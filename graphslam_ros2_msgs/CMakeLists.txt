@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(graphslam_main)
+project(graphslam_ros2_msgs)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -17,28 +17,22 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(scanmatcher REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/SubMap.msg"
+  DEPENDENCIES builtin_interfaces std_msgs geometry_msgs sensor_msgs
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-add_executable(graphslam_node
-src/main.cpp
-)
-
-ament_target_dependencies(graphslam_node
-  rclcpp
-  #scanmatcher
-  graphslam
-  )
-
-install(TARGETS 
-  graphslam_node
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-
+ament_export_dependencies(rosidl_default_runtime)
+ament_export_include_directories(include)
 ament_package()

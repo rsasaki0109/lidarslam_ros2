@@ -15,11 +15,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+SET(CMAKE_BUILD_TYPE "RELEASE")
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package (PCL REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -40,14 +43,19 @@ src/scanmatcher_node.cpp
 )
 
 target_link_libraries(scanmatcher_node
-scanmatcher_component)
+scanmatcher_component ${PCL_LIBRARIES})
 
 ament_target_dependencies(scanmatcher_node
   rclcpp rclcpp_components tf2_ros)
 
 include_directories(
     include
+    ${PCL_INCLUDE_DIRS}
 )
+link_directories(
+  ${PCL_LIBRARY_DIRS}
+)
+add_definitions(${PCL_DEFINITIONS})
 
 rclcpp_components_register_nodes(scanmatcher_component 
   "graphslam::ScanMatcherComponent")

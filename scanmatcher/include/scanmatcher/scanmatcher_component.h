@@ -44,6 +44,8 @@ extern "C" {
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <pcl/registration/ndt.h>
+
 namespace graphslam
 {
     class ScanMatcherComponent: public rclcpp::Node

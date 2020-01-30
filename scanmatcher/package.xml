@@ -14,6 +14,8 @@
   <test_depend>rclcpp</test_depend>
   <test_depend>rclcpp_components</test_depend>
   <test_depend>tf2_ros</test_depend>
+  <test_depend>libpcl-all-dev</test_depend>
+
 
   <export>
     <build_type>ament_cmake</build_type>
