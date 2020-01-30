@@ -64,7 +64,7 @@ namespace graphslam
         pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
         pcl::VoxelGrid<pcl::PointXYZI>::Ptr voxelgrid_;
 
-        geometry_msgs::msg::point previous_position_;
+        //geometry_msgs::msg::point previous_position_;
     };
 }
 
