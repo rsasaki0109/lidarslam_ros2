@@ -44,7 +44,10 @@ extern "C" {
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <geometry_msgs/msg/point.hpp>
+
 #include <pcl/registration/ndt.h>
+#include <pcl/registration/gicp.h>
 
 namespace graphslam
 {
@@ -57,6 +60,11 @@ namespace graphslam
         rclcpp::Clock clock_;
         tf2_ros::Buffer tfbuffer_;
         tf2_ros::TransformListener listener_;
+
+        pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
+        pcl::VoxelGrid<pcl::PointXYZI>::Ptr voxelgrid_;
+
+        geometry_msgs::msg::point previous_position_;
     };
 }
 

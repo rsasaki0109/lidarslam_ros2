@@ -12,11 +12,15 @@ this is a ros2 slam package of the frontend using gicp/ndt scan matching and the
 
 ## params
 
+- frontend 
+
 |Name|Type|Default value|Description|
 |---|---|---|---|
 |resolution|double|1.0|resolution size length of voxels[m]|
 |voxel_leaf_size|double|0.2|down sample size of a input cloud[m]|
 |trans_for_update|double|1.5|moving distance of a map update[m]|
+
+- backend 
 
 ## demo
 demo data(ROS1) by Meiji University[https://drive.google.com/file/d/1VEy_iJZKEGcNDDKsK-YrqgKxwy6qsric/view]

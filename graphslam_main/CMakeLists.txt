@@ -19,6 +19,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(scanmatcher REQUIRED)
+#find_package(graphslam REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -31,8 +32,8 @@ src/main.cpp
 
 ament_target_dependencies(graphslam_node
   rclcpp
-  #scanmatcher
-  graphslam
+  scanmatcher
+  #graphslam
   )
 
 install(TARGETS 
