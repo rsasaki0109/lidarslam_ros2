@@ -44,7 +44,9 @@ extern "C" {
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <pcl/registration/ndt.h>
 #include <pcl/registration/gicp.h>
@@ -61,10 +63,25 @@ namespace graphslam
         tf2_ros::Buffer tfbuffer_;
         tf2_ros::TransformListener listener_;
 
+        std::string global_frame_id_;
+
         pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
         pcl::VoxelGrid<pcl::PointXYZI>::Ptr voxelgrid_;
 
-        //geometry_msgs::msg::point previous_position_;
+        geometry_msgs::msg::Point previous_position_;
+
+        rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr initial_pose_sub_;
+        rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_input_cloud_;
+        geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
+        pcl::PointCloud<pcl::PointXYZI> map_;
+        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_pub_;
+
+        void initializePubSub();
+        void receiveCloud();
+
+        bool initial_pose_received_{false};
+
     };
 }
 

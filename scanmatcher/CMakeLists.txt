@@ -12,7 +12,8 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  #add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wextra -Wpedantic)
 endif()
 
 SET(CMAKE_BUILD_TYPE "RELEASE")
@@ -22,6 +23,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package (PCL REQUIRED)
 
@@ -37,7 +39,7 @@ src/scanmatcher_component.cpp
 target_compile_definitions(scanmatcher_component PRIVATE "GS_SM_BUILDING_DLL")
 
 ament_target_dependencies(scanmatcher_component
-  rclcpp rclcpp_components tf2_ros)
+  rclcpp rclcpp_components tf2_ros sensor_msgs)
 
 add_executable(scanmatcher_node
 src/scanmatcher_node.cpp
@@ -47,7 +49,7 @@ target_link_libraries(scanmatcher_node
 scanmatcher_component ${PCL_LIBRARIES})
 
 ament_target_dependencies(scanmatcher_node
-  rclcpp rclcpp_components tf2_ros)
+  rclcpp)
 
 include_directories(
     include
