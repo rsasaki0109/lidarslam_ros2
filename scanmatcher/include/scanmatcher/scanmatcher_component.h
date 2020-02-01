@@ -43,11 +43,18 @@ extern "C" {
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/transform.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 
+#include <pcl_conversions/pcl_conversions.h>
+
+#include <pcl/point_types.h>
 #include <pcl/registration/ndt.h>
 #include <pcl/registration/gicp.h>
 
@@ -62,6 +69,7 @@ namespace graphslam
         rclcpp::Clock clock_;
         tf2_ros::Buffer tfbuffer_;
         tf2_ros::TransformListener listener_;
+        tf2_ros::TransformBroadcaster broadcaster_;
 
         std::string global_frame_id_;
 
@@ -78,9 +86,13 @@ namespace graphslam
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_pub_;
 
         void initializePubSub();
-        void receiveCloud();
+        void receiveCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr input_cloud, rclcpp::Time stamp);
+        //void publishMapAndPose(geometry_msgs::msg::Vector3 vec, geometry_msgs::msg::Quaternion quat, rclcpp::Time stamp);
+        Eigen::Matrix4f getSimTrans(geometry_msgs::msg::PoseStamped pose_stamped);
 
         bool initial_pose_received_{false};
+        bool initial_cloud_received_{false};
+        double trans_for_mapupdate_;
 
     };
 }

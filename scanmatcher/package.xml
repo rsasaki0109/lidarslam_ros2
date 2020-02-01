@@ -16,6 +16,8 @@
   <test_depend>geometry_msgs</test_depend>
   <test_depend>sensor_msgs</test_depend>
   <test_depend>tf2_ros</test_depend>
+  <test_depend>tf2_geometry_msgs</test_depend>
+  <test_depend>pcl_conversions</test_depend>
   <test_depend>libpcl-all-dev</test_depend>
 
 

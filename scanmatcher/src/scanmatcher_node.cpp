@@ -9,6 +9,5 @@ int main(int argc, char *argv[])
     rclcpp::NodeOptions options;
     rclcpp::spin(std::make_shared<graphslam::ScanMatcherComponent>(options));
     rclcpp::shutdown();
-
     return 0;
 }
