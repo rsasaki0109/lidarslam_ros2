@@ -26,10 +26,10 @@ namespace graphslam
         declare_parameter("trans_for_mapupdate", 1.5);
         get_parameter("trans_for_mapupdate", trans_for_mapupdate_);
 
-        voxelgrid_->setLeafSize(voxel_leaf_size, voxel_leaf_size, voxel_leaf_size);
+        voxelgrid_.setLeafSize(voxel_leaf_size, voxel_leaf_size, voxel_leaf_size);
 
         if(registration_method == "NDT"){
-            pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>::Ptr ndt;
+            pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>::Ptr ndt(new pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>());
             ndt->setResolution(ndt_resolution);
             registration_ = ndt;
             
@@ -40,6 +40,7 @@ namespace graphslam
         }
 
         initializePubSub();
+        RCLCPP_INFO(get_logger(), "initialization end");
     }   
 
     void ScanMatcherComponent::initializePubSub(){
@@ -52,6 +53,8 @@ namespace graphslam
                 RCLCPP_WARN(get_logger(),"This initial_pose is not in the global frame");
                 return;
             }
+            RCLCPP_INFO(get_logger(), "initial_pose is received");
+            std::cout << "initial_pose is received" << std::endl;
             corrent_pose_stamped_ = *msg;
             previous_position_ = corrent_pose_stamped_.pose.position;
             initial_pose_received_ = true;
@@ -60,15 +63,14 @@ namespace graphslam
         auto cloud_callback =
         [this](const typename sensor_msgs::msg::PointCloud2::SharedPtr msg) -> void
         {
-            //TODO
             if(initial_pose_received_)
             {
-                pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr;
+                pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
                 pcl::fromROSMsg(*msg,*cloud_ptr);
-
                 if(!initial_cloud_received_)
                 {
                     RCLCPP_INFO(get_logger(), "create a first map");
+                    std::cout << "create a first map" << std::endl;
 
                     initial_cloud_received_ = true;
 
@@ -102,14 +104,14 @@ namespace graphslam
             create_subscription<sensor_msgs::msg::PointCloud2>(
                 "input_cloud", rclcpp::SensorDataQoS(), cloud_callback);    
         // pub
-        pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("curent_pose", rclcpp::SystemDefaultsQoS());
+        pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("current_pose", rclcpp::SystemDefaultsQoS());
         map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("map", rclcpp::SystemDefaultsQoS()); 
     }
 
     void ScanMatcherComponent::receiveCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr, rclcpp::Time stamp){
         pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-        voxelgrid_->setInputCloud(cloud_ptr);
-        voxelgrid_->filter(*filtered_cloud_ptr);
+        voxelgrid_.setInputCloud(cloud_ptr);
+        voxelgrid_.filter(*filtered_cloud_ptr);
         registration_->setInputSource(filtered_cloud_ptr);
 
         Eigen::Matrix4f sim_trans = getSimTrans(corrent_pose_stamped_);
@@ -119,6 +121,23 @@ namespace graphslam
 
         Eigen::Matrix4f final_transformation = registration_->getFinalTransformation();
 
+        publishMapAndPose(cloud_ptr, final_transformation, stamp);
+
+        std::cout << "---------------------------------------------------------" << std::endl;
+        std::cout << "trans: " << trans_ << std::endl;
+        std::cout << "number of filtered cloud points: " << filtered_cloud_ptr->size() << std::endl;
+        std::cout << "number of map　points: " << map_.size() << std::endl;
+        std::cout << "initial transformation:" << std::endl;
+        std::cout <<  sim_trans << std::endl;
+        std::cout << "has converged: " << registration_->hasConverged() << std::endl;
+        std::cout << "fitness score: " << registration_->getFitnessScore() << std::endl;
+        std::cout << "final transformation:" << std::endl;
+        std::cout <<  final_transformation << std::endl;
+        std::cout << "---------------------------------------------------------" << std::endl;
+
+    }
+
+    void ScanMatcherComponent::publishMapAndPose(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp){
         tf2::Matrix3x3 rotation_matrix;
         rotation_matrix.setValue(static_cast<double>(final_transformation(0, 0)), static_cast<double>(final_transformation(0, 1)),
                        static_cast<double>(final_transformation(0, 2)), static_cast<double>(final_transformation(1, 0)),
@@ -148,16 +167,17 @@ namespace graphslam
 
         corrent_pose_stamped_.header.stamp = stamp;
         corrent_pose_stamped_.pose.position.x = vec.x;
-        corrent_pose_stamped_.pose.position.x = vec.y;
-        corrent_pose_stamped_.pose.position.x = vec.z;
+        corrent_pose_stamped_.pose.position.y = vec.y;
+        corrent_pose_stamped_.pose.position.z = vec.z;
         corrent_pose_stamped_.pose.orientation = quat;
         pose_pub_->publish(corrent_pose_stamped_);
 
-        double trans = sqrt(pow(vec.x - previous_position_.x, 2.0) 
+        trans_ = sqrt(pow(vec.x - previous_position_.x, 2.0) 
                         + pow(vec.y - previous_position_.y, 2.0) 
                         + pow(vec.z - previous_position_.z, 2.0)) ;    
-        if (trans >= trans_for_mapupdate_){
+        if (trans_ >= trans_for_mapupdate_){
             RCLCPP_INFO(get_logger(), "map updte");
+            std::cout << "map updte" << std::endl;
             pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map_));
             pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
             previous_position_.x = vec.x;
@@ -171,17 +191,16 @@ namespace graphslam
             pcl::toROSMsg(*map_ptr, *map_msg_ptr);
             map_pub_->publish(map_msg_ptr);
         }
-
     }
-
-    //void ScanMatcherComponent::publishMapAndPose(geometry_msgs::msg::Vector3 vec, geometry_msgs::msg::Quaternion quat, rclcpp::Time stamp){}
 
     Eigen::Matrix4f ScanMatcherComponent::getSimTrans(geometry_msgs::msg::PoseStamped pose_stamped){
         geometry_msgs::msg::Point pos = pose_stamped.pose.position;
         geometry_msgs::msg::Quaternion quat = pose_stamped.pose.orientation;
         Eigen::Translation3f translation(pos.x, pos.y, pos.z);
-        Eigen::Quaternionf rotation(quat.x, quat.y, quat.z, quat.w);
+        //Eigen::Quaternionf rotation(quat.x, quat.y, quat.z, quat.w);
+        Eigen::Quaternionf rotation(quat.w, quat.x, quat.y, quat.z);
         Eigen::Matrix4f sim_trans = (translation * rotation).matrix();
+
         return sim_trans;
     }
 

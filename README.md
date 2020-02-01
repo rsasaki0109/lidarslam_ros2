@@ -17,11 +17,11 @@ this is a ros2 slam package of the frontend using gicp/ndt scan matching and the
 |Name|Type|Default value|Description|
 |---|---|---|---|
 |registration_method|string|"NDT"|"NDT" or "GICP"|
-|ndt_resolution|double|1.0|resolution size length of voxels[m]|
-|voxel_leaf_size|double|0.2|down sample size of a input cloud[m]|
-|trans_for_mapupdate|double|1.5|moving distance of a map update[m]|
+|ndt_resolution|double|5.0|resolution size length of voxels[m]|
+|voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
+|trans_for_mapupdate|double|1.5|moving distance of map update[m]|
 
-- backend 
+- backend(Unimplemented yet) 
 
 ## demo
 ### frontend only
@@ -33,11 +33,11 @@ tar zxfv sample_moriyama_150324.tar.gz
 ```
 
 ```
-ros2 run scanmatcher scanmatcher_node
+ros2 launch scanmatcher mapping.launch.py
 ```
 
 ```
-ros2 topic pub scanmatcher/initialpose geometry_msgs/PoseStamped '{ pose: {position: {x: 0, y: 0}, orientation: {z: 0, w: 1}}}' --once
+ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0, w: 1}}}' --once
 ```
 
 ```
