@@ -16,7 +16,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wextra -Wpedantic)
 endif()
 
-SET(CMAKE_BUILD_TYPE "RELEASE")
+#SET(CMAKE_BUILD_TYPE "RELEASE")
+SET(CMAKE_CXX_FLAGS "-O2 -g ${CMAKE_CXX_FLAGS}")
 
 # find dependencies
 find_package(ament_cmake REQUIRED)

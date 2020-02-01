@@ -45,6 +45,8 @@ namespace graphslam
             registration_ = gicp;
         }
 
+        map_.header.frame_id = "map";
+
         initializePubSub();
         RCLCPP_INFO(get_logger(), "initialization end");
     }   
@@ -85,13 +87,11 @@ namespace graphslam
                     pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, sim_trans);
                     map_ += *transformed_cloud_ptr;
             
-
                     pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map_));
                     registration_->setInputTarget(map_ptr);
 
                     sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
                     pcl::toROSMsg(*map_ptr, *map_msg_ptr);
-                    map_msg_ptr->header.frame_id = "map";
                     map_pub_->publish(*map_msg_ptr);
                 }
 
@@ -107,6 +107,7 @@ namespace graphslam
         sub_input_cloud_ = 
             create_subscription<sensor_msgs::msg::PointCloud2>(
                 "input_cloud", rclcpp::SensorDataQoS(), cloud_callback);    
+   
         // pub
         pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("current_pose", rclcpp::SystemDefaultsQoS());
         map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("map", rclcpp::SystemDefaultsQoS()); 
@@ -198,6 +199,7 @@ namespace graphslam
             
             sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
             pcl::toROSMsg(*map_ptr, *map_msg_ptr);
+            map_msg_ptr->header.frame_id = "map";
             map_pub_->publish(map_msg_ptr);
         }
     }

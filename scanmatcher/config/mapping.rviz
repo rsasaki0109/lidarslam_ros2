@@ -86,7 +86,7 @@ Visualization Manager:
       Shaft Length: 1
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
-      Topic: /curent_pose
+      Topic: /current_pose
       Unreliable: false
       Value: true
   Enabled: true
@@ -115,7 +115,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 9.54829216003418
+      Distance: 11.977377891540527
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -149,5 +149,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 308
-  Y: 48
+  X: 283
+  Y: 107
