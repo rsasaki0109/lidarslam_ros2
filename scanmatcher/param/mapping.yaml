@@ -1,7 +1,6 @@
-ndt_mapping:
+scan_matcher:
     ros__parameters:
       registration_method: "NDT"
       ndt_resolution: 5.0 
-      max_iterations: 25
-      voxel_leaf_size: 0.2
-      trans_for_update: 1.5
+      voxel_leaf_size: 2.5
+      trans_for_mapupdate: 1.5

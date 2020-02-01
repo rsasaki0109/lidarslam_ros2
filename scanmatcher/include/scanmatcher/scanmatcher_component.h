@@ -88,8 +88,8 @@ namespace graphslam
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_pub_;
 
         void initializePubSub();
-        void receiveCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr input_cloud, rclcpp::Time stamp);
-        void publishMapAndPose(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp);
+        void receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& input_cloud, rclcpp::Time stamp);
+        void publishMapAndPose(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp);
         Eigen::Matrix4f getSimTrans(geometry_msgs::msg::PoseStamped pose_stamped);
 
         bool initial_pose_received_{false};

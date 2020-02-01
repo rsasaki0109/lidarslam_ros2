@@ -17,7 +17,7 @@ namespace graphslam
         std::string registration_method;
         double ndt_resolution;
 
-        declare_parameter("voxel_leaf_size", 0.1);
+        declare_parameter("voxel_leaf_size", 0.2);
         get_parameter("voxel_leaf_size", voxel_leaf_size);
         declare_parameter("registration_method","NDT");
         get_parameter("registration_method",registration_method);
@@ -25,6 +25,12 @@ namespace graphslam
         get_parameter("ndt_resolution", ndt_resolution);
         declare_parameter("trans_for_mapupdate", 1.5);
         get_parameter("trans_for_mapupdate", trans_for_mapupdate_);
+
+        std::cout << "voxel_leaf_size[m]:" << voxel_leaf_size << std::endl;
+        std::cout << "registration_method:" << registration_method << std::endl;
+        std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;
+        std::cout << "trans_for_mapupdate[m]:" << trans_for_mapupdate_ << std::endl;
+        std::cout << "------------------" << std::endl;
 
         voxelgrid_.setLeafSize(voxel_leaf_size, voxel_leaf_size, voxel_leaf_size);
 
@@ -54,7 +60,7 @@ namespace graphslam
                 return;
             }
             RCLCPP_INFO(get_logger(), "initial_pose is received");
-            std::cout << "initial_pose is received" << std::endl;
+
             corrent_pose_stamped_ = *msg;
             previous_position_ = corrent_pose_stamped_.pose.position;
             initial_pose_received_ = true;
@@ -70,7 +76,6 @@ namespace graphslam
                 if(!initial_cloud_received_)
                 {
                     RCLCPP_INFO(get_logger(), "create a first map");
-                    std::cout << "create a first map" << std::endl;
 
                     initial_cloud_received_ = true;
 
@@ -88,7 +93,6 @@ namespace graphslam
                     pcl::toROSMsg(*map_ptr, *map_msg_ptr);
                     map_msg_ptr->header.frame_id = "map";
                     map_pub_->publish(*map_msg_ptr);
-                    return;
                 }
 
                 if(initial_cloud_received_) receiveCloud(cloud_ptr, msg->header.stamp);
@@ -108,7 +112,7 @@ namespace graphslam
         map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("map", rclcpp::SystemDefaultsQoS()); 
     }
 
-    void ScanMatcherComponent::receiveCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr, rclcpp::Time stamp){
+    void ScanMatcherComponent::receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, rclcpp::Time stamp){
         pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
         voxelgrid_.setInputCloud(cloud_ptr);
         voxelgrid_.filter(*filtered_cloud_ptr);
@@ -137,7 +141,7 @@ namespace graphslam
 
     }
 
-    void ScanMatcherComponent::publishMapAndPose(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp){
+    void ScanMatcherComponent::publishMapAndPose(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp){
         tf2::Matrix3x3 rotation_matrix;
         rotation_matrix.setValue(static_cast<double>(final_transformation(0, 0)), static_cast<double>(final_transformation(0, 1)),
                        static_cast<double>(final_transformation(0, 2)), static_cast<double>(final_transformation(1, 0)),
@@ -176,17 +180,22 @@ namespace graphslam
                         + pow(vec.y - previous_position_.y, 2.0) 
                         + pow(vec.z - previous_position_.z, 2.0)) ;    
         if (trans_ >= trans_for_mapupdate_){
-            RCLCPP_INFO(get_logger(), "map updte");
-            std::cout << "map updte" << std::endl;
-            pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map_));
+            RCLCPP_INFO(get_logger(), "map update");
+
             pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+        
             previous_position_.x = vec.x;
             previous_position_.y = vec.y;
             previous_position_.z = vec.z;
+ 
             pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, final_transformation);
-            map_ += *transformed_cloud_ptr;
-            registration_->setInputTarget(map_ptr);
 
+            map_ += *transformed_cloud_ptr;
+
+            pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map_));
+
+            registration_->setInputTarget(map_ptr);
+            
             sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
             pcl::toROSMsg(*map_ptr, *map_msg_ptr);
             map_pub_->publish(map_msg_ptr);
