@@ -44,7 +44,7 @@ ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"
 ros2 bag play -s rosbag_v2 sample_moriyama_150324.bag 
 ```
 
-![demo](./scanmatcher/images/mapping.png)  
+<img src="./scanmatcher/images/mapping.png" width="640px">
 
 ### frontend and backend(Unimplemented yet)
 demo data(ROS1) by Meiji University[https://drive.google.com/file/d/1VEy_iJZKEGcNDDKsK-YrqgKxwy6qsric/view]
