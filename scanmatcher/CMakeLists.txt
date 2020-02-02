@@ -30,6 +30,7 @@ find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(pcl_conversions REQUIRED)
+find_package(graphslam_ros2_msgs REQUIRED)
 find_package (PCL REQUIRED)
 
 if(BUILD_TESTING)
@@ -44,7 +45,16 @@ src/scanmatcher_component.cpp
 target_compile_definitions(scanmatcher_component PRIVATE "GS_SM_BUILDING_DLL")
 
 ament_target_dependencies(scanmatcher_component
-  rclcpp rclcpp_components tf2_ros tf2_geometry_msgs tf2_sensor_msgs tf2_eigen geometry_msgs sensor_msgs)
+  rclcpp 
+  rclcpp_components 
+  tf2_ros 
+  tf2_geometry_msgs 
+  tf2_sensor_msgs 
+  tf2_eigen 
+  geometry_msgs 
+  sensor_msgs
+  graphslam_ros2_msgs
+)
 
 add_executable(scanmatcher_node
 src/scanmatcher_node.cpp

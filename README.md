@@ -51,6 +51,19 @@ ros2 bag play -s rosbag_v2 sample_moriyama_150324.bag
 ### frontend and backend(Unimplemented yet)
 demo data(ROS1) by Meiji University[https://drive.google.com/file/d/1VEy_iJZKEGcNDDKsK-YrqgKxwy6qsric/view]
 
+
+
+~~Note)To use this rosbag, You need to git clone [ros1_bridge](https://github.com/ros2/ros1_bridge/tree/154b35b6f960a8fc782de27c1b2b0c903baac4b3) ,
+add `my_mapping_rules.yaml` in **ros1_bridge**'s folder,~~
+```
+-
+    ros1_package_name: 'velodyne_msgs'
+    ros2_package_name: 'velodyne_msgs'
+```
+~~and modifiy package.xml and CMakeLists.txt in ros1_bridge in the reference to [this document](https://github.com/ros2/ros1_bridge/blob/154b35b6f960a8fc782de27c1b2b0c903baac4b3/doc/index.rst).~~
+
+
+
 ```
 ros2 run graphslam_main graphslam_node 
 ```

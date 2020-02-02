@@ -54,6 +54,8 @@ extern "C" {
 #include <geometry_msgs/msg/transform.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
+#include <graphslam_ros2_msgs/msg/map_array.hpp>
+
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <pcl/point_types.h>
@@ -85,8 +87,10 @@ namespace graphslam
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_input_cloud_;
         geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
         pcl::PointCloud<pcl::PointXYZI> map_;
+        graphslam_ros2_msgs::msg::MapArray map_array_msg_;
         rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_pub_;
+        rclcpp::Publisher<graphslam_ros2_msgs::msg::MapArray>::SharedPtr map_array_pub_;
 
         void initializePubSub();
         void receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& input_cloud, rclcpp::Time stamp);

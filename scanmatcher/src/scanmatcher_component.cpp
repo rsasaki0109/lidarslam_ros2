@@ -46,6 +46,7 @@ namespace graphslam
         }
 
         map_.header.frame_id = "map";
+        map_array_msg_.header.frame_id = "map";
 
         initializePubSub();
         RCLCPP_INFO(get_logger(), "initialization end");
@@ -100,14 +101,24 @@ namespace graphslam
                     
                     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
                     pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, sim_trans);
+                    registration_->setInputTarget(transformed_cloud_ptr);
+                    
+                    // map
                     map_ += *transformed_cloud_ptr;
-            
-                    pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map_));
-                    registration_->setInputTarget(map_ptr);
-
                     sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
-                    pcl::toROSMsg(*map_ptr, *map_msg_ptr);
+                    pcl::toROSMsg(*transformed_cloud_ptr, *map_msg_ptr);
                     map_pub_->publish(*map_msg_ptr);
+
+                    //map array
+                    sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
+                    pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
+                    graphslam_ros2_msgs::msg::SubMap submap;
+                    submap.header = msg->header;
+                    submap.distance = 0;
+                    submap.pose = corrent_pose_stamped_.pose;
+                    submap.cloud = *transformed_cloud_msg_ptr;
+                    map_array_msg_.header = msg->header;
+                    map_array_msg_.submaps.push_back(submap);
                 }
 
                 if(initial_cloud_received_) receiveCloud(cloud_ptr, msg->header.stamp);
@@ -126,6 +137,7 @@ namespace graphslam
         // pub
         pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("current_pose", rclcpp::SystemDefaultsQoS());
         map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("map", rclcpp::SystemDefaultsQoS()); 
+        map_array_pub_ = create_publisher<graphslam_ros2_msgs::msg::MapArray>("map_array", rclcpp::SystemDefaultsQoS()); 
     }
 
     void ScanMatcherComponent::receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, rclcpp::Time stamp){
@@ -207,15 +219,30 @@ namespace graphslam
             pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, final_transformation);
 
             map_ += *transformed_cloud_ptr;
-
             pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map_));
 
-            registration_->setInputTarget(map_ptr);
+            registration_->setInputTarget(map_ptr);//TODO
             
             sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
             pcl::toROSMsg(*map_ptr, *map_msg_ptr);
             map_msg_ptr->header.frame_id = "map";
             map_pub_->publish(map_msg_ptr);
+
+            //TODO:change map_ to map_array
+            //map array
+            /*
+            sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
+            pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
+            graphslam_ros2_msgs::msg::SubMap submap;
+            submap.header = corrent_pose_stamped_.header;
+            submap.distance = trans_ + map_array_msg_.submaps.end()->distance;
+            submap.pose = corrent_pose_stamped_.pose;
+            submap.cloud = *transformed_cloud_msg_ptr;
+            map_array_msg_.header = corrent_pose_stamped_.header;
+            map_array_msg_.submaps.push_back(submap);
+            map_array_pub_->publish(map_array_msg_);
+            */
+
         }
     }
 
