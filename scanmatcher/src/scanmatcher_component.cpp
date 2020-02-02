@@ -61,7 +61,8 @@ namespace graphslam
                 RCLCPP_WARN(get_logger(),"This initial_pose is not in the global frame");
                 return;
             }
-            RCLCPP_INFO(get_logger(), "initial_pose is received");
+            //RCLCPP_INFO(get_logger(), "initial_pose is received");
+            std::cout << "initial_pose is received" << std::endl;
 
             corrent_pose_stamped_ = *msg;
             previous_position_ = corrent_pose_stamped_.pose.position;
@@ -73,8 +74,22 @@ namespace graphslam
         {
             if(initial_pose_received_)
             {
+                sensor_msgs::msg::PointCloud2 transformerd_msg;
+                try{
+                    tf2::TimePoint time_point = tf2::TimePoint(
+                        std::chrono::seconds(msg->header.stamp.sec) +
+                        std::chrono::nanoseconds(msg->header.stamp.nanosec));
+                    const geometry_msgs::msg::TransformStamped transform = tfbuffer_.lookupTransform(
+                        "base_link", msg->header.frame_id, time_point);
+                    tf2::doTransform(*msg, transformerd_msg, transform);//TODO:slow now(https://github.com/ros/geometry2/pull/432)
+                }
+                catch (tf2::TransformException& e){
+                    RCLCPP_ERROR(this->get_logger(),"%s",e.what());
+                    return;
+                }
+
                 pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-                pcl::fromROSMsg(*msg,*cloud_ptr);
+                pcl::fromROSMsg(transformerd_msg,*cloud_ptr);
                 if(!initial_cloud_received_)
                 {
                     RCLCPP_INFO(get_logger(), "create a first map");

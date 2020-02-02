@@ -6,9 +6,11 @@ this is a ros2 slam package of the frontend using gicp/ndt scan matching and the
 - input  
 /initial_pose  (geometry_msgs/PoseStamed)  
 /input_cloud  (sensor_msgs/PointCloud2)  
+/tf(from "base_link" to LiDAR's frame) 
 - output  
 /current_pose (geometry_msgs/PoseStamped)  
 /map  (sensor_msgs/PointCloud2)  
+/tf(from "map" to "base_link")  
 
 ## params
 
