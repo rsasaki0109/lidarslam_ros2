@@ -78,20 +78,20 @@ namespace graphslam
         pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI> ndt_;
         pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
 
-        geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
         graphslam_ros2_msgs::msg::MapArray map_array_msg_;
-        rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
-        rclcpp::Subscription<graphslam_ros2_msgs::msg::MapArray>::SharedPtr input_cloud_sub_;
-        geometry_msgs::msg::PoseStamped modified_corrent_pose_stamped_;
+        rclcpp::Subscription<graphslam_ros2_msgs::msg::MapArray>::SharedPtr map_array_sub_;
         graphslam_ros2_msgs::msg::MapArray modified_map_array_msg_;
-        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr modified_pose_pub_;
         rclcpp::Publisher<graphslam_ros2_msgs::msg::MapArray>::SharedPtr modified_map_array_pub_;
         rclcpp::TimerBase::SharedPtr loop_detect_timer_;
 
         void initializePubSub();
-        void detectLoop();
+        void searchLoop();
         void doPoseAdjustment();
         void publishMapAndPose();
+
+        int loop_detection_period_;
+        double threshold_loop_clousure_;
+        double distance_loop_clousure_;
     };
 }
 

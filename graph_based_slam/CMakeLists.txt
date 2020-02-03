@@ -36,7 +36,7 @@ add_library(graph_based_slam_component SHARED
 src/graph_based_slam_component.cpp
 )
 
-target_compile_definitions(graph_based_slam_component PRIVATE "GS_SM_BUILDING_DLL")
+target_compile_definitions(graph_based_slam_component PRIVATE "GS_GBS_BUILDING_DLL")
 
 ament_target_dependencies(graph_based_slam_component
   rclcpp 
@@ -77,10 +77,10 @@ install(
   DESTINATION include
 )
 
-#install(
-#  DIRECTORY launch param
-#  DESTINATION share/${PROJECT_NAME}
-#)
+install(
+  DIRECTORY launch param
+  DESTINATION share/${PROJECT_NAME}
+)
 
 install(TARGETS
   graph_based_slam_component

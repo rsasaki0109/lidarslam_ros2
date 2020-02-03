@@ -27,10 +27,11 @@ this is a ros2 slam package of the frontend using gicp/ndt scan matching and the
 
 |Name|Type|Default value|Description|
 |---|---|---|---|
-|loop_detection_frequency|double|1.0|frequency of loop detection[Hz]|
 |ndt_resolution|double|5.0|resolution size of voxels[m]|
 |voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
-|threshold_loop_clousure|double|1| fitness score of ndt for loop clousure|
+|loop_detection_period|int|1000|period of serching loop detection[ms]|
+|threshold_loop_clousure|double|1.0| fitness score of ndt for loop clousure|
+|distance_loop_clousure|double|1.0| distance from revisit candidates for loop clousure[m]|
 
 ## demo
 ### frontend only
