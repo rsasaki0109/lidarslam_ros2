@@ -31,7 +31,7 @@ this is a ros2 slam package of the frontend using gicp/ndt scan matching and the
 |voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
 |loop_detection_period|int|1000|period of serching loop detection[ms]|
 |threshold_loop_clousure|double|1.0| fitness score of ndt for loop clousure|
-|distance_loop_clousure|double|1.0| distance from revisit candidates for loop clousure[m]|
+|distance_loop_clousure|double|4.5| distance from revisit candidates for loop clousure[m]|
 
 ## demo
 ### frontend only
