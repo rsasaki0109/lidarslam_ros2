@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>graph_based_slam</name>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="rsasaki0109@gmail.com">sasaki</maintainer>
+  <license>TODO: License declaration</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>rclcpp</test_depend>
+  <test_depend>rclcpp_components</test_depend>
+  <test_depend>geometry_msgs</test_depend>
+  <test_depend>sensor_msgs</test_depend>
+  <test_depend>tf2_ros</test_depend>
+  <test_depend>tf2_sensor_msgs</test_depend>
+  <test_depend>tf2_geometry_msgs</test_depend>
+  <test_depend>tf2_eigen</test_depend>
+  <test_depend>pcl_conversions</test_depend>
+  <test_depend>graphslam_ros2_msgs</test_depend>
+  <test_depend>libpcl-all-dev</test_depend>
+
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

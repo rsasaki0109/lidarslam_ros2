@@ -25,6 +25,13 @@ this is a ros2 slam package of the frontend using gicp/ndt scan matching and the
 
 - backend(Unimplemented yet) 
 
+|Name|Type|Default value|Description|
+|---|---|---|---|
+|loop_detection_frequency|double|1.0|frequency of loop detection[Hz]|
+|ndt_resolution|double|5.0|resolution size of voxels[m]|
+|voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
+|threshold_loop_clousure|double|1| fitness score of ndt for loop clousure|
+
 ## demo
 ### frontend only
 demo data(ROS1) by Autoware Foundation
@@ -32,6 +39,10 @@ demo data(ROS1) by Autoware Foundation
 ```
 wget http://db3.ertl.jp/autoware/sample_data/sample_moriyama_150324.tar.gz
 tar zxfv sample_moriyama_150324.tar.gz
+```
+
+```
+rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz 
 ```
 
 ```
@@ -67,6 +78,7 @@ add `my_mapping_rules.yaml` in **ros1_bridge**'s folder,~~
 ```
 ros2 run graphslam_main graphslam_node 
 ```
+(ros2 run graph_based_slam graph_based_slam_node)
 
 ```
 ros2 bag play -s rosbag_v2 infant_outdoor.bag 
