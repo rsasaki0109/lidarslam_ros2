@@ -1,7 +1,8 @@
 graphslam_ros2
 ====
 this is a ros2 slam package of the frontend using gicp/ndt scan matching and the backend using graph-based slam. 
-
+## requirement to build
+You need install g2o.
 ## io
 - input  
 /initial_pose  (geometry_msgs/PoseStamed)  
@@ -89,4 +90,4 @@ ros2 bag play -s rosbag_v2 infant_outdoor.bag
 
 - Eigen
 - PCL(BSD3)
-- ceres-solver/g2o
+- g2o(BSD2except a part)

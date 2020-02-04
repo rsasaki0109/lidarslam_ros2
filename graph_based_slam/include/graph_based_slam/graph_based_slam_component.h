@@ -62,6 +62,19 @@ extern "C" {
 #include <pcl/registration/ndt.h>
 #include <pcl/registration/gicp.h>
 
+#include "g2o/core/sparse_optimizer.h"
+#include "g2o/core/optimization_algorithm_levenberg.h"
+#include "g2o/core/block_solver.h"
+
+#include "g2o/solvers/eigen/linear_solver_eigen.h"
+
+#include "g2o/types/slam3d/vertex_se3.h"
+#include "g2o/types/slam3d/vertex_pointxyz.h"
+#include "g2o/types/slam3d/edge_se3.h"
+#include "g2o/types/slam3d/edge_se3_pointxyz.h"
+#include "g2o/types/slam3d/se3quat.h"
+#include "g2o/types/slam3d/parameter_se3_offset.h"
+
 namespace graphslam
 {
     class GraphBasedSlamComponent: public rclcpp::Node
@@ -86,7 +99,7 @@ namespace graphslam
 
         void initializePubSub();
         void searchLoop();
-        void doPoseAdjustment();
+        void doPoseAdjustment(int id_loop_point);
         void publishMapAndPose();
 
         int loop_detection_period_;

@@ -12,7 +12,8 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  #add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wextra -Wpedantic)
 endif()
 
 SET(CMAKE_CXX_FLAGS "-O2 -g ${CMAKE_CXX_FLAGS}")
@@ -25,7 +26,13 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(graphslam_ros2_msgs REQUIRED)
-find_package (PCL REQUIRED)
+find_package(PCL REQUIRED)
+find_package(g2o REQUIRED
+COMPONENTS
+g2o::core
+g2o::types_slam3d
+g2o::solver_eigen
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -55,7 +62,12 @@ src/graph_based_slam_node.cpp
 )
 
 target_link_libraries(graph_based_slam_node
-graph_based_slam_component ${PCL_LIBRARIES})
+graph_based_slam_component 
+${PCL_LIBRARIES}
+g2o::core
+g2o::types_slam3d
+g2o::solver_eigen
+)
 
 ament_target_dependencies(graph_based_slam_node
   rclcpp)

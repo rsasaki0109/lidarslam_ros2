@@ -70,6 +70,7 @@ namespace graphslam
         pcl::fromROSMsg(latest_submap.cloud, *latest_submap_cloud_ptr);
         ndt_.setInputTarget(latest_submap_cloud_ptr);
         double latest_moving_distance = latest_submap.distance;
+        int i =0;
         for(auto submap : map_array_msg_.submaps){
 
             if(latest_moving_distance - submap.distance > distance_loop_clousure_){
@@ -83,10 +84,9 @@ namespace graphslam
 
                 double fitness_score = ndt_.getFitnessScore();
                 if(fitness_score < threshold_loop_clousure_){
-                    doPoseAdjustment();
+                    doPoseAdjustment(i);//TODO: pass id of loop detection
                 }
-
-
+                i++;
             }
         }
         
@@ -94,9 +94,67 @@ namespace graphslam
 
     }
 
-    void GraphBasedSlamComponent::doPoseAdjustment(){
-        std::cout << "doPoseAdjustment" << std::endl;
-        //TODO
+    void GraphBasedSlamComponent::doPoseAdjustment(int id_loop_point){
+        g2o::SparseOptimizer optimizer;
+        optimizer.setVerbose(false);
+        std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType> linear_solver =
+            g2o::make_unique<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>();
+        g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(
+		    g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver)));
+        optimizer.setAlgorithm(solver);
+
+        int submaps_size = map_array_msg_.submaps.size();
+        Eigen::Isometry3d first_visited_point;
+        Eigen::Isometry3d previous_pose;
+        Eigen::Matrix<double, 6, 6> info_mat = Eigen::Matrix<double, 6, 6>::Identity();
+        for(int i = 0; i++ ; i  < submaps_size){
+            geometry_msgs::msg::Point pos = map_array_msg_.submaps[i].pose.position;
+            geometry_msgs::msg::Quaternion quat = map_array_msg_.submaps[i].pose.orientation;
+            Eigen::Vector3d translation(pos.x, pos.y, pos.z);
+            Eigen::Quaterniond rotation(quat.w, quat.x, quat.y, quat.z);
+            Eigen::Isometry3d pose(Eigen::Isometry3d::Identity());
+		    pose.pretranslate(translation);
+            pose.prerotate(rotation);
+
+            g2o::VertexSE3* vertex_sim3 = new g2o::VertexSE3();
+            vertex_sim3->setId(i);
+            vertex_sim3->setEstimate(pose);
+            if (i == submaps_size - 1) vertex_sim3->setFixed(true);
+            optimizer.addVertex(vertex_sim3);
+
+            if(i=id_loop_point) first_visited_point = pose;
+            if(i>0){
+                Eigen::Isometry3d relative_pose = pose.inverse() * previous_pose;
+    
+                g2o::EdgeSE3* edge_sim3 = new g2o::EdgeSE3();
+                edge_sim3->setMeasurement(relative_pose);
+                edge_sim3->setInformation(info_mat);
+                edge_sim3->vertices()[0] = optimizer.vertex(i-1);
+                edge_sim3->vertices()[1] = optimizer.vertex(i);
+                optimizer.addEdge(edge_sim3);
+            }
+            
+            previous_pose = pose;
+        }
+
+        // loop edge
+        Eigen::Isometry3d revisit_point = previous_pose;
+        Eigen::Isometry3d relative_pose = first_visited_point.inverse() * revisit_point;
+        g2o::EdgeSE3* edge_sim3 = new g2o::EdgeSE3();
+        edge_sim3->setMeasurement(relative_pose);
+        edge_sim3->setInformation(info_mat);
+        edge_sim3->vertices()[0] = optimizer.vertex(0);
+        edge_sim3->vertices()[1] = optimizer.vertex(submaps_size-1);
+        optimizer.addEdge(edge_sim3);
+
+        optimizer.initializeOptimization();
+        optimizer.optimize(10);
+
+        //TODO:publish modified map_array
+        for(int i = 0; i++ ; i  < submaps_size){
+            g2o::VertexSE3* vertex_sim3 = static_cast<g2o::VertexSE3*>(optimizer.vertex(i));
+            //TODO
+        }
     }
  
 }
