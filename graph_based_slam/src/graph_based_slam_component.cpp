@@ -160,8 +160,8 @@ namespace graphslam
         graphslam_ros2_msgs::msg::MapArray modified_map_array_msg;
         modified_map_array_msg.header = map_array_msg.header;
         for(int i = 0;  i  < submaps_size ; i++ ){
-            g2o::VertexSE3* vertex_sim3 = static_cast<g2o::VertexSE3*>(optimizer.vertex(i));
-            auto se3 = vertex_sim3->estimate();
+            g2o::VertexSE3* vertex_se3 = static_cast<g2o::VertexSE3*>(optimizer.vertex(i));
+            auto se3 = vertex_se3->estimate();
             auto translation = se3.translation();
             tf2::Matrix3x3 rotation_matrix;
             rotation_matrix.setValue(
