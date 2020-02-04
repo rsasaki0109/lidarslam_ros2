@@ -2,7 +2,10 @@ graphslam_ros2
 ====
 this is a ros2 slam package of the frontend using gicp/ndt scan matching and the backend using graph-based slam. 
 ## requirement to build
-You need install g2o.
+You need install g2o, or
+```
+git clone --recursive https://github.com/rsasaki0109/littleslam_ros2
+```
 ## io
 - input  
 /initial_pose  (geometry_msgs/PoseStamed)  
