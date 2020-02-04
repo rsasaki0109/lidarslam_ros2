@@ -39,6 +39,8 @@ git clone --recursive https://github.com/rsasaki0109/graphslam_ros2
 
 ## demo
 ### frontend only
+- car_mapping
+
 demo data(ROS1) by Autoware Foundation
 
 ```
@@ -51,7 +53,7 @@ rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz
 ```
 
 ```
-ros2 launch scanmatcher mapping.launch.py
+ros2 launch scanmatcher mapping_car.launch.py
 ```
 
 ```
@@ -64,33 +66,45 @@ ros2 bag play -s rosbag_v2 sample_moriyama_150324.bag
 
 <img src="./scanmatcher/images/mapping.png" width="640px">
 
+- mobilerobot_mapping
+ 
+a demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
+```
+rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz 
+```
+
+```
+ros2 launch scanmatcher mapping_robot.launch.py
+```
+
+```
+ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0, w: 1}}}' --once
+```
+
+```
+ros2 bag play -s rosbag_v2 hdl_400.bag 
+```
+
 ### frontend and backend(Unimplemented yet)
-demo data(ROS1) by Meiji University[https://drive.google.com/file/d/1VEy_iJZKEGcNDDKsK-YrqgKxwy6qsric/view]
-
-
-
-~~Note)To use this rosbag, You need to git clone [ros1_bridge](https://github.com/ros2/ros1_bridge/tree/154b35b6f960a8fc782de27c1b2b0c903baac4b3) ,
-add `my_mapping_rules.yaml` in **ros1_bridge**'s folder,~~
-```
--
-    ros1_package_name: 'velodyne_msgs'
-    ros2_package_name: 'velodyne_msgs'
-```
-~~and modifiy package.xml and CMakeLists.txt in ros1_bridge in the reference to [this document](https://github.com/ros2/ros1_bridge/blob/154b35b6f960a8fc782de27c1b2b0c903baac4b3/doc/index.rst).~~
-
+a demo data(ROS1) is `hdl_400.bag` in hdl_graph_slam
 
 
 ```
-ros2 run graphslam_main graphslam_node 
+ros2 run graphslam_main graphslam_node(ros2 run graph_based_slam graph_based_slam_node) 
 ```
-(ros2 run graph_based_slam graph_based_slam_node)
+
 
 ```
-ros2 bag play -s rosbag_v2 infant_outdoor.bag 
+ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0, w: 1}}}' --once
+```
+
+
+```
+ros2 bag play -s rosbag_v2 hdl_400.bag 
 ```
 
 ## Used Libraries 
 
 - Eigen
 - PCL(BSD3)
-- g2o(BSD2except a part)
+- g2o(BSD2 except a part)
