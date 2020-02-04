@@ -1,0 +1,6 @@
+scan_matcher:
+    ros__parameters:
+      registration_method: "NDT"
+      ndt_resolution: 5.0
+      voxel_leaf_size: 2.5
+      trans_for_mapupdate: 1.5
