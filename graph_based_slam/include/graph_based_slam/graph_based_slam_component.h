@@ -93,13 +93,12 @@ namespace graphslam
 
         graphslam_ros2_msgs::msg::MapArray map_array_msg_;
         rclcpp::Subscription<graphslam_ros2_msgs::msg::MapArray>::SharedPtr map_array_sub_;
-        graphslam_ros2_msgs::msg::MapArray modified_map_array_msg_;
         rclcpp::Publisher<graphslam_ros2_msgs::msg::MapArray>::SharedPtr modified_map_array_pub_;
         rclcpp::TimerBase::SharedPtr loop_detect_timer_;
 
         void initializePubSub();
         void searchLoop();
-        void doPoseAdjustment(int id_loop_point);
+        void doPoseAdjustment(int id_loop_point, graphslam_ros2_msgs::msg::MapArray map_array_msg);
         void publishMapAndPose();
 
         int loop_detection_period_;

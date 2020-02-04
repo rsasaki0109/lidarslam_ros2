@@ -60,10 +60,16 @@ namespace graphslam
             std::bind(&GraphBasedSlamComponent::searchLoop, this)
             );
 
+        modified_map_array_pub_ = create_publisher<graphslam_ros2_msgs::msg::MapArray>(
+            "modified_map_array", rclcpp::SystemDefaultsQoS());     
+        
     }
 
+    //TODO:searching for multiple recenet submaps 
     void GraphBasedSlamComponent::searchLoop()
     {
+        graphslam_ros2_msgs::msg::MapArray map_array_msg = map_array_msg_;
+
         graphslam_ros2_msgs::msg::SubMap latest_submap;
         latest_submap = map_array_msg_.submaps.back();
         pcl::PointCloud<pcl::PointXYZI>::Ptr latest_submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
@@ -84,7 +90,8 @@ namespace graphslam
 
                 double fitness_score = ndt_.getFitnessScore();
                 if(fitness_score < threshold_loop_clousure_){
-                    doPoseAdjustment(i);//TODO: pass id of loop detection
+                    doPoseAdjustment(i, map_array_msg);
+                    return;
                 }
                 i++;
             }
@@ -94,7 +101,7 @@ namespace graphslam
 
     }
 
-    void GraphBasedSlamComponent::doPoseAdjustment(int id_loop_point){
+    void GraphBasedSlamComponent::doPoseAdjustment(int id_loop_point, graphslam_ros2_msgs::msg::MapArray map_array_msg){
         g2o::SparseOptimizer optimizer;
         optimizer.setVerbose(false);
         std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType> linear_solver =
@@ -107,7 +114,7 @@ namespace graphslam
         Eigen::Isometry3d first_visited_point;
         Eigen::Isometry3d previous_pose;
         Eigen::Matrix<double, 6, 6> info_mat = Eigen::Matrix<double, 6, 6>::Identity();
-        for(int i = 0; i++ ; i  < submaps_size){
+        for(int i = 0;  i  < submaps_size ; i++ ){
             geometry_msgs::msg::Point pos = map_array_msg_.submaps[i].pose.position;
             geometry_msgs::msg::Quaternion quat = map_array_msg_.submaps[i].pose.orientation;
             Eigen::Vector3d translation(pos.x, pos.y, pos.z);
@@ -150,11 +157,41 @@ namespace graphslam
         optimizer.initializeOptimization();
         optimizer.optimize(10);
 
-        //TODO:publish modified map_array
-        for(int i = 0; i++ ; i  < submaps_size){
+        graphslam_ros2_msgs::msg::MapArray modified_map_array_msg;
+        modified_map_array_msg.header = map_array_msg.header;
+        for(int i = 0;  i  < submaps_size ; i++ ){
             g2o::VertexSE3* vertex_sim3 = static_cast<g2o::VertexSE3*>(optimizer.vertex(i));
-            //TODO
+            auto se3 = vertex_sim3->estimate();
+            auto translation = se3.translation();
+            tf2::Matrix3x3 rotation_matrix;
+            rotation_matrix.setValue(
+                       static_cast<double>(translation(0, 0)), static_cast<double>(translation(0, 1)),
+                       static_cast<double>(translation(0, 2)), static_cast<double>(translation(1, 0)),
+                       static_cast<double>(translation(1, 1)), static_cast<double>(translation(1, 2)),
+                       static_cast<double>(translation(2, 0)), static_cast<double>(translation(2, 1)),
+                       static_cast<double>(translation(2, 2)));
+
+            geometry_msgs::msg::Point pos;
+            pos.x = translation(0, 3);
+            pos.x = translation(1, 3);
+            pos.x = translation(2, 3);
+            tf2::Quaternion quat_tf2;
+            rotation_matrix.getRotation(quat_tf2);
+            geometry_msgs::msg::Quaternion quat;
+            quat.x = quat_tf2.x();
+            quat.y = quat_tf2.y();
+            quat.z = quat_tf2.z();
+            quat.w = quat_tf2.w();
+            
+            graphslam_ros2_msgs::msg::SubMap submap;
+            submap.header = map_array_msg.submaps[i].header;
+            submap.pose.position = pos;
+            submap.pose.orientation = quat;
+            submap.cloud = map_array_msg.submaps[i].cloud;
+            
+            modified_map_array_msg.submaps.push_back(submap);
         }
+        modified_map_array_pub_->publish(modified_map_array_msg);
     }
  
 }
