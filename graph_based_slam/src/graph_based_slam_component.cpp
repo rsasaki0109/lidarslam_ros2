@@ -143,7 +143,7 @@ namespace graphslam
         g2o::EdgeSE3* edge_sim3 = new g2o::EdgeSE3();
         edge_sim3->setMeasurement(relative_pose);
         edge_sim3->setInformation(info_mat);
-        edge_sim3->vertices()[0] = optimizer.vertex(0);
+        edge_sim3->vertices()[0] = optimizer.vertex(id_loop_point);
         edge_sim3->vertices()[1] = optimizer.vertex(submaps_size-1);
         optimizer.addEdge(edge_sim3);
 
