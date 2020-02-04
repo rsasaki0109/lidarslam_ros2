@@ -123,22 +123,22 @@ namespace graphslam
 		    pose.pretranslate(translation);
             pose.prerotate(rotation);
 
-            g2o::VertexSE3* vertex_sim3 = new g2o::VertexSE3();
-            vertex_sim3->setId(i);
-            vertex_sim3->setEstimate(pose);
-            if (i == submaps_size - 1) vertex_sim3->setFixed(true);
-            optimizer.addVertex(vertex_sim3);
+            g2o::VertexSE3* vertex_se3 = new g2o::VertexSE3();
+            vertex_se3->setId(i);
+            vertex_se3->setEstimate(pose);
+            if (i == submaps_size - 1) vertex_se3->setFixed(true);
+            optimizer.addVertex(vertex_se3);
 
-            if(i=id_loop_point) first_visited_point = pose;
+            if(i == id_loop_point) first_visited_point = pose;
             if(i>0){
                 Eigen::Isometry3d relative_pose = pose.inverse() * previous_pose;
     
-                g2o::EdgeSE3* edge_sim3 = new g2o::EdgeSE3();
-                edge_sim3->setMeasurement(relative_pose);
-                edge_sim3->setInformation(info_mat);
-                edge_sim3->vertices()[0] = optimizer.vertex(i-1);
-                edge_sim3->vertices()[1] = optimizer.vertex(i);
-                optimizer.addEdge(edge_sim3);
+                g2o::EdgeSE3* edge_se3 = new g2o::EdgeSE3();
+                edge_se3->setMeasurement(relative_pose);
+                edge_se3->setInformation(info_mat);
+                edge_se3->vertices()[0] = optimizer.vertex(i-1);
+                edge_se3->vertices()[1] = optimizer.vertex(i);
+                optimizer.addEdge(edge_se3);
             }
             
             previous_pose = pose;
@@ -147,12 +147,12 @@ namespace graphslam
         // loop edge
         Eigen::Isometry3d revisit_point = previous_pose;
         Eigen::Isometry3d relative_pose = first_visited_point.inverse() * revisit_point;
-        g2o::EdgeSE3* edge_sim3 = new g2o::EdgeSE3();
-        edge_sim3->setMeasurement(relative_pose);
-        edge_sim3->setInformation(info_mat);
-        edge_sim3->vertices()[0] = optimizer.vertex(id_loop_point);
-        edge_sim3->vertices()[1] = optimizer.vertex(submaps_size-1);
-        optimizer.addEdge(edge_sim3);
+        g2o::EdgeSE3* edge_se3 = new g2o::EdgeSE3();
+        edge_se3->setMeasurement(relative_pose);
+        edge_se3->setInformation(info_mat);
+        edge_se3->vertices()[0] = optimizer.vertex(id_loop_point);
+        edge_se3->vertices()[1] = optimizer.vertex(submaps_size-1);
+        optimizer.addEdge(edge_se3);
 
         optimizer.initializeOptimization();
         optimizer.optimize(10);
