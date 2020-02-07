@@ -170,24 +170,14 @@ namespace graphslam
     }
 
     void ScanMatcherComponent::publishMapAndPose(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp){
-        tf2::Matrix3x3 rotation_matrix;
-        rotation_matrix.setValue(static_cast<double>(final_transformation(0, 0)), static_cast<double>(final_transformation(0, 1)),
-                       static_cast<double>(final_transformation(0, 2)), static_cast<double>(final_transformation(1, 0)),
-                       static_cast<double>(final_transformation(1, 1)), static_cast<double>(final_transformation(1, 2)),
-                       static_cast<double>(final_transformation(2, 0)), static_cast<double>(final_transformation(2, 1)),
-                       static_cast<double>(final_transformation(2, 2)));
-
         geometry_msgs::msg::Vector3 vec;
         vec.x = static_cast<double>(final_transformation(0, 3));
         vec.y = static_cast<double>(final_transformation(1, 3));
         vec.z = static_cast<double>(final_transformation(2, 3));
-        tf2::Quaternion quat_tf2;
-        rotation_matrix.getRotation(quat_tf2);
-        geometry_msgs::msg::Quaternion quat;
-        quat.x = quat_tf2.x();
-        quat.y = quat_tf2.y();
-        quat.z = quat_tf2.z();
-        quat.w = quat_tf2.w();
+
+        Eigen::Matrix3d rot_mat = final_transformation.block<3, 3>(0, 0).cast<double>();
+        Eigen::Quaterniond q_eig(rot_mat);
+        geometry_msgs::msg::Quaternion quat = tf2::toMsg(q_eig);
         
         geometry_msgs::msg::TransformStamped transform_stamped;
         transform_stamped.header.stamp = stamp;
