@@ -100,6 +100,7 @@ namespace graphslam
         bool initial_pose_received_{false};
         bool initial_cloud_received_{false};
         double trans_for_mapupdate_;
+        double vg_size_for_viz_;
 
     };
 }

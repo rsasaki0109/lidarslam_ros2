@@ -4,3 +4,4 @@ scan_matcher:
       ndt_resolution: 5.0
       voxel_leaf_size: 2.5
       trans_for_mapupdate: 1.5
+      vg_size_for_viz: 0.075

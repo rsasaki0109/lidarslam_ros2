@@ -2,7 +2,6 @@
 #include <chrono>
 
 using namespace std::chrono_literals;
-//using namespace std::placeholders;
 
 namespace graphslam
 {
@@ -17,6 +16,8 @@ namespace graphslam
         std::string registration_method;
         double ndt_resolution;
 
+        declare_parameter("global_frame_id", "map");
+        get_parameter("global_frame_id", global_frame_id_);
         declare_parameter("voxel_leaf_size", 0.2);
         get_parameter("voxel_leaf_size", voxel_leaf_size);
         declare_parameter("registration_method","NDT");
@@ -25,11 +26,14 @@ namespace graphslam
         get_parameter("ndt_resolution", ndt_resolution);
         declare_parameter("trans_for_mapupdate", 1.5);
         get_parameter("trans_for_mapupdate", trans_for_mapupdate_);
+        declare_parameter("vg_size_for_viz", 0.1);
+        get_parameter("vg_size_for_viz", vg_size_for_viz_);
 
         std::cout << "voxel_leaf_size[m]:" << voxel_leaf_size << std::endl;
         std::cout << "registration_method:" << registration_method << std::endl;
         std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;
         std::cout << "trans_for_mapupdate[m]:" << trans_for_mapupdate_ << std::endl;
+        std::cout << "vg_size_for_viz[m]:" << vg_size_for_viz_ << std::endl;
         std::cout << "------------------" << std::endl;
 
         voxelgrid_.setLeafSize(voxel_leaf_size, voxel_leaf_size, voxel_leaf_size);
@@ -58,7 +62,7 @@ namespace graphslam
         auto initial_pose_callback =
         [this](const typename geometry_msgs::msg::PoseStamped::SharedPtr msg) -> void
         {
-            if (msg->header.frame_id == global_frame_id_) {
+            if (msg->header.frame_id != global_frame_id_) {
                 RCLCPP_WARN(get_logger(),"This initial_pose is not in the global frame");
                 return;
             }
@@ -149,14 +153,19 @@ namespace graphslam
         Eigen::Matrix4f sim_trans = getSimTrans(corrent_pose_stamped_);
         pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZI>);
 
+        rclcpp::Clock system_clock;
+        rclcpp::Time time_align_start = system_clock.now();
         registration_->align(*output_cloud, sim_trans);
+        rclcpp::Time time_align_end = system_clock.now();
 
         Eigen::Matrix4f final_transformation = registration_->getFinalTransformation();
 
         publishMapAndPose(cloud_ptr, final_transformation, stamp);
 
         std::cout << "---------------------------------------------------------" << std::endl;
+        std::cout << "nanoseconds: " << stamp.nanoseconds() << std::endl;
         std::cout << "trans: " << trans_ << std::endl;
+        std::cout << "align time:" << time_align_end.seconds() - time_align_start.seconds() << "s" << std::endl;
         std::cout << "number of filtered cloud points: " << filtered_cloud_ptr->size() << std::endl;
         std::cout << "number of map　points: " << map_.size() << std::endl;
         std::cout << "initial transformation:" << std::endl;
@@ -213,8 +222,15 @@ namespace graphslam
 
             registration_->setInputTarget(map_ptr);//TODO
             
+            pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_map_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+            pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_for_viz;
+            voxelgrid_for_viz.setLeafSize(vg_size_for_viz_, vg_size_for_viz_, vg_size_for_viz_);
+            voxelgrid_for_viz.setInputCloud(map_ptr);
+            voxelgrid_for_viz.filter(*filtered_map_ptr);
+
             sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
-            pcl::toROSMsg(*map_ptr, *map_msg_ptr);
+            //pcl::toROSMsg(*map_ptr, *map_msg_ptr);
+            pcl::toROSMsg(*filtered_map_ptr, *map_msg_ptr);
             map_msg_ptr->header.frame_id = "map";
             map_pub_->publish(map_msg_ptr);
 
