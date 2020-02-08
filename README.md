@@ -1,6 +1,6 @@
 graphslam_ros2
 ====
-this is a ros2 slam package of the frontend using ndt scan matching and the backend using graph-based slam. 
+this is a ros2 slam package of the frontend using gicp/ndt scan matching and the backend using graph-based slam. 
 ## requirement to build
 You need install g2o, or
 ```
@@ -22,6 +22,7 @@ git clone --recursive https://github.com/rsasaki0109/graphslam_ros2
 
 |Name|Type|Default value|Description|
 |---|---|---|---|
+|registration_method|string|"NDT"|"NDT" or "GICP"|
 |ndt_resolution|double|5.0|resolution size of voxels[m]|
 |voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
 |transformation_epsilon|double|0.01|maximum allowable difference between consecutive transformations in ndt[m]|
@@ -69,7 +70,7 @@ ros2 bag play -s rosbag_v2 sample_moriyama_150324.bag
 
 - mobilerobot_mapping
  
-a demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
+demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 ```
 rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz 
 ```
@@ -89,7 +90,7 @@ ros2 bag play -s rosbag_v2 hdl_400.bag
 <img src="./scanmatcher/images/mapping_without_loopclosure.png" width="640px">
 
 ### frontend and backend(Unimplemented yet)
-a demo data(ROS1) is `hdl_400.bag` in hdl_graph_slam
+demo data(ROS1) is `hdl_400.bag` in hdl_graph_slam
 
 
 ```
