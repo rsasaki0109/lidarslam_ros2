@@ -25,7 +25,6 @@ git clone --recursive https://github.com/rsasaki0109/graphslam_ros2
 |registration_method|string|"NDT"|"NDT" or "GICP"|
 |ndt_resolution|double|5.0|resolution size of voxels[m]|
 |voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
-|transformation_epsilon|double|0.01|maximum allowable difference between consecutive transformations in ndt[m]|
 |trans_for_mapupdate|double|1.5|moving distance of map update[m]|
 |vg_size_for_viz|double|0.1|resolution size of voxels for visualization[m]|
 
