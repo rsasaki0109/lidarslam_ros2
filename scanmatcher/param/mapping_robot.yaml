@@ -1,7 +1,10 @@
 scan_matcher:
     ros__parameters:
       registration_method: "NDT"
-      ndt_resolution: 3.0
-      voxel_leaf_size: 2.5
+      ndt_resolution: 2.0
+      ndt_num_threads: 4
       trans_for_mapupdate: 1.5
-      vg_size_for_viz: 0.075
+      vg_size_for_input: 1.5
+      vg_size_for_map: 0.075
+      vg_size_for_viz: 0.08
+      use_imu: false

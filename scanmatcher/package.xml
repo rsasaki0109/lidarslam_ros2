@@ -21,6 +21,7 @@
   <test_depend>tf2_eigen</test_depend>
   <test_depend>pcl_conversions</test_depend>
   <test_depend>graphslam_ros2_msgs</test_depend>
+  <test_depend>ndt_omp_ros2</test_depend>
   <test_depend>libpcl-all-dev</test_depend>
 
   <export>

@@ -18,7 +18,8 @@ def generate_launch_description():
         package='scanmatcher',
         node_executable='scanmatcher_node',
         parameters=[mapping_param_dir],
-        remappings=[('/input_cloud','/velodyne_points'),('/imu','/gpsimu_driver/imu_data')],# hdl_graph_slam
+        remappings=[('/input_cloud','/velodyne_points'),('/imu','/gpsimu_driver/imu_data')],
+        #remappings=[('/imu','/gpsimu_driver/imu_data')],# for imu debug
         output='screen'
         )
 
