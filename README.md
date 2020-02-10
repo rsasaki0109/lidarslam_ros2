@@ -35,6 +35,7 @@ git clone https://github.com/RainerKuemmerle/g2o
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
 |vg_size_for_viz|double|0.1|resolution size of voxels for visualization[m]|
 |use_imu|bool|false|whether imu is used or not(not working well)|
+|use_gravity_correction:|bool|false|whether gravity_correction with a low-pass filter is used or not|
 
 - backend(graph-based-slam)(Unimplemented yet) 
 

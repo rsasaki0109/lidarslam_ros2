@@ -19,8 +19,7 @@ namespace graphslam
 
         declare_parameter("global_frame_id", "map");
         get_parameter("global_frame_id", global_frame_id_);
-        declare_parameter("use_imu", false);
-        get_parameter("use_imu", use_imu_);
+        
         declare_parameter("registration_method","NDT");
         get_parameter("registration_method",registration_method);
         declare_parameter("ndt_resolution", 5.0);
@@ -36,6 +35,19 @@ namespace graphslam
         declare_parameter("vg_size_for_viz", 0.1);
         get_parameter("vg_size_for_viz", vg_size_for_viz_);
 
+        declare_parameter("use_imu", false);
+        get_parameter("use_imu", use_imu_);
+        declare_parameter("use_gravity_correction", false);
+        get_parameter("use_gravity_correction", use_gravity_correction_);
+        declare_parameter("stddev_lo_xy", 0.05);
+        get_parameter("stddev_lo_xy", stddev_lo_xy_);
+        declare_parameter("stddev_lo_z", 0.05);
+        get_parameter("stddev_lo_z", stddev_lo_z_);
+        declare_parameter("stddev_imu_gyro", 0.1);
+        get_parameter("stddev_imu_gyro", stddev_imu_gyro_);
+        declare_parameter("stddev_imu_acc", 0.1);
+        get_parameter("stddev_imu_acc", stddev_imu_acc_);
+
         std::cout << "registration_method:" << registration_method << std::endl;
         std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;
         std::cout << "ndt_num_threads:" << ndt_num_threads << std::endl;
@@ -44,6 +56,7 @@ namespace graphslam
         std::cout << "vg_size_for_map[m]:" << vg_size_for_map_ << std::endl;
         std::cout << "vg_size_for_viz[m]:" << vg_size_for_viz_ << std::endl;
         std::cout << "use_imu:" << std::boolalpha << use_imu_ << std::endl;
+        std::cout << "use_gravity_correction:" << std::boolalpha << use_gravity_correction_ << std::endl;
         std::cout << "------------------" << std::endl;
 
         if(registration_method == "NDT"){
@@ -198,6 +211,20 @@ namespace graphslam
 
         Eigen::Matrix4f final_transformation = registration_->getFinalTransformation();
 
+        if(use_imu_){
+            //kalman filter update
+            Eigen::Vector3d imu_pos(sim_trans(0, 3), sim_trans(1, 3), sim_trans(2, 3));
+            Eigen::Vector3d scan_pos(final_transformation(0, 3), final_transformation(1, 3), final_transformation(2, 3));
+            std::cout << "---------------------------------------------------------" << std::endl;
+            std::cout << "imu_pos" << std::endl;
+            std::cout <<  imu_pos << std::endl;
+            std::cout << "scan_pos:" << std::endl;
+            std::cout <<  scan_pos << std::endl;
+            std::cout << "cov:" << std::endl;
+            std::cout <<  cov_ << std::endl;
+            final_transformation = updateKFByMeasurement(scan_pos, imu_pos, stamp);
+        }
+
         publishMapAndPose(cloud_ptr, final_transformation, stamp);
 
         std::cout << "---------------------------------------------------------" << std::endl;
@@ -306,18 +333,32 @@ namespace graphslam
 
     void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu imu_msg){
         //TODO: not working well
-        // gravity
-        double alpha = 0.8;//a low-pass filter parameter
-        Eigen::Vector3d gravity;
-        gravity.x() = alpha * gravity_.x() + (1 - alpha) * imu_msg.linear_acceleration.x;
-        gravity.y() = alpha * gravity_.y() + (1 - alpha) * imu_msg.linear_acceleration.y;
-        gravity.z() = alpha * gravity_.z() + (1 - alpha) * imu_msg.linear_acceleration.z;
-        double d_gravity = (gravity - gravity_).norm();
-        gravity_.x() = gravity.x();
-        gravity_.y() = gravity.y();
-        gravity_.z() = gravity.z();
 
-        if(d_gravity > 1.0) return;
+        /*
+        double ax = imu_msg.linear_acceleration.x;
+        double ay = imu_msg.linear_acceleration.y;
+        double az = imu_msg.linear_acceleration.z;
+        double roll = atan2(ay, az);
+        double pitch = atan2(-ax, ay * sin(roll) + az * cos(roll) );
+        std::cout << "roll:" << roll * 180 / M_PI << std::endl;
+        std::cout << "pitch:" << pitch * 180 / M_PI << std::endl;
+        */
+
+
+        // gravity correction
+        if(use_gravity_correction_){
+            double alpha = 0.8;//a low-pass filter parameter
+            Eigen::Vector3d gravity;
+            gravity.x() = alpha * gravity_.x() + (1 - alpha) * imu_msg.linear_acceleration.x;
+            gravity.y() = alpha * gravity_.y() + (1 - alpha) * imu_msg.linear_acceleration.y;
+            gravity.z() = alpha * gravity_.z() + (1 - alpha) * imu_msg.linear_acceleration.z;
+            double d_gravity = (gravity - gravity_).norm();
+            gravity_.x() = gravity.x();
+            gravity_.y() = gravity.y();
+            gravity_.z() = gravity.z();
+
+            if(d_gravity > 1.0) return;
+        }
 
         // predict 
         current_stamp_ = imu_msg.header.stamp;
@@ -349,11 +390,34 @@ namespace graphslam
                                         * Eigen::AngleAxisd(imu_msg.angular_velocity.y * dt_imu, Eigen::Vector3d::UnitY())    
                                         * Eigen::AngleAxisd(imu_msg.angular_velocity.z * dt_imu, Eigen::Vector3d::UnitZ()));  
         Eigen::Quaterniond predicted_quat = quat_wdt * previous_quat;
+        
+        // F
+        Eigen::Matrix<double, 9, 9> F = Eigen::Matrix<double, 9, 9>::Identity();
+        F.block<3,3>(0,3) = dt_imu *  Eigen::Matrix3d::Identity();
+        Eigen::Matrix3d acc_skew ;
+        acc_skew << 0      ,-acc(2), acc(1),
+                    acc(2) ,0      ,-acc(0),
+                    -acc(1),acc(0) ,0;
+        F.block<3,3>(3,6) = rot_mat *(-acc_skew) * dt_imu;
+        
+        
+        // Q
+        Eigen::Matrix<double, 6, 6> Q = Eigen::Matrix<double, 6, 6>::Identity();
+        Q.block<3,3>(0, 0) = pow(stddev_imu_gyro_, 2) * Q.block<3,3>(0, 0);
+        Q.block<3,3>(3, 3) = pow(stddev_imu_acc_, 2) * Q.block<3,3>(3, 3);
+        Q = Q * (dt_imu * dt_imu);
 
+        // L
+        Eigen::Matrix<double, 9, 6> L = Eigen::Matrix<double, 9, 6>::Zero();
+        L.block<3,3>(3, 0) = Eigen::Matrix3d::Identity();
+        L.block<3,3>(6, 3) = Eigen::Matrix3d::Identity();
+
+        cov_ = F * cov_ * F.transpose() + L * Q * L.transpose();
+        
         corrent_pose_stamped_.header.stamp = imu_msg.header.stamp;
-        //corrent_pose_stamped_.pose.position.x = pos.x();
-        //corrent_pose_stamped_.pose.position.y = pos.y();
-        //corrent_pose_stamped_.pose.position.z = pos.z();
+        corrent_pose_stamped_.pose.position.x = pos.x();
+        corrent_pose_stamped_.pose.position.y = pos.y();
+        corrent_pose_stamped_.pose.position.z = pos.z();
         corrent_pose_stamped_.pose.orientation.x = predicted_quat.x();
         corrent_pose_stamped_.pose.orientation.y = predicted_quat.y();
         corrent_pose_stamped_.pose.orientation.z = predicted_quat.z();
@@ -361,6 +425,39 @@ namespace graphslam
         pose_pub_->publish(corrent_pose_stamped_);
 
         return;
+    }
+
+    Eigen::Matrix4f ScanMatcherComponent::updateKFByMeasurement(const Eigen::Vector3d scan_pos, const Eigen::Vector3d imu_pos, rclcpp::Time stamp){
+
+        current_stamp_ = stamp;
+        Eigen::Matrix3d R;
+        R << pow(stddev_lo_xy_,2), 0, 0,
+             0, pow(stddev_lo_xy_,2), 0 ,
+             0, 0, pow(stddev_lo_z_,2);
+        Eigen::Matrix<double, 3, 9> H = Eigen::Matrix<double, 3, 9>::Zero();
+        H.block<3,3>(0, 0) =  Eigen::Matrix3d::Identity();
+        Eigen::MatrixXd K = cov_ * H.transpose() * (H * cov_ * H.transpose() + R).inverse(); 
+        Eigen::Vector3d y = scan_pos;
+        Eigen::VectorXd dx = K *(y - imu_pos);
+
+        // state
+        Eigen::Vector3d fusion_pos;
+        fusion_pos = imu_pos + dx.segment(ERROR_STATE::DX, 3);
+        vec_imu_ = vec_imu_ + dx.segment(ERROR_STATE::DVX, 3);
+
+        Eigen::Translation3f translation(fusion_pos.x(), fusion_pos.y(), fusion_pos.z());
+
+        Eigen::Quaternionf predicted_quat;
+        double norm_quat = sqrt(dx(ERROR_STATE::DTHX)*dx(ERROR_STATE::DTHX) + dx(ERROR_STATE::DTHY)*dx(ERROR_STATE::DTHY) + dx(ERROR_STATE::DTHZ)*dx(ERROR_STATE::DTHZ));
+        if (norm_quat < 1e-10) predicted_quat = Eigen::Quaternionf(0, 0, 0, cos(norm_quat/2));
+        else predicted_quat = Eigen::Quaternionf(sin(norm_quat/2) * dx(ERROR_STATE::DTHX)/norm_quat, sin(norm_quat/2) * dx(ERROR_STATE::DTHY)/norm_quat,
+                                                 sin(norm_quat/2) * dx(ERROR_STATE::DTHZ)/norm_quat, cos(norm_quat/2));
+                                       
+        cov_ = (Eigen::Matrix<double, 9, 9>::Identity() - K*H) * cov_;
+
+        Eigen::Matrix4f sim_trans = (translation * predicted_quat).matrix();
+
+        return sim_trans;
     }
 
 
