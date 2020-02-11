@@ -35,8 +35,10 @@ namespace graphslam
         declare_parameter("vg_size_for_viz", 0.1);
         get_parameter("vg_size_for_viz", vg_size_for_viz_);
 
-        declare_parameter("use_imu", false);
-        get_parameter("use_imu", use_imu_);
+        declare_parameter("use_imu_posatt", false);
+        get_parameter("use_imu_posatt", use_imu_posatt_);
+        declare_parameter("use_imu_rpy", false);
+        get_parameter("use_imu_rpy", use_imu_rpy_);
         declare_parameter("use_gravity_correction", false);
         get_parameter("use_gravity_correction", use_gravity_correction_);
         declare_parameter("stddev_lo_xy", 0.05);
@@ -55,7 +57,8 @@ namespace graphslam
         std::cout << "vg_size_for_input[m]:" << vg_size_for_input_ << std::endl;
         std::cout << "vg_size_for_map[m]:" << vg_size_for_map_ << std::endl;
         std::cout << "vg_size_for_viz[m]:" << vg_size_for_viz_ << std::endl;
-        std::cout << "use_imu:" << std::boolalpha << use_imu_ << std::endl;
+        std::cout << "use_imu_posatt:" << std::boolalpha << use_imu_posatt_ << std::endl;
+        std::cout << "use_imu_rpy:" << std::boolalpha << use_imu_rpy_ << std::endl;
         std::cout << "use_gravity_correction:" << std::boolalpha << use_gravity_correction_ << std::endl;
         std::cout << "------------------" << std::endl;
 
@@ -101,6 +104,32 @@ namespace graphslam
             previous_position_.y() = corrent_pose_stamped_.pose.position.y;
             previous_position_.z() = corrent_pose_stamped_.pose.position.z;
             initial_pose_received_ = true;
+
+            std::cout << "x:" << corrent_pose_stamped_.pose.position.x << std::endl;
+            std::cout << "y:" << corrent_pose_stamped_.pose.position.y << std::endl;
+            std::cout << "z:" << corrent_pose_stamped_.pose.position.z << std::endl;
+
+            if(use_imu_rpy_){
+                Eigen::Matrix4f sim_trans = getSimTrans(corrent_pose_stamped_);
+                tf2::Matrix3x3 mat_trans_tf2;
+                mat_trans_tf2.setValue(
+                    static_cast<double>(sim_trans(0, 0)), static_cast<double>(sim_trans(0, 1)),
+                    static_cast<double>(sim_trans(0, 2)), static_cast<double>(sim_trans(1, 0)),
+                    static_cast<double>(sim_trans(1, 1)), static_cast<double>(sim_trans(1, 2)),
+                    static_cast<double>(sim_trans(2, 0)), static_cast<double>(sim_trans(2, 1)),
+                    static_cast<double>(sim_trans(2, 2)));
+
+                double roll,pitch,yaw;
+                mat_trans_tf2.getRPY(roll, pitch, yaw, 1);
+                rollpitchyaw_(0) = roll;
+                rollpitchyaw_(1) = pitch;
+                rollpitchyaw_(2) = yaw;
+                std::cout << "rpy" << std::endl;
+                std::cout << roll * 180 / M_PI << std::endl;
+                std::cout << pitch * 180 / M_PI << std::endl;
+                std::cout << yaw * 180 / M_PI << std::endl;
+
+            }
         };
 
         auto cloud_callback =
@@ -136,6 +165,30 @@ namespace graphslam
                     initial_cloud_received_ = true;
 
                     Eigen::Matrix4f sim_trans = getSimTrans(corrent_pose_stamped_);
+                    
+                    if(use_imu_rpy_){
+                        tf2::Matrix3x3 mat_trans_tf2;
+                        mat_trans_tf2.setValue(
+                        static_cast<double>(sim_trans(0, 0)), static_cast<double>(sim_trans(0, 1)),
+                        static_cast<double>(sim_trans(0, 2)), static_cast<double>(sim_trans(1, 0)),
+                        static_cast<double>(sim_trans(1, 1)), static_cast<double>(sim_trans(1, 2)),
+                        static_cast<double>(sim_trans(2, 0)), static_cast<double>(sim_trans(2, 1)),
+                        static_cast<double>(sim_trans(2, 2)));
+
+                        double roll,pitch,yaw;
+                        mat_trans_tf2.getRPY(roll, pitch, yaw, 1);  
+
+                        tf2::Quaternion quat_tf2;  
+                        quat_tf2.setRPY(rollpitchyaw_(0), rollpitchyaw_(1), yaw);   
+
+                        Eigen::Translation3f translation(sim_trans(0, 3), sim_trans(1, 3), sim_trans(2, 3));
+                        Eigen::AngleAxisf rotation_x(rollpitchyaw_(0), Eigen::Vector3f::UnitX());
+                        Eigen::AngleAxisf rotation_y(rollpitchyaw_(1), Eigen::Vector3f::UnitY());
+                        Eigen::AngleAxisf rotation_z(yaw, Eigen::Vector3f::UnitZ());     
+
+                        sim_trans = (translation * rotation_z * rotation_y * rotation_x).matrix() ;
+                    }
+
                     initial_pos_mat_ = sim_trans;
                     
                     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
@@ -168,7 +221,7 @@ namespace graphslam
         auto imu_callback =
         [this](const typename sensor_msgs::msg::Imu::SharedPtr msg) -> void
         {
-            if(use_imu_ && initial_pose_received_)
+            if(initial_pose_received_)
             {
                 receiveImu(*msg); 
             }
@@ -201,7 +254,31 @@ namespace graphslam
         registration_->setInputSource(filtered_cloud_ptr);
 
         Eigen::Matrix4f sim_trans = getSimTrans(corrent_pose_stamped_);
-        sim_trans = sim_trans * initial_pos_mat_.inverse();
+        if(use_imu_rpy_){
+            tf2::Matrix3x3 mat_trans_tf2;
+            mat_trans_tf2.setValue(
+                static_cast<double>(sim_trans(0, 0)), static_cast<double>(sim_trans(0, 1)),
+                static_cast<double>(sim_trans(0, 2)), static_cast<double>(sim_trans(1, 0)),
+                static_cast<double>(sim_trans(1, 1)), static_cast<double>(sim_trans(1, 2)),
+                static_cast<double>(sim_trans(2, 0)), static_cast<double>(sim_trans(2, 1)),
+                static_cast<double>(sim_trans(2, 2)));
+
+            double roll,pitch,yaw;
+            mat_trans_tf2.getRPY(roll, pitch, yaw, 1);  
+
+            tf2::Quaternion quat_tf2;  
+            quat_tf2.setRPY(rollpitchyaw_(0), rollpitchyaw_(1), yaw);  
+            rollpitchyaw_(2) = yaw;
+
+            Eigen::Translation3f translation(sim_trans(0, 3), sim_trans(1, 3), sim_trans(2, 3));
+            Eigen::AngleAxisf rotation_x(rollpitchyaw_(0), Eigen::Vector3f::UnitX());
+            Eigen::AngleAxisf rotation_y(rollpitchyaw_(1), Eigen::Vector3f::UnitY());
+            Eigen::AngleAxisf rotation_z(yaw, Eigen::Vector3f::UnitZ());     
+
+            sim_trans = (translation * rotation_z * rotation_y * rotation_x).matrix() ;
+
+        }
+        sim_trans = sim_trans ;//* initial_pos_mat_.inverse();
         pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZI>);
 
         rclcpp::Clock system_clock;
@@ -211,7 +288,8 @@ namespace graphslam
 
         Eigen::Matrix4f final_transformation = registration_->getFinalTransformation();
 
-        if(use_imu_){
+        /*
+        if(use_imu_posatt_){
             //kalman filter update
             Eigen::Vector3d imu_pos(sim_trans(0, 3), sim_trans(1, 3), sim_trans(2, 3));
             Eigen::Vector3d scan_pos(final_transformation(0, 3), final_transformation(1, 3), final_transformation(2, 3));
@@ -224,8 +302,21 @@ namespace graphslam
             std::cout <<  cov_ << std::endl;
             final_transformation = updateKFByMeasurement(scan_pos, imu_pos, stamp);
         }
+        */
 
         publishMapAndPose(cloud_ptr, final_transformation, stamp);
+
+
+        tf2::Matrix3x3 mat_tf2;
+        mat_tf2.setValue(
+            static_cast<double>(final_transformation(0, 0)), static_cast<double>(final_transformation(0, 1)),
+            static_cast<double>(final_transformation(0, 2)), static_cast<double>(final_transformation(1, 0)),
+            static_cast<double>(final_transformation(1, 1)), static_cast<double>(final_transformation(1, 2)),
+            static_cast<double>(final_transformation(2, 0)), static_cast<double>(final_transformation(2, 1)),
+            static_cast<double>(final_transformation(2, 2)));
+
+        double roll,pitch,yaw;
+        mat_tf2.getRPY(roll, pitch, yaw, 1);//mat2rpy
 
         std::cout << "---------------------------------------------------------" << std::endl;
         std::cout << "nanoseconds: " << stamp.nanoseconds() << std::endl;
@@ -239,6 +330,14 @@ namespace graphslam
         std::cout << "fitness score: " << registration_->getFitnessScore() << std::endl;
         std::cout << "final transformation:" << std::endl;
         std::cout <<  final_transformation << std::endl;
+        std::cout << "rpy" << std::endl;
+        std::cout << roll * 180 / M_PI << std::endl;
+        std::cout << pitch * 180 / M_PI << std::endl;
+        std::cout << yaw * 180 / M_PI << std::endl;
+        if(use_imu_rpy_){
+            std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << std::endl;
+            std::cout << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
+        }
         std::cout << "---------------------------------------------------------" << std::endl;
 
     }
@@ -248,7 +347,7 @@ namespace graphslam
         Eigen::Matrix4f final_transformation, rclcpp::Time stamp){
         
         Eigen::Matrix4f pc_transformation = final_transformation;
-        final_transformation = final_transformation * initial_pos_mat_;
+        final_transformation = final_transformation ;//* initial_pos_mat_;
 
         Eigen::Vector3d vec;
         vec.x() = static_cast<double>(final_transformation(0, 3));
@@ -333,18 +432,58 @@ namespace graphslam
 
     void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu imu_msg){
         //TODO: not working well
+        // dt_imu
+        double current_time_imu = imu_msg.header.stamp.sec 
+                                    + imu_msg.header.stamp.nanosec * 1e-9;
+        if(previous_time_imu_ == -1){
+            previous_time_imu_ = current_time_imu;
+            return;
+        }
+        double dt_imu = current_time_imu - previous_time_imu_;
+        previous_time_imu_ = current_time_imu;
+
+        if(use_imu_rpy_){
+            // motion update
+            double roll = rollpitchyaw_(0);
+            double pitch = rollpitchyaw_(1);
+            double yaw = rollpitchyaw_(2);
+            Eigen::Vector3d w{imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z};
+            Eigen::Matrix3d f = Eigen::Matrix3d::Identity();//tmp
+            f << 1 , sin(roll) * tan(pitch), cos(roll),
+                 0 , cos(yaw), -sin(roll),
+                 0 , sin(roll)/cos(pitch), cos(roll)/cos(pitch);
+            rollpitchyaw_ += f * w * dt_imu;
+            cov_rpy_ += Eigen::Matrix3d::Identity() * pow(stddev_imu_gyro_, 2) * pow(dt_imu,2);
+            
+            // obserbation update
+            double ax = imu_msg.linear_acceleration.x;
+            double ay = imu_msg.linear_acceleration.y;
+            double az = imu_msg.linear_acceleration.z;
+            double roll_acc = atan2(ay, az);
+            double pitch_acc = atan2(-ax, ay * sin(roll_acc) + az * cos(roll_acc) );
+            Eigen::Vector2d y{roll_acc, pitch_acc};
+
+            Eigen::Matrix<double, 2, 3> H;
+            H << 1, 0, 0,
+                 0, 1, 0;
+            Eigen::Matrix2d R = Eigen::Matrix2d::Identity() * pow(1.0, 2);
+            Eigen::MatrixXd K = cov_rpy_ * H.transpose() * (H * cov_rpy_ * H.transpose() + R).inverse(); 
+            Eigen::Vector3d dx = K *(y - H * rollpitchyaw_);
+
+            rollpitchyaw_ += dx;
+
+
+            /*
+            std::cout << "---------------------------------------------------------" << std::endl;
+            std::cout << "roll_acc:" << roll * 180 / M_PI << std::endl;
+            std::cout << "pitch_acc:" << pitch * 180 / M_PI << std::endl;
+            std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << std::endl;
+            std::cout << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
+            */
+        }
+        
 
         /*
-        double ax = imu_msg.linear_acceleration.x;
-        double ay = imu_msg.linear_acceleration.y;
-        double az = imu_msg.linear_acceleration.z;
-        double roll = atan2(ay, az);
-        double pitch = atan2(-ax, ay * sin(roll) + az * cos(roll) );
-        std::cout << "roll:" << roll * 180 / M_PI << std::endl;
-        std::cout << "pitch:" << pitch * 180 / M_PI << std::endl;
-        */
-
-
         // gravity correction
         if(use_gravity_correction_){
             double alpha = 0.8;//a low-pass filter parameter
@@ -360,19 +499,11 @@ namespace graphslam
             if(d_gravity > 1.0) return;
         }
 
+        if(use_imu_posatt_){
+
         // predict 
         current_stamp_ = imu_msg.header.stamp;
 
-        // dt_imu
-        double current_time_imu = imu_msg.header.stamp.sec 
-                                    + imu_msg.header.stamp.nanosec * 1e-9;
-        if(previous_time_imu_ == -1){
-            previous_time_imu_ = current_time_imu;
-            return;
-        }
-        double dt_imu = current_time_imu - previous_time_imu_;
-        previous_time_imu_ = current_time_imu;
-        
         // state
         geometry_msgs::msg::Point pos_msg = corrent_pose_stamped_.pose.position;
         Eigen::Vector3d pos(pos_msg.x, pos_msg.y, pos_msg.z);
@@ -423,6 +554,8 @@ namespace graphslam
         corrent_pose_stamped_.pose.orientation.z = predicted_quat.z();
         corrent_pose_stamped_.pose.orientation.w = predicted_quat.w();
         pose_pub_->publish(corrent_pose_stamped_);
+        }
+        */
 
         return;
     }

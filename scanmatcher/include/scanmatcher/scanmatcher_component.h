@@ -84,8 +84,7 @@ namespace graphslam
         tf2_ros::TransformBroadcaster broadcaster_;
 
         std::string global_frame_id_;
-        bool use_imu_;
-        bool use_gravity_correction_;
+        
 
         pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
         pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
@@ -95,6 +94,8 @@ namespace graphslam
         Eigen::Matrix4f initial_pos_mat_;
         double previous_time_imu_{-1};
         rclcpp::Time current_stamp_;
+        Eigen::Vector3d rollpitchyaw_{0, 0, 0};
+        Eigen::Matrix3d cov_rpy_{Eigen::Matrix3d::Identity()};
         Eigen::Vector3d vec_imu_{0, 0, 0};
         Eigen::Matrix<double, 9, 9> cov_{Eigen::Matrix<double, 9, 9>::Identity()};
 
@@ -126,6 +127,10 @@ namespace graphslam
         double vg_size_for_viz_;
 
         //Kalman Filter Parameter
+        bool use_imu_rpy_;
+        bool use_imu_posatt_;
+        bool use_gravity_correction_;
+
         double stddev_lo_xy_;
         double stddev_lo_z_;
         double stddev_imu_gyro_;

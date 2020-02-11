@@ -7,5 +7,6 @@ scan_matcher:
     vg_size_for_input: 1.5
     vg_size_for_map: 0.075
     vg_size_for_viz: 0.08
-    use_imu: false
+    use_imu_rpy: false
+    use_imu_posatt: false
     use_gravity_correction: true
