@@ -25,6 +25,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -60,6 +61,7 @@ ament_target_dependencies(scanmatcher_component
   tf2_eigen 
   geometry_msgs 
   sensor_msgs
+  nav_msgs
   graphslam_ros2_msgs
   ndt_omp_ros2
 )

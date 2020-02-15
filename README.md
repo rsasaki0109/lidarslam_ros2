@@ -19,6 +19,7 @@ git clone https://github.com/RainerKuemmerle/g2o
 - output  
 /current_pose (geometry_msgs/PoseStamped)  
 /map  (sensor_msgs/PointCloud2)  
+/path  (nav_msgs/Path)  
 /tf(from "map" to "base_link")  
 
 ## params

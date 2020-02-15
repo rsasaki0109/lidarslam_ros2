@@ -81,8 +81,8 @@ namespace graphslam
             registration_ = gicp;
         }
 
-        map_.header.frame_id = "map";
-        map_array_msg_.header.frame_id = "map";
+        map_.header.frame_id = global_frame_id_;
+        map_array_msg_.header.frame_id = global_frame_id_;
 
         initializePubSub();
         RCLCPP_INFO(get_logger(), "initialization end");
@@ -198,7 +198,7 @@ namespace graphslam
                     map_ += *transformed_cloud_ptr;
                     sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
                     pcl::toROSMsg(*transformed_cloud_ptr, *map_msg_ptr);
-                    map_pub_->publish(*map_msg_ptr);
+                    //map_pub_->publish(*map_msg_ptr);
 
                     //map array
                     sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
@@ -211,10 +211,7 @@ namespace graphslam
                     map_array_msg_.header = msg->header;
                     map_array_msg_.submaps.push_back(submap);
 
-                    if(use_imu_rpy_){
-                        std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << std::endl;
-                        std::cout << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
-                    }
+                    map_pub_->publish(submap.cloud);
 
                 }
 
@@ -249,6 +246,7 @@ namespace graphslam
         pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("current_pose", rclcpp::SystemDefaultsQoS());
         map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("map", rclcpp::SystemDefaultsQoS()); 
         map_array_pub_ = create_publisher<graphslam_ros2_msgs::msg::MapArray>("map_array", rclcpp::SystemDefaultsQoS()); 
+        path_pub_ = create_publisher<nav_msgs::msg::Path>("path", 10);
     }
 
     void ScanMatcherComponent::receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, rclcpp::Time stamp){
@@ -394,33 +392,47 @@ namespace graphslam
             map_ += *transformed_cloud_ptr;
             pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map_));
 
-            registration_->setInputTarget(map_ptr);//TODO
+            //registration_->setInputTarget(map_ptr);//TODO:change scan2scan matching to submap2scan matching
+            registration_->setInputTarget(transformed_cloud_ptr);
             
             pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_map_ptr(new pcl::PointCloud<pcl::PointXYZI>());
             voxelgrid_.setLeafSize(vg_size_for_viz_, vg_size_for_viz_, vg_size_for_viz_);
             voxelgrid_.setInputCloud(map_ptr);
             voxelgrid_.filter(*filtered_map_ptr);
 
+            
             sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
             //pcl::toROSMsg(*map_ptr, *map_msg_ptr);
             pcl::toROSMsg(*filtered_map_ptr, *map_msg_ptr);
             map_msg_ptr->header.frame_id = "map";
             map_pub_->publish(map_msg_ptr);
+            
 
             //TODO:change map_ to map_array
             //map array
-            /*
+            
             sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
             pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
             graphslam_ros2_msgs::msg::SubMap submap;
-            submap.header = corrent_pose_stamped_.header;
+            submap.header.frame_id = global_frame_id_;
+            submap.header.stamp = corrent_pose_stamped_.header.stamp;
             submap.distance = trans_ + map_array_msg_.submaps.end()->distance;
             submap.pose = corrent_pose_stamped_.pose;
             submap.cloud = *transformed_cloud_msg_ptr;
-            map_array_msg_.header = corrent_pose_stamped_.header;
+            submap.cloud.header.frame_id = global_frame_id_;
+            map_array_msg_.header.stamp = corrent_pose_stamped_.header.stamp;
             map_array_msg_.submaps.push_back(submap);
             map_array_pub_->publish(map_array_msg_);
-            */
+            
+            nav_msgs::msg::Path path;
+            path.header.frame_id = "map";
+            for(auto submap : map_array_msg_.submaps){
+                geometry_msgs::msg::PoseStamped pose_stamped;
+                pose_stamped.header = submap.header;
+                pose_stamped.pose = submap.pose;
+                path.poses.push_back(pose_stamped);
+            }
+            path_pub_->publish(path);
 
         }
     }

@@ -15,6 +15,7 @@
   <test_depend>rclcpp_components</test_depend>
   <test_depend>geometry_msgs</test_depend>
   <test_depend>sensor_msgs</test_depend>
+  <test_depend>nav_msgs</test_depend>
   <test_depend>tf2_ros</test_depend>
   <test_depend>tf2_sensor_msgs</test_depend>
   <test_depend>tf2_geometry_msgs</test_depend>
