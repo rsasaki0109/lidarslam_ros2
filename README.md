@@ -34,7 +34,7 @@ git clone https://github.com/RainerKuemmerle/g2o
 |vg_size_for_input|double|0.2|down sample size of input cloud[m]|
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
 |vg_size_for_viz|double|0.1|resolution size of voxels for visualization[m]|
-|use_imu_rpu|bool|false|whether imu is used or not for initial attitude of ndt(not working well)|
+|use_imu_rpy|bool|false|whether imu is used or not for initial attitude of ndt|
 |use_imu_posatt|bool|false|whether imu is used or not for ndt/imu posatt fusion(not working well)|
 |use_gravity_correction:|bool|false|whether gravity_correction with a low-pass filter is used or not|
 

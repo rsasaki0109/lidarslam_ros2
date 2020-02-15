@@ -65,7 +65,9 @@ namespace graphslam
         if(registration_method == "NDT"){
             //pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>::Ptr ndt(new pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>());
             pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>::Ptr ndt(new pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>());
+            
             ndt->setResolution(ndt_resolution);
+            ndt->setTransformationEpsilon(0.01);
 
             //ndt_omp
             ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
@@ -75,7 +77,7 @@ namespace graphslam
             
         }
         else{
-            pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>::Ptr gicp;
+            pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>::Ptr gicp;
             registration_ = gicp;
         }
 
@@ -176,10 +178,7 @@ namespace graphslam
                         static_cast<double>(sim_trans(2, 2)));
 
                         double roll,pitch,yaw;
-                        mat_trans_tf2.getRPY(roll, pitch, yaw, 1);  
-
-                        tf2::Quaternion quat_tf2;  
-                        quat_tf2.setRPY(rollpitchyaw_(0), rollpitchyaw_(1), yaw);   
+                        mat_trans_tf2.getRPY(roll, pitch, yaw, 1);    
 
                         Eigen::Translation3f translation(sim_trans(0, 3), sim_trans(1, 3), sim_trans(2, 3));
                         Eigen::AngleAxisf rotation_x(rollpitchyaw_(0), Eigen::Vector3f::UnitX());
@@ -211,6 +210,12 @@ namespace graphslam
                     submap.cloud = *transformed_cloud_msg_ptr;
                     map_array_msg_.header = msg->header;
                     map_array_msg_.submaps.push_back(submap);
+
+                    if(use_imu_rpy_){
+                        std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << std::endl;
+                        std::cout << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
+                    }
+
                 }
 
                 if(initial_cloud_received_) receiveCloud(cloud_ptr, msg->header.stamp);
@@ -318,7 +323,7 @@ namespace graphslam
         double roll,pitch,yaw;
         mat_tf2.getRPY(roll, pitch, yaw, 1);//mat2rpy
 
-        std::cout << "---------------------------------------------------------" << std::endl;
+        //std::cout << "---------------------------------------------------------" << std::endl;
         std::cout << "nanoseconds: " << stamp.nanoseconds() << std::endl;
         std::cout << "trans: " << trans_ << std::endl;
         std::cout << "align time:" << time_align_end.seconds() - time_align_start.seconds() << "s" << std::endl;
@@ -447,13 +452,17 @@ namespace graphslam
             double roll = rollpitchyaw_(0);
             double pitch = rollpitchyaw_(1);
             double yaw = rollpitchyaw_(2);
-            Eigen::Vector3d w{imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z};
+            Eigen::Vector3d w{imu_msg.angular_velocity.z, imu_msg.angular_velocity.y, imu_msg.angular_velocity.x};
             Eigen::Matrix3d f = Eigen::Matrix3d::Identity();//tmp
             f << 1 , sin(roll) * tan(pitch), cos(roll),
                  0 , cos(yaw), -sin(roll),
                  0 , sin(roll)/cos(pitch), cos(roll)/cos(pitch);
             rollpitchyaw_ += f * w * dt_imu;
             cov_rpy_ += Eigen::Matrix3d::Identity() * pow(stddev_imu_gyro_, 2) * pow(dt_imu,2);
+
+            rollpitchyaw_(0) = pi2piInRadian(rollpitchyaw_(0));
+            rollpitchyaw_(1) = pi2piInRadian(rollpitchyaw_(1));
+            rollpitchyaw_(2) = pi2piInRadian(rollpitchyaw_(2));
             
             // obserbation update
             double ax = imu_msg.linear_acceleration.x;
@@ -461,25 +470,37 @@ namespace graphslam
             double az = imu_msg.linear_acceleration.z;
             double roll_acc = atan2(ay, az);
             double pitch_acc = atan2(-ax, ay * sin(roll_acc) + az * cos(roll_acc) );
+            roll_acc = pi2piInRadian(roll_acc);
+            pitch_acc = pi2piInRadian(pitch_acc);
             Eigen::Vector2d y{roll_acc, pitch_acc};
-
+            
             Eigen::Matrix<double, 2, 3> H;
             H << 1, 0, 0,
                  0, 1, 0;
             Eigen::Matrix2d R = Eigen::Matrix2d::Identity() * pow(1.0, 2);
             Eigen::MatrixXd K = cov_rpy_ * H.transpose() * (H * cov_rpy_ * H.transpose() + R).inverse(); 
-            Eigen::Vector3d dx = K *(y - H * rollpitchyaw_);
+            Eigen::Vector2d dy{pi2piInRadian(y(0) - rollpitchyaw_(0)), pi2piInRadian(y(1) - rollpitchyaw_(1))};
+            //Eigen::Vector3d dx = K *(y - H * rollpitchyaw_);
+            Eigen::Vector3d dx = K *dy;
 
             rollpitchyaw_ += dx;
+
+            rollpitchyaw_(0) = pi2piInRadian(rollpitchyaw_(0));
+            rollpitchyaw_(1) = pi2piInRadian(rollpitchyaw_(1));
+            rollpitchyaw_(2) = pi2piInRadian(rollpitchyaw_(2));
 
 
             /*
             std::cout << "---------------------------------------------------------" << std::endl;
+            std::cout << "nanosec: " << imu_msg.header.stamp.sec << std::endl;
+            std::cout << "nanoseconds: " << imu_msg.header.stamp.nanosec << std::endl;
             std::cout << "roll_acc:" << roll * 180 / M_PI << std::endl;
             std::cout << "pitch_acc:" << pitch * 180 / M_PI << std::endl;
             std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << std::endl;
             std::cout << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
             */
+
+            
         }
         
 
@@ -591,6 +612,18 @@ namespace graphslam
         Eigen::Matrix4f sim_trans = (translation * predicted_quat).matrix();
 
         return sim_trans;
+    }
+
+    double ScanMatcherComponent::pi2piInRadian(const double theta){
+        if(theta > M_PI){
+            return theta - 2*M_PI;
+        }
+        else if(theta < -M_PI){
+            return theta + 2*M_PI;
+        }
+        else{
+            return theta;
+        }
     }
 
 

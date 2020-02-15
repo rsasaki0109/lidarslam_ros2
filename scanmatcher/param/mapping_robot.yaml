@@ -6,7 +6,7 @@ scan_matcher:
     trans_for_mapupdate: 1.5
     vg_size_for_input: 1.5
     vg_size_for_map: 0.075
-    vg_size_for_viz: 0.08
+    vg_size_for_viz: 0.1
     use_imu_rpy: false
     use_imu_posatt: false
     use_gravity_correction: true

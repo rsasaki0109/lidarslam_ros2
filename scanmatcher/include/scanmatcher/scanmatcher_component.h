@@ -67,8 +67,8 @@ extern "C" {
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <pcl/point_types.h>
-#include <pcl/registration/ndt.h>
-#include <pcl/registration/gicp.h>
+//#include <pcl/registration/ndt.h>
+//#include <pcl/registration/gicp.h>
 
 namespace graphslam
 {
@@ -118,6 +118,7 @@ namespace graphslam
         Eigen::Matrix4f updateKFByMeasurement(const Eigen::Vector3d scan_pos, const Eigen::Vector3d imu_pos, rclcpp::Time stamp);
         void publishMapAndPose(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp);
         Eigen::Matrix4f getSimTrans(geometry_msgs::msg::PoseStamped pose_stamped);
+        double pi2piInRadian(const double theta);
 
         bool initial_pose_received_{false};
         bool initial_cloud_received_{false};
