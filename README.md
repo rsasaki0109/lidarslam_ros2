@@ -34,19 +34,16 @@ git clone https://github.com/RainerKuemmerle/g2o
 |trans_for_mapupdate|double|1.5|moving distance of map update[m]|
 |vg_size_for_input|double|0.2|down sample size of input cloud[m]|
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
-|vg_size_for_viz|double|0.1|resolution size of voxels for visualization[m]|
 |use_imu_rpy|bool|false|whether imu is used or not for initial attitude of ndt|
-|use_imu_posatt|bool|false|whether imu is used or not for ndt/imu posatt fusion(not working well)|
-|use_gravity_correction:|bool|false|whether gravity_correction with a low-pass filter is used or not|
 
-- backend(graph-based-slam)(Unimplemented yet) 
+- backend(graph-based-slam)
 
 |Name|Type|Default value|Description|
 |---|---|---|---|
 |ndt_resolution|double|5.0|resolution size of voxels[m]|
 |voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
 |loop_detection_period|int|1000|period of serching loop detection[ms]|
-|threshold_loop_clousure|double|1.0| fitness score of ndt for loop clousure|
+|threshold_loop_clousure_score|double|1.0| fitness score of ndt for loop clousure|
 |distance_loop_clousure|double|4.5| distance from revisit candidates for loop clousure[m]|
 
 ## demo
@@ -99,14 +96,15 @@ ros2 bag play -s rosbag_v2 hdl_400.bag
 
 <img src="./scanmatcher/images/mapping_without_loopclosure.png" width="640px">
 
-### frontend and backend(Unimplemented yet)
+### frontend and backend
 demo data(ROS1) is `hdl_400.bag` in hdl_graph_slam
 
 
 ```
-ros2 run graphslam_main graphslam_node(ros2 run graph_based_slam graph_based_slam_node) 
+ros2 launch scanmatcher mapping_robot.launch.py
+ros2 launch graph_based_slam graphbasedslam.launch.py
 ```
-
+~~ros2 run graphslam_main graphslam_node~~
 
 ```
 ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0.8509, w: 0.8509}}}' --once

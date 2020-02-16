@@ -6,4 +6,3 @@ scan_matcher:
       trans_for_mapupdate: 1.5
       vg_size_for_input: 2.5
       vg_size_for_map: 0.05
-      vg_size_for_viz: 0.075

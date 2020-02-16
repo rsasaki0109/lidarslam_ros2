@@ -92,6 +92,7 @@ namespace graphslam
 
         Eigen::Vector3d previous_position_;
         double trans_;
+        double latest_distance_{0};
         Eigen::Matrix4f initial_pos_mat_;
         double previous_time_imu_{-1};
         rclcpp::Time current_stamp_;
@@ -127,7 +128,6 @@ namespace graphslam
         double trans_for_mapupdate_;
         double vg_size_for_input_;
         double vg_size_for_map_;
-        double vg_size_for_viz_;
 
         //Kalman Filter Parameter
         bool use_imu_rpy_;

@@ -53,6 +53,7 @@ extern "C" {
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <nav_msgs/msg/path.hpp>
 
 #include <graphslam_ros2_msgs/msg/map_array.hpp>
 
@@ -61,6 +62,11 @@ extern "C" {
 #include <pcl/point_types.h>
 #include <pcl/registration/ndt.h>
 #include <pcl/registration/gicp.h>
+
+#include <pclomp/ndt_omp.h>
+#include <pclomp/ndt_omp_impl.hpp>
+#include <pclomp/voxel_grid_covariance_omp.h>
+#include <pclomp/voxel_grid_covariance_omp_impl.hpp>
 
 #include "g2o/core/sparse_optimizer.h"
 #include "g2o/core/optimization_algorithm_levenberg.h"
@@ -88,12 +94,13 @@ namespace graphslam
         tf2_ros::TransformListener listener_;
         tf2_ros::TransformBroadcaster broadcaster_;
 
-        pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI> ndt_;
+        pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI> ndt_;
         pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
 
         graphslam_ros2_msgs::msg::MapArray map_array_msg_;
         rclcpp::Subscription<graphslam_ros2_msgs::msg::MapArray>::SharedPtr map_array_sub_;
         rclcpp::Publisher<graphslam_ros2_msgs::msg::MapArray>::SharedPtr modified_map_array_pub_;
+        rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr modified_path_pub_;
         rclcpp::TimerBase::SharedPtr loop_detect_timer_;
 
         void initializePubSub();
@@ -102,8 +109,10 @@ namespace graphslam
         void publishMapAndPose();
 
         int loop_detection_period_;
-        double threshold_loop_clousure_;
+        double threshold_loop_clousure_score_;
         double distance_loop_clousure_;
+
+        bool initial_map_array_received_{false};
     };
 }
 

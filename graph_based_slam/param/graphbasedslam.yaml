@@ -1,0 +1,7 @@
+graph_based_slam:
+    ros__parameters:
+      ndt_resolution: 1.0
+      voxel_leaf_size: 0.2
+      loop_detection_period: 2000
+      threshold_loop_clousure_score: 1.5
+      distance_loop_clousure: 50.0

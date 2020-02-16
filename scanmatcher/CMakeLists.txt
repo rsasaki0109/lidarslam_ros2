@@ -92,6 +92,10 @@ install(
   DIRECTORY "include/"
   DESTINATION include
 )
+#install(DIRECTORY
+#  include/scanmatcher
+#  DESTINATION include
+#  )
 
 install(
   DIRECTORY launch param

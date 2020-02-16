@@ -32,8 +32,6 @@ namespace graphslam
         get_parameter("vg_size_for_input", vg_size_for_input_);
         declare_parameter("vg_size_for_map", 0.1);
         get_parameter("vg_size_for_map", vg_size_for_map_);
-        declare_parameter("vg_size_for_viz", 0.1);
-        get_parameter("vg_size_for_viz", vg_size_for_viz_);
 
         declare_parameter("use_imu_posatt", false);
         get_parameter("use_imu_posatt", use_imu_posatt_);
@@ -56,10 +54,9 @@ namespace graphslam
         std::cout << "trans_for_mapupdate[m]:" << trans_for_mapupdate_ << std::endl;
         std::cout << "vg_size_for_input[m]:" << vg_size_for_input_ << std::endl;
         std::cout << "vg_size_for_map[m]:" << vg_size_for_map_ << std::endl;
-        std::cout << "vg_size_for_viz[m]:" << vg_size_for_viz_ << std::endl;
-        std::cout << "use_imu_posatt:" << std::boolalpha << use_imu_posatt_ << std::endl;
+        //std::cout << "use_imu_posatt:" << std::boolalpha << use_imu_posatt_ << std::endl;
         std::cout << "use_imu_rpy:" << std::boolalpha << use_imu_rpy_ << std::endl;
-        std::cout << "use_gravity_correction:" << std::boolalpha << use_gravity_correction_ << std::endl;
+        //std::cout << "use_gravity_correction:" << std::boolalpha << use_gravity_correction_ << std::endl;
         std::cout << "------------------" << std::endl;
 
         if(registration_method == "NDT"){
@@ -107,9 +104,10 @@ namespace graphslam
             previous_position_.z() = corrent_pose_stamped_.pose.position.z;
             initial_pose_received_ = true;
 
-            std::cout << "x:" << corrent_pose_stamped_.pose.position.x << std::endl;
-            std::cout << "y:" << corrent_pose_stamped_.pose.position.y << std::endl;
-            std::cout << "z:" << corrent_pose_stamped_.pose.position.z << std::endl;
+            std::cout << "x:" << corrent_pose_stamped_.pose.position.x << ","
+                      << "y:" << corrent_pose_stamped_.pose.position.y << ","
+                      << "z:" << corrent_pose_stamped_.pose.position.z << std::endl;
+            
 
             if(use_imu_rpy_){
                 Eigen::Matrix4f sim_trans = getSimTrans(corrent_pose_stamped_);
@@ -245,8 +243,8 @@ namespace graphslam
         // pub
         pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("current_pose", rclcpp::SystemDefaultsQoS());
         map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("map", rclcpp::SystemDefaultsQoS()); 
-        map_array_pub_ = create_publisher<graphslam_ros2_msgs::msg::MapArray>("map_array", rclcpp::SystemDefaultsQoS()); 
-        path_pub_ = create_publisher<nav_msgs::msg::Path>("path", 10);
+        map_array_pub_ = create_publisher<graphslam_ros2_msgs::msg::MapArray>("map_array", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable()); 
+        path_pub_ = create_publisher<nav_msgs::msg::Path>("path", rclcpp::SystemDefaultsQoS());
     }
 
     void ScanMatcherComponent::receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, rclcpp::Time stamp){
@@ -322,15 +320,20 @@ namespace graphslam
         mat_tf2.getRPY(roll, pitch, yaw, 1);//mat2rpy
 
         //std::cout << "---------------------------------------------------------" << std::endl;
+        
         std::cout << "nanoseconds: " << stamp.nanoseconds() << std::endl;
         std::cout << "trans: " << trans_ << std::endl;
+        
         std::cout << "align time:" << time_align_end.seconds() - time_align_start.seconds() << "s" << std::endl;
+        /*
         std::cout << "number of filtered cloud points: " << filtered_cloud_ptr->size() << std::endl;
         std::cout << "number of map　points: " << map_.size() << std::endl;
         std::cout << "initial transformation:" << std::endl;
         std::cout <<  sim_trans << std::endl;
         std::cout << "has converged: " << registration_->hasConverged() << std::endl;
+        */
         std::cout << "fitness score: " << registration_->getFitnessScore() << std::endl;
+        /*
         std::cout << "final transformation:" << std::endl;
         std::cout <<  final_transformation << std::endl;
         std::cout << "rpy" << std::endl;
@@ -341,6 +344,10 @@ namespace graphslam
             std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << std::endl;
             std::cout << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
         }
+        */
+        int num_submaps = map_array_msg_.submaps.size();
+        std::cout << "num_submaps:" << num_submaps << std::endl;
+        std::cout << "latest_distance_:" << latest_distance_ << std::endl;
         std::cout << "---------------------------------------------------------" << std::endl;
 
     }
@@ -394,16 +401,10 @@ namespace graphslam
 
             //registration_->setInputTarget(map_ptr);//TODO:change scan2scan matching to submap2scan matching
             registration_->setInputTarget(transformed_cloud_ptr);
-            
-            pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_map_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-            voxelgrid_.setLeafSize(vg_size_for_viz_, vg_size_for_viz_, vg_size_for_viz_);
-            voxelgrid_.setInputCloud(map_ptr);
-            voxelgrid_.filter(*filtered_map_ptr);
-
+        
             
             sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
-            //pcl::toROSMsg(*map_ptr, *map_msg_ptr);
-            pcl::toROSMsg(*filtered_map_ptr, *map_msg_ptr);
+            pcl::toROSMsg(*map_ptr, *map_msg_ptr);
             map_msg_ptr->header.frame_id = "map";
             map_pub_->publish(map_msg_ptr);
             
@@ -416,7 +417,8 @@ namespace graphslam
             graphslam_ros2_msgs::msg::SubMap submap;
             submap.header.frame_id = global_frame_id_;
             submap.header.stamp = corrent_pose_stamped_.header.stamp;
-            submap.distance = trans_ + map_array_msg_.submaps.end()->distance;
+            latest_distance_ += trans_;
+            submap.distance = latest_distance_;
             submap.pose = corrent_pose_stamped_.pose;
             submap.cloud = *transformed_cloud_msg_ptr;
             submap.cloud.header.frame_id = global_frame_id_;
