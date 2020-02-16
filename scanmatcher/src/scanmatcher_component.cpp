@@ -408,19 +408,21 @@ namespace graphslam
             map_msg_ptr->header.frame_id = "map";
             map_pub_->publish(map_msg_ptr);
             
-
-            //TODO:change map_ to map_array
             //map array
             
-            sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
-            pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
+            //sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
+            //pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
+            sensor_msgs::msg::PointCloud2::Ptr cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
+            pcl::toROSMsg(*cloud_ptr, *cloud_msg_ptr);
+
             graphslam_ros2_msgs::msg::SubMap submap;
             submap.header.frame_id = global_frame_id_;
             submap.header.stamp = corrent_pose_stamped_.header.stamp;
             latest_distance_ += trans_;
             submap.distance = latest_distance_;
             submap.pose = corrent_pose_stamped_.pose;
-            submap.cloud = *transformed_cloud_msg_ptr;
+            //submap.cloud = *transformed_cloud_msg_ptr;//TODO
+            submap.cloud = *cloud_msg_ptr;
             submap.cloud.header.frame_id = global_frame_id_;
             map_array_msg_.header.stamp = corrent_pose_stamped_.header.stamp;
             map_array_msg_.submaps.push_back(submap);
