@@ -3,6 +3,7 @@
 
 using namespace std::chrono_literals;
 
+std::mutex mtx;
 
 namespace graphslam
 {
@@ -49,6 +50,7 @@ namespace graphslam
         [this](const typename graphslam_ros2_msgs::msg::MapArray::SharedPtr msg_ptr) -> void
         {
             //TODO:mutex
+            std::lock_guard<std::mutex> lock(mtx);
             map_array_msg_ = *msg_ptr;
             initial_map_array_received_ = true;
         };
@@ -76,6 +78,7 @@ namespace graphslam
     {
 
         if(initial_map_array_received_ == false) return;
+        std::lock_guard<std::mutex> lock(mtx);
         std::cout << "----------------------------" << std::endl;
         std::cout << "do searchLoop" << std::endl;
 
@@ -97,13 +100,12 @@ namespace graphslam
         bool is_candidate = false;
         for(auto submap : map_array_msg_.submaps){
             
-            
             Eigen::Vector3d submap_pos{submap.pose.position.x, submap.pose.position.y, submap.pose.position.z};
             if(latest_moving_distance - submap.distance > distance_loop_clousure_ && (latest_submap_pos - submap_pos).norm() < distance_loop_clousure_){
                 is_candidate = true;
                 std::cout << "-" << std::endl;
                 std::cout << "submap.distance:" << submap.distance <<std::endl;
-                std::cout << "delta_pos:" << (latest_submap_pos - submap_pos).norm() <<std::endl;
+                //std::cout << "delta_pos:" << (latest_submap_pos - submap_pos).norm() <<std::endl;
 
                 pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
                 pcl::fromROSMsg(submap.cloud, *submap_cloud_ptr);

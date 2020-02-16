@@ -81,6 +81,8 @@ extern "C" {
 #include "g2o/types/slam3d/se3quat.h"
 #include "g2o/types/slam3d/parameter_se3_offset.h"
 
+#include <mutex>
+
 namespace graphslam
 {
     class GraphBasedSlamComponent: public rclcpp::Node
