@@ -15,7 +15,8 @@ git clone https://github.com/RainerKuemmerle/g2o
 - input  
 /initial_pose  (geometry_msgs/PoseStamed)  
 /input_cloud  (sensor_msgs/PointCloud2)  
-/tf(from "base_link" to LiDAR's frame) 
+/tf(from "base_link" to LiDAR's frame)  
+/imu  (sensor_msgs/Imu)(optional)  
 - output  
 /current_pose (geometry_msgs/PoseStamped)  
 /map  (sensor_msgs/PointCloud2)  
@@ -97,14 +98,18 @@ ros2 bag play -s rosbag_v2 hdl_400.bag
 <img src="./scanmatcher/images/mapping_without_loopclosure.png" width="640px">
 
 ### frontend and backend
-demo data(ROS1) is `hdl_400.bag` in hdl_graph_slam
-
+demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 
 ```
-ros2 launch scanmatcher mapping_robot.launch.py
-ros2 launch graph_based_slam graphbasedslam.launch.py
+rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz 
 ```
-~~ros2 run graphslam_main graphslam_node~~
+
+```
+ros2 launch graphslam_main main.launch.py
+```
+
+~~ros2 launch scanmatcher mapping_robot.launch.py~~  
+~~ros2 launch graph_based_slam graphbasedslam.launch.py~~
 
 ```
 ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0.8509, w: 0.8509}}}' --once

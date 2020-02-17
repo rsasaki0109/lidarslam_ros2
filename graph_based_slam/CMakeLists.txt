@@ -94,6 +94,8 @@ add_definitions(${PCL_DEFINITIONS})
 rclcpp_components_register_nodes(graph_based_slam_component 
   "graphslam::GraphBasedSlamComponent")
 
+ament_export_libraries(graph_based_slam_component)
+
 install(
   DIRECTORY "include/"
   DESTINATION include
@@ -116,5 +118,5 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-
+ament_export_include_directories(include)
 ament_package()

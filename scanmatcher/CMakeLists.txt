@@ -88,14 +88,12 @@ add_definitions(${PCL_DEFINITIONS})
 rclcpp_components_register_nodes(scanmatcher_component 
   "graphslam::ScanMatcherComponent")
 
+ament_export_libraries(scanmatcher_component)
+
 install(
   DIRECTORY "include/"
   DESTINATION include
 )
-#install(DIRECTORY
-#  include/scanmatcher
-#  DESTINATION include
-#  )
 
 install(
   DIRECTORY launch param
@@ -114,5 +112,5 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-
+ament_export_include_directories(include)
 ament_package()

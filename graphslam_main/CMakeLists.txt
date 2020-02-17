@@ -12,14 +12,43 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  #add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wextra -Wpedantic)
 endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(scanmatcher REQUIRED)
-#find_package(graphslam REQUIRED)
+find_package(graph_based_slam REQUIRED)
+find_package(graphslam_ros2_msgs REQUIRED)
+find_package(ndt_omp_ros2 REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(PCL REQUIRED)
+find_package(OpenMP)
+find_package(g2o REQUIRED
+COMPONENTS
+g2o::core
+g2o::types_slam3d
+g2o::types_slam3d_addons
+g2o::solver_eigen
+)
+
+SET(CMAKE_CXX_FLAGS "-O2 -g ${CMAKE_CXX_FLAGS}")
+
+if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
+include_directories(
+  include
+  ${EIGEN3_INCLUDE_DIR}
+  ${PCL_INCLUDE_DIRS}
+)
+link_directories(
+  ${PCL_LIBRARY_DIRS}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -30,11 +59,26 @@ add_executable(graphslam_node
 src/main.cpp
 )
 
+target_link_libraries(graphslam_node
+${PCL_LIBRARIES}
+g2o::core
+g2o::types_slam3d
+g2o::types_slam3d_addons
+g2o::solver_eigen
+)
+
 ament_target_dependencies(graphslam_node
   rclcpp
   scanmatcher
-  #graphslam
+  graph_based_slam
+  graphslam_ros2_msgs
+  ndt_omp_ros2
   )
+
+install(
+  DIRECTORY launch param
+  DESTINATION share/${PROJECT_NAME}
+)
 
 install(TARGETS 
   graphslam_node
