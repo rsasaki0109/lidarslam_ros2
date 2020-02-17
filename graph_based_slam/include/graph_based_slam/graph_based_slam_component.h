@@ -115,6 +115,7 @@ namespace graphslam
         double distance_loop_clousure_;
 
         bool initial_map_array_received_{false};
+        bool is_map_array_updated_{false};
     };
 }
 

@@ -53,6 +53,7 @@ namespace graphslam
             std::lock_guard<std::mutex> lock(mtx);
             map_array_msg_ = *msg_ptr;
             initial_map_array_received_ = true;
+            is_map_array_updated_ = true;
         };
 
         map_array_sub_ = 
@@ -78,6 +79,9 @@ namespace graphslam
     {
 
         if(initial_map_array_received_ == false) return;
+        if(is_map_array_updated_ == false) return;
+        is_map_array_updated_ = false;
+
         std::lock_guard<std::mutex> lock(mtx);
         std::cout << "----------------------------" << std::endl;
         std::cout << "do searchLoop" << std::endl;
@@ -95,6 +99,7 @@ namespace graphslam
         Eigen::Vector3d latest_submap_pos{latest_submap.pose.position.x, latest_submap.pose.position.y, latest_submap.pose.position.z};
         int i =0;
         double min_fitness_score = 1000;
+        double distance_min_fitness_score = 0;
         std::cout << "latest_moving_distance:" << latest_moving_distance << std::endl;
         geometry_msgs::msg::PoseStamped pose_stamped_minsocore;
         bool is_candidate = false;
@@ -103,8 +108,8 @@ namespace graphslam
             Eigen::Vector3d submap_pos{submap.pose.position.x, submap.pose.position.y, submap.pose.position.z};
             if(latest_moving_distance - submap.distance > distance_loop_clousure_ && (latest_submap_pos - submap_pos).norm() < distance_loop_clousure_){
                 is_candidate = true;
-                std::cout << "-" << std::endl;
-                std::cout << "submap.distance:" << submap.distance <<std::endl;
+                //std::cout << "-" << std::endl;
+                //std::cout << "submap.distance:" << submap.distance <<std::endl;
                 //std::cout << "delta_pos:" << (latest_submap_pos - submap_pos).norm() <<std::endl;
 
                 pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
@@ -123,6 +128,7 @@ namespace graphslam
                 }
 
                 if(fitness_score < min_fitness_score){
+                    distance_min_fitness_score = submap.distance;
                     min_fitness_score = fitness_score;
                     pose_stamped_minsocore.header = submap.header;
                     pose_stamped_minsocore.pose = submap.pose;
@@ -133,13 +139,15 @@ namespace graphslam
         }
         if(is_candidate){
             std::cout << "-"  << std::endl;
+            std::cout << "distance_min_fitness_score:" << distance_min_fitness_score << std::endl;
             std::cout << "min_fitness_score:" << min_fitness_score << std::endl;
             std::cout << "pose_minsocore"  << std::endl;
             std::cout << "x:" << pose_stamped_minsocore.pose.position.x << "," <<
                          "y:" << pose_stamped_minsocore.pose.position.y << "," <<
                          "z:" << pose_stamped_minsocore.pose.position.z << std::endl;
         }   
-        
+
+        std::cout << "searchLoop end" << std::endl;
 
     }
 
