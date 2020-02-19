@@ -133,6 +133,7 @@ ros2 bag play -s rosbag_v2 hdl_400.bag
 
 <img src="./scanmatcher/images/mapping_without_loopclosure.png" width="640px">
 
+Green: without loopclosure
 
 ## Used Libraries 
 
