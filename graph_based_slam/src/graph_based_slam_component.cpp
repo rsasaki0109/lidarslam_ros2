@@ -41,6 +41,7 @@ namespace graphslam
 
         initializePubSub();
         RCLCPP_INFO(get_logger(), "initialization end");
+
     }   
 
     void GraphBasedSlamComponent::initializePubSub(){
@@ -49,7 +50,6 @@ namespace graphslam
         auto map_array_callback =
         [this](const typename graphslam_ros2_msgs::msg::MapArray::SharedPtr msg_ptr) -> void
         {
-            //TODO:mutex
             std::lock_guard<std::mutex> lock(mtx);
             map_array_msg_ = *msg_ptr;
             initial_map_array_received_ = true;
@@ -108,9 +108,6 @@ namespace graphslam
             Eigen::Vector3d submap_pos{submap.pose.position.x, submap.pose.position.y, submap.pose.position.z};
             if(latest_moving_distance - submap.distance > distance_loop_clousure_ && (latest_submap_pos - submap_pos).norm() < distance_loop_clousure_){
                 is_candidate = true;
-                //std::cout << "-" << std::endl;
-                //std::cout << "submap.distance:" << submap.distance <<std::endl;
-                //std::cout << "delta_pos:" << (latest_submap_pos - submap_pos).norm() <<std::endl;
 
                 pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
                 pcl::fromROSMsg(submap.cloud, *submap_cloud_ptr);
@@ -123,6 +120,8 @@ namespace graphslam
                 std::cout << "fitness_score:" << fitness_score << std::endl;
                 if(fitness_score < threshold_loop_clousure_score_){
                     std::cout << "do PoseAdjustment" << std::endl;
+                    std::cout << "submap.distance:" << submap.distance << std::endl;
+                    std::cout << "id_loop_point:" << i << std::endl;
                     doPoseAdjustment(i, map_array_msg);
                     return;
                 }
@@ -166,14 +165,13 @@ namespace graphslam
         Eigen::Isometry3d first_visited_point;
         Eigen::Isometry3d previous_pose;
         Eigen::Matrix<double, 6, 6> info_mat = Eigen::Matrix<double, 6, 6>::Identity();
-        for(int i = 0;  i  < submaps_size ; i++ ){
+        for(int i = 0;  i < submaps_size ; i++ ){
             geometry_msgs::msg::Point pos = map_array_msg_.submaps[i].pose.position;
             geometry_msgs::msg::Quaternion quat = map_array_msg_.submaps[i].pose.orientation;
-            Eigen::Vector3d translation(pos.x, pos.y, pos.z);
+
+            Eigen::Translation3d translation(pos.x, pos.y, pos.z);
             Eigen::Quaterniond rotation(quat.w, quat.x, quat.y, quat.z);
-            Eigen::Isometry3d pose(Eigen::Isometry3d::Identity());
-		    pose.pretranslate(translation);
-            pose.prerotate(rotation);
+            Eigen::Isometry3d pose = translation * rotation;
 
             g2o::VertexSE3* vertex_se3 = new g2o::VertexSE3();
             vertex_se3->setId(i);
@@ -183,13 +181,15 @@ namespace graphslam
 
             if(i == id_loop_point) first_visited_point = pose;
             if(i>0){
-                Eigen::Isometry3d relative_pose = pose.inverse() * previous_pose;
+                //Eigen::Isometry3d relative_pose = pose.inverse() * previous_pose;
+                Eigen::Isometry3d relative_pose = previous_pose.inverse() * pose;
     
                 g2o::EdgeSE3* edge_se3 = new g2o::EdgeSE3();
                 edge_se3->setMeasurement(relative_pose);
                 edge_se3->setInformation(info_mat);
                 edge_se3->vertices()[0] = optimizer.vertex(i-1);
                 edge_se3->vertices()[1] = optimizer.vertex(i);
+                
                 optimizer.addEdge(edge_se3);
             }
             
@@ -197,7 +197,8 @@ namespace graphslam
         }
         // loop edge
         Eigen::Isometry3d revisit_point = previous_pose;
-        Eigen::Isometry3d relative_pose = first_visited_point.inverse() * revisit_point;
+        Eigen::Isometry3d tmp = first_visited_point.inverse() * revisit_point;
+        Eigen::Isometry3d relative_pose{tmp.rotation()};
         g2o::EdgeSE3* edge_se3 = new g2o::EdgeSE3();
         edge_se3->setMeasurement(relative_pose);
         edge_se3->setInformation(info_mat);
@@ -214,14 +215,14 @@ namespace graphslam
         path.header.frame_id = "map";
         for(int i = 0;  i  < submaps_size ; i++ ){
             g2o::VertexSE3* vertex_se3 = static_cast<g2o::VertexSE3*>(optimizer.vertex(i));
-            auto se3 = vertex_se3->estimate();
+            Eigen::Isometry3d se3 = vertex_se3->estimate();
             Eigen::Vector3d translation = se3.translation();
             Eigen::Matrix3d rotation = se3.rotation();
             
             geometry_msgs::msg::Point pos;
             pos.x = translation(0);
-            pos.x = translation(1);
-            pos.x = translation(2);
+            pos.y = translation(1);
+            pos.z = translation(2);
 
             Eigen::Quaterniond q_eig(rotation);
             geometry_msgs::msg::Quaternion quat = tf2::toMsg(q_eig); 

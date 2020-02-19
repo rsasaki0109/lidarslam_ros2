@@ -332,7 +332,7 @@ namespace graphslam
         std::cout <<  sim_trans << std::endl;
         std::cout << "has converged: " << registration_->hasConverged() << std::endl;
         */
-        std::cout << "fitness score: " << registration_->getFitnessScore() << std::endl;
+        //std::cout << "fitness score: " << registration_->getFitnessScore() << std::endl;
         /*
         std::cout << "final transformation:" << std::endl;
         std::cout <<  final_transformation << std::endl;

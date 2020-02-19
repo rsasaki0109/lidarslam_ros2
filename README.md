@@ -12,16 +12,27 @@ and clone g2o for graph-based-slam in `/src` directry
 git clone https://github.com/RainerKuemmerle/g2o
 ```
 ## io
+
+### frontend(scan-matcher) 
 - input  
 /initial_pose  (geometry_msgs/PoseStamed)  
 /input_cloud  (sensor_msgs/PointCloud2)  
 /tf(from "base_link" to LiDAR's frame)  
 /imu  (sensor_msgs/Imu)(optional)  
+/modified_map_array(graphslam_ros2_msgs/MapArray)
 - output  
 /current_pose (geometry_msgs/PoseStamped)  
 /map  (sensor_msgs/PointCloud2)  
 /path  (nav_msgs/Path)  
 /tf(from "map" to "base_link")  
+/map_array(graphslam_ros2_msgs/MapArray)
+
+### backend(graph-based-slam)
+- input  
+/map_array(graphslam_ros2_msgs/MapArray)
+- output  
+/modified_map_array(graphslam_ros2_msgs/MapArray)  
+/modified_path  (nav_msgs/Path)  
 
 ## params
 
@@ -48,6 +59,31 @@ git clone https://github.com/RainerKuemmerle/g2o
 |distance_loop_clousure|double|4.5| distance from revisit candidates for loop clousure[m]|
 
 ## demo
+### frontend and backend
+demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
+
+```
+rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz 
+```
+
+```
+ros2 launch graphslam_main main.launch.py
+```
+
+
+```
+ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0.8509, w: 0.8509}}}' --once
+```
+
+
+```
+ros2 bag play -s rosbag_v2 hdl_400.bag 
+```
+
+<img src="./graphslam_main/images/mapping_with_loopclosure.png" width="640px">
+
+Green: with loopclosure, Yellow: without loopclosure
+
 ### frontend only
 - car_mapping
 
@@ -97,28 +133,6 @@ ros2 bag play -s rosbag_v2 hdl_400.bag
 
 <img src="./scanmatcher/images/mapping_without_loopclosure.png" width="640px">
 
-### frontend and backend
-demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
-
-```
-rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz 
-```
-
-```
-ros2 launch graphslam_main main.launch.py
-```
-
-~~ros2 launch scanmatcher mapping_robot.launch.py~~  
-~~ros2 launch graph_based_slam graphbasedslam.launch.py~~
-
-```
-ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0.8509, w: 0.8509}}}' --once
-```
-
-
-```
-ros2 bag play -s rosbag_v2 hdl_400.bag 
-```
 
 ## Used Libraries 
 

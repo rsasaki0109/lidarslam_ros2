@@ -83,6 +83,7 @@ extern "C" {
 
 #include <mutex>
 
+
 namespace graphslam
 {
     class GraphBasedSlamComponent: public rclcpp::Node
@@ -116,6 +117,7 @@ namespace graphslam
 
         bool initial_map_array_received_{false};
         bool is_map_array_updated_{false};
+
     };
 }
 
