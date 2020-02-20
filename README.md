@@ -112,6 +112,8 @@ ros2 bag play -s rosbag_v2 sample_moriyama_150324.bag
 
 <img src="./scanmatcher/images/mapping.png" width="640px">
 
+Yellow: without loopclosure
+
 - mobilerobot_mapping
  
 demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
@@ -133,7 +135,7 @@ ros2 bag play -s rosbag_v2 hdl_400.bag
 
 <img src="./scanmatcher/images/mapping_without_loopclosure.png" width="640px">
 
-Green: without loopclosure
+Yellow: without loopclosure
 
 ## Used Libraries 
 
