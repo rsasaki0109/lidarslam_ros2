@@ -279,6 +279,7 @@ namespace graphslam
 
         sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
         pcl::toROSMsg(*map_ptr, *map_msg_ptr);
+	map_msg_ptr->header.frame_id = "map";
         modified_map_pub_->publish(*map_msg_ptr);
         pcl::io::savePCDFileASCII("map.pcd" , *map_ptr);
 
