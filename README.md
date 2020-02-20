@@ -6,6 +6,9 @@ this is a ros2 slam package of the frontend using gicp/ndt scan matching and the
 
 Green: with loopclosure, Yellow: without loopclosure
 
+<img src="./graphslam_main/images/map.png" width="640px">
+
+
 ## requirement to build
 You need to clone [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-matcher
 ```
@@ -80,7 +83,7 @@ ros2 launch graphslam_main main.launch.py
 
 
 ```
-ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0.8509, w: 0.8509}}}' --once
+ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0, w: 1}}}' --once
 ```
 
 
@@ -91,6 +94,8 @@ ros2 bag play -s rosbag_v2 hdl_400.bag
 <img src="./graphslam_main/images/mapping_with_loopclosure.png" width="640px">
 
 Green: with loopclosure, Yellow: without loopclosure
+
+<img src="./graphslam_main/images/map.png" width="640px">
 
 ### frontend only
 - car_mapping
@@ -134,7 +139,7 @@ ros2 launch scanmatcher mapping_robot.launch.py
 ```
 
 ```
-ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0.8509, w: 0.8509}}}' --once
+ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0, w: 1}}}' --once
 ```
 
 ```
@@ -144,6 +149,7 @@ ros2 bag play -s rosbag_v2 hdl_400.bag
 <img src="./scanmatcher/images/mapping_without_loopclosure.png" width="640px">
 
 Yellow: without loopclosure
+
 
 ## Used Libraries 
 
