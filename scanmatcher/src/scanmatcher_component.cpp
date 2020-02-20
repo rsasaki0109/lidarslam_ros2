@@ -33,20 +33,23 @@ namespace graphslam
         declare_parameter("vg_size_for_map", 0.1);
         get_parameter("vg_size_for_map", vg_size_for_map_);
 
-        declare_parameter("use_imu_posatt", false);
-        get_parameter("use_imu_posatt", use_imu_posatt_);
+        //declare_parameter("use_imu_posatt", false);
+        //get_parameter("use_imu_posatt", use_imu_posatt_);
         declare_parameter("use_imu_rpy", false);
         get_parameter("use_imu_rpy", use_imu_rpy_);
+        /*
         declare_parameter("use_gravity_correction", false);
         get_parameter("use_gravity_correction", use_gravity_correction_);
         declare_parameter("stddev_lo_xy", 0.05);
         get_parameter("stddev_lo_xy", stddev_lo_xy_);
         declare_parameter("stddev_lo_z", 0.05);
         get_parameter("stddev_lo_z", stddev_lo_z_);
+        */
         declare_parameter("stddev_imu_gyro", 0.1);
         get_parameter("stddev_imu_gyro", stddev_imu_gyro_);
         declare_parameter("stddev_imu_acc", 0.1);
         get_parameter("stddev_imu_acc", stddev_imu_acc_);
+
 
         std::cout << "registration_method:" << registration_method << std::endl;
         std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;

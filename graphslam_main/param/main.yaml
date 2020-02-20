@@ -14,6 +14,6 @@ graph_based_slam:
       voxel_leaf_size: 0.2
       loop_detection_period: 3000
       threshold_loop_clousure_score: 1.5
-      distance_loop_clousure: 30.0
+      distance_loop_clousure: 100.0
       range_of_searching_loop_clousure: 30.0
 

@@ -42,6 +42,7 @@ namespace graphslam
         voxelgrid_.setLeafSize(voxel_leaf_size, voxel_leaf_size, voxel_leaf_size);
 
         ndt_.setResolution(ndt_resolution);
+        ndt_.setTransformationEpsilon(0.01);
 
         initializePubSub();
         RCLCPP_INFO(get_logger(), "initialization end");
@@ -116,14 +117,18 @@ namespace graphslam
 
                 pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
                 pcl::fromROSMsg(submap.cloud, *submap_cloud_ptr);
-                ndt_.setInputSource(submap_cloud_ptr);
+                pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+                voxelgrid_.setInputCloud(submap_cloud_ptr);
+                voxelgrid_.filter(*filtered_cloud_ptr);
+                ndt_.setInputSource(filtered_cloud_ptr);
 
                 pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
                 ndt_.align(*output_cloud_ptr);
 
                 double fitness_score = ndt_.getFitnessScore();
-                std::cout << "fitness_score:" << fitness_score << std::endl;
+                std::cout << "distance:" << submap.distance << ",score:" << fitness_score << std::endl;
                 if(fitness_score < threshold_loop_clousure_score_){
+                    std::cout << "---"  << std::endl;
                     std::cout << "do PoseAdjustment" << std::endl;
                     std::cout << "submap.distance:" << submap.distance << std::endl;
                     std::cout << "id_loop_point:" << i << std::endl;
@@ -147,6 +152,7 @@ namespace graphslam
                 i++;
             }
         }
+
         if(is_candidate){
             std::cout << "-"  << std::endl;
             std::cout << "distance_min_fitness_score:" << distance_min_fitness_score << std::endl;
@@ -279,7 +285,7 @@ namespace graphslam
 
         sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
         pcl::toROSMsg(*map_ptr, *map_msg_ptr);
-	map_msg_ptr->header.frame_id = "map";
+        map_msg_ptr->header.frame_id = "map";
         modified_map_pub_->publish(*map_msg_ptr);
         pcl::io::savePCDFileASCII("map.pcd" , *map_ptr);
 
