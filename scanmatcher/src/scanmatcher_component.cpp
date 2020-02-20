@@ -469,7 +469,7 @@ namespace graphslam
             double pitch = rollpitchyaw_(1);
             double yaw = rollpitchyaw_(2);
             Eigen::Vector3d w{imu_msg.angular_velocity.z, imu_msg.angular_velocity.y, imu_msg.angular_velocity.x};
-            Eigen::Matrix3d f = Eigen::Matrix3d::Identity();//tmp
+            Eigen::Matrix3d f = Eigen::Matrix3d::Identity();
             f << 1 , sin(roll) * tan(pitch), cos(roll),
                  0 , cos(yaw), -sin(roll),
                  0 , sin(roll)/cos(pitch), cos(roll)/cos(pitch);

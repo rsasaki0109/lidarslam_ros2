@@ -62,6 +62,7 @@ extern "C" {
 #include <pcl/point_types.h>
 #include <pcl/registration/ndt.h>
 #include <pcl/registration/gicp.h>
+#include <pcl/io/pcd_io.h>
 
 #include <pclomp/ndt_omp.h>
 #include <pclomp/ndt_omp_impl.hpp>
@@ -104,19 +105,27 @@ namespace graphslam
         rclcpp::Subscription<graphslam_ros2_msgs::msg::MapArray>::SharedPtr map_array_sub_;
         rclcpp::Publisher<graphslam_ros2_msgs::msg::MapArray>::SharedPtr modified_map_array_pub_;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr modified_path_pub_;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr modified_map_pub_;
         rclcpp::TimerBase::SharedPtr loop_detect_timer_;
 
         void initializePubSub();
         void searchLoop();
-        void doPoseAdjustment(int id_loop_point, graphslam_ros2_msgs::msg::MapArray map_array_msg);
+        void doPoseAdjustment(graphslam_ros2_msgs::msg::MapArray map_array_msg);
         void publishMapAndPose();
 
         int loop_detection_period_;
         double threshold_loop_clousure_score_;
         double distance_loop_clousure_;
+        double range_of_searching_loop_clousure_;
 
         bool initial_map_array_received_{false};
         bool is_map_array_updated_{false};
+
+        struct LoopEdge {
+        std::pair<int, int> pair_id;
+        Eigen::Isometry3d relative_pose;
+        };
+        std::vector<LoopEdge> loop_edges_;
 
     };
 }

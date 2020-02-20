@@ -1,6 +1,11 @@
 graphslam_ros2
 ====
 this is a ros2 slam package of the frontend using gicp/ndt scan matching and the backend using graph-based slam. 
+
+<img src="./graphslam_main/images/mapping_with_loopclosure.png" width="640px">
+
+Green: with loopclosure, Yellow: without loopclosure
+
 ## requirement to build
 You need to clone [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-matcher
 ```
@@ -19,7 +24,6 @@ git clone https://github.com/RainerKuemmerle/g2o
 /input_cloud  (sensor_msgs/PointCloud2)  
 /tf(from "base_link" to LiDAR's frame)  
 /imu  (sensor_msgs/Imu)(optional)  
-/modified_map_array(graphslam_ros2_msgs/MapArray)
 - output  
 /current_pose (geometry_msgs/PoseStamped)  
 /map  (sensor_msgs/PointCloud2)  
@@ -32,7 +36,10 @@ git clone https://github.com/RainerKuemmerle/g2o
 /map_array(graphslam_ros2_msgs/MapArray)
 - output  
 /modified_map_array(graphslam_ros2_msgs/MapArray)  
-/modified_path  (nav_msgs/Path)  
+/modified_path  (nav_msgs/Path) 
+/modified_map  (sensor_msgs/PointCloud2)  
+
+,and  `pose_graph.g2o` and `map.pcd` are saved in loop closing.
 
 ## params
 
@@ -56,7 +63,8 @@ git clone https://github.com/RainerKuemmerle/g2o
 |voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
 |loop_detection_period|int|1000|period of serching loop detection[ms]|
 |threshold_loop_clousure_score|double|1.0| fitness score of ndt for loop clousure|
-|distance_loop_clousure|double|4.5| distance from revisit candidates for loop clousure[m]|
+|distance_loop_clousure|double|20.0| distance far from revisit candidates for loop clousure[m]|
+|range_of_searching_loop_clousure|double|20.0| range of sezrching revisit candidates for loop clousure[m]|
 
 ## demo
 ### frontend and backend
