@@ -36,7 +36,7 @@ git clone https://github.com/RainerKuemmerle/g2o
 /map_array(graphslam_ros2_msgs/MapArray)
 - output  
 /modified_map_array(graphslam_ros2_msgs/MapArray)  
-/modified_path  (nav_msgs/Path) 
+/modified_path  (nav_msgs/Path)   
 /modified_map  (sensor_msgs/PointCloud2)  
 
 ,and  `pose_graph.g2o` and `map.pcd` are saved in loop closing.
