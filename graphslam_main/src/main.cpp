@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
     std::cout << "main start" << std::endl;
     rclcpp::init(argc, argv);
     rclcpp::NodeOptions options;
+    options.use_intra_process_comms(true);
 
     rclcpp::executors::SingleThreadedExecutor exec;
 
