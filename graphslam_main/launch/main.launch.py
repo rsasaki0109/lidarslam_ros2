@@ -20,7 +20,7 @@ def generate_launch_description():
         parameters=[main_param_dir],
         remappings=[('/input_cloud','/velodyne_points'),('/imu','/gpsimu_driver/imu_data')],
         #remappings=[('/imu','/gpsimu_driver/imu_data')],# for imu debug
-        #output='screen'
+        output='screen'
         )
 
     tf = launch_ros.actions.Node(

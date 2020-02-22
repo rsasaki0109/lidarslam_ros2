@@ -98,7 +98,6 @@ namespace graphslam
                 RCLCPP_WARN(get_logger(),"This initial_pose is not in the global frame");
                 return;
             }
-            //RCLCPP_INFO(get_logger(), "initial_pose is received");
             std::cout << "initial_pose is received" << std::endl;
 
             corrent_pose_stamped_ = *msg;
@@ -127,11 +126,6 @@ namespace graphslam
                 rollpitchyaw_(0) = roll;
                 rollpitchyaw_(1) = pitch;
                 rollpitchyaw_(2) = yaw;
-                std::cout << "rpy" << std::endl;
-                std::cout << roll * 180 / M_PI << std::endl;
-                std::cout << pitch * 180 / M_PI << std::endl;
-                std::cout << yaw * 180 / M_PI << std::endl;
-
             }
         };
 
@@ -334,9 +328,7 @@ namespace graphslam
         std::cout << "initial transformation:" << std::endl;
         std::cout <<  sim_trans << std::endl;
         std::cout << "has converged: " << registration_->hasConverged() << std::endl;
-        */
-        //std::cout << "fitness score: " << registration_->getFitnessScore() << std::endl;
-        /*
+        std::cout << "fitness score: " << registration_->getFitnessScore() << std::endl;
         std::cout << "final transformation:" << std::endl;
         std::cout <<  final_transformation << std::endl;
         std::cout << "rpy" << std::endl;
@@ -369,7 +361,7 @@ namespace graphslam
 
         Eigen::Matrix3d rot_mat = final_transformation.block<3, 3>(0, 0).cast<double>();
         Eigen::Quaterniond q_eig(rot_mat);
-        geometry_msgs::msg::Quaternion quat = tf2::toMsg(q_eig);
+        geometry_msgs::msg::Quaternion quat_msg = tf2::toMsg(q_eig);
         
         geometry_msgs::msg::TransformStamped transform_stamped;
         transform_stamped.header.stamp = stamp;
@@ -378,14 +370,14 @@ namespace graphslam
         transform_stamped.transform.translation.x = vec.x();
         transform_stamped.transform.translation.y = vec.y();
         transform_stamped.transform.translation.z = vec.z();
-        transform_stamped.transform.rotation = quat;
+        transform_stamped.transform.rotation = quat_msg;
         broadcaster_.sendTransform(transform_stamped);
 
         corrent_pose_stamped_.header.stamp = stamp;
         corrent_pose_stamped_.pose.position.x = vec.x();
         corrent_pose_stamped_.pose.position.y = vec.y();
         corrent_pose_stamped_.pose.position.z = vec.z();
-        corrent_pose_stamped_.pose.orientation = quat;
+        corrent_pose_stamped_.pose.orientation = quat_msg;
         pose_pub_->publish(corrent_pose_stamped_);
 
         trans_ = (vec - previous_position_).norm();  
@@ -486,6 +478,12 @@ namespace graphslam
             double ax = imu_msg.linear_acceleration.x;
             double ay = imu_msg.linear_acceleration.y;
             double az = imu_msg.linear_acceleration.z;
+            if(az < 0){
+                ax = -ax;
+                ay = -ay;
+                az = -az;
+            }
+
             double roll_acc = atan2(ay, az);
             double pitch_acc = atan2(-ax, ay * sin(roll_acc) + az * cos(roll_acc) );
             roll_acc = pi2piInRadian(roll_acc);
