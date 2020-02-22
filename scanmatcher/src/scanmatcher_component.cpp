@@ -445,11 +445,10 @@ namespace graphslam
     }
 
     Eigen::Matrix4f ScanMatcherComponent::getSimTrans(geometry_msgs::msg::PoseStamped pose_stamped){
-        geometry_msgs::msg::Point pos = pose_stamped.pose.position;
-        geometry_msgs::msg::Quaternion quat = pose_stamped.pose.orientation;
-        Eigen::Translation3f translation(pos.x, pos.y, pos.z);
-        Eigen::Quaternionf rotation(quat.w, quat.x, quat.y, quat.z);
-        Eigen::Matrix4f sim_trans = (translation * rotation).matrix();
+
+        Eigen::Affine3d affine;
+        tf2::fromMsg(pose_stamped.pose, affine);
+        Eigen::Matrix4f sim_trans = affine.matrix().cast<float>();
 
         return sim_trans;
     }

@@ -120,6 +120,7 @@ namespace graphslam
 
         bool initial_map_array_received_{false};
         bool is_map_array_updated_{false};
+        int previous_submaps_num_{0};
 
         struct LoopEdge {
         std::pair<int, int> pair_id;
