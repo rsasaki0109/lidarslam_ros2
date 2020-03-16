@@ -35,6 +35,8 @@ namespace graphslam
 
         //declare_parameter("use_imu_posatt", false);
         //get_parameter("use_imu_posatt", use_imu_posatt_);
+        declare_parameter("use_odom", false);
+        get_parameter("use_odom", use_odom_);
         declare_parameter("use_imu_rpy", false);
         get_parameter("use_imu_rpy", use_imu_rpy_);
         /*
@@ -58,6 +60,7 @@ namespace graphslam
         std::cout << "vg_size_for_input[m]:" << vg_size_for_input_ << std::endl;
         std::cout << "vg_size_for_map[m]:" << vg_size_for_map_ << std::endl;
         //std::cout << "use_imu_posatt:" << std::boolalpha << use_imu_posatt_ << std::endl;
+        std::cout << "use_odom:" << std::boolalpha << use_odom_ << std::endl;
         std::cout << "use_imu_rpy:" << std::boolalpha << use_imu_rpy_ << std::endl;
         //std::cout << "use_gravity_correction:" << std::boolalpha << use_gravity_correction_ << std::endl;
         std::cout << "------------------" << std::endl;
@@ -224,6 +227,15 @@ namespace graphslam
             }
         };
 
+        auto odom_callback =
+        [this](const typename nav_msgs::msg::Odometry::SharedPtr msg) -> void
+        {
+            if(initial_pose_received_)
+            {
+                receiveOdom(*msg); 
+            }
+        };
+
 
         initial_pose_sub_ = 
             create_subscription<geometry_msgs::msg::PoseStamped>(
@@ -232,6 +244,10 @@ namespace graphslam
         imu_sub_ = 
             create_subscription<sensor_msgs::msg::Imu>(
                 "imu", rclcpp::SensorDataQoS(), imu_callback);    
+
+        odom_sub_ = 
+            create_subscription<nav_msgs::msg::Odometry>(
+                "odom", rclcpp::SensorDataQoS(), odom_callback);  
 
         input_cloud_sub_ = 
             create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -279,6 +295,8 @@ namespace graphslam
         sim_trans = sim_trans ;//* initial_pos_mat_.inverse();
         pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZI>);
 
+        //std::cout << "fitness score: " << registration_->getFitnessScore() << std::endl;
+
         rclcpp::Clock system_clock;
         rclcpp::Time time_align_start = system_clock.now();
         registration_->align(*output_cloud, sim_trans);
@@ -322,7 +340,7 @@ namespace graphslam
         //std::cout << "trans: " << trans_ << std::endl;
         
         std::cout << "align time:" << time_align_end.seconds() - time_align_start.seconds() << "s" << std::endl;
-        /*
+        
         std::cout << "number of filtered cloud points: " << filtered_cloud_ptr->size() << std::endl;
         std::cout << "number of map　points: " << map_.size() << std::endl;
         std::cout << "initial transformation:" << std::endl;
@@ -332,14 +350,14 @@ namespace graphslam
         std::cout << "final transformation:" << std::endl;
         std::cout <<  final_transformation << std::endl;
         std::cout << "rpy" << std::endl;
-        std::cout << roll * 180 / M_PI << std::endl;
-        std::cout << pitch * 180 / M_PI << std::endl;
-        std::cout << yaw * 180 / M_PI << std::endl;
+        std::cout << "roll:" << roll * 180 / M_PI << ","
+                  << "pitch:" << pitch * 180 / M_PI << ","
+                  << "yaw:" << yaw * 180 / M_PI << std::endl;
         if(use_imu_rpy_){
             std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << std::endl;
             std::cout << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
         }
-        */
+        
         int num_submaps = map_array_msg_.submaps.size();
         std::cout << "num_submaps:" << num_submaps << std::endl;
         std::cout << "latest_distance_:" << latest_distance_ << std::endl;
@@ -593,6 +611,46 @@ namespace graphslam
         pose_pub_->publish(corrent_pose_stamped_);
         }
         */
+
+        return;
+    }
+
+    void ScanMatcherComponent::receiveOdom(const nav_msgs::msg::Odometry odom_msg){
+        if(!use_odom_) return;
+        double current_time_odom = odom_msg.header.stamp.sec 
+                                    + odom_msg.header.stamp.nanosec * 1e-9;
+        if(previous_time_odom_ == -1){
+            previous_time_odom_ = current_time_odom;
+            return;
+        }
+        double dt_odom = current_time_odom - previous_time_odom_;
+        previous_time_odom_ = current_time_odom; 
+
+        //TODO
+        tf2::Quaternion previous_quat_tf;
+        double roll, pitch, yaw;
+        tf2::fromMsg(corrent_pose_stamped_.pose.orientation, previous_quat_tf);
+        tf2::Matrix3x3(previous_quat_tf).getRPY(roll, pitch, yaw);
+
+        roll += odom_msg.twist.twist.angular.x * dt_odom;
+        pitch += odom_msg.twist.twist.angular.x * dt_odom;
+        yaw += odom_msg.twist.twist.angular.x * dt_odom;
+
+        //Eigen::Matrix3d 
+        Eigen::Quaterniond quat_eig = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
+                    * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
+                    * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+        
+        //Eigen::Quaterniond quat_eig(rot_mat);
+        geometry_msgs::msg::Quaternion quat_msg = tf2::toMsg(quat_eig);
+        
+        Eigen::Vector3d odom{odom_msg.twist.twist.linear.x, odom_msg.twist.twist.linear.y, odom_msg.twist.twist.linear.z};
+        Eigen::Vector3d delta_position = quat_eig.matrix() * dt_odom * odom;
+
+        corrent_pose_stamped_.pose.position.x += delta_position.x();
+        corrent_pose_stamped_.pose.position.y += delta_position.y();
+        corrent_pose_stamped_.pose.position.z += delta_position.z();
+        corrent_pose_stamped_.pose.orientation = quat_msg;
 
         return;
     }

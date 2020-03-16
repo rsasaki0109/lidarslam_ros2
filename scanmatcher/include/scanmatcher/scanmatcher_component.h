@@ -50,6 +50,7 @@ extern "C" {
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/msg/imu.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform.hpp>
@@ -95,6 +96,7 @@ namespace graphslam
         double latest_distance_{0};
         Eigen::Matrix4f initial_pos_mat_;
         double previous_time_imu_{-1};
+        double previous_time_odom_{-1};
         rclcpp::Time current_stamp_;
         Eigen::Vector3d rollpitchyaw_{0, 0, 0};
         Eigen::Matrix3d cov_rpy_{Eigen::Matrix3d::Identity()};
@@ -105,6 +107,7 @@ namespace graphslam
 
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr initial_pose_sub_;
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr input_cloud_sub_;
 
         geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
@@ -118,6 +121,7 @@ namespace graphslam
         void initializePubSub();
         void receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& input_cloud, rclcpp::Time stamp);
         void receiveImu(const sensor_msgs::msg::Imu imu_msg);
+        void receiveOdom(const nav_msgs::msg::Odometry odom_msg);
         Eigen::Matrix4f updateKFByMeasurement(const Eigen::Vector3d scan_pos, const Eigen::Vector3d imu_pos, rclcpp::Time stamp);
         void publishMapAndPose(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp);
         Eigen::Matrix4f getSimTrans(geometry_msgs::msg::PoseStamped pose_stamped);
@@ -128,6 +132,8 @@ namespace graphslam
         double trans_for_mapupdate_;
         double vg_size_for_input_;
         double vg_size_for_map_;
+
+        bool use_odom_;
 
         //Kalman Filter Parameter
         bool use_imu_rpy_;

@@ -27,6 +27,8 @@ git clone https://github.com/RainerKuemmerle/g2o
 /input_cloud  (sensor_msgs/PointCloud2)  
 /tf(from "base_link" to LiDAR's frame)  
 /imu  (sensor_msgs/Imu)(optional)  
+/odom  (nav_msgs/Odometry)(optional)  
+
 - output  
 /current_pose (geometry_msgs/PoseStamped)  
 /map  (sensor_msgs/PointCloud2)  
@@ -57,6 +59,7 @@ git clone https://github.com/RainerKuemmerle/g2o
 |vg_size_for_input|double|0.2|down sample size of input cloud[m]|
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
 |use_imu_rpy|bool|false|whether imu is used or not for initial attitude of ndt|
+|use_odom|bool|false|whether odom is used or not for initial attitude of ndt|
 |stddev_imu_gyro|double|0.1|stddev of angular velocity sensor[rad/s]|
 |stddev_imu_acc|double|0.1|stddev of accelerometer[m/s^2]|
 
