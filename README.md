@@ -60,8 +60,6 @@ git clone https://github.com/RainerKuemmerle/g2o
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
 |use_imu_rpy|bool|false|whether imu is used or not for initial attitude of ndt|
 |use_odom|bool|false|whether odom is used or not for initial attitude of ndt|
-|stddev_imu_gyro|double|0.1|stddev of angular velocity sensor[rad/s]|
-|stddev_imu_acc|double|0.1|stddev of accelerometer[m/s^2]|
 
 - backend(graph-based-slam)
 
