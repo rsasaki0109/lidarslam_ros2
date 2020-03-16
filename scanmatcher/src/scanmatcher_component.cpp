@@ -626,7 +626,6 @@ namespace graphslam
         double dt_odom = current_time_odom - previous_time_odom_;
         previous_time_odom_ = current_time_odom; 
 
-        //TODO
         tf2::Quaternion previous_quat_tf;
         double roll, pitch, yaw;
         tf2::fromMsg(corrent_pose_stamped_.pose.orientation, previous_quat_tf);
@@ -636,12 +635,10 @@ namespace graphslam
         pitch += odom_msg.twist.twist.angular.x * dt_odom;
         yaw += odom_msg.twist.twist.angular.x * dt_odom;
 
-        //Eigen::Matrix3d 
         Eigen::Quaterniond quat_eig = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
                     * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
                     * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
         
-        //Eigen::Quaterniond quat_eig(rot_mat);
         geometry_msgs::msg::Quaternion quat_msg = tf2::toMsg(quat_eig);
         
         Eigen::Vector3d odom{odom_msg.twist.twist.linear.x, odom_msg.twist.twist.linear.y, odom_msg.twist.twist.linear.z};
