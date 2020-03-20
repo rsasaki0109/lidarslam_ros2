@@ -69,8 +69,6 @@ extern "C" {
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <pcl/point_types.h>
-//#include <pcl/registration/ndt.h>
-//#include <pcl/registration/gicp.h>
 
 namespace graphslam
 {
@@ -87,24 +85,16 @@ namespace graphslam
 
         std::string global_frame_id_;
         
-
         pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
         pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
 
         Eigen::Vector3d previous_position_;
         double trans_;
         double latest_distance_{0};
-        Eigen::Matrix4f initial_pos_mat_;
-        double previous_time_imu_{-1};
+
         double previous_time_odom_{-1};
         rclcpp::Time current_stamp_;
         Eigen::Vector3d rollpitchyaw_{0, 0, 0};
-        Eigen::Matrix<double, 6, 1> x_rpy_{Eigen::Matrix<double, 6, 1>::Zero()};//[roll pitch yaw bias_wx bias_wy bias_wz]
-        Eigen::Matrix<double, 6, 6> cov_rpy_{100 * Eigen::Matrix<double, 6, 6>::Identity()};
-        Eigen::Vector3d vec_imu_{0, 0, 0};
-        Eigen::Matrix<double, 9, 9> cov_{Eigen::Matrix<double, 9, 9>::Identity()};
-
-        Eigen::Vector3d gravity_{0, 0, 9.80665};
 
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr initial_pose_sub_;
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
@@ -120,10 +110,9 @@ namespace graphslam
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
 
         void initializePubSub();
-        void receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& input_cloud, rclcpp::Time stamp);
+        void receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& input_cloud_ptr, rclcpp::Time stamp);
         void receiveImu(const sensor_msgs::msg::Imu imu_msg);
         void receiveOdom(const nav_msgs::msg::Odometry odom_msg);
-        Eigen::Matrix4f updateKFByMeasurement(const Eigen::Vector3d scan_pos, const Eigen::Vector3d imu_pos, rclcpp::Time stamp);
         void publishMapAndPose(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp);
         Eigen::Matrix4f getSimTrans(geometry_msgs::msg::PoseStamped pose_stamped);
 
@@ -133,24 +122,8 @@ namespace graphslam
         double vg_size_for_input_;
         double vg_size_for_map_;
 
-        bool use_odom_;
-
-        //Kalman Filter Parameter
-        bool use_imu_rpy_;
-        bool use_imu_posatt_;
-        bool use_gravity_correction_;
-
-        double stddev_lo_xy_;
-        double stddev_lo_z_;
-        double stddev_imu_gyro_;
-        double stddev_imu_acc_;
-
-        enum ERROR_STATE{
-          DX   = 0,   DY = 1,   DZ = 2,
-          DVX  = 3,  DVY = 4,  DVZ = 5,
-          DTHX = 6, DTHY = 7, DTHZ = 8,
-        };
-
+        bool use_odom_{false};
+        bool use_imu_{false};
 
     };
 }

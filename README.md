@@ -58,8 +58,9 @@ git clone https://github.com/RainerKuemmerle/g2o
 |trans_for_mapupdate|double|1.5|moving distance of map update[m]|
 |vg_size_for_input|double|0.2|down sample size of input cloud[m]|
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
-|use_imu_rpy|bool|false|whether imu is used or not for initial attitude of ndt|
-|use_odom|bool|false|whether odom is used or not for initial attitude of ndt|
+|use_imu|bool|false|whether imu is used or not for initial attitude in ndt(needed to be calcurated in advance by madgwick filter, kalman filter, and so on)|
+|use_odom|bool|false|whether odom is used or not for initial attitude in ndt|
+
 
 - backend(graph-based-slam)
 
