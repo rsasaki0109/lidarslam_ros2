@@ -22,7 +22,7 @@ namespace graphslam
         
         declare_parameter("registration_method","NDT");
         get_parameter("registration_method",registration_method);
-        declare_parameter("ndt_resolution", 5.0);
+        declare_parameter("ndt_resolution", 0.3);
         get_parameter("ndt_resolution", ndt_resolution);
         declare_parameter("ndt_num_threads", 0);
         get_parameter("ndt_num_threads", ndt_num_threads);
