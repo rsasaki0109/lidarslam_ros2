@@ -100,7 +100,6 @@ namespace graphslam
         rclcpp::Time current_stamp_;
         Eigen::Vector3d rollpitchyaw_{0, 0, 0};
         Eigen::Matrix<double, 6, 1> x_rpy_{Eigen::Matrix<double, 6, 1>::Zero()};//[roll pitch yaw bias_wx bias_wy bias_wz]
-        //Eigen::Matrix<double,6,1> x_rpy_{0, 0, 0, 5, 5, 5};
         Eigen::Matrix<double, 6, 6> cov_rpy_{100 * Eigen::Matrix<double, 6, 6>::Identity()};
         Eigen::Vector3d vec_imu_{0, 0, 0};
         Eigen::Matrix<double, 9, 9> cov_{Eigen::Matrix<double, 9, 9>::Identity()};
