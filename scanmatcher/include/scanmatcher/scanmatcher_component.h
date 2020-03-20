@@ -99,7 +99,9 @@ namespace graphslam
         double previous_time_odom_{-1};
         rclcpp::Time current_stamp_;
         Eigen::Vector3d rollpitchyaw_{0, 0, 0};
-        Eigen::Matrix3d cov_rpy_{Eigen::Matrix3d::Identity()};
+        Eigen::Matrix<double, 6, 1> x_rpy_{Eigen::Matrix<double, 6, 1>::Zero()};//[roll pitch yaw bias_wx bias_wy bias_wz]
+        //Eigen::Matrix<double,6,1> x_rpy_{0, 0, 0, 5, 5, 5};
+        Eigen::Matrix<double, 6, 6> cov_rpy_{100 * Eigen::Matrix<double, 6, 6>::Identity()};
         Eigen::Vector3d vec_imu_{0, 0, 0};
         Eigen::Matrix<double, 9, 9> cov_{Eigen::Matrix<double, 9, 9>::Identity()};
 
@@ -125,7 +127,6 @@ namespace graphslam
         Eigen::Matrix4f updateKFByMeasurement(const Eigen::Vector3d scan_pos, const Eigen::Vector3d imu_pos, rclcpp::Time stamp);
         void publishMapAndPose(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp);
         Eigen::Matrix4f getSimTrans(geometry_msgs::msg::PoseStamped pose_stamped);
-        double pi2piInRadian(const double theta);
 
         bool initial_pose_received_{false};
         bool initial_cloud_received_{false};

@@ -47,9 +47,9 @@ namespace graphslam
         declare_parameter("stddev_lo_z", 0.05);
         get_parameter("stddev_lo_z", stddev_lo_z_);
         */
-        declare_parameter("stddev_imu_gyro", 0.1);
+        declare_parameter("stddev_imu_gyro", 5.0);
         get_parameter("stddev_imu_gyro", stddev_imu_gyro_);
-        declare_parameter("stddev_imu_acc", 0.1);
+        declare_parameter("stddev_imu_acc", 0.3);
         get_parameter("stddev_imu_acc", stddev_imu_acc_);
 
 
@@ -261,6 +261,7 @@ namespace graphslam
     }
 
     void ScanMatcherComponent::receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, rclcpp::Time stamp){
+        
         pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
         voxelgrid_.setLeafSize(vg_size_for_input_, vg_size_for_input_, vg_size_for_input_);
         voxelgrid_.setInputCloud(cloud_ptr);
@@ -354,14 +355,16 @@ namespace graphslam
                   << "pitch:" << pitch * 180 / M_PI << ","
                   << "yaw:" << yaw * 180 / M_PI << std::endl;
         if(use_imu_rpy_){
-            std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << std::endl;
-            std::cout << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
+            std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << ","
+                      << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
         }
         
         int num_submaps = map_array_msg_.submaps.size();
         std::cout << "num_submaps:" << num_submaps << std::endl;
         std::cout << "latest_distance_:" << latest_distance_ << std::endl;
         std::cout << "---------------------------------------------------------" << std::endl;
+
+        //previous_time_odom_ = stamp.nanoseconds() * 1e-9;
 
     }
 
@@ -477,63 +480,78 @@ namespace graphslam
 
         if(use_imu_rpy_){
             // motion update
-            double roll = rollpitchyaw_(0);
-            double pitch = rollpitchyaw_(1);
-            double yaw = rollpitchyaw_(2);
-            Eigen::Vector3d w{imu_msg.angular_velocity.z, imu_msg.angular_velocity.y, imu_msg.angular_velocity.x};
-            Eigen::Matrix3d f = Eigen::Matrix3d::Identity();
-            f << 1 , sin(roll) * tan(pitch), cos(roll),
-                 0 , cos(yaw), -sin(roll),
-                 0 , sin(roll)/cos(pitch), cos(roll)/cos(pitch);
-            rollpitchyaw_ += f * w * dt_imu;
-            cov_rpy_ += Eigen::Matrix3d::Identity() * pow(stddev_imu_gyro_, 2) * pow(dt_imu,2);
 
-            rollpitchyaw_(0) = pi2piInRadian(rollpitchyaw_(0));
-            rollpitchyaw_(1) = pi2piInRadian(rollpitchyaw_(1));
-            rollpitchyaw_(2) = pi2piInRadian(rollpitchyaw_(2));
+            double roll = x_rpy_(0);
+            double pitch = x_rpy_(1);
+            double yaw = x_rpy_(2);
+            Eigen::Vector3d w{imu_msg.angular_velocity.z, imu_msg.angular_velocity.y, imu_msg.angular_velocity.x};
+            Eigen::Vector3d gyro_bias = x_rpy_.tail<3>();
+            w = w - gyro_bias;
+
+            Eigen::Matrix<double, 6, 3> l = Eigen::Matrix<double, 6, 3>::Identity();
+            l << 1 , sin(roll) * tan(pitch), cos(roll),
+                 0 , cos(yaw), -sin(roll),
+                 0 , sin(roll)/cos(pitch), cos(roll)/cos(pitch),
+                 0 , 0, 0,
+                 0 , 0, 0,
+                 0 , 0, 0
+                 ;
+
+            double tau_gyro_bias = 1.0;
+            Eigen::Matrix<double, 6, 6> f = Eigen::Matrix<double, 6, 6>::Identity();
+            f.block<3,3>(3, 3) -= Eigen::Matrix<double, 3, 3>::Identity() * dt_imu / tau_gyro_bias;
+
+            x_rpy_ =  f * x_rpy_  + l * w * dt_imu;
+
+            Eigen::Matrix<double, 6, 6> q = Eigen::Matrix<double, 6, 6>::Zero();
+            q.block<3,3>(0, 0) = Eigen::Matrix<double, 3, 3>::Identity() * pow(stddev_imu_gyro_, 2) * pow(dt_imu, 2);
+
+            cov_rpy_ = f * cov_rpy_ * f.transpose() +  q;
             
             // obserbation update
             double ax = imu_msg.linear_acceleration.x;
             double ay = imu_msg.linear_acceleration.y;
             double az = imu_msg.linear_acceleration.z;
             if(az < 0){
-                ax = -ax;
-                ay = -ay;
-                az = -az;
+                ax = -ax; ay = -ay; az = -az;
             }
 
             double roll_acc = atan2(ay, az);
             double pitch_acc = atan2(-ax, ay * sin(roll_acc) + az * cos(roll_acc) );
-            roll_acc = pi2piInRadian(roll_acc);
-            pitch_acc = pi2piInRadian(pitch_acc);
+
             Eigen::Vector2d y{roll_acc, pitch_acc};
             
-            Eigen::Matrix<double, 2, 3> H;
-            H << 1, 0, 0,
-                 0, 1, 0;
-            Eigen::Matrix2d R = Eigen::Matrix2d::Identity() * pow(1.0, 2);
-            Eigen::MatrixXd K = cov_rpy_ * H.transpose() * (H * cov_rpy_ * H.transpose() + R).inverse(); 
-            Eigen::Vector2d dy{pi2piInRadian(y(0) - rollpitchyaw_(0)), pi2piInRadian(y(1) - rollpitchyaw_(1))};
-            //Eigen::Vector3d dx = K *(y - H * rollpitchyaw_);
-            Eigen::Vector3d dx = K *dy;
+            Eigen::Matrix<double, 2, 6> H;
+            H << 1, 0, 0, 0, 0, 0,
+                 0, 1, 0, 0, 0, 0
+                 ;
 
-            rollpitchyaw_ += dx;
+            double sig_ang_by_acc = 1.0 * 180 / M_PI;//
+            Eigen::Matrix2d R = Eigen::Matrix2d::Identity() * pow(sig_ang_by_acc, 2);
+            Eigen::Matrix<double, 6, 2> K = cov_rpy_ * H.transpose() * (H * cov_rpy_ * H.transpose() + R).inverse(); 
+            Eigen::Vector2d dy{y(0) - x_rpy_(0), y(1) - x_rpy_(1)};
+            Eigen::Matrix<double, 6, 1> dx = K *dy;//6x2 2x1
+   
+            x_rpy_ += dx;
+            rollpitchyaw_(0) = roll_acc;
+            rollpitchyaw_(1) = pitch_acc;
+            rollpitchyaw_(2) = x_rpy_(2);
 
-            rollpitchyaw_(0) = pi2piInRadian(rollpitchyaw_(0));
-            rollpitchyaw_(1) = pi2piInRadian(rollpitchyaw_(1));
-            rollpitchyaw_(2) = pi2piInRadian(rollpitchyaw_(2));
-
-
+            cov_rpy_ = (Eigen::Matrix<double, 6, 6>::Identity() - K * H) * cov_rpy_;
             /*
             std::cout << "---------------------------------------------------------" << std::endl;
             std::cout << "nanosec: " << imu_msg.header.stamp.sec << std::endl;
             std::cout << "nanoseconds: " << imu_msg.header.stamp.nanosec << std::endl;
-            std::cout << "roll_acc:" << roll * 180 / M_PI << std::endl;
-            std::cout << "pitch_acc:" << pitch * 180 / M_PI << std::endl;
+            std::cout << "roll_acc:" << roll_acc * 180 / M_PI << std::endl;
+            std::cout << "pitch_acc:" << pitch_acc * 180 / M_PI << std::endl;
             std::cout << "roll:" << rollpitchyaw_(0) * 180 / M_PI << std::endl;
             std::cout << "pitch:" << rollpitchyaw_(1) * 180 / M_PI << std::endl;
+            std::cout << "yaw:" << rollpitchyaw_(2) * 180 / M_PI << std::endl;
+            std::cout << "cov_rpy" << std::endl;
+            std::cout << cov_rpy_ << std::endl;
+            std::cout << "x" << std::endl;
+            std::cout << x_rpy_ << std::endl;
             */
-
             
         }
         
@@ -553,8 +571,9 @@ namespace graphslam
 
             if(d_gravity > 1.0) return;
         }
+        */
 
-        if(use_imu_posatt_){
+        if(!use_imu_posatt_) return;
 
         // predict 
         current_stamp_ = imu_msg.header.stamp;
@@ -609,14 +628,14 @@ namespace graphslam
         corrent_pose_stamped_.pose.orientation.z = predicted_quat.z();
         corrent_pose_stamped_.pose.orientation.w = predicted_quat.w();
         pose_pub_->publish(corrent_pose_stamped_);
-        }
-        */
-
+        
         return;
     }
 
     void ScanMatcherComponent::receiveOdom(const nav_msgs::msg::Odometry odom_msg){
+
         if(!use_odom_) return;
+
         double current_time_odom = odom_msg.header.stamp.sec 
                                     + odom_msg.header.stamp.nanosec * 1e-9;
         if(previous_time_odom_ == -1){
@@ -624,6 +643,7 @@ namespace graphslam
             return;
         }
         double dt_odom = current_time_odom - previous_time_odom_;
+        //std::cout << "dt_odom:" << dt_odom << std::endl;
         previous_time_odom_ = current_time_odom; 
 
         tf2::Quaternion previous_quat_tf;
@@ -684,19 +704,6 @@ namespace graphslam
 
         return sim_trans;
     }
-
-    double ScanMatcherComponent::pi2piInRadian(const double theta){
-        if(theta > M_PI){
-            return theta - 2*M_PI;
-        }
-        else if(theta < -M_PI){
-            return theta + 2*M_PI;
-        }
-        else{
-            return theta;
-        }
-    }
-
 
 }
 
