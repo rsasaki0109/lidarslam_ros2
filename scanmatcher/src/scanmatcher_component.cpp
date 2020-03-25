@@ -452,8 +452,8 @@ namespace graphslam
         tf2::Matrix3x3(previous_quat_tf).getRPY(roll, pitch, yaw);
 
         roll += odom_msg.twist.twist.angular.x * dt_odom;
-        pitch += odom_msg.twist.twist.angular.x * dt_odom;
-        yaw += odom_msg.twist.twist.angular.x * dt_odom;
+        pitch += odom_msg.twist.twist.angular.y * dt_odom;
+        yaw += odom_msg.twist.twist.angular.z * dt_odom;
 
         Eigen::Quaterniond quat_eig = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
                     * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
