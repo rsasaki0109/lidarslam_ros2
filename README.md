@@ -1,5 +1,6 @@
 graphslam_ros2
 ====
+![CI](https://github.com/rsasaki0109/graphslam_ros2/workflows/CI/badge.svg)  
 this is ros2 slam package of the frontend using gicp/ndt scan matching and the backend using graph-based slam. 
 
 <img src="./graphslam_main/images/mapping_with_loopclosure.png" width="640px">
@@ -10,15 +11,26 @@ Green: with loopclosure, Yellow: without loopclosure
 
 
 ## requirement to build
-You need to clone [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-matcher
+You need  [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-matcher and g2o for graph-based-slam.  
+
+clone
 ```
-git clone https://github.com/rsasaki0109/ndt_omp_ros2
+git clone --recursive https://github.com/rsasaki0109/graphslam_ros2
+```
+g2o install
+```
+cd graphslam_ros2/Thirdparty/g2o/
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=RELEASE 
+make -j 4
+make install
+```
+build
+```
+cd ~/ros2_ws
+colcon build
 ```
 
-and clone g2o for graph-based-slam in `/src` directry
-```
-git clone https://github.com/RainerKuemmerle/g2o
-```
 ## io
 
 ### frontend(scan-matcher) 
