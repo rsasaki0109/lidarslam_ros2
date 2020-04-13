@@ -28,10 +28,10 @@ jobs:
                   cp -rf . ~/ros2_ws/src/graphslam_ros2
             - name: Install g2o
               run: |
-                  cd ~/ros2_ws/src/test_g2o_slam3d_ros2/Thirdparty/g2o
+                  cd ~/ros2_ws/src/graphslam_ros2/Thirdparty/g2o
                   mkdir -p build && cd build
                   cmake \
-                        -DCMAKE_BUILD_TYPE=Release \
+                        -DCMAKE_BUILD_TYPE=RELEASE \
                         -DCMAKE_INSTALL_PREFIX=/usr/local \
                         -DCMAKE_CXX_FLAGS=-std=c++11 \
                         -DBUILD_SHARED_LIBS=ON \
