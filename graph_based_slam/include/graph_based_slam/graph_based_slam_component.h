@@ -55,7 +55,7 @@ extern "C" {
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <nav_msgs/msg/path.hpp>
 
-#include <graphslam_ros2_msgs/msg/map_array.hpp>
+#include <lidarslam_msgs/msg/map_array.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -101,16 +101,16 @@ namespace graphslam
         pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI> ndt_;
         pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
 
-        graphslam_ros2_msgs::msg::MapArray map_array_msg_;
-        rclcpp::Subscription<graphslam_ros2_msgs::msg::MapArray>::SharedPtr map_array_sub_;
-        rclcpp::Publisher<graphslam_ros2_msgs::msg::MapArray>::SharedPtr modified_map_array_pub_;
+        lidarslam_msgs::msg::MapArray map_array_msg_;
+        rclcpp::Subscription<lidarslam_msgs::msg::MapArray>::SharedPtr map_array_sub_;
+        rclcpp::Publisher<lidarslam_msgs::msg::MapArray>::SharedPtr modified_map_array_pub_;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr modified_path_pub_;
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr modified_map_pub_;
         rclcpp::TimerBase::SharedPtr loop_detect_timer_;
 
         void initializePubSub();
         void searchLoop();
-        void doPoseAdjustment(graphslam_ros2_msgs::msg::MapArray map_array_msg);
+        void doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg);
         void publishMapAndPose();
 
         int loop_detection_period_;

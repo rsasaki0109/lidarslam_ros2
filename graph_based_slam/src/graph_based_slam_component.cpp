@@ -52,7 +52,7 @@ namespace graphslam
         RCLCPP_INFO(get_logger(), "initialize Publishers and Subscribers");
 
         auto map_array_callback =
-        [this](const typename graphslam_ros2_msgs::msg::MapArray::SharedPtr msg_ptr) -> void
+        [this](const typename lidarslam_msgs::msg::MapArray::SharedPtr msg_ptr) -> void
         {
             std::lock_guard<std::mutex> lock(mtx);
             map_array_msg_ = *msg_ptr;
@@ -61,7 +61,7 @@ namespace graphslam
         };
 
         map_array_sub_ = 
-            create_subscription<graphslam_ros2_msgs::msg::MapArray>(
+            create_subscription<lidarslam_msgs::msg::MapArray>(
                 "map_array", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(), map_array_callback);  
 
         std::chrono::milliseconds period(loop_detection_period_);
@@ -72,7 +72,7 @@ namespace graphslam
             
         modified_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("modified_map", rclcpp::SystemDefaultsQoS()); 
 
-        modified_map_array_pub_ = create_publisher<graphslam_ros2_msgs::msg::MapArray>(
+        modified_map_array_pub_ = create_publisher<lidarslam_msgs::msg::MapArray>(
             "modified_map_array", rclcpp::SystemDefaultsQoS()); 
 
         modified_path_pub_ = create_publisher<nav_msgs::msg::Path>("modified_path", rclcpp::SystemDefaultsQoS());    
@@ -92,7 +92,7 @@ namespace graphslam
         std::cout << "----------------------------" << std::endl;
         std::cout << "do searchLoop" << std::endl;
 
-        graphslam_ros2_msgs::msg::MapArray map_array_msg = map_array_msg_;
+        lidarslam_msgs::msg::MapArray map_array_msg = map_array_msg_;
         std::lock_guard<std::mutex> lock(mtx);
         int num_submaps = map_array_msg.submaps.size();
         std::cout << "num_submaps:" << num_submaps << std::endl;
@@ -103,7 +103,7 @@ namespace graphslam
         bool is_candidate = false;
         for(int j = 0; j < num_submaps - previous_submaps_num_; j++){
 
-            graphslam_ros2_msgs::msg::SubMap latest_submap;
+            lidarslam_msgs::msg::SubMap latest_submap;
             latest_submap = map_array_msg.submaps[num_submaps - 1 - j];
             Eigen::Affine3d latest_submap_affine;
             tf2::fromMsg(latest_submap.pose, latest_submap_affine);
@@ -188,7 +188,7 @@ namespace graphslam
 
     }
 
-    void GraphBasedSlamComponent::doPoseAdjustment(graphslam_ros2_msgs::msg::MapArray map_array_msg){
+    void GraphBasedSlamComponent::doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg){
 
         g2o::SparseOptimizer optimizer;
         optimizer.setVerbose(false);
@@ -247,7 +247,7 @@ namespace graphslam
         optimizer.save("pose_graph.g2o");
 
         /* modified_map publish */
-        graphslam_ros2_msgs::msg::MapArray modified_map_array_msg;
+        lidarslam_msgs::msg::MapArray modified_map_array_msg;
         modified_map_array_msg.header = map_array_msg.header;
         nav_msgs::msg::Path path;
         path.header.frame_id = "map";
@@ -282,7 +282,7 @@ namespace graphslam
             *map_ptr += *cloud_ptr;
             
             /* submap */
-            graphslam_ros2_msgs::msg::SubMap submap;
+            lidarslam_msgs::msg::SubMap submap;
             submap.header = map_array_msg.submaps[i].header;
             submap.pose.position = pos;
             submap.pose.orientation = quat;

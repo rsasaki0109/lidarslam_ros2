@@ -4,10 +4,22 @@ scan_matcher:
     ndt_resolution: 2.0
     ndt_num_threads: 0
     trans_for_mapupdate: 1.5
-    vg_size_for_input: 1.5
-    vg_size_for_map: 0.075
-    use_imu_rpy: false
-    
+    vg_size_for_input: 1.0
+    vg_size_for_map: 0.1
+    scan_min_range: 1.0
+    scan_max_range: 100.0
+    scan_period: 0.2
+    set_initial_pose: true
+    initial_pose_x: 0.0
+    initial_pose_y: 0.0
+    initial_pose_z: 0.0
+    initial_pose_qx: 0.0
+    initial_pose_qy: 0.0
+    initial_pose_qz: 0.0
+    initial_pose_qw: 1.0
+    use_imu: true
+    use_odom: false
+
 graph_based_slam:
     ros__parameters:
       ndt_resolution: 1.5

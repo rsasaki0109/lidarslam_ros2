@@ -26,7 +26,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(graphslam_ros2_msgs REQUIRED)
+find_package(lidarslam_msgs REQUIRED)
 find_package(ndt_omp_ros2 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(g2o REQUIRED
@@ -63,7 +63,7 @@ ament_target_dependencies(graph_based_slam_component
   geometry_msgs 
   sensor_msgs
   nav_msgs
-  graphslam_ros2_msgs
+  lidarslam_msgs
   ndt_omp_ros2
 )
 

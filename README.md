@@ -1,13 +1,13 @@
-graphslam_ros2
+lidarslam
 ====
-![CI](https://github.com/rsasaki0109/graphslam_ros2/workflows/CI/badge.svg)  
+![CI](https://github.com/rsasaki0109/lidarslam_ros2/workflows/CI/badge.svg)  
 this is ros2 slam package of the frontend using gicp/ndt scan matching and the backend using graph-based slam. 
 
-<img src="./graphslam_main/images/mapping_with_loopclosure.png" width="640px">
+<img src="./lidarslam/images/mapping_with_loopclosure.png" width="640px">
 
 Green: with loopclosure, Yellow: without loopclosure
 
-<img src="./graphslam_main/images/map.png" width="640px">
+<img src="./lidarslam/images/map.png" width="640px">
 
 
 ## requirement to build
@@ -15,11 +15,11 @@ You need  [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-m
 
 clone
 ```
-git clone --recursive https://github.com/rsasaki0109/graphslam_ros2
+git clone --recursive https://github.com/rsasaki0109/lidarslam
 ```
 g2o install
 ```
-cd graphslam_ros2/Thirdparty/g2o/
+cd lidarslam/Thirdparty/g2o/
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=RELEASE 
 make -j 4
@@ -28,6 +28,8 @@ make install
 build
 ```
 cd ~/ros2_ws
+colcon build --packages-select ndt_omp_ros2
+source ~/ros2_ws/install/setup.bash
 colcon build
 ```
 
@@ -46,13 +48,13 @@ colcon build
 /map  (sensor_msgs/PointCloud2)  
 /path  (nav_msgs/Path)  
 /tf(from "map" to "base_link")  
-/map_array(graphslam_ros2_msgs/MapArray)
+/map_array(lidarslam_msgs/MapArray)
 
 ### backend(graph-based-slam)
 - input  
-/map_array(graphslam_ros2_msgs/MapArray)
+/map_array(lidarslam_msgs/MapArray)
 - output  
-/modified_map_array(graphslam_ros2_msgs/MapArray)  
+/modified_map_array(lidarslam_msgs/MapArray)  
 /modified_path  (nav_msgs/Path)   
 /modified_map  (sensor_msgs/PointCloud2)  
 
@@ -70,8 +72,19 @@ colcon build
 |trans_for_mapupdate|double|1.5|moving distance of map update[m]|
 |vg_size_for_input|double|0.2|down sample size of input cloud[m]|
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
-|use_imu|bool|false|whether imu is used or not for initial attitude in ndt(needed to be calcurated in advance by madgwick filter, kalman filter, and so on)|
-|use_odom|bool|false|whether odom is used or not for initial attitude in ndt|
+|scan_max_range|double|100.0|max range of input cloud[m]|
+|scan_min_range|double|1.0|min range of input cloud[m]|
+|scan_periad|double|0.1|scan period of input cloud[sec]|
+|set_initial_pose|bool|false|whether or not to set the default value in the param file|
+|initial_pose_x|double|0.0|x-coordinate of the initial pose value[m]|
+|initial_pose_y|double|0.0|y-coordinate of the initial pose value[m]|
+|initial_pose_z|double|0.0|z-coordinate of the initial pose value[m]|
+|initial_pose_qx|double|0.0|Quaternion x of the initial pose value|
+|initial_pose_qy|double|0.0|Quaternion y of the initial pose value|
+|initial_pose_qz|double|0.0|Quaternion z of the initial pose value|
+|initial_pose_qw|double|1.0|Quaternion w of the initial pose value|
+|use_odom|bool|false|whether odom is used or not for initial attitude in point cloud registration|
+|use_imu|bool|false|whether 9-axis imu is used or not for point cloud distortion correction|
 
 
 - backend(graph-based-slam)
@@ -90,28 +103,22 @@ colcon build
 demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 
 ```
-rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz 
+rviz2 -d src/lidarslam_ros2/scanmatcher/config/mapping.rviz 
 ```
 
 ```
-ros2 launch graphslam_main main.launch.py
+ros2 launch lidarslam lidarslam.launch.py
 ```
-
-
-```
-ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0, w: 1}}}' --once
-```
-
 
 ```
 ros2 bag play -s rosbag_v2 hdl_400.bag 
 ```
 
-<img src="./graphslam_main/images/mapping_with_loopclosure.png" width="640px">
+<img src="./lidarslam/images/mapping_with_loopclosure.png" width="640px">
 
 Green: with loopclosure, Yellow: without loopclosure
 
-<img src="./graphslam_main/images/map.png" width="640px">
+<img src="./lidarslam/images/map.png" width="640px">
 
 ### frontend only
 - car_mapping
@@ -124,7 +131,7 @@ tar zxfv sample_moriyama_150324.tar.gz
 ```
 
 ```
-rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz 
+rviz2 -d src/lidarslam_ros2/scanmatcher/config/mapping.rviz 
 ```
 
 ```
@@ -147,7 +154,7 @@ Yellow: without loopclosure
  
 demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 ```
-rviz2 -d src/graphslam_ros2/scanmatcher/config/mapping.rviz 
+rviz2 -d src/lidarslam_ros2/scanmatcher/config/mapping.rviz 
 ```
 
 ```

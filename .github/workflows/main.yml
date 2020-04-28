@@ -24,11 +24,11 @@ jobs:
                 submodules: true
             - name: Copy repository
               run: |
-                  mkdir -p ~/ros2_ws/src/graphslam_ros2
-                  cp -rf . ~/ros2_ws/src/graphslam_ros2
+                  mkdir -p ~/ros2_ws/src/lidarslam_ros2
+                  cp -rf . ~/ros2_ws/src/lidarslam_ros2
             - name: Install g2o
               run: |
-                  cd ~/ros2_ws/src/graphslam_ros2/Thirdparty/g2o
+                  cd ~/ros2_ws/src/lidarslam_ros2/Thirdparty/g2o
                   mkdir -p build && cd build
                   cmake .. -DCMAKE_BUILD_TYPE=RELEASE
                   make -j 4

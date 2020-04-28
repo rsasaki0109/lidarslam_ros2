@@ -10,16 +10,15 @@ def generate_launch_description():
     main_param_dir = launch.substitutions.LaunchConfiguration(
         'main_param_dir',
         default=os.path.join(
-            get_package_share_directory('graphslam_main'),
+            get_package_share_directory('lidarslam'),
             'param',
-            'main.yaml'))
+            'lidarslam.yaml'))
 
     mapping = launch_ros.actions.Node(
         package='scanmatcher',
         node_executable='scanmatcher_node',
         parameters=[main_param_dir],
-        remappings=[('/input_cloud','/velodyne_points'),('/imu','/gpsimu_driver/imu_data')],
-        #remappings=[('/imu','/gpsimu_driver/imu_data')],# for imu debug
+        remappings=[('/input_cloud','/velodyne_points')],
         output='screen'
         )
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(graphslam_main)
+project(lidarslam)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -21,7 +21,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(scanmatcher REQUIRED)
 find_package(graph_based_slam REQUIRED)
-find_package(graphslam_ros2_msgs REQUIRED)
+find_package(lidarslam_msgs REQUIRED)
 find_package(ndt_omp_ros2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
@@ -55,11 +55,11 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-add_executable(graphslam_node
-src/main.cpp
+add_executable(lidarslam
+src/lidarslam.cpp
 )
 
-target_link_libraries(graphslam_node
+target_link_libraries(lidarslam
 ${PCL_LIBRARIES}
 g2o::core
 g2o::types_slam3d
@@ -67,11 +67,11 @@ g2o::types_slam3d_addons
 g2o::solver_eigen
 )
 
-ament_target_dependencies(graphslam_node
+ament_target_dependencies(lidarslam
   rclcpp
   scanmatcher
   graph_based_slam
-  graphslam_ros2_msgs
+  lidarslam_msgs
   ndt_omp_ros2
   )
 
@@ -81,7 +81,7 @@ install(
 )
 
 install(TARGETS 
-  graphslam_node
+  lidarslam
   DESTINATION lib/${PROJECT_NAME}
 )
 
