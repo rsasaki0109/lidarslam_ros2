@@ -117,6 +117,7 @@ namespace graphslam
         double threshold_loop_clousure_score_;
         double distance_loop_clousure_;
         double range_of_searching_loop_clousure_;
+        int search_submap_num_;
 
         bool initial_map_array_received_{false};
         bool is_map_array_updated_{false};

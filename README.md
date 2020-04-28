@@ -1,4 +1,4 @@
-lidarslam
+lidarslam_ros2
 ====
 ![CI](https://github.com/rsasaki0109/lidarslam_ros2/workflows/CI/badge.svg)  
 this is ros2 slam package of the frontend using gicp/ndt scan matching and the backend using graph-based slam. 
@@ -15,11 +15,11 @@ You need  [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-m
 
 clone
 ```
-git clone --recursive https://github.com/rsasaki0109/lidarslam
+git clone --recursive https://github.com/rsasaki0109/lidarslam_ros2
 ```
 g2o install
 ```
-cd lidarslam/Thirdparty/g2o/
+cd lidarslam_ros2/Thirdparty/g2o/
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=RELEASE 
 make -j 4
@@ -97,6 +97,7 @@ colcon build
 |threshold_loop_clousure_score|double|1.0| fitness score of ndt for loop clousure|
 |distance_loop_clousure|double|20.0| distance far from revisit candidates for loop clousure[m]|
 |range_of_searching_loop_clousure|double|20.0| range of sezrching revisit candidates for loop clousure[m]|
+|search_submap_num|int|2|the number of submap points before and after the revisit point used for registration.[m]|
 
 ## demo
 ### frontend and backend

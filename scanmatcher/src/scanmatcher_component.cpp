@@ -160,7 +160,7 @@ namespace graphslam
 
                 if (use_imu_) {
                   double received_time = msg->header.stamp.sec +
-                  msg->header.stamp.nanosec * 1e-9;
+                    msg->header.stamp.nanosec * 1e-9;
                   adjustDistortion(tmp_ptr, received_time);
                 }
 
