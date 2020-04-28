@@ -97,7 +97,7 @@ colcon build
 |threshold_loop_clousure_score|double|1.0| fitness score of ndt for loop clousure|
 |distance_loop_clousure|double|20.0| distance far from revisit candidates for loop clousure[m]|
 |range_of_searching_loop_clousure|double|20.0| range of sezrching revisit candidates for loop clousure[m]|
-|search_submap_num|int|2|the number of submap points before and after the revisit point used for registration.[m]|
+|search_submap_num|int|2|the number of submap points before and after the revisit point used for registration|
 
 ## demo
 ### frontend and backend
