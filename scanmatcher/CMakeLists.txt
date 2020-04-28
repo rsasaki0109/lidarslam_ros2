@@ -13,7 +13,7 @@ endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   #add_compile_options(-Wall -Wextra -Wpedantic)
-  add_compile_options(-Wextra -Wpedantic)
+  #add_compile_options(-Wextra -Wpedantic)
 endif()
 
 #SET(CMAKE_BUILD_TYPE "RELEASE")
@@ -31,7 +31,7 @@ find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(pcl_conversions REQUIRED)
-find_package(graphslam_ros2_msgs REQUIRED)
+find_package(lidarslam_msgs REQUIRED)
 find_package(ndt_omp_ros2 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(OpenMP)
@@ -62,7 +62,7 @@ ament_target_dependencies(scanmatcher_component
   geometry_msgs 
   sensor_msgs
   nav_msgs
-  graphslam_ros2_msgs
+  lidarslam_msgs
   ndt_omp_ros2
 )
 

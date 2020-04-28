@@ -57,7 +57,7 @@ extern "C" {
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <nav_msgs/msg/path.hpp>
 
-#include <graphslam_ros2_msgs/msg/map_array.hpp>
+#include <lidarslam_msgs/msg/map_array.hpp>
 
 #include <pclomp/ndt_omp.h>
 #include <pclomp/ndt_omp_impl.hpp>
@@ -68,7 +68,6 @@ extern "C" {
 
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <pcl/point_types.h>
 
 namespace graphslam
 {
@@ -92,7 +91,7 @@ namespace graphslam
         double trans_;
         double latest_distance_{0};
 
-        double previous_time_odom_{-1};
+        
         rclcpp::Time current_stamp_;
         Eigen::Vector3d rollpitchyaw_{0, 0, 0};
 
@@ -103,10 +102,10 @@ namespace graphslam
 
         geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
         pcl::PointCloud<pcl::PointXYZI> map_;
-        graphslam_ros2_msgs::msg::MapArray map_array_msg_;
+        lidarslam_msgs::msg::MapArray map_array_msg_;
         rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_pub_;
-        rclcpp::Publisher<graphslam_ros2_msgs::msg::MapArray>::SharedPtr map_array_pub_;
+        rclcpp::Publisher<lidarslam_msgs::msg::MapArray>::SharedPtr map_array_pub_;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
 
         void initializePubSub();
@@ -116,14 +115,60 @@ namespace graphslam
         void publishMapAndPose(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, Eigen::Matrix4f final_transformation, rclcpp::Time stamp);
         Eigen::Matrix4f getSimTrans(geometry_msgs::msg::PoseStamped pose_stamped);
 
+        void adjustDistortion(pcl::PointCloud<pcl::PointXYZI>::Ptr & cloud, double scan_time);
+        void odomUpdate(double scan_time);
+
         bool initial_pose_received_{false};
         bool initial_cloud_received_{false};
         double trans_for_mapupdate_;
         double vg_size_for_input_;
         double vg_size_for_map_;
+        double scan_min_range_{0.1};
+        double scan_max_range_{100.0};
 
+        bool set_initial_pose_{false};
         bool use_odom_{false};
         bool use_imu_{false};
+
+        // initial_pose
+        double initial_pose_x_;
+        double initial_pose_y_;
+        double initial_pose_z_;
+        double initial_pose_qx_;
+        double initial_pose_qy_;
+        double initial_pose_qz_;
+        double initial_pose_qw_;
+
+        // odom
+        double previous_time_odom_{-1};
+        nav_msgs::msg::Odometry odom_msg_;
+
+        // imu
+        double scan_period_{0.1};
+        static const int imu_que_length_{200};
+        int imu_ptr_front_{0}, imu_ptr_last_{-1}, imu_ptr_last_iter_{0};
+
+        std::array<double, imu_que_length_> imu_time_;
+        std::array<float, imu_que_length_> imu_roll_;
+        std::array<float, imu_que_length_> imu_pitch_;
+        std::array<float, imu_que_length_> imu_yaw_;
+
+        std::array<float, imu_que_length_> imu_acc_x_;
+        std::array<float, imu_que_length_> imu_acc_y_;
+        std::array<float, imu_que_length_> imu_acc_z_;
+        std::array<float, imu_que_length_> imu_velo_x_;
+        std::array<float, imu_que_length_> imu_velo_y_;
+        std::array<float, imu_que_length_> imu_velo_z_;
+        std::array<float, imu_que_length_> imu_shift_x_;
+        std::array<float, imu_que_length_> imu_shift_y_;
+        std::array<float, imu_que_length_> imu_shift_z_;
+
+        std::array<float, imu_que_length_> imu_angular_velo_x_;
+        std::array<float, imu_que_length_> imu_angular_velo_y_;
+        std::array<float, imu_que_length_> imu_angular_velo_z_;
+        std::array<float, imu_que_length_> imu_angular_rot_x_;
+        std::array<float, imu_que_length_> imu_angular_rot_y_;
+        std::array<float, imu_que_length_> imu_angular_rot_z_;
 
     };
 }

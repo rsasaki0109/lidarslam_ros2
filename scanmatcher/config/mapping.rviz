@@ -6,10 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Grid1
-        - /PointCloud21
-        - /Path1
-        - /Path2
       Splitter Ratio: 0.5
     Tree Height: 613
   - Class: rviz_common/Selection
@@ -29,7 +25,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 1
+      Cell Size: 10
       Class: rviz_default_plugins/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -58,12 +54,12 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 250
+      Max Intensity: 255
       Min Color: 0; 0; 0
-      Min Intensity: 0
+      Min Intensity: 4
       Name: PointCloud2
       Position Transformer: XYZ
       Queue Size: 10
@@ -75,7 +71,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -152,6 +148,36 @@ Visualization Manager:
       Topic: /modified_path
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 255
+      Min Color: 0; 0; 0
+      Min Intensity: 4
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic: /lslidar_point_cloud
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -178,25 +204,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 33.721988677978516
+      Distance: 93.62554931640625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.6865637302398682
-        Y: -1.6291261911392212
-        Z: 4.433873176574707
+        X: 0.2535023093223572
+        Y: -7.471435070037842
+        Z: 2.8620872497558594
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.16979750990867615
+      Pitch: 0.6497962474822998
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.6905122995376587
+      Yaw: 1.8005123138427734
     Saved: ~
 Window Geometry:
   Displays:
@@ -212,5 +238,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1201
-  X: 503
-  Y: 97
+  X: 600
+  Y: 91
