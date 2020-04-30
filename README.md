@@ -161,30 +161,6 @@ ros2 bag play -s rosbag_v2 sample_moriyama_150324.bag
 
 Yellow: without loopclosure
 
-- mobilerobot_mapping
- 
-demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
-```
-rviz2 -d src/lidarslam_ros2/scanmatcher/config/mapping.rviz 
-```
-
-```
-ros2 launch scanmatcher mapping_robot.launch.py
-```
-
-```
-ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0, w: 1}}}' --once
-```
-
-```
-ros2 bag play -s rosbag_v2 hdl_400.bag 
-```
-
-<img src="./scanmatcher/images/mapping_without_loopclosure.png" width="640px">
-
-Yellow: without loopclosure
-
-
 ## Used Libraries 
 
 - Eigen
