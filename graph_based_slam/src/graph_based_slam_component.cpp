@@ -49,6 +49,23 @@ namespace graphslam
 
         initializePubSub();
 
+        auto map_save_callback =
+        [this](const std::shared_ptr<rmw_request_id_t> request_header,
+            const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+            const std::shared_ptr<std_srvs::srv::Empty::Response> response) -> void
+        {
+            std::cout << "Received an request to save the map" << std::endl;
+            if (initial_map_array_received_ == false) {
+                std::cout << "initial map is not received" << std::endl;
+                return;
+            }
+
+            doPoseAdjustment(map_array_msg_);
+
+        };
+
+        map_save_srv_ = create_service<std_srvs::srv::Empty>("map_save", map_save_callback);
+
     }   
 
     void GraphBasedSlamComponent::initializePubSub(){
