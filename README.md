@@ -66,7 +66,14 @@ colcon build
 /modified_path  (nav_msgs/Path)   
 /modified_map  (sensor_msgs/PointCloud2)  
 
-,and  `pose_graph.g2o` and `map.pcd` are saved in loop closing.
+- srv  
+/map_save  (std_srvs/Empty)
+
+,and  `pose_graph.g2o` and `map.pcd` are saved in loop closing or using the following service call.
+
+```
+ros2 service call /map_save std_srvs/Empty
+```
 
 ## params
 
@@ -159,7 +166,7 @@ ros2 bag play -s rosbag_v2 sample_moriyama_150324.bag
 
 <img src="./scanmatcher/images/mapping.png" width="640px">
 
-Yellow: without loopclosure
+Yellow: path without loopclosure
 
 ## Used Libraries 
 

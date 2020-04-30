@@ -54,6 +54,7 @@ extern "C" {
 #include <geometry_msgs/msg/transform.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <nav_msgs/msg/path.hpp>
+#include <std_srvs/srv/empty.hpp>
 
 #include <lidarslam_msgs/msg/map_array.hpp>
 
@@ -107,6 +108,7 @@ namespace graphslam
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr modified_map_pub_;
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loop_candidate_map_pub_;
         rclcpp::TimerBase::SharedPtr loop_detect_timer_;
+        rclcpp::Service<std_srvs::srv::Empty>::SharedPtr map_save_srv_;
 
         void initializePubSub();
         void searchLoop();
