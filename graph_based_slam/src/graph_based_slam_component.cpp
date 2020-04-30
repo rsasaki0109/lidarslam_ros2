@@ -75,6 +75,8 @@ namespace graphslam
             
         modified_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("modified_map", rclcpp::SystemDefaultsQoS()); 
 
+        loop_candidate_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("loop_candidate_map", rclcpp::SystemDefaultsQoS()); 
+
         modified_map_array_pub_ = create_publisher<lidarslam_msgs::msg::MapArray>(
             "modified_map_array", rclcpp::SystemDefaultsQoS()); 
 
@@ -100,7 +102,6 @@ namespace graphslam
         int num_submaps = map_array_msg.submaps.size();
         std::cout << "num_submaps:" << num_submaps << std::endl;
 
-        //TODO:improvement
         double min_fitness_score = std::numeric_limits<double>::max();
         double distance_min_fitness_score = 0;
         bool is_candidate = false;
@@ -128,70 +129,61 @@ namespace graphslam
                 is_candidate = true;
 
                 pcl::PointCloud<pcl::PointXYZI>::Ptr submap_clouds_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-                for (int j = -search_submap_num_; j <= search_submap_num_; ++j)
-                {   
+                for (int j = -search_submap_num_; j <= search_submap_num_; ++j) {   
                     if (i + j < 0) continue;
                     auto near_submap = map_array_msg.submaps[i + j];
                     pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
                     pcl::fromROSMsg(near_submap.cloud, *submap_cloud_ptr);
-                    Eigen::Translation3f trans{
-                      near_submap.pose.position.x,
-                      near_submap.pose.position.y,
-                      near_submap.pose.position.z};
-                    Eigen::Matrix3f rot = Eigen::Matrix3f::Identity();
-                    Eigen::Affine3f affine = trans * rot;
-                    pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_submap_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-                    pcl::transformPointCloud(*submap_cloud_ptr, *transformed_submap_ptr, affine);
-                    *submap_clouds_ptr += *transformed_submap_ptr;
+                    *submap_clouds_ptr += *submap_cloud_ptr;
                 }
+
                 pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
                 voxelgrid_.setInputCloud(submap_clouds_ptr);
                 voxelgrid_.filter(*filtered_cloud_ptr);
                 ndt_.setInputTarget(filtered_cloud_ptr);
 
+                /* publish  loop_candidate_map*/
+                sensor_msgs::msg::PointCloud2::Ptr submap_clouds_msg_ptr(new sensor_msgs::msg::PointCloud2);
+                pcl::toROSMsg(*submap_clouds_ptr, *submap_clouds_msg_ptr);
+                submap_clouds_msg_ptr->header.frame_id = "map";
+                loop_candidate_map_pub_->publish(*submap_clouds_msg_ptr);
+
                 Eigen::Affine3d submap_affine;
                 tf2::fromMsg(submap.pose, submap_affine);
-
-                //Eigen::Matrix4f init_guess = (submap_affine.inverse() * latest_submap_affine).matrix().cast<float>();
 
                 pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
                 rclcpp::Clock system_clock;
                 rclcpp::Time time_align_start = system_clock.now();
-                //ndt_.align(*output_cloud_ptr, init_guess);
                 ndt_.align(*output_cloud_ptr);
                 rclcpp::Time time_align_end = system_clock.now();
                 auto aligned_time = time_align_end.seconds() - time_align_start.seconds();
 
                 double fitness_score = ndt_.getFitnessScore();
 
-                if(fitness_score < threshold_loop_clousure_score_){
-                    std::cout << "---"  << std::endl;
-                    std::cout << "do PoseAdjustment" << std::endl;
-                    std::cout << "distance:" << submap.distance << ",score:" << fitness_score << std::endl;
-                    std::cout << "id_loop_point 1:" << i << std::endl;
-                    std::cout << "id_loop_point 2:" << num_submaps -1 << std::endl;
-                    
+                if (fitness_score < threshold_loop_clousure_score_) {
+
+                    Eigen::Affine3d init_affine;
+                    tf2::fromMsg(latest_submap.pose, init_affine);
+                    Eigen::Matrix4f init_guess = init_affine.matrix().cast<float>();
                     Eigen::Matrix4d final_transformation = ndt_.getFinalTransformation().cast<double>();
-                    Eigen::Translation3d trans{final_transformation.block<3,1>(0, 3)};
-                    Eigen::Matrix3d rot{final_transformation.block<3,3>(0, 0)};
-
-                    std::cout << "final_transformation:" << std::endl << final_transformation << std::endl;
-
-                    Eigen::Isometry3d affine{(trans * -rot).matrix()};
-
+                    
                     LoopEdge loop_edge;
                     loop_edge.pair_id = std::pair<int, int>(i, num_submaps -1);
-                    loop_edge.relative_pose = Eigen::Isometry3d(-ndt_.getFinalTransformation().block<3,3>(0, 0).cast<double>());//better
-                    //loop_edge.relative_pose = Eigen::Isometry3d(-ndt_.getFinalTransformation().cast<double>());
-                    //loop_edge.relative_pose = affine;
+                    loop_edge.relative_pose = Eigen::Isometry3d(init_guess.cast<double>()).inverse() * Eigen::Isometry3d(final_transformation);
                     loop_edges_.push_back(loop_edge);
+
+                    std::cout << "---"  << std::endl;
+                    std::cout << "PoseAdjustment" << std::endl;
+                    std::cout << "distance:" << submap.distance << ",score:" << fitness_score << std::endl;
+                    std::cout << "id_loop_point 1:" << i << std::endl;
+                    std::cout << "id_loop_point 2:" << num_submaps -1 << std::endl; 
 
                     doPoseAdjustment(map_array_msg);
                     std::cout << "searchLoop end" << std::endl;
                     return;
                 }
 
-                if(fitness_score < min_fitness_score){
+                if (fitness_score < min_fitness_score) {
                     distance_min_fitness_score = submap.distance;
                     min_fitness_score = fitness_score;
                 }
@@ -201,13 +193,12 @@ namespace graphslam
             }
         }
 
-        if(is_candidate){
+        if (is_candidate) {
                 std::cout << "-"  << std::endl;
                 std::cout << "distance:" << distance_min_fitness_score << std::endl;
                 std::cout << "min_fitness_score:" << min_fitness_score << std::endl;
             }  
 
-        previous_submaps_num_ = num_submaps;
         std::cout << "searchLoop end" << std::endl;
 
     }
@@ -242,7 +233,6 @@ namespace graphslam
             optimizer.addVertex(vertex_se3);
 
             if (i > 0) {
-
                 Eigen::Isometry3d relative_pose = previous_pose.inverse() * pose;
     
                 g2o::EdgeSE3* edge_se3 = new g2o::EdgeSE3();
@@ -297,7 +287,7 @@ namespace graphslam
 
             pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
             pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-            pcl::fromROSMsg(map_array_msg.submaps[i].cloud,*cloud_ptr);
+            pcl::fromROSMsg(map_array_msg.submaps[i].cloud, *cloud_ptr);
             
             pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, previous_matrix.inverse());
             pcl::transformPointCloud(*transformed_cloud_ptr, *cloud_ptr, se3.matrix());

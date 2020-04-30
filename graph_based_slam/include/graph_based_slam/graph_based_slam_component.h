@@ -84,7 +84,6 @@ extern "C" {
 
 #include <mutex>
 
-
 namespace graphslam
 {
     class GraphBasedSlamComponent: public rclcpp::Node
@@ -106,6 +105,7 @@ namespace graphslam
         rclcpp::Publisher<lidarslam_msgs::msg::MapArray>::SharedPtr modified_map_array_pub_;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr modified_path_pub_;
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr modified_map_pub_;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loop_candidate_map_pub_;
         rclcpp::TimerBase::SharedPtr loop_detect_timer_;
 
         void initializePubSub();
@@ -124,8 +124,8 @@ namespace graphslam
         int previous_submaps_num_{0};
 
         struct LoopEdge {
-        std::pair<int, int> pair_id;
-        Eigen::Isometry3d relative_pose;
+          std::pair<int, int> pair_id;
+          Eigen::Isometry3d relative_pose;
         };
         std::vector<LoopEdge> loop_edges_;
 

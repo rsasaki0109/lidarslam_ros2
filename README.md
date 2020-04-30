@@ -1,14 +1,23 @@
 lidarslam_ros2
 ====
 ![CI](https://github.com/rsasaki0109/lidarslam_ros2/workflows/CI/badge.svg)  
-this is ros2 slam package of the frontend using gicp/ndt scan matching and the backend using graph-based slam. 
+ros2 slam package of the frontend using OpenMP-boosted gicp/ndt scan matching and the backend using graph-based slam. 
 
+mobile robot mapping  
 <img src="./lidarslam/images/mapping_with_loopclosure.png" width="640px">
 
-Green: with loopclosure, Yellow: without loopclosure
+Green: path with loopclosure, Yellow: path without loopclosure  
+(the grids in size of 10m × 10m)
 
-<img src="./lidarslam/images/map.png" width="640px">
+<img src="./lidarslam/images/map.png" width="640px"> 
 
+Red: map
+
+## summary
+
+`lidarslam_ros2` is a ROS2 package  of the frontend using  OpenMP-boosted gicp/ndt scan matching and the backend using graph-based slam.  
+I'm sure this package will work on my 4-core laptop with 16GB of memory.  
+(WIP)
 
 ## requirement to build
 You need  [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-matcher and g2o for graph-based-slam.  
@@ -54,7 +63,6 @@ colcon build
 - input  
 /map_array(lidarslam_msgs/MapArray)
 - output  
-/modified_map_array(lidarslam_msgs/MapArray)  
 /modified_path  (nav_msgs/Path)   
 /modified_map  (sensor_msgs/PointCloud2)  
 
@@ -75,6 +83,7 @@ colcon build
 |scan_max_range|double|100.0|max range of input cloud[m]|
 |scan_min_range|double|1.0|min range of input cloud[m]|
 |scan_periad|double|0.1|scan period of input cloud[sec]|
+|map_publish_period|int|10000|period of map publish[ms]|
 |set_initial_pose|bool|false|whether or not to set the default value in the param file|
 |initial_pose_x|double|0.0|x-coordinate of the initial pose value[m]|
 |initial_pose_y|double|0.0|y-coordinate of the initial pose value[m]|
@@ -85,6 +94,7 @@ colcon build
 |initial_pose_qw|double|1.0|Quaternion w of the initial pose value|
 |use_odom|bool|false|whether odom is used or not for initial attitude in point cloud registration|
 |use_imu|bool|false|whether 9-axis imu is used or not for point cloud distortion correction|
+|debug_flag|bool|false|Whether or not to display the registration information|
 
 
 - backend(graph-based-slam)
@@ -117,7 +127,7 @@ ros2 bag play -s rosbag_v2 hdl_400.bag
 
 <img src="./lidarslam/images/mapping_with_loopclosure.png" width="640px">
 
-Green: with loopclosure, Yellow: without loopclosure
+Green: path with loopclosure, Yellow: path without loopclosure
 
 <img src="./lidarslam/images/map.png" width="640px">
 
