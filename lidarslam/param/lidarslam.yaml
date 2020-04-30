@@ -9,6 +9,7 @@ scan_matcher:
     scan_min_range: 1.0
     scan_max_range: 200.0
     scan_period: 0.2
+    map_publish_period: 10000
     set_initial_pose: true
     initial_pose_x: 0.0
     initial_pose_y: 0.0
@@ -19,13 +20,14 @@ scan_matcher:
     initial_pose_qw: 1.0
     use_imu: true
     use_odom: false
+    debug_flag: false
 
 graph_based_slam:
     ros__parameters:
       ndt_resolution: 1.0
       voxel_leaf_size: 0.1
       loop_detection_period: 3000
-      threshold_loop_clousure_score: 0.5
+      threshold_loop_clousure_score: 1.0
       distance_loop_clousure: 100.0
       range_of_searching_loop_clousure: 20.0
       search_submap_num: 2
