@@ -86,7 +86,6 @@ namespace graphslam
 
     }
 
-    //TODO:speeding up
     void GraphBasedSlamComponent::searchLoop()
     {
 
@@ -142,7 +141,7 @@ namespace graphslam
                 voxelgrid_.filter(*filtered_cloud_ptr);
                 ndt_.setInputTarget(filtered_cloud_ptr);
 
-                /* publish  loop_candidate_map*/
+                /* publish  loop_candidate_map */
                 sensor_msgs::msg::PointCloud2::Ptr submap_clouds_msg_ptr(new sensor_msgs::msg::PointCloud2);
                 pcl::toROSMsg(*submap_clouds_ptr, *submap_clouds_msg_ptr);
                 submap_clouds_msg_ptr->header.frame_id = "map";
@@ -280,7 +279,7 @@ namespace graphslam
             Eigen::Quaterniond q_eig(rotation);
             geometry_msgs::msg::Quaternion quat = tf2::toMsg(q_eig); 
 
-            //map
+            // map
             Eigen::Affine3d affine;
             tf2::fromMsg(map_array_msg.submaps[i].pose, affine);
             Eigen::Matrix4f previous_matrix = affine.matrix().cast<float>();
@@ -289,10 +288,10 @@ namespace graphslam
             pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
             pcl::fromROSMsg(map_array_msg.submaps[i].cloud, *cloud_ptr);
             
-            pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, previous_matrix.inverse());
-            pcl::transformPointCloud(*transformed_cloud_ptr, *cloud_ptr, se3.matrix());
+            Eigen::Isometry3f isometry = Eigen::Isometry3f(previous_matrix).inverse() * Eigen::Isometry3f(se3);
+            pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, isometry.matrix());
             sensor_msgs::msg::PointCloud2::Ptr cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
-            pcl::toROSMsg(*cloud_ptr, *cloud_msg_ptr);
+            pcl::toROSMsg(*transformed_cloud_ptr, *cloud_msg_ptr);
             *map_ptr += *cloud_ptr;
             
             /* submap */
