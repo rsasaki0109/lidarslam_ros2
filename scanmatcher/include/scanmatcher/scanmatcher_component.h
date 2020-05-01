@@ -69,7 +69,6 @@ extern "C" {
 
 #include <pcl_conversions/pcl_conversions.h>
 
-
 namespace graphslam
 {
     class ScanMatcherComponent: public rclcpp::Node
@@ -110,9 +109,9 @@ namespace graphslam
         void publishMapAndPose(
           const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr,
           Eigen::Matrix4f final_transformation,
-          rclcpp::Time stamp);
-        Eigen::Matrix4f getTransformation(geometry_msgs::msg::PoseStamped pose_stamped);
-        void odomUpdate(const double scan_time);
+          rclcpp::Time stamp
+          );
+        Eigen::Matrix4f getTransformation(geometry_msgs::msg::Pose pose);
         void publishMap();
 
         bool initial_pose_received_{false};
@@ -146,8 +145,10 @@ namespace graphslam
         double initial_pose_qw_;
 
         // odom
-        double previous_time_odom_;
-        nav_msgs::msg::Odometry odom_msg_;
+        Eigen::Matrix4f previous_odom_position_{Eigen::Matrix4f::Identity()};
+        static const int odom_que_length_{200};
+        std::array<nav_msgs::msg::Odometry, odom_que_length_> odom_que_;
+        int odom_ptr_front_{0}, odom_ptr_last_{-1};
 
         // imu
         double scan_period_{0.1};

@@ -108,6 +108,9 @@ namespace graphslam
 
         if (initial_map_array_received_ == false) return;
         if (is_map_array_updated_ == false) return;
+        if (map_array_msg_.cloud_coordinate != map_array_msg_.GLOBAL) {
+            RCLCPP_WARN(get_logger(), "cloud_coordinate should be global, but it's not global.");
+        }
         is_map_array_updated_ = false;
 
         std::cout << "----------------------------" << std::endl;

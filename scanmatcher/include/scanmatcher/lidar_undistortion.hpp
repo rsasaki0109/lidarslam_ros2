@@ -41,7 +41,7 @@ public:
 
     Eigen::Matrix3f rot = quat.toRotationMatrix();
     acc = rot * acc;
-    angular_velo = rot * angular_velo;
+    //angular_velo = rot * angular_velo;
 
     int imu_ptr_back = (imu_ptr_last_ - 1 + imu_que_length_) % imu_que_length_;
     double time_diff = imu_time_[imu_ptr_last_] - imu_time_[imu_ptr_back];
