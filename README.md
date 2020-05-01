@@ -69,7 +69,7 @@ colcon build
 - srv  
 /map_save  (std_srvs/Empty)
 
-,and  `pose_graph.g2o` and `map.pcd` are saved in loop closing or using the following service call.
+`pose_graph.g2o` and `map.pcd` are saved in loop closing or using the following service call.
 
 ```
 ros2 service call /map_save std_srvs/Empty

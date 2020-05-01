@@ -99,6 +99,7 @@ namespace graphslam
 
         map_.header.frame_id = global_frame_id_;
         map_array_msg_.header.frame_id = global_frame_id_;
+        map_array_msg_.cloud_coordinate = map_array_msg_.GLOBAL;
 
         path_.header.frame_id = global_frame_id_;
 
@@ -192,7 +193,7 @@ namespace graphslam
 
                     initial_cloud_received_ = true;
 
-                    Eigen::Matrix4f sim_trans = getTransformation(corrent_pose_stamped_);
+                    Eigen::Matrix4f sim_trans = getTransformation(corrent_pose_stamped_.pose);
                     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
                     pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, sim_trans);
                     registration_->setInputTarget(transformed_cloud_ptr);
@@ -271,16 +272,35 @@ namespace graphslam
         voxelgrid_.filter(*filtered_cloud_ptr);
         registration_->setInputSource(filtered_cloud_ptr);
 
+        Eigen::Matrix4f sim_trans = getTransformation(corrent_pose_stamped_.pose);
+
         if (use_odom_) {
-          double current_time_odom = stamp.nanoseconds() * 1e-9;
-          odomUpdate(current_time_odom);
-          previous_time_odom_ = current_time_odom;
+
+          if (odom_ptr_last_ == -1) {
+            RCLCPP_WARN(get_logger(), "odom_msg is not received yet");
+            return;
+          }
+
+          int odom_ptr = odom_ptr_front_;
+          while (odom_ptr != odom_ptr_last_) {
+            rclcpp::Time odom_stamp =  odom_que_[odom_ptr].header.stamp;
+            if (odom_stamp.nanoseconds() > stamp.nanoseconds()) break;
+            odom_ptr = (odom_ptr + 1) % odom_que_length_;
+          }
+
+          Eigen::Matrix4f odom_position = getTransformation(odom_que_[odom_ptr].pose.pose);
+
+          if (previous_odom_position_ == Eigen::Matrix4f::Identity()) {
+            previous_odom_position_ = odom_position;
+          }
+
+          sim_trans = sim_trans * previous_odom_position_.inverse() * odom_position; 
+          odom_ptr_front_ = odom_ptr;
+          previous_odom_position_ = odom_position;
+             
         }
 
-        Eigen::Matrix4f sim_trans = getTransformation(corrent_pose_stamped_);
-
         pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZI>);
-
         rclcpp::Clock system_clock;
         rclcpp::Time time_align_start = system_clock.now();
         registration_->align(*output_cloud, sim_trans);
@@ -321,7 +341,7 @@ namespace graphslam
 
     void ScanMatcherComponent::publishMapAndPose(
         const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr, 
-        Eigen::Matrix4f final_transformation, rclcpp::Time stamp){
+        Eigen::Matrix4f final_transformation, rclcpp::Time stamp) {
         
         Eigen::Vector3d position;
         position.x() = static_cast<double>(final_transformation(0, 3));
@@ -353,8 +373,7 @@ namespace graphslam
         path_pub_->publish(path_);
 
         trans_ = (position - previous_position_).norm();  
-        if (trans_ >= trans_for_mapupdate_){
-            RCLCPP_INFO(get_logger(), "map update");
+        if (trans_ >= trans_for_mapupdate_) {
             previous_position_ = position;
 
             pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
@@ -388,14 +407,14 @@ namespace graphslam
         }
     }
 
-    Eigen::Matrix4f ScanMatcherComponent::getTransformation(geometry_msgs::msg::PoseStamped pose_stamped){
+    Eigen::Matrix4f ScanMatcherComponent::getTransformation(geometry_msgs::msg::Pose pose) {
         Eigen::Affine3d affine;
-        tf2::fromMsg(pose_stamped.pose, affine);
+        tf2::fromMsg(pose, affine);
         Eigen::Matrix4f sim_trans = affine.matrix().cast<float>();
         return sim_trans;
     }
 
-    void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu msg){
+    void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu msg) {
         if (!use_imu_) return;
 
         double roll, pitch, yaw;
@@ -415,52 +434,13 @@ namespace graphslam
 
     }
 
-    void ScanMatcherComponent::receiveOdom(const nav_msgs::msg::Odometry odom_msg){
+    void ScanMatcherComponent::receiveOdom(const nav_msgs::msg::Odometry odom_msg) {
         if (!use_odom_) return;
-        rclcpp::Time stamp = odom_msg.header.stamp;
-        double current_time_odom = stamp.nanoseconds() * 1e-9;
-        odomUpdate(current_time_odom);
-
-        previous_time_odom_ = current_time_odom;
-        odom_msg_ = odom_msg;
-
-        return;
-    }
-
-    void ScanMatcherComponent::odomUpdate(const double current_time)
-    {
-        double dt_odom = current_time - previous_time_odom_;
-        if (dt_odom > 1.0 /* [sec] */) {
-          RCLCPP_WARN(this->get_logger(), "odom time interval is too large: %f [sec]", dt_odom);
-          return;
+        odom_ptr_last_ = (odom_ptr_last_ + 1) % odom_que_length_;
+        odom_que_[odom_ptr_last_] = odom_msg;
+        if ((odom_ptr_last_ + 1) % odom_que_length_ == odom_ptr_front_) {
+            odom_ptr_front_ = (odom_ptr_front_ + 1) % odom_que_length_;
         }
-        if (dt_odom < 0.0 /* [sec] */) {
-          RCLCPP_WARN(this->get_logger(), "odom time interval is negative: %f [sec]", dt_odom);
-          return;
-        }
-
-        tf2::Quaternion previous_quat_tf;
-        double roll, pitch, yaw;
-        tf2::fromMsg(corrent_pose_stamped_.pose.orientation, previous_quat_tf);
-        tf2::Matrix3x3(previous_quat_tf).getRPY(roll, pitch, yaw);
-
-        roll += odom_msg_.twist.twist.angular.x * dt_odom;
-        pitch += odom_msg_.twist.twist.angular.y * dt_odom;
-        yaw += odom_msg_.twist.twist.angular.z * dt_odom;
-
-        Eigen::Quaterniond quat_eig = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
-                    * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
-                    * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
-        
-        geometry_msgs::msg::Quaternion quat_msg = tf2::toMsg(quat_eig);
-        
-        Eigen::Vector3d odom{odom_msg_.twist.twist.linear.x, odom_msg_.twist.twist.linear.y, odom_msg_.twist.twist.linear.z};
-        Eigen::Vector3d delta_position = quat_eig.matrix() * dt_odom * odom;
-
-        corrent_pose_stamped_.pose.position.x += delta_position.x();
-        corrent_pose_stamped_.pose.position.y += delta_position.y();
-        corrent_pose_stamped_.pose.position.z += delta_position.z();
-        corrent_pose_stamped_.pose.orientation = quat_msg;
     }
 
     void ScanMatcherComponent::publishMap() {
