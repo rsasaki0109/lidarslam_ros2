@@ -67,6 +67,10 @@ extern "C" {
 #include <pclomp/gicp_omp.h>
 #include <pclomp/gicp_omp_impl.hpp>
 
+#include <mutex>
+#include <boost/thread.hpp>
+#include <boost/thread/future.hpp>
+
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace graphslam
@@ -86,12 +90,20 @@ private:
   std::string global_frame_id_;
 
   pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
-  pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
 
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr input_cloud_sub_;
+
+  std::mutex mtx_;
+  pcl::PointCloud<pcl::PointXYZI> targeted_cloud_;
+  rclcpp::Time last_map_time_;
+  bool mapping_flag_{false};
+  bool is_map_updated_{false};
+  boost::thread mapping_thread_;
+  boost::packaged_task<void> mapping_task_;
+  boost::unique_future<void> mapping_future_;
 
   geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
   pcl::PointCloud<pcl::PointXYZI> map_;
@@ -101,7 +113,6 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_pub_;
   rclcpp::Publisher<lidarslam_msgs::msg::MapArray>::SharedPtr map_array_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
-  rclcpp::TimerBase::SharedPtr map_publish_timer_;
 
   void initializePubSub();
   void receiveCloud(
@@ -116,6 +127,11 @@ private:
   );
   Eigen::Matrix4f getTransformation(geometry_msgs::msg::Pose pose);
   void publishMap();
+  void updateMap(
+    const pcl::PointCloud<pcl::PointXYZI>::ConstPtr cloud_ptr,
+    Eigen::Matrix4f final_transformation,
+    geometry_msgs::msg::PoseStamped corrent_pose_stamped
+  );
 
   bool initial_pose_received_{false};
   bool initial_cloud_received_{false};
@@ -126,7 +142,7 @@ private:
   double vg_size_for_map_;
   double scan_min_range_{0.1};
   double scan_max_range_{100.0};
-  int map_publish_period_;
+  double map_publish_period_;
   int num_targeted_cloud_;
 
   bool set_initial_pose_{false};
