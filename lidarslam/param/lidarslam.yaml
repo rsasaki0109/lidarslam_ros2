@@ -9,7 +9,7 @@ scan_matcher:
     scan_min_range: 1.0
     scan_max_range: 200.0
     scan_period: 0.2
-    map_publish_period: 10000
+    map_publish_period: 15.0
     num_targeted_cloud: 10
     set_initial_pose: true
     initial_pose_x: 0.0
