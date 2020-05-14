@@ -10,6 +10,7 @@ scan_matcher:
     scan_max_range: 200.0
     scan_period: 0.2
     map_publish_period: 10000
+    num_targeted_cloud: 10
     set_initial_pose: true
     initial_pose_x: 0.0
     initial_pose_y: 0.0
@@ -18,7 +19,7 @@ scan_matcher:
     initial_pose_qy: 0.0
     initial_pose_qz: 0.0
     initial_pose_qw: 1.0
-    use_imu: true
+    use_imu: false
     use_odom: false
     debug_flag: false
 
