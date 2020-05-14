@@ -71,90 +71,94 @@ extern "C" {
 
 namespace graphslam
 {
-    class ScanMatcherComponent: public rclcpp::Node
-    {
-    public:
-        GS_SM_PUBLIC
-        explicit ScanMatcherComponent(const rclcpp::NodeOptions & options);
-    private:
-        rclcpp::Clock clock_;
-        tf2_ros::Buffer tfbuffer_;
-        tf2_ros::TransformListener listener_;
-        tf2_ros::TransformBroadcaster broadcaster_;
+class ScanMatcherComponent : public rclcpp::Node
+{
+public:
+  GS_SM_PUBLIC
+  explicit ScanMatcherComponent(const rclcpp::NodeOptions & options);
 
-        std::string global_frame_id_;
-        
-        pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
-        pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
+private:
+  rclcpp::Clock clock_;
+  tf2_ros::Buffer tfbuffer_;
+  tf2_ros::TransformListener listener_;
+  tf2_ros::TransformBroadcaster broadcaster_;
 
-        rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr initial_pose_sub_;
-        rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
-        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
-        rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr input_cloud_sub_;
+  std::string global_frame_id_;
 
-        geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
-        pcl::PointCloud<pcl::PointXYZI> map_;
-        lidarslam_msgs::msg::MapArray map_array_msg_;
-        nav_msgs::msg::Path path_;
-        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_pub_;
-        rclcpp::Publisher<lidarslam_msgs::msg::MapArray>::SharedPtr map_array_pub_;
-        rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
-        rclcpp::TimerBase::SharedPtr map_publish_timer_;
+  pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
+  pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
 
-        void initializePubSub();
-        void receiveCloud(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& input_cloud_ptr, rclcpp::Time stamp);
-        void receiveImu(const sensor_msgs::msg::Imu imu_msg);
-        void receiveOdom(const nav_msgs::msg::Odometry odom_msg);
-        void publishMapAndPose(
-          const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud_ptr,
-          Eigen::Matrix4f final_transformation,
-          rclcpp::Time stamp
-          );
-        Eigen::Matrix4f getTransformation(geometry_msgs::msg::Pose pose);
-        void publishMap();
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr initial_pose_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr input_cloud_sub_;
 
-        bool initial_pose_received_{false};
-        bool initial_cloud_received_{false};
+  geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
+  pcl::PointCloud<pcl::PointXYZI> map_;
+  lidarslam_msgs::msg::MapArray map_array_msg_;
+  nav_msgs::msg::Path path_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_pub_;
+  rclcpp::Publisher<lidarslam_msgs::msg::MapArray>::SharedPtr map_array_pub_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+  rclcpp::TimerBase::SharedPtr map_publish_timer_;
 
-        // setting parameter
-        double trans_for_mapupdate_;
-        double vg_size_for_input_;
-        double vg_size_for_map_;
-        double scan_min_range_{0.1};
-        double scan_max_range_{100.0};
-        int map_publish_period_;
-        
-        bool set_initial_pose_{false};
-        bool use_odom_{false};
-        bool use_imu_{false};
-        bool debug_flag_{false};
+  void initializePubSub();
+  void receiveCloud(
+    const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & input_cloud_ptr,
+    rclcpp::Time stamp);
+  void receiveImu(const sensor_msgs::msg::Imu imu_msg);
+  void receiveOdom(const nav_msgs::msg::Odometry odom_msg);
+  void publishMapAndPose(
+    const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & cloud_ptr,
+    Eigen::Matrix4f final_transformation,
+    rclcpp::Time stamp
+  );
+  Eigen::Matrix4f getTransformation(geometry_msgs::msg::Pose pose);
+  void publishMap();
 
-        // map 
-        Eigen::Vector3d previous_position_;
-        double trans_;
-        double latest_distance_{0};
-        
-        // initial_pose
-        double initial_pose_x_;
-        double initial_pose_y_;
-        double initial_pose_z_;
-        double initial_pose_qx_;
-        double initial_pose_qy_;
-        double initial_pose_qz_;
-        double initial_pose_qw_;
+  bool initial_pose_received_{false};
+  bool initial_cloud_received_{false};
 
-        // odom
-        Eigen::Matrix4f previous_odom_position_{Eigen::Matrix4f::Identity()};
-        static const int odom_que_length_{200};
-        std::array<nav_msgs::msg::Odometry, odom_que_length_> odom_que_;
-        int odom_ptr_front_{0}, odom_ptr_last_{-1};
+  // setting parameter
+  double trans_for_mapupdate_;
+  double vg_size_for_input_;
+  double vg_size_for_map_;
+  double scan_min_range_{0.1};
+  double scan_max_range_{100.0};
+  int map_publish_period_;
+  int num_targeted_cloud_;
 
-        // imu
-        double scan_period_{0.1};
-        LidarUndistortion lidar_undistortion_;
+  bool set_initial_pose_{false};
+  bool use_odom_{false};
+  bool use_imu_{false};
+  bool debug_flag_{false};
 
-    };
+  // map
+  Eigen::Vector3d previous_position_;
+  double trans_;
+  double latest_distance_{0};
+
+  // initial_pose
+  double initial_pose_x_;
+  double initial_pose_y_;
+  double initial_pose_z_;
+  double initial_pose_qx_;
+  double initial_pose_qy_;
+  double initial_pose_qz_;
+  double initial_pose_qw_;
+
+  // odom
+  Eigen::Matrix4f previous_odom_position_{Eigen::Matrix4f::Identity()};
+  static const int odom_que_length_{200};
+  std::array<nav_msgs::msg::Odometry, odom_que_length_> odom_que_;
+  int odom_ptr_front_{0}, odom_ptr_last_{-1};
+
+  // imu
+  double scan_period_{0.1};
+  LidarUndistortion lidar_undistortion_;
+
+};
 }
 
 #endif  //GS_SM_COMPONENT_H_INCLUDED

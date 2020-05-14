@@ -91,6 +91,8 @@ ros2 service call /map_save std_srvs/Empty
 |scan_min_range|double|1.0|min range of input cloud[m]|
 |scan_periad|double|0.1|scan period of input cloud[sec]|
 |map_publish_period|int|10000|period of map publish[ms]|
+|num_targeted_cloud|int|10|number of targeted cloud in registration|
+|debug_flag|bool|false|Whether or not to display the registration information|
 |set_initial_pose|bool|false|whether or not to set the default value in the param file|
 |initial_pose_x|double|0.0|x-coordinate of the initial pose value[m]|
 |initial_pose_y|double|0.0|y-coordinate of the initial pose value[m]|
