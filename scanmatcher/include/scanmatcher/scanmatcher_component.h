@@ -68,8 +68,8 @@ extern "C" {
 #include <pclomp/gicp_omp_impl.hpp>
 
 #include <mutex>
-#include <boost/thread.hpp>
-#include <boost/thread/future.hpp>
+#include <thread>
+#include <future>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -101,9 +101,9 @@ private:
   rclcpp::Time last_map_time_;
   bool mapping_flag_{false};
   bool is_map_updated_{false};
-  boost::thread mapping_thread_;
-  boost::packaged_task<void> mapping_task_;
-  boost::unique_future<void> mapping_future_;
+  std::thread mapping_thread_;
+  std::packaged_task<void()> mapping_task_;
+  std::future<void> mapping_future_;
 
   geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
   pcl::PointCloud<pcl::PointXYZI> map_;

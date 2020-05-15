@@ -276,14 +276,17 @@ void ScanMatcherComponent::receiveCloud(
   const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & cloud_ptr,
   rclcpp::Time stamp)
 {
-
-  if (mapping_flag_ && mapping_future_.has_value()) {
+  if (mapping_flag_ && mapping_future_.valid()) {
+    auto status = mapping_future_.wait_for(0s);
+    if  (status == std::future_status::ready) {
       if (is_map_updated_ == true) {
         pcl::PointCloud<pcl::PointXYZI>::Ptr targeted_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>(targeted_cloud_));
         registration_->setInputTarget(targeted_cloud_ptr);
         is_map_updated_ = false;
       }
       mapping_flag_ = false;
+      mapping_thread_.detach();
+    }
   }
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
@@ -399,9 +402,9 @@ void ScanMatcherComponent::publishMapAndPose(
     geometry_msgs::msg::PoseStamped corrent_pose_stamped;
     corrent_pose_stamped = corrent_pose_stamped_;
     previous_position_ = position;
-    mapping_task_ = boost::packaged_task<void>(boost::bind(&ScanMatcherComponent::updateMap, this, cloud_ptr, final_transformation, corrent_pose_stamped));
+    mapping_task_ = std::packaged_task<void()>(std::bind(&ScanMatcherComponent::updateMap, this, cloud_ptr, final_transformation, corrent_pose_stamped));
     mapping_future_ = mapping_task_.get_future();
-    mapping_thread_ = boost::thread(boost::move(boost::ref(mapping_task_)));
+    mapping_thread_ = std::thread(std::move(std::ref(mapping_task_)));
     mapping_flag_ = true;
   }
 }
