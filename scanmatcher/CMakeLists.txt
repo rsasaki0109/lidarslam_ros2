@@ -34,7 +34,6 @@ find_package(pcl_conversions REQUIRED)
 find_package(lidarslam_msgs REQUIRED)
 find_package(ndt_omp_ros2 REQUIRED)
 find_package(PCL REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenMP)
 
 if (OPENMP_FOUND)
