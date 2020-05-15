@@ -318,7 +318,6 @@ void ScanMatcherComponent::receiveCloud(
     sim_trans = sim_trans * previous_odom_position_.inverse() * odom_position;
     odom_ptr_front_ = odom_ptr;
     previous_odom_position_ = odom_position;
-
   }
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZI>);
@@ -453,6 +452,7 @@ void ScanMatcherComponent::updateMap(
     rclcpp::Time map_time = clock_.now();
     double dt = map_time.seconds() - last_map_time_.seconds();
     if (dt > map_publish_period_) publishMap();
+    last_map_time_ = map_time;
 }
 
 Eigen::Matrix4f ScanMatcherComponent::getTransformation(geometry_msgs::msg::Pose pose)
