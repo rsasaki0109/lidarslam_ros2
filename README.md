@@ -123,7 +123,7 @@ ros2 service call /map_save std_srvs/Empty
 demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 
 ```
-rviz2 -d src/lidarslam_ros2/scanmatcher/config/mapping.rviz 
+rviz2 -d src/lidarslam_ros2/lidarslam/rviz/mapping.rviz 
 ```
 
 ```
@@ -151,7 +151,7 @@ tar zxfv sample_moriyama_150324.tar.gz
 ```
 
 ```
-rviz2 -d src/lidarslam_ros2/scanmatcher/config/mapping.rviz 
+rviz2 -d src/lidarslam_ros2/scanmatcher/rviz/mapping.rviz 
 ```
 
 ```

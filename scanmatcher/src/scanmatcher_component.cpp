@@ -278,9 +278,10 @@ void ScanMatcherComponent::receiveCloud(
 {
   if (mapping_flag_ && mapping_future_.valid()) {
     auto status = mapping_future_.wait_for(0s);
-    if  (status == std::future_status::ready) {
+    if (status == std::future_status::ready) {
       if (is_map_updated_ == true) {
-        pcl::PointCloud<pcl::PointXYZI>::Ptr targeted_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>(targeted_cloud_));
+        pcl::PointCloud<pcl::PointXYZI>::Ptr targeted_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>(
+            targeted_cloud_));
         registration_->setInputTarget(targeted_cloud_ptr);
         is_map_updated_ = false;
       }
@@ -402,7 +403,9 @@ void ScanMatcherComponent::publishMapAndPose(
     geometry_msgs::msg::PoseStamped corrent_pose_stamped;
     corrent_pose_stamped = corrent_pose_stamped_;
     previous_position_ = position;
-    mapping_task_ = std::packaged_task<void()>(std::bind(&ScanMatcherComponent::updateMap, this, cloud_ptr, final_transformation, corrent_pose_stamped));
+    mapping_task_ =
+      std::packaged_task<void()>(std::bind(&ScanMatcherComponent::updateMap, this, cloud_ptr,
+        final_transformation, corrent_pose_stamped));
     mapping_future_ = mapping_task_.get_future();
     mapping_thread_ = std::thread(std::move(std::ref(mapping_task_)));
     mapping_flag_ = true;
@@ -413,49 +416,51 @@ void ScanMatcherComponent::updateMap(
   const pcl::PointCloud<pcl::PointXYZI>::ConstPtr cloud_ptr,
   Eigen::Matrix4f final_transformation, geometry_msgs::msg::PoseStamped corrent_pose_stamped)
 {
+  pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
+  voxel_grid.setLeafSize(vg_size_for_map_, vg_size_for_map_, vg_size_for_map_);
+  voxel_grid.setInputCloud(cloud_ptr);
+  voxel_grid.filter(*tmp_ptr);
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::transformPointCloud(*tmp_ptr, *transformed_cloud_ptr, final_transformation);
+
+  map_ += *transformed_cloud_ptr;
+
+  targeted_cloud_.clear();
+  targeted_cloud_ += *transformed_cloud_ptr;
+  int num_submaps = map_array_msg_.submaps.size();
+  for (int i = 0; i < num_targeted_cloud_ - 1; i++) {
+    if (num_submaps - 1 - i < 0) {continue;}
     pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-    pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
-    voxel_grid.setLeafSize(vg_size_for_map_, vg_size_for_map_, vg_size_for_map_);
-    voxel_grid.setInputCloud(cloud_ptr);
-    voxel_grid.filter(*tmp_ptr);
+    pcl::fromROSMsg(map_array_msg_.submaps[num_submaps - 1 - i].cloud, *tmp_ptr);
+    targeted_cloud_ += *tmp_ptr;
+  }
 
-    pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-    pcl::transformPointCloud(*tmp_ptr, *transformed_cloud_ptr, final_transformation);
+  /* map array */
+  sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
+  pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
 
-    map_ += *transformed_cloud_ptr;
+  lidarslam_msgs::msg::SubMap submap;
+  submap.header.frame_id = global_frame_id_;
+  submap.header.stamp = corrent_pose_stamped.header.stamp;
+  latest_distance_ += trans_;
+  submap.distance = latest_distance_;
+  submap.pose = corrent_pose_stamped.pose;
+  submap.cloud = *transformed_cloud_msg_ptr;
+  submap.cloud.header.frame_id = global_frame_id_;
+  map_array_msg_.header.stamp = corrent_pose_stamped.header.stamp;
+  map_array_msg_.submaps.push_back(submap);
+  map_array_pub_->publish(map_array_msg_);
 
-    targeted_cloud_.clear();
-    targeted_cloud_ += *transformed_cloud_ptr;
-    int num_submaps = map_array_msg_.submaps.size();
-    for (int i = 0; i < num_targeted_cloud_ - 1; i++) {
-      if (num_submaps - 1 - i < 0) {continue;}
-      pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-      pcl::fromROSMsg(map_array_msg_.submaps[num_submaps - 1 - i].cloud, *tmp_ptr);
-      targeted_cloud_ += *tmp_ptr;
-    }
+  is_map_updated_ = true;
 
-    /* map array */
-    sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
-    pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
-
-    lidarslam_msgs::msg::SubMap submap;
-    submap.header.frame_id = global_frame_id_;
-    submap.header.stamp = corrent_pose_stamped.header.stamp;
-    latest_distance_ += trans_;
-    submap.distance = latest_distance_;
-    submap.pose = corrent_pose_stamped.pose;
-    submap.cloud = *transformed_cloud_msg_ptr;
-    submap.cloud.header.frame_id = global_frame_id_;
-    map_array_msg_.header.stamp = corrent_pose_stamped.header.stamp;
-    map_array_msg_.submaps.push_back(submap);
-    map_array_pub_->publish(map_array_msg_);
-
-    is_map_updated_ = true;
-
-    rclcpp::Time map_time = clock_.now();
-    double dt = map_time.seconds() - last_map_time_.seconds();
-    if (dt > map_publish_period_) publishMap();
+  rclcpp::Time map_time = clock_.now();
+  double dt = map_time.seconds() - last_map_time_.seconds();
+  if (dt > map_publish_period_) {
+    publishMap();
     last_map_time_ = map_time;
+  }
 }
 
 Eigen::Matrix4f ScanMatcherComponent::getTransformation(geometry_msgs::msg::Pose pose)
@@ -501,6 +506,7 @@ void ScanMatcherComponent::receiveOdom(const nav_msgs::msg::Odometry odom_msg)
 
 void ScanMatcherComponent::publishMap()
 {
+  RCLCPP_INFO(get_logger(), "publish a map");
   pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map_));
   sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);
