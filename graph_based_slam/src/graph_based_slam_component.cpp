@@ -17,11 +17,14 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   RCLCPP_INFO(get_logger(), "initialization start");
   double voxel_leaf_size;
   double ndt_resolution;
+  int ndt_num_threads;
 
   declare_parameter("voxel_leaf_size", 0.2);
   get_parameter("voxel_leaf_size", voxel_leaf_size);
   declare_parameter("ndt_resolution", 5.0);
   get_parameter("ndt_resolution", ndt_resolution);
+  declare_parameter("ndt_num_threads", 0);
+  get_parameter("ndt_num_threads", ndt_num_threads);
   declare_parameter("loop_detection_period", 1000);
   get_parameter("loop_detection_period", loop_detection_period_);
   declare_parameter("threshold_loop_clousure_score", 1.0);
@@ -35,6 +38,7 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
 
   std::cout << "voxel_leaf_size[m]:" << voxel_leaf_size << std::endl;
   std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;
+  std::cout << "ndt_num_threads:" << ndt_num_threads << std::endl;
   std::cout << "loop_detection_period[Hz]:" << loop_detection_period_ << std::endl;
   std::cout << "threshold_loop_clousure_score:" << threshold_loop_clousure_score_ << std::endl;
   std::cout << "distance_loop_clousure[m]:" << distance_loop_clousure_ << std::endl;
@@ -47,6 +51,8 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
 
   ndt_.setResolution(ndt_resolution);
   ndt_.setTransformationEpsilon(0.01);
+  ndt_.setNeighborhoodSearchMethod(pclomp::DIRECT7);
+  if (ndt_num_threads > 0) {ndt_.setNumThreads(ndt_num_threads);}
 
   initializePubSub();
 

@@ -111,6 +111,7 @@ ros2 service call /map_save std_srvs/Empty
 |Name|Type|Default value|Description|
 |---|---|---|---|
 |ndt_resolution|double|5.0|resolution size of voxels[m]|
+|ndt_num_threads|int|0|threads using ndt(if `0` is set, maximum alloawble threads are used.)|
 |voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
 |loop_detection_period|int|1000|period of serching loop detection[ms]|
 |threshold_loop_clousure_score|double|1.0| fitness score of ndt for loop clousure|
