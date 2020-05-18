@@ -2,7 +2,7 @@ scan_matcher:
   ros__parameters:
     registration_method: "NDT"
     ndt_resolution: 2.0
-    ndt_num_threads: 0
+    ndt_num_threads: 2
     trans_for_mapupdate: 1.5
     vg_size_for_input: 0.5
     vg_size_for_map: 0.1
@@ -27,6 +27,7 @@ graph_based_slam:
     ros__parameters:
       ndt_resolution: 1.0
       voxel_leaf_size: 0.1
+      ndt_num_threads: 2
       loop_detection_period: 3000
       threshold_loop_clousure_score: 0.7
       distance_loop_clousure: 100.0
