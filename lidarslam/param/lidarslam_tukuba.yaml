@@ -2,15 +2,15 @@ scan_matcher:
   ros__parameters:
     registration_method: "NDT"
     ndt_resolution: 2.0
-    ndt_num_threads: 2
-    trans_for_mapupdate: 1.5
-    vg_size_for_input: 0.5
+    ndt_num_threads: 1
+    trans_for_mapupdate: 2.0
+    vg_size_for_input: 1.0
     vg_size_for_map: 0.1
     scan_min_range: 1.0
-    scan_max_range: 200.0
+    scan_max_range: 100.0
     scan_period: 0.2
-    map_publish_period: 15.0
-    num_targeted_cloud: 20
+    map_publish_period: 1000.0
+    num_targeted_cloud: 30
     set_initial_pose: true
     initial_pose_x: 0.0
     initial_pose_y: 0.0
@@ -25,13 +25,13 @@ scan_matcher:
 
 graph_based_slam:
     ros__parameters:
-      ndt_resolution: 1.0
-      ndt_num_threads: 2
-      voxel_leaf_size: 0.1
-      loop_detection_period: 3000
-      threshold_loop_clousure_score: 0.7
+      ndt_resolution: 5.0
+      ndt_num_threads: 1
+      voxel_leaf_size: 0.2
+      loop_detection_period: 5000
+      threshold_loop_clousure_score: 2.5
       distance_loop_clousure: 100.0
       range_of_searching_loop_clousure: 20.0
-      search_submap_num: 2
+      search_submap_num: 4
       use_save_map_in_loop: true
 

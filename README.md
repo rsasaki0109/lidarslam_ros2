@@ -4,19 +4,19 @@ lidarslam_ros2
 ros2 slam package of the frontend using OpenMP-boosted gicp/ndt scan matching and the backend using graph-based slam. 
 
 mobile robot mapping  
-<img src="./lidarslam/images/mapping_with_loopclosure.png" width="640px">
+<img src="./lidarslam/images/path_tukuba.png" width="640px">
 
-Green: path with loopclosure, Yellow: path without loopclosure  
-(the grids in size of 10m × 10m)
+Green: path with loopclosure  
+(the 25x25 grids in size of 10m × 10m)
 
-<img src="./lidarslam/images/map.png" width="640px"> 
+<img src="./lidarslam/images/map_tukuba.png" width="640px"> 
 
 Red: map
 
 ## summary
 
 `lidarslam_ros2` is a ROS2 package  of the frontend using  OpenMP-boosted gicp/ndt scan matching and the backend using graph-based slam.  
-I've found that a 4-core laptop with 16GB of memory will work with this package as well.  
+I found that even a four-core laptop with 16GB of memory could work in outdoor environments for several kilometers with only 16 line LiDAR.  
 (WIP)
 
 ## requirement to build
@@ -46,9 +46,9 @@ colcon build
 
 ### frontend(scan-matcher) 
 - input  
-/initial_pose  (geometry_msgs/PoseStamed)  
 /input_cloud  (sensor_msgs/PointCloud2)  
 /tf(from "base_link" to LiDAR's frame)  
+/initial_pose  (geometry_msgs/PoseStamed)(optional)  
 /imu  (sensor_msgs/Imu)(optional)  
 /odom  (nav_msgs/Odometry)(optional)  
 
@@ -83,7 +83,7 @@ ros2 service call /map_save std_srvs/Empty
 |---|---|---|---|
 |registration_method|string|"NDT"|"NDT" or "GICP"|
 |ndt_resolution|double|5.0|resolution size of voxels[m]|
-|ndt_num_threads|int|0|threads using ndt(if `0` is set, maximum alloawble threads are used.)|
+|ndt_num_threads|int|0|threads using ndt(if `0` is set, maximum alloawble threads are used.)(The higher the number, the better, but reduce it if the CPU processing is too large to estimate its own position.)|
 |trans_for_mapupdate|double|1.5|moving distance of map update[m]|
 |vg_size_for_input|double|0.2|down sample size of input cloud[m]|
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
@@ -91,9 +91,9 @@ ros2 service call /map_save std_srvs/Empty
 |scan_min_range|double|1.0|min range of input cloud[m]|
 |scan_periad|double|0.1|scan period of input cloud[sec]|
 |map_publish_period|double|15.0|period of map publish[sec]|
-|num_targeted_cloud|int|10|number of targeted cloud in registration|
+|num_targeted_cloud|int|10|number of targeted cloud in registration(The higher this number,  the less distortion.)|
 |debug_flag|bool|false|Whether or not to display the registration information|
-|set_initial_pose|bool|false|whether or not to set the default value in the param file|
+|set_initial_pose|bool|false|whether or not to set the default pose value in the param file|
 |initial_pose_x|double|0.0|x-coordinate of the initial pose value[m]|
 |initial_pose_y|double|0.0|y-coordinate of the initial pose value[m]|
 |initial_pose_z|double|0.0|z-coordinate of the initial pose value[m]|
@@ -116,13 +116,14 @@ ros2 service call /map_save std_srvs/Empty
 |loop_detection_period|int|1000|period of serching loop detection[ms]|
 |threshold_loop_clousure_score|double|1.0| fitness score of ndt for loop clousure|
 |distance_loop_clousure|double|20.0| distance far from revisit candidates for loop clousure[m]|
-|range_of_searching_loop_clousure|double|20.0| range of sezrching revisit candidates for loop clousure[m]|
+|range_of_searching_loop_clousure|double|20.0|search radius for candidate points from the present for loop closure[m]|
 |search_submap_num|int|2|the number of submap points before and after the revisit point used for registration|
+|use_save_map_in_loop|bool|true|Whether to save the map when loop close(If the map saving process in loop close is too heavy and the self-position estimation fails, set this to `false`.)|
 
 ## demo
-### frontend and backend
-demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
-
+### trial environment
+demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)  
+The Velodyne VLP-32 was used in this data.
 ```
 rviz2 -d src/lidarslam_ros2/lidarslam/rviz/mapping.rviz 
 ```
@@ -135,41 +136,38 @@ ros2 launch lidarslam lidarslam.launch.py
 ros2 bag play -s rosbag_v2 hdl_400.bag 
 ```
 
-<img src="./lidarslam/images/mapping_with_loopclosure.png" width="640px">
+<img src="./lidarslam/images/path.png" width="640px">
 
 Green: path with loopclosure, Yellow: path without loopclosure
 
 <img src="./lidarslam/images/map.png" width="640px">
 
-### frontend only
-- car_mapping
+### The larger environment
 
-demo data(ROS1) by Autoware Foundation
+demo data(ROS1) by Autoware Foundation  
+https://data.tier4.jp/rosbag_details/?id=212  
+The Velodyne VLP-16 was used in this data.
 
-```
-wget http://db3.ertl.jp/autoware/sample_data/sample_moriyama_150324.tar.gz
-tar zxfv sample_moriyama_150324.tar.gz
-```
 
 ```
-rviz2 -d src/lidarslam_ros2/scanmatcher/rviz/mapping.rviz 
+rviz2 -d src/lidarslam_ros2/lidarslam/rviz/mapping_tukuba.rviz 
 ```
 
 ```
-ros2 launch scanmatcher mapping_car.launch.py
+ros2 launch lidarslam lidarslam_tukuba.launch.py
 ```
 
 ```
-ros2 topic pub initial_pose geometry_msgs/PoseStamped '{header: {frame_id: "map"}, pose: {position: {x: 0, y: 0}, orientation: {z: 0, w: 1}}}' --once
+ros2 bag play -s rosbag_v2 tc_2017-10-15-15-34-02_free_download.bag 
 ```
 
-```
-ros2 bag play -s rosbag_v2 sample_moriyama_150324.bag 
-```
+<img src="./lidarslam/images/path_tukuba.png" width="640px">  
 
-<img src="./scanmatcher/images/mapping.png" width="640px">
+Green: path  
 
-Yellow: path without loopclosure
+<img src="./lidarslam/images/map_tukuba.png" width="640px">  
+
+Red: map
 
 ## Used Libraries 
 

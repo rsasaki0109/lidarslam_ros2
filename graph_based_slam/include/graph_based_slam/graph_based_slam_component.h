@@ -113,7 +113,7 @@ private:
 
   void initializePubSub();
   void searchLoop();
-  void doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg);
+  void doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg, bool do_save_map);
   void publishMapAndPose();
 
   int loop_detection_period_;
@@ -121,6 +121,7 @@ private:
   double distance_loop_clousure_;
   double range_of_searching_loop_clousure_;
   int search_submap_num_;
+  bool use_save_map_in_loop_{true};
 
   bool initial_map_array_received_{false};
   bool is_map_array_updated_{false};

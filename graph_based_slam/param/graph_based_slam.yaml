@@ -1,6 +1,0 @@
-graph_based_slam:
-    ros__parameters:
-      ndt_resolution: 5.0
-      voxel_leaf_size: 0.2
-      threshold_loop_clousure: 1.0
-      distance_loop_clousure: 4.5

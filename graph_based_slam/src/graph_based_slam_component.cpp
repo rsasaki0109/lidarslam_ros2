@@ -35,6 +35,8 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   get_parameter("range_of_searching_loop_clousure", range_of_searching_loop_clousure_);
   declare_parameter("search_submap_num", 3);
   get_parameter("search_submap_num", search_submap_num_);
+  declare_parameter("use_save_map_in_loop", true);
+  get_parameter("use_save_map_in_loop", use_save_map_in_loop_);
 
   std::cout << "voxel_leaf_size[m]:" << voxel_leaf_size << std::endl;
   std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;
@@ -45,6 +47,7 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   std::cout << "range_of_searching_loop_clousure[m]:" << range_of_searching_loop_clousure_ <<
     std::endl;
   std::cout << "search_submap_num:" << search_submap_num_ << std::endl;
+  std::cout << "use_save_map_in_loop:" << std::boolalpha << use_save_map_in_loop_ << std::endl;
   std::cout << "------------------" << std::endl;
 
   voxelgrid_.setLeafSize(voxel_leaf_size, voxel_leaf_size, voxel_leaf_size);
@@ -66,9 +69,7 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
         std::cout << "initial map is not received" << std::endl;
         return;
       }
-
-      doPoseAdjustment(map_array_msg_);
-
+      doPoseAdjustment(map_array_msg_, true);
     };
 
   map_save_srv_ = create_service<std_srvs::srv::Empty>("map_save", map_save_callback);
@@ -172,25 +173,16 @@ void GraphBasedSlamComponent::searchLoop()
       voxelgrid_.filter(*filtered_cloud_ptr);
       ndt_.setInputTarget(filtered_cloud_ptr);
 
-      /* publish  loop_candidate_map */
-      sensor_msgs::msg::PointCloud2::SharedPtr submap_clouds_msg_ptr(
-        new sensor_msgs::msg::PointCloud2);
-      pcl::toROSMsg(*submap_clouds_ptr, *submap_clouds_msg_ptr);
-      submap_clouds_msg_ptr->header.frame_id = "map";
-      loop_candidate_map_pub_->publish(*submap_clouds_msg_ptr);
-
-      Eigen::Affine3d submap_affine;
-      tf2::fromMsg(submap.pose, submap_affine);
-
       pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
       ndt_.align(*output_cloud_ptr);
-
       double fitness_score = ndt_.getFitnessScore();
 
       if (fitness_score < threshold_loop_clousure_score_) {
 
         Eigen::Affine3d init_affine;
         tf2::fromMsg(latest_submap.pose, init_affine);
+        Eigen::Affine3d submap_affine;
+        tf2::fromMsg(submap.pose, submap_affine);
 
         LoopEdge loop_edge;
         loop_edge.pair_id = std::pair<int, int>(i, num_submaps - 1);
@@ -205,7 +197,7 @@ void GraphBasedSlamComponent::searchLoop()
         std::cout << "distance:" << submap.distance << ",score:" << fitness_score << std::endl;
         std::cout << "id_loop_point 1:" << i << std::endl;
         std::cout << "id_loop_point 2:" << num_submaps - 1 << std::endl;
-        doPoseAdjustment(map_array_msg);
+        doPoseAdjustment(map_array_msg, use_save_map_in_loop_);
         std::cout << "searchLoop end" << std::endl;
         return;
       }
@@ -230,7 +222,7 @@ void GraphBasedSlamComponent::searchLoop()
 
 }
 
-void GraphBasedSlamComponent::doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg)
+void GraphBasedSlamComponent::doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg, bool do_save_map)
 {
 
   g2o::SparseOptimizer optimizer;
@@ -289,6 +281,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(lidarslam_msgs::msg::MapArray map
   optimizer.save("pose_graph.g2o");
 
   /* modified_map publish */
+  std::cout << "modified_map publish" << std::endl;
   lidarslam_msgs::msg::MapArray modified_map_array_msg;
   modified_map_array_msg.header = map_array_msg.header;
   nav_msgs::msg::Path path;
@@ -348,7 +341,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(lidarslam_msgs::msg::MapArray map
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);
   map_msg_ptr->header.frame_id = "map";
   modified_map_pub_->publish(*map_msg_ptr);
-  pcl::io::savePCDFileASCII("map.pcd", *map_ptr);
+  if(do_save_map) {pcl::io::savePCDFileASCII("map.pcd", *map_ptr);}
 
 }
 
