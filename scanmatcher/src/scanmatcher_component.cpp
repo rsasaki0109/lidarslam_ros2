@@ -165,21 +165,21 @@ void ScanMatcherComponent::initializePubSub()
     [this](const typename sensor_msgs::msg::PointCloud2::SharedPtr msg) -> void
     {
       if (initial_pose_received_) {
-        sensor_msgs::msg::PointCloud2 transformerd_msg;
+        sensor_msgs::msg::PointCloud2 transformed_msg;
         try {
           tf2::TimePoint time_point = tf2::TimePoint(
             std::chrono::seconds(msg->header.stamp.sec) +
             std::chrono::nanoseconds(msg->header.stamp.nanosec));
           const geometry_msgs::msg::TransformStamped transform = tfbuffer_.lookupTransform(
             robot_frame_id_, msg->header.frame_id, time_point);
-          tf2::doTransform(*msg, transformerd_msg, transform); // TODO:slow now(https://github.com/ros/geometry2/pull/432)
+          tf2::doTransform(*msg, transformed_msg, transform); // TODO:slow now(https://github.com/ros/geometry2/pull/432)
         } catch (tf2::TransformException & e) {
           RCLCPP_ERROR(this->get_logger(), "%s", e.what());
           return;
         }
 
         pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-        pcl::fromROSMsg(transformerd_msg, *tmp_ptr);
+        pcl::fromROSMsg(transformed_msg, *tmp_ptr);
 
         if (use_imu_) {
           double scan_time = msg->header.stamp.sec +

@@ -82,14 +82,14 @@ ros2 service call /map_save std_srvs/Empty
 |Name|Type|Default value|Description|
 |---|---|---|---|
 |registration_method|string|"NDT"|"NDT" or "GICP"|
-|ndt_resolution|double|5.0|resolution size of voxels[m]|
+|ndt_resolution|double|5.0|resolution size of voxel[m]|
 |ndt_num_threads|int|0|threads using ndt(if `0` is set, maximum alloawble threads are used.)(The higher the number, the better, but reduce it if the CPU processing is too large to estimate its own position.)|
 |trans_for_mapupdate|double|1.5|moving distance of map update[m]|
 |vg_size_for_input|double|0.2|down sample size of input cloud[m]|
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
 |scan_max_range|double|100.0|max range of input cloud[m]|
 |scan_min_range|double|1.0|min range of input cloud[m]|
-|scan_periad|double|0.1|scan period of input cloud[sec]|
+|scan_period|double|0.1|scan period of input cloud[sec]|
 |map_publish_period|double|15.0|period of map publish[sec]|
 |num_targeted_cloud|int|10|number of targeted cloud in registration(The higher this number,  the less distortion.)|
 |debug_flag|bool|false|Whether or not to display the registration information|
@@ -110,13 +110,13 @@ ros2 service call /map_save std_srvs/Empty
 
 |Name|Type|Default value|Description|
 |---|---|---|---|
-|ndt_resolution|double|5.0|resolution size of voxels[m]|
+|ndt_resolution|double|5.0|resolution size of voxel[m]|
 |ndt_num_threads|int|0|threads using ndt(if `0` is set, maximum alloawble threads are used.)|
 |voxel_leaf_size|double|0.2|down sample size of input cloud[m]|
-|loop_detection_period|int|1000|period of serching loop detection[ms]|
-|threshold_loop_clousure_score|double|1.0| fitness score of ndt for loop clousure|
-|distance_loop_clousure|double|20.0| distance far from revisit candidates for loop clousure[m]|
-|range_of_searching_loop_clousure|double|20.0|search radius for candidate points from the present for loop closure[m]|
+|loop_detection_period|int|1000|period of searching loop detection[ms]|
+|threshold_loop_closure_score|double|1.0| fitness score of ndt for loop clousure|
+|distance_loop_closure|double|20.0| distance far from revisit candidates for loop clousure[m]|
+|range_of_searching_loop_closure|double|20.0|search radius for candidate points from the present for loop closure[m]|
 |search_submap_num|int|2|the number of submap points before and after the revisit point used for registration|
 |use_save_map_in_loop|bool|true|Whether to save the map when loop close(If the map saving process in loop close is too heavy and the self-position estimation fails, set this to `false`.)|
 

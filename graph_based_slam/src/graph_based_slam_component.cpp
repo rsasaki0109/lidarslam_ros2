@@ -27,12 +27,12 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   get_parameter("ndt_num_threads", ndt_num_threads);
   declare_parameter("loop_detection_period", 1000);
   get_parameter("loop_detection_period", loop_detection_period_);
-  declare_parameter("threshold_loop_clousure_score", 1.0);
-  get_parameter("threshold_loop_clousure_score", threshold_loop_clousure_score_);
-  declare_parameter("distance_loop_clousure", 20.0);
-  get_parameter("distance_loop_clousure", distance_loop_clousure_);
-  declare_parameter("range_of_searching_loop_clousure", 20.0);
-  get_parameter("range_of_searching_loop_clousure", range_of_searching_loop_clousure_);
+  declare_parameter("threshold_loop_closure_score", 1.0);
+  get_parameter("threshold_loop_closure_score", threshold_loop_closure_score_);
+  declare_parameter("distance_loop_closure", 20.0);
+  get_parameter("distance_loop_closure", distance_loop_closure_);
+  declare_parameter("range_of_searching_loop_closure", 20.0);
+  get_parameter("range_of_searching_loop_closure", range_of_searching_loop_closure_);
   declare_parameter("search_submap_num", 3);
   get_parameter("search_submap_num", search_submap_num_);
   declare_parameter("use_save_map_in_loop", true);
@@ -42,9 +42,9 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;
   std::cout << "ndt_num_threads:" << ndt_num_threads << std::endl;
   std::cout << "loop_detection_period[Hz]:" << loop_detection_period_ << std::endl;
-  std::cout << "threshold_loop_clousure_score:" << threshold_loop_clousure_score_ << std::endl;
-  std::cout << "distance_loop_clousure[m]:" << distance_loop_clousure_ << std::endl;
-  std::cout << "range_of_searching_loop_clousure[m]:" << range_of_searching_loop_clousure_ <<
+  std::cout << "threshold_loop_closure_score:" << threshold_loop_closure_score_ << std::endl;
+  std::cout << "distance_loop_closure[m]:" << distance_loop_closure_ << std::endl;
+  std::cout << "range_of_searching_loop_closure[m]:" << range_of_searching_loop_closure_ <<
     std::endl;
   std::cout << "search_submap_num:" << search_submap_num_ << std::endl;
   std::cout << "use_save_map_in_loop:" << std::boolalpha << use_save_map_in_loop_ << std::endl;
@@ -154,8 +154,8 @@ void GraphBasedSlamComponent::searchLoop()
     auto submap = map_array_msg.submaps[i];
     Eigen::Vector3d submap_pos{submap.pose.position.x, submap.pose.position.y,
       submap.pose.position.z};
-    if (latest_moving_distance - submap.distance > distance_loop_clousure_ &&
-      (latest_submap_pos - submap_pos).norm() < range_of_searching_loop_clousure_)
+    if (latest_moving_distance - submap.distance > distance_loop_closure_ &&
+      (latest_submap_pos - submap_pos).norm() < range_of_searching_loop_closure_)
     {
       is_candidate = true;
 
@@ -177,7 +177,7 @@ void GraphBasedSlamComponent::searchLoop()
       ndt_.align(*output_cloud_ptr);
       double fitness_score = ndt_.getFitnessScore();
 
-      if (fitness_score < threshold_loop_clousure_score_) {
+      if (fitness_score < threshold_loop_closure_score_) {
 
         Eigen::Affine3d init_affine;
         tf2::fromMsg(latest_submap.pose, init_affine);
