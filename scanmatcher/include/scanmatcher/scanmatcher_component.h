@@ -87,6 +87,8 @@ private:
   tf2_ros::TransformBroadcaster broadcaster_;
 
   std::string global_frame_id_;
+  std::string robot_frame_id_;
+  std::string odom_frame_id_;
 
   pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
 

@@ -18,6 +18,10 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
 
   declare_parameter("global_frame_id", "map");
   get_parameter("global_frame_id", global_frame_id_);
+  declare_parameter("robot_frame_id", "base_link");
+  get_parameter("robot_frame_id", robot_frame_id_);
+  declare_parameter("odom_frame_id", "odom");
+  get_parameter("odom_frame_id", odom_frame_id_);
   declare_parameter("registration_method", "NDT");
   get_parameter("registration_method", registration_method);
   declare_parameter("ndt_resolution", 5.0);
@@ -167,7 +171,7 @@ void ScanMatcherComponent::initializePubSub()
             std::chrono::seconds(msg->header.stamp.sec) +
             std::chrono::nanoseconds(msg->header.stamp.nanosec));
           const geometry_msgs::msg::TransformStamped transform = tfbuffer_.lookupTransform(
-            "base_link", msg->header.frame_id, time_point);
+            robot_frame_id_, msg->header.frame_id, time_point);
           tf2::doTransform(*msg, transformerd_msg, transform); // TODO:slow now(https://github.com/ros/geometry2/pull/432)
         } catch (tf2::TransformException & e) {
           RCLCPP_ERROR(this->get_logger(), "%s", e.what());
@@ -292,7 +296,7 @@ void ScanMatcherComponent::receiveCloud(
   if (use_odom_) {
     geometry_msgs::msg::TransformStamped odom_trans;
     try {
-      odom_trans = tfbuffer_.lookupTransform("odom", "base_link", tf2_ros::fromMsg(stamp));
+      odom_trans = tfbuffer_.lookupTransform(odom_frame_id_, robot_frame_id_, tf2_ros::fromMsg(stamp));
     } catch (tf2::TransformException & e) {
       RCLCPP_ERROR(this->get_logger(), "%s", e.what());
     }
@@ -361,7 +365,7 @@ void ScanMatcherComponent::publishMapAndPose(
   geometry_msgs::msg::TransformStamped transform_stamped;
   transform_stamped.header.stamp = stamp;
   transform_stamped.header.frame_id = global_frame_id_;
-  transform_stamped.child_frame_id = "base_link";
+  transform_stamped.child_frame_id = robot_frame_id_;
   transform_stamped.transform.translation.x = position.x();
   transform_stamped.transform.translation.y = position.y();
   transform_stamped.transform.translation.z = position.z();
