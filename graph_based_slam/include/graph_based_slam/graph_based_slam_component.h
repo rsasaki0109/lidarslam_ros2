@@ -117,9 +117,9 @@ private:
   void publishMapAndPose();
 
   int loop_detection_period_;
-  double threshold_loop_clousure_score_;
-  double distance_loop_clousure_;
-  double range_of_searching_loop_clousure_;
+  double threshold_loop_closure_score_;
+  double distance_loop_closure_;
+  double range_of_searching_loop_closure_;
   int search_submap_num_;
   bool use_save_map_in_loop_{true};
 
