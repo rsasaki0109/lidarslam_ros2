@@ -222,7 +222,9 @@ void GraphBasedSlamComponent::searchLoop()
 
 }
 
-void GraphBasedSlamComponent::doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg, bool do_save_map)
+void GraphBasedSlamComponent::doPoseAdjustment(
+  lidarslam_msgs::msg::MapArray map_array_msg,
+  bool do_save_map)
 {
 
   g2o::SparseOptimizer optimizer;
@@ -341,7 +343,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(lidarslam_msgs::msg::MapArray map
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);
   map_msg_ptr->header.frame_id = "map";
   modified_map_pub_->publish(*map_msg_ptr);
-  if(do_save_map) {pcl::io::savePCDFileASCII("map.pcd", *map_ptr);}
+  if (do_save_map) {pcl::io::savePCDFileASCII("map.pcd", *map_ptr);}
 
 }
 

@@ -240,12 +240,6 @@ void ScanMatcherComponent::initializePubSub()
       if (initial_pose_received_) {receiveImu(*msg);}
     };
 
-  auto odom_callback =
-    [this](const typename nav_msgs::msg::Odometry::SharedPtr msg) -> void
-    {
-      if (initial_pose_received_) {receiveOdom(*msg);}
-    };
-
   initial_pose_sub_ =
     create_subscription<geometry_msgs::msg::PoseStamped>(
     "initial_pose", rclcpp::SystemDefaultsQoS(), initial_pose_callback);
@@ -253,10 +247,6 @@ void ScanMatcherComponent::initializePubSub()
   imu_sub_ =
     create_subscription<sensor_msgs::msg::Imu>(
     "imu", rclcpp::SensorDataQoS(), imu_callback);
-
-  odom_sub_ =
-    create_subscription<nav_msgs::msg::Odometry>(
-    "odom", rclcpp::SensorDataQoS(), odom_callback);
 
   input_cloud_sub_ =
     create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -300,28 +290,18 @@ void ScanMatcherComponent::receiveCloud(
   Eigen::Matrix4f sim_trans = getTransformation(corrent_pose_stamped_.pose);
 
   if (use_odom_) {
-
-    if (odom_ptr_last_ == -1) {
-      RCLCPP_WARN(get_logger(), "odom_msg is not received yet");
-      return;
+    geometry_msgs::msg::TransformStamped odom_trans;
+    try {
+      odom_trans = tfbuffer_.lookupTransform("odom", "base_link", tf2_ros::fromMsg(stamp));
+    } catch (tf2::TransformException & e) {
+      RCLCPP_ERROR(this->get_logger(), "%s", e.what());
     }
-
-    int odom_ptr = odom_ptr_front_;
-    while (odom_ptr != odom_ptr_last_) {
-      rclcpp::Time odom_stamp = odom_que_[odom_ptr].header.stamp;
-      if (odom_stamp.nanoseconds() > stamp.nanoseconds()) {break;}
-      odom_ptr = (odom_ptr + 1) % odom_que_length_;
+    Eigen::Affine3d odom_affine = tf2::transformToEigen(odom_trans);
+    Eigen::Matrix4f odom_mat = odom_affine.matrix().cast<float>();
+    if (previous_odom_mat_ != Eigen::Matrix4f::Identity()) {
+      sim_trans = sim_trans *  previous_odom_mat_.inverse() * odom_mat;
     }
-
-    Eigen::Matrix4f odom_position = getTransformation(odom_que_[odom_ptr].pose.pose);
-
-    if (previous_odom_position_ == Eigen::Matrix4f::Identity()) {
-      previous_odom_position_ = odom_position;
-    }
-
-    sim_trans = sim_trans * previous_odom_position_.inverse() * odom_position;
-    odom_ptr_front_ = odom_ptr;
-    previous_odom_position_ = odom_position;
+    previous_odom_mat_ = odom_mat;
   }
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZI>);
@@ -492,16 +472,6 @@ void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu msg)
 
   lidar_undistortion_.getImu(angular_velo, acc, quat, imu_time);
 
-}
-
-void ScanMatcherComponent::receiveOdom(const nav_msgs::msg::Odometry odom_msg)
-{
-  if (!use_odom_) {return;}
-  odom_ptr_last_ = (odom_ptr_last_ + 1) % odom_que_length_;
-  odom_que_[odom_ptr_last_] = odom_msg;
-  if ((odom_ptr_last_ + 1) % odom_que_length_ == odom_ptr_front_) {
-    odom_ptr_front_ = (odom_ptr_front_ + 1) % odom_que_length_;
-  }
 }
 
 void ScanMatcherComponent::publishMap()
