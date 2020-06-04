@@ -11,7 +11,7 @@ Green: path with loopclosure
 
 <img src="./lidarslam/images/map_tukuba.png" width="640px"> 
 
-Red: map
+Red and yellow: map
 
 ## summary
 
@@ -50,7 +50,7 @@ colcon build
 /tf(from "base_link" to LiDAR's frame)  
 /initial_pose  (geometry_msgs/PoseStamed)(optional)  
 /imu  (sensor_msgs/Imu)(optional)  
-/odom  (nav_msgs/Odometry)(optional)  
+/tf(from "odom" to "base_link")(Odometry)(optional)  
 
 - output  
 /current_pose (geometry_msgs/PoseStamped)  
@@ -167,7 +167,7 @@ Green: path
 
 <img src="./lidarslam/images/map_tukuba.png" width="640px">  
 
-Red: map
+Red and yellow: map
 
 ## Used Libraries 
 

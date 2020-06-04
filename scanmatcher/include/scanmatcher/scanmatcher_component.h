@@ -50,7 +50,6 @@ extern "C" {
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/msg/imu.hpp>
-#include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform.hpp>
@@ -88,12 +87,13 @@ private:
   tf2_ros::TransformBroadcaster broadcaster_;
 
   std::string global_frame_id_;
+  std::string robot_frame_id_;
+  std::string odom_frame_id_;
 
   pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
 
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr input_cloud_sub_;
 
   std::mutex mtx_;
@@ -119,7 +119,6 @@ private:
     const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & input_cloud_ptr,
     rclcpp::Time stamp);
   void receiveImu(const sensor_msgs::msg::Imu imu_msg);
-  void receiveOdom(const nav_msgs::msg::Odometry odom_msg);
   void publishMapAndPose(
     const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & cloud_ptr,
     Eigen::Matrix4f final_transformation,
@@ -165,10 +164,7 @@ private:
   double initial_pose_qw_;
 
   // odom
-  Eigen::Matrix4f previous_odom_position_{Eigen::Matrix4f::Identity()};
-  static const int odom_que_length_{200};
-  std::array<nav_msgs::msg::Odometry, odom_que_length_> odom_que_;
-  int odom_ptr_front_{0}, odom_ptr_last_{-1};
+  Eigen::Matrix4f previous_odom_mat_{Eigen::Matrix4f::Identity()};
 
   // imu
   double scan_period_{0.1};

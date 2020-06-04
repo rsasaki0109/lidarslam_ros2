@@ -1,5 +1,7 @@
 scan_matcher:
   ros__parameters:
+    global_frame_id: "map"
+    robot_frame_id: "base_link"
     registration_method: "NDT"
     ndt_resolution: 2.0
     ndt_num_threads: 1
@@ -9,7 +11,7 @@ scan_matcher:
     scan_min_range: 1.0
     scan_max_range: 100.0
     scan_period: 0.2
-    map_publish_period: 1000.0
+    map_publish_period: 100.0
     num_targeted_cloud: 30
     set_initial_pose: true
     initial_pose_x: 0.0
@@ -34,4 +36,3 @@ graph_based_slam:
       range_of_searching_loop_clousure: 20.0
       search_submap_num: 4
       use_save_map_in_loop: true
-

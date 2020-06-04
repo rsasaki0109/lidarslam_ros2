@@ -1,5 +1,7 @@
 scan_matcher:
   ros__parameters:
+    global_frame_id: "map"
+    robot_frame_id: "base_link"
     registration_method: "NDT"
     ndt_resolution: 2.0
     ndt_num_threads: 2
@@ -20,7 +22,7 @@ scan_matcher:
     initial_pose_qz: 0.0
     initial_pose_qw: 1.0
     use_imu: false
-    use_odom: false
+    use_odom: true
     debug_flag: false
 
 graph_based_slam:
