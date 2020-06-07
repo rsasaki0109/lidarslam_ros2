@@ -28,7 +28,7 @@ jobs:
                   cp -rf . ~/ros2_ws/src/lidarslam_ros2
             - name: Install g2o
               run: |
-                  mkdir workspace && cd workspace
+                  mkdir ~/workspace && cd ~/workspace
                   git clone https://github.com/RainerKuemmerle/g2o.git
                   cd g2o
                   mkdir -p build && cd build
@@ -50,8 +50,7 @@ jobs:
             - name: Install dependencies
               run: |
                   source /opt/ros/foxy/setup.bash
-                  sudo apt install python3-rosdep2
-                  sudo rosdep init
+                  sudo apt install -y python3-rosdep2
                   rosdep update
                   cd ~/ros2_ws/src
                   rosdep install -r -y --from-paths . --ignore-src       

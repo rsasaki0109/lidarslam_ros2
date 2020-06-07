@@ -28,7 +28,7 @@ git clone --recursive https://github.com/rsasaki0109/lidarslam_ros2
 ```
 g2o install
 ```
-mkdir workspace && cd workspace
+mkdir ~/workspace && cd ~/workspace
 git clone https://github.com/RainerKuemmerle/g2o.git
 cd g2o
 mkdir build && cd build
