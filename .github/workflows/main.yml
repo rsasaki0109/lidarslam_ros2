@@ -61,7 +61,6 @@ jobs:
                   # Ref: https://index.ros.org/doc/ros2/Tutorials/Colcon-Tutorial/
                   sudo apt install python3-colcon-common-extensions
                   cd ~/ros2_ws
-                  colcon build --packages-select ndt_omp_ros2
-                  source ~/ros2_ws/install/setup.bash
+                  export CMAKE_PREFIX_PATH=$AMENT_PREFIX_PATH:$CMAKE_PREFIX_PATH
                   colcon build
                   source ~/ros2_ws/install/setup.bash
