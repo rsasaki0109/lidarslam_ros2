@@ -5,11 +5,11 @@ on: [push, pull_request]
 jobs:
     job1:
         name: Build
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-20.04
         steps:
             - name: ROS2 Install
               run: |
-                  # Ref: https://index.ros.org/doc/ros2/Installation/Dashing/Linux-Install-Debians/
+                  # Ref: https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Install-Debians/
                   sudo locale-gen en_US en_US.UTF-8
                   sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
                   export LANG=en_US.UTF-8
@@ -17,8 +17,8 @@ jobs:
                   curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
                   sudo sh -c 'echo "deb [arch=amd64,arm64] http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
                   sudo apt update
-                  sudo apt install ros-dashing-desktop
-                  source /opt/ros/dashing/setup.bash
+                  sudo apt install ros-foxy-desktop
+                  source /opt/ros/foxy/setup.bash
             - uses: actions/checkout@v1
               with:
                 submodules: true
@@ -28,7 +28,9 @@ jobs:
                   cp -rf . ~/ros2_ws/src/lidarslam_ros2
             - name: Install g2o
               run: |
-                  cd ~/ros2_ws/src/lidarslam_ros2/Thirdparty/g2o
+                  mkdir workspace && cd workspace
+                  git clone https://github.com/RainerKuemmerle/g2o.git
+                  cd g2o
                   mkdir -p build && cd build
                   cmake \
                     -DCMAKE_BUILD_TYPE=Release \
@@ -47,15 +49,15 @@ jobs:
                   sudo make install
             - name: Install dependencies
               run: |
-                  source /opt/ros/dashing/setup.bash
-                  sudo apt install -y python-rosdep
+                  source /opt/ros/foxy/setup.bash
+                  sudo apt install python3-rosdep2
                   sudo rosdep init
                   rosdep update
                   cd ~/ros2_ws/src
                   rosdep install -r -y --from-paths . --ignore-src       
             - name: Build packages
               run: |
-                  source /opt/ros/dashing/setup.bash
+                  source /opt/ros/foxy/setup.bash
                   # Install colcon
                   # Ref: https://index.ros.org/doc/ros2/Tutorials/Colcon-Tutorial/
                   sudo apt install python3-colcon-common-extensions

@@ -9,21 +9,21 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
-  <test_depend>rclcpp</test_depend>
-  <test_depend>rclcpp_components</test_depend>
-  <test_depend>geometry_msgs</test_depend>
-  <test_depend>sensor_msgs</test_depend>
-  <test_depend>nav_msgs</test_depend>
-  <test_depend>tf2_ros</test_depend>
-  <test_depend>tf2_sensor_msgs</test_depend>
-  <test_depend>tf2_geometry_msgs</test_depend>
-  <test_depend>tf2_eigen</test_depend>
-  <test_depend>pcl_conversions</test_depend>
-  <test_depend>lidarslam_msgs</test_depend>
-  <test_depend>ndt_omp_ros2</test_depend>
-  <test_depend>libpcl-all-dev</test_depend>
+  <depend>ament_lint_auto</depend>
+  <depend>ament_lint_common</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_sensor_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_eigen</depend>
+  <depend>pcl_conversions</depend>
+  <depend>lidarslam_msgs</depend>
+  <depend>ndt_omp_ros2</depend>
+  <depend>libpcl-all-dev</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

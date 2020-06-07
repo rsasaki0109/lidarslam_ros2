@@ -58,9 +58,6 @@ ament_target_dependencies(graph_based_slam_component
   rclcpp 
   rclcpp_components 
   tf2_ros 
-  tf2_geometry_msgs 
-  tf2_sensor_msgs 
-  tf2_eigen 
   geometry_msgs 
   sensor_msgs
   nav_msgs

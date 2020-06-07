@@ -28,7 +28,9 @@ git clone --recursive https://github.com/rsasaki0109/lidarslam_ros2
 ```
 g2o install
 ```
-cd lidarslam_ros2/Thirdparty/g2o/
+mkdir workspace && cd workspace
+git clone https://github.com/RainerKuemmerle/g2o.git
+cd g2o
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=RELEASE 
 make -j 4
@@ -37,8 +39,6 @@ make install
 build
 ```
 cd ~/ros2_ws
-colcon build --packages-select ndt_omp_ros2
-source ~/ros2_ws/install/setup.bash
 colcon build
 ```
 
