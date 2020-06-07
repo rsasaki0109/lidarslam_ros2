@@ -1,6 +1,3 @@
 [submodule "Thirdparty/ndt_omp_ros2"]
 	path = Thirdparty/ndt_omp_ros2
 	url = https://github.com/rsasaki0109/ndt_omp_ros2
-[submodule "Thirdparty/g2o"]
-	path = Thirdparty/g2o
-	url = https://github.com/RainerKuemmerle/g2o
