@@ -9,12 +9,13 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>rclcpp</depend>
+  <depend>scanmatcher</depend>
+  <depend>graph_based_slam</depend>
+  <depend>lidarslam_msgs</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-  <test_depend>rclcpp</test_depend>
-  <test_depend>scanmatcher</test_depend>
-  <test_depend>graph_based_slam</test_depend>
-  <test_depend>lidarslam_msgs</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
