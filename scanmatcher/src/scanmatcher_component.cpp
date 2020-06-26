@@ -108,7 +108,6 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
     registration_ = gicp;
   }
 
-  map_.header.frame_id = global_frame_id_;
   map_array_msg_.header.frame_id = global_frame_id_;
   map_array_msg_.cloud_coordinate = map_array_msg_.GLOBAL;
 
@@ -211,12 +210,11 @@ void ScanMatcherComponent::initializePubSub()
           registration_->setInputTarget(transformed_cloud_ptr);
 
           // map
-          map_ += *transformed_cloud_ptr;
-          sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
+          sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
           pcl::toROSMsg(*transformed_cloud_ptr, *map_msg_ptr);
 
           //map array
-          sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(
+          sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_msg_ptr(
             new sensor_msgs::msg::PointCloud2);
           pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
           lidarslam_msgs::msg::SubMap submap;
@@ -331,7 +329,6 @@ void ScanMatcherComponent::receiveCloud(
   std::cout << "align time:" << time_align_end.seconds() - time_align_start.seconds() << "s" <<
     std::endl;
   std::cout << "number of filtered cloud points: " << filtered_cloud_ptr->size() << std::endl;
-  std::cout << "number of map　points: " << map_.size() << std::endl;
   std::cout << "initial transformation:" << std::endl;
   std::cout << sim_trans << std::endl;
   std::cout << "has converged: " << registration_->hasConverged() << std::endl;
@@ -409,8 +406,6 @@ void ScanMatcherComponent::updateMap(
   pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::transformPointCloud(*tmp_ptr, *transformed_cloud_ptr, final_transformation);
 
-  map_ += *transformed_cloud_ptr;
-
   targeted_cloud_.clear();
   targeted_cloud_ += *transformed_cloud_ptr;
   int num_submaps = map_array_msg_.submaps.size();
@@ -422,7 +417,7 @@ void ScanMatcherComponent::updateMap(
   }
 
   /* map array */
-  sensor_msgs::msg::PointCloud2::Ptr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
+  sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
 
   lidarslam_msgs::msg::SubMap submap;
@@ -463,15 +458,20 @@ void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu msg)
   tf2::Quaternion orientation;
   tf2::fromMsg(msg.orientation, orientation);
   tf2::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
-  float acc_x = msg.linear_acceleration.x + sin(pitch) * 9.81;
-  float acc_y = msg.linear_acceleration.y - cos(pitch) * sin(roll) * 9.81;
-  float acc_z = msg.linear_acceleration.z - cos(pitch) * cos(roll) * 9.81;
+  float acc_x = static_cast<float>(msg.linear_acceleration.x) + sin(pitch) * 9.81;
+  float acc_y = static_cast<float>(msg.linear_acceleration.y) - cos(pitch) * sin(roll) * 9.81;
+  float acc_z = static_cast<float>(msg.linear_acceleration.z) - cos(pitch) * cos(roll) * 9.81;
 
-  Eigen::Vector3f angular_velo{msg.angular_velocity.x, msg.angular_velocity.y,
-    msg.angular_velocity.z};
+  Eigen::Vector3f angular_velo{
+    static_cast<float>(msg.angular_velocity.x),
+    static_cast<float>(msg.angular_velocity.y),
+    static_cast<float>(msg.angular_velocity.z)};
   Eigen::Vector3f acc{acc_x, acc_y, acc_z};
-  Eigen::Quaternionf quat{msg.orientation.w, msg.orientation.x, msg.orientation.y,
-    msg.orientation.z};
+  Eigen::Quaternionf quat{
+    static_cast<float>(msg.orientation.w),
+    static_cast<float>(msg.orientation.x),
+    static_cast<float>(msg.orientation.y),
+    static_cast<float>(msg.orientation.z)};
   double imu_time = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9;
 
   lidar_undistortion_.getImu(angular_velo, acc, quat, imu_time);
@@ -481,8 +481,17 @@ void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu msg)
 void ScanMatcherComponent::publishMap()
 {
   RCLCPP_INFO(get_logger(), "publish a map");
-  pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map_));
-  sensor_msgs::msg::PointCloud2::Ptr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
+
+  pcl::PointCloud<pcl::PointXYZI> map;
+  for (auto & submap : map_array_msg_.submaps) {
+    pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::fromROSMsg(submap.cloud, *submap_cloud_ptr);
+    map += *submap_cloud_ptr;
+  }
+  std::cout << "number of map　points: " << map.size() << std::endl;
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map));
+  sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);
   map_msg_ptr->header.frame_id = global_frame_id_;
   map_pub_->publish(*map_msg_ptr);

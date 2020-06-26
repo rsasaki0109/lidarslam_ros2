@@ -106,7 +106,6 @@ private:
   std::future<void> mapping_future_;
 
   geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
-  pcl::PointCloud<pcl::PointXYZI> map_;
   lidarslam_msgs::msg::MapArray map_array_msg_;
   nav_msgs::msg::Path path_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
