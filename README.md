@@ -1,5 +1,6 @@
 lidarslam_ros2
 ====
+![dashing](https://github.com/rsasaki0109/lidarslam_ros2/workflows/dashing/badge.svg)
 ![foxy](https://github.com/rsasaki0109/lidarslam_ros2/workflows/foxy/badge.svg)  
 ros2 slam package of the frontend using OpenMP-boosted gicp/ndt scan matching and the backend using graph-based slam. 
 
@@ -24,6 +25,7 @@ You need  [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-m
 
 clone
 ```
+cd ~/ros2_ws/src
 git clone --recursive https://github.com/rsasaki0109/lidarslam_ros2
 ```
 build
