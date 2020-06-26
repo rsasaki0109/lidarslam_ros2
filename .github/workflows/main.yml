@@ -1,4 +1,4 @@
-name: CI
+name: foxy
 
 on: [push, pull_request]
 
@@ -26,27 +26,6 @@ jobs:
               run: |
                   mkdir -p ~/ros2_ws/src/lidarslam_ros2
                   cp -rf . ~/ros2_ws/src/lidarslam_ros2
-            - name: Install g2o
-              run: |
-                  mkdir ~/workspace && cd ~/workspace
-                  git clone https://github.com/RainerKuemmerle/g2o.git
-                  cd g2o
-                  mkdir -p build && cd build
-                  cmake \
-                    -DCMAKE_BUILD_TYPE=Release \
-                    -DCMAKE_CXX_FLAGS=-std=c++11 \
-                    -DBUILD_SHARED_LIBS=ON \
-                    -DBUILD_UNITTESTS=OFF \
-                    -DBUILD_WITH_MARCH_NATIVE=ON \
-                    -DG2O_BUILD_EXAMPLES=OFF \
-                    -DG2O_BUILD_APPS=OFF \
-                    -DG2O_USE_CHOLMOD=OFF \
-                    -DG2O_USE_CSPARSE=ON \
-                    -DG2O_USE_OPENGL=OFF \
-                    -DG2O_USE_OPENMP=ON \
-                    ..
-                  make -j 4
-                  sudo make install
             - name: Install dependencies
               run: |
                   source /opt/ros/foxy/setup.bash

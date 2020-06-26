@@ -1,6 +1,6 @@
 lidarslam_ros2
 ====
-![CI](https://github.com/rsasaki0109/lidarslam_ros2/workflows/CI/badge.svg)  
+![foxy](https://github.com/rsasaki0109/lidarslam_ros2/workflows/foxy/badge.svg)  
 ros2 slam package of the frontend using OpenMP-boosted gicp/ndt scan matching and the backend using graph-based slam. 
 
 mobile robot mapping  
@@ -20,21 +20,11 @@ I found that even a four-core laptop with 16GB of memory could work in outdoor e
 (WIP)
 
 ## requirement to build
-You need  [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-matcher and g2o for graph-based-slam.  
+You need  [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-matcher
 
 clone
 ```
 git clone --recursive https://github.com/rsasaki0109/lidarslam_ros2
-```
-g2o install
-```
-mkdir ~/workspace && cd ~/workspace
-git clone https://github.com/RainerKuemmerle/g2o.git
-cd g2o
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=RELEASE 
-make -j 4
-make install
 ```
 build
 ```
