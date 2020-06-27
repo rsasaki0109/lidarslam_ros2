@@ -96,7 +96,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
       ndt(new pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>());
     ndt->setResolution(ndt_resolution);
     ndt->setTransformationEpsilon(0.01);
-    //ndt_omp
+    // ndt_omp
     ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
     if (ndt_num_threads > 0) {ndt->setNumThreads(ndt_num_threads);}
 
@@ -266,7 +266,7 @@ void ScanMatcherComponent::initializePubSub()
 
 void ScanMatcherComponent::receiveCloud(
   const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & cloud_ptr,
-  rclcpp::Time stamp)
+  const rclcpp::Time stamp)
 {
   if (mapping_flag_ && mapping_future_.valid()) {
     auto status = mapping_future_.wait_for(0s);
@@ -347,7 +347,7 @@ void ScanMatcherComponent::receiveCloud(
 
 void ScanMatcherComponent::publishMapAndPose(
   const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & cloud_ptr,
-  Eigen::Matrix4f final_transformation, rclcpp::Time stamp)
+  const Eigen::Matrix4f final_transformation, const rclcpp::Time stamp)
 {
 
   Eigen::Vector3d position;
@@ -395,7 +395,7 @@ void ScanMatcherComponent::publishMapAndPose(
 
 void ScanMatcherComponent::updateMap(
   const pcl::PointCloud<pcl::PointXYZI>::ConstPtr cloud_ptr,
-  Eigen::Matrix4f final_transformation, geometry_msgs::msg::PoseStamped corrent_pose_stamped)
+  const Eigen::Matrix4f final_transformation, const geometry_msgs::msg::PoseStamped corrent_pose_stamped)
 {
   pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
@@ -442,7 +442,7 @@ void ScanMatcherComponent::updateMap(
   }
 }
 
-Eigen::Matrix4f ScanMatcherComponent::getTransformation(geometry_msgs::msg::Pose pose)
+Eigen::Matrix4f ScanMatcherComponent::getTransformation(const geometry_msgs::msg::Pose pose)
 {
   Eigen::Affine3d affine;
   tf2::fromMsg(pose, affine);

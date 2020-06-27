@@ -116,19 +116,19 @@ private:
   void initializePubSub();
   void receiveCloud(
     const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & input_cloud_ptr,
-    rclcpp::Time stamp);
+    const rclcpp::Time stamp);
   void receiveImu(const sensor_msgs::msg::Imu imu_msg);
   void publishMapAndPose(
     const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & cloud_ptr,
-    Eigen::Matrix4f final_transformation,
-    rclcpp::Time stamp
+    const Eigen::Matrix4f final_transformation,
+    const rclcpp::Time stamp
   );
-  Eigen::Matrix4f getTransformation(geometry_msgs::msg::Pose pose);
+  Eigen::Matrix4f getTransformation(const geometry_msgs::msg::Pose pose);
   void publishMap();
   void updateMap(
     const pcl::PointCloud<pcl::PointXYZI>::ConstPtr cloud_ptr,
-    Eigen::Matrix4f final_transformation,
-    geometry_msgs::msg::PoseStamped corrent_pose_stamped
+    const Eigen::Matrix4f final_transformation,
+    const geometry_msgs::msg::PoseStamped corrent_pose_stamped
   );
 
   bool initial_pose_received_{false};
