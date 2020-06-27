@@ -255,11 +255,14 @@ void ScanMatcherComponent::initializePubSub()
     "input_cloud", rclcpp::SensorDataQoS(), cloud_callback);
 
   // pub
-  pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("current_pose",
-      rclcpp::SystemDefaultsQoS());
+  pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>(
+    "current_pose",
+    rclcpp::SystemDefaultsQoS());
   map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("map", rclcpp::SystemDefaultsQoS());
   map_array_pub_ =
-    create_publisher<lidarslam_msgs::msg::MapArray>("map_array", rclcpp::QoS(rclcpp::KeepLast(
+    create_publisher<lidarslam_msgs::msg::MapArray>(
+    "map_array", rclcpp::QoS(
+      rclcpp::KeepLast(
         1)).transient_local().reliable());
   path_pub_ = create_publisher<nav_msgs::msg::Path>("path", rclcpp::SystemDefaultsQoS());
 }
@@ -294,14 +297,16 @@ void ScanMatcherComponent::receiveCloud(
   if (use_odom_) {
     geometry_msgs::msg::TransformStamped odom_trans;
     try {
-      odom_trans = tfbuffer_.lookupTransform(odom_frame_id_, robot_frame_id_, tf2_ros::fromMsg(stamp));
+      odom_trans = tfbuffer_.lookupTransform(
+        odom_frame_id_, robot_frame_id_, tf2_ros::fromMsg(
+          stamp));
     } catch (tf2::TransformException & e) {
       RCLCPP_ERROR(this->get_logger(), "%s", e.what());
     }
     Eigen::Affine3d odom_affine = tf2::transformToEigen(odom_trans);
     Eigen::Matrix4f odom_mat = odom_affine.matrix().cast<float>();
     if (previous_odom_mat_ != Eigen::Matrix4f::Identity()) {
-      sim_trans = sim_trans *  previous_odom_mat_.inverse() * odom_mat;
+      sim_trans = sim_trans * previous_odom_mat_.inverse() * odom_mat;
     }
     previous_odom_mat_ = odom_mat;
   }
@@ -385,7 +390,9 @@ void ScanMatcherComponent::publishMapAndPose(
     corrent_pose_stamped = corrent_pose_stamped_;
     previous_position_ = position;
     mapping_task_ =
-      std::packaged_task<void()>(std::bind(&ScanMatcherComponent::updateMap, this, cloud_ptr,
+      std::packaged_task<void()>(
+      std::bind(
+        &ScanMatcherComponent::updateMap, this, cloud_ptr,
         final_transformation, corrent_pose_stamped));
     mapping_future_ = mapping_task_.get_future();
     mapping_thread_ = std::thread(std::move(std::ref(mapping_task_)));
@@ -395,7 +402,8 @@ void ScanMatcherComponent::publishMapAndPose(
 
 void ScanMatcherComponent::updateMap(
   const pcl::PointCloud<pcl::PointXYZI>::ConstPtr cloud_ptr,
-  const Eigen::Matrix4f final_transformation, const geometry_msgs::msg::PoseStamped corrent_pose_stamped)
+  const Eigen::Matrix4f final_transformation,
+  const geometry_msgs::msg::PoseStamped corrent_pose_stamped)
 {
   pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
@@ -417,7 +425,8 @@ void ScanMatcherComponent::updateMap(
   }
 
   /* map array */
-  sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
+  sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_msg_ptr(
+    new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
 
   lidarslam_msgs::msg::SubMap submap;

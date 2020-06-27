@@ -99,17 +99,20 @@ void GraphBasedSlamComponent::initializePubSub()
     std::bind(&GraphBasedSlamComponent::searchLoop, this)
   );
 
-  modified_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("modified_map",
-      rclcpp::SystemDefaultsQoS());
+  modified_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
+    "modified_map",
+    rclcpp::SystemDefaultsQoS());
 
-  loop_candidate_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("loop_candidate_map",
-      rclcpp::SystemDefaultsQoS());
+  loop_candidate_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
+    "loop_candidate_map",
+    rclcpp::SystemDefaultsQoS());
 
   modified_map_array_pub_ = create_publisher<lidarslam_msgs::msg::MapArray>(
     "modified_map_array", rclcpp::SystemDefaultsQoS());
 
-  modified_path_pub_ = create_publisher<nav_msgs::msg::Path>("modified_path",
-      rclcpp::SystemDefaultsQoS());
+  modified_path_pub_ = create_publisher<nav_msgs::msg::Path>(
+    "modified_path",
+    rclcpp::SystemDefaultsQoS());
 
   RCLCPP_INFO(get_logger(), "initialization end");
 
@@ -309,7 +312,8 @@ void GraphBasedSlamComponent::doPoseAdjustment(
     Eigen::Matrix4f previous_matrix = affine.matrix().cast<float>();
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-    pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+    pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(
+      new pcl::PointCloud<pcl::PointXYZI>());
     pcl::fromROSMsg(map_array_msg.submaps[i].cloud, *cloud_ptr);
 
     Eigen::Isometry3f isometry = Eigen::Isometry3f(previous_matrix).inverse() * Eigen::Isometry3f(

@@ -87,54 +87,54 @@ extern "C" {
 
 namespace graphslam
 {
-class GraphBasedSlamComponent : public rclcpp::Node
-{
+  class GraphBasedSlamComponent: public rclcpp::Node
+  {
 public:
-  GS_GBS_PUBLIC
-  explicit GraphBasedSlamComponent(const rclcpp::NodeOptions & options);
+    GS_GBS_PUBLIC
+    explicit GraphBasedSlamComponent(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Clock clock_;
-  tf2_ros::Buffer tfbuffer_;
-  tf2_ros::TransformListener listener_;
-  tf2_ros::TransformBroadcaster broadcaster_;
+    rclcpp::Clock clock_;
+    tf2_ros::Buffer tfbuffer_;
+    tf2_ros::TransformListener listener_;
+    tf2_ros::TransformBroadcaster broadcaster_;
 
-  pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI> ndt_;
-  pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
+    pclomp::NormalDistributionsTransform < pcl::PointXYZI, pcl::PointXYZI > ndt_;
+    pcl::VoxelGrid < pcl::PointXYZI > voxelgrid_;
 
-  lidarslam_msgs::msg::MapArray map_array_msg_;
-  rclcpp::Subscription<lidarslam_msgs::msg::MapArray>::SharedPtr map_array_sub_;
-  rclcpp::Publisher<lidarslam_msgs::msg::MapArray>::SharedPtr modified_map_array_pub_;
-  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr modified_path_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr modified_map_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loop_candidate_map_pub_;
-  rclcpp::TimerBase::SharedPtr loop_detect_timer_;
-  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr map_save_srv_;
+    lidarslam_msgs::msg::MapArray map_array_msg_;
+    rclcpp::Subscription < lidarslam_msgs::msg::MapArray > ::SharedPtr map_array_sub_;
+    rclcpp::Publisher < lidarslam_msgs::msg::MapArray > ::SharedPtr modified_map_array_pub_;
+    rclcpp::Publisher < nav_msgs::msg::Path > ::SharedPtr modified_path_pub_;
+    rclcpp::Publisher < sensor_msgs::msg::PointCloud2 > ::SharedPtr modified_map_pub_;
+    rclcpp::Publisher < sensor_msgs::msg::PointCloud2 > ::SharedPtr loop_candidate_map_pub_;
+    rclcpp::TimerBase::SharedPtr loop_detect_timer_;
+    rclcpp::Service < std_srvs::srv::Empty > ::SharedPtr map_save_srv_;
 
-  void initializePubSub();
-  void searchLoop();
-  void doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg, bool do_save_map);
-  void publishMapAndPose();
+    void initializePubSub();
+    void searchLoop();
+    void doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg, bool do_save_map);
+    void publishMapAndPose();
 
-  int loop_detection_period_;
-  double threshold_loop_closure_score_;
-  double distance_loop_closure_;
-  double range_of_searching_loop_closure_;
-  int search_submap_num_;
-  bool use_save_map_in_loop_{true};
+    int loop_detection_period_;
+    double threshold_loop_closure_score_;
+    double distance_loop_closure_;
+    double range_of_searching_loop_closure_;
+    int search_submap_num_;
+    bool use_save_map_in_loop_ {true};
 
-  bool initial_map_array_received_{false};
-  bool is_map_array_updated_{false};
-  int previous_submaps_num_{0};
+    bool initial_map_array_received_ {false};
+    bool is_map_array_updated_ {false};
+    int previous_submaps_num_ {0};
 
-  struct LoopEdge
-  {
-    std::pair<int, int> pair_id;
-    Eigen::Isometry3d relative_pose;
+    struct LoopEdge
+    {
+      std::pair < int, int > pair_id;
+      Eigen::Isometry3d relative_pose;
+    };
+    std::vector < LoopEdge > loop_edges_;
+
   };
-  std::vector<LoopEdge> loop_edges_;
-
-};
 }
 
 #endif  //GS_GBS_COMPONENT_H_INCLUDED
