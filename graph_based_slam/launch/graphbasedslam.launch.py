@@ -16,7 +16,7 @@ def generate_launch_description():
 
     graphbasedslam = launch_ros.actions.Node(
         package='graph_based_slam',
-        node_executable='graph_based_slam_node',
+        executable='graph_based_slam_node',
         parameters=[graphbasedslam_param_dir],
         output='screen'
         )

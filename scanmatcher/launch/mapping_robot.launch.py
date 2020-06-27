@@ -16,7 +16,7 @@ def generate_launch_description():
 
     mapping = launch_ros.actions.Node(
         package='scanmatcher',
-        node_executable='scanmatcher_node',
+        executable='scanmatcher_node',
         parameters=[mapping_param_dir],
         remappings=[('/input_cloud','/velodyne_points'),('/imu','/gpsimu_driver/imu_data')],
         #remappings=[('/imu','/gpsimu_driver/imu_data')],# for imu debug
@@ -25,7 +25,7 @@ def generate_launch_description():
 
     tf = launch_ros.actions.Node(
         package='tf2_ros',
-        node_executable='static_transform_publisher',
+        executable='static_transform_publisher',
         arguments=['0','0','0','0','0','0','1','base_link','velodyne']
         )
 

@@ -16,7 +16,7 @@ def generate_launch_description():
 
     mapping = launch_ros.actions.Node(
         package='scanmatcher',
-        node_executable='scanmatcher_node',
+        executable='scanmatcher_node',
         parameters=[mapping_param_dir],
         remappings=[('/input_cloud','/points_raw')],# Autoware
         output='screen'
@@ -24,7 +24,7 @@ def generate_launch_description():
 
     tf = launch_ros.actions.Node(
         package='tf2_ros',
-        node_executable='static_transform_publisher',
+        executable='static_transform_publisher',
         arguments=['1.2','0','2.0','0','0','0','1','base_link','velodyne']
         )
 

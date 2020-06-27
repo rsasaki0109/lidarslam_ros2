@@ -16,7 +16,7 @@ def generate_launch_description():
 
     mapping = launch_ros.actions.Node(
         package='scanmatcher',
-        node_executable='scanmatcher_node',
+        executable='scanmatcher_node',
         parameters=[main_param_dir],
         remappings=[('/input_cloud','/velodyne_points')],
         output='screen'
@@ -24,14 +24,14 @@ def generate_launch_description():
 
     tf = launch_ros.actions.Node(
         package='tf2_ros',
-        node_executable='static_transform_publisher',
+        executable='static_transform_publisher',
         arguments=['0','0','0','0','0','0','1','base_link','velodyne']
         )
 
 
     graphbasedslam = launch_ros.actions.Node(
         package='graph_based_slam',
-        node_executable='graph_based_slam_node',
+        executable='graph_based_slam_node',
         parameters=[main_param_dir],
         output='screen'
         )

@@ -16,7 +16,7 @@ def generate_launch_description():
 
     mapping = launch_ros.actions.Node(
         package='scanmatcher',
-        node_executable='scanmatcher_node',
+        executable='scanmatcher_node',
         parameters=[main_param_dir],
         remappings=[('/input_cloud','/points_raw')],
         output='screen'
@@ -24,7 +24,7 @@ def generate_launch_description():
 
     graphbasedslam = launch_ros.actions.Node(
         package='graph_based_slam',
-        node_executable='graph_based_slam_node',
+        executable='graph_based_slam_node',
         parameters=[main_param_dir],
         output='screen'
         )
