@@ -15,6 +15,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   std::string registration_method;
   double ndt_resolution;
   int ndt_num_threads;
+  double gicp_corr_dist_threshold;
 
   declare_parameter("global_frame_id", "map");
   get_parameter("global_frame_id", global_frame_id_);
@@ -28,6 +29,8 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   get_parameter("ndt_resolution", ndt_resolution);
   declare_parameter("ndt_num_threads", 0);
   get_parameter("ndt_num_threads", ndt_num_threads);
+  declare_parameter("gicp_corr_dist_threshold", 5.0);
+  get_parameter("gicp_corr_dist_threshold", gicp_corr_dist_threshold);
   declare_parameter("trans_for_mapupdate", 1.5);
   get_parameter("trans_for_mapupdate", trans_for_mapupdate_);
   declare_parameter("vg_size_for_input", 0.2);
@@ -76,6 +79,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   std::cout << "registration_method:" << registration_method << std::endl;
   std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;
   std::cout << "ndt_num_threads:" << ndt_num_threads << std::endl;
+  std::cout << "gicp_corr_dist_threshold[m]:" << gicp_corr_dist_threshold << std::endl;
   std::cout << "trans_for_mapupdate[m]:" << trans_for_mapupdate_ << std::endl;
   std::cout << "vg_size_for_input[m]:" << vg_size_for_input_ << std::endl;
   std::cout << "vg_size_for_map[m]:" << vg_size_for_map_ << std::endl;
@@ -105,6 +109,8 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   } else {
     pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>::Ptr
       gicp(new pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>());
+    gicp->setMaxCorrespondenceDistance(gicp_corr_dist_threshold);
+    gicp->setTransformationEpsilon(1e-8);
     registration_ = gicp;
   }
 

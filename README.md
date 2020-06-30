@@ -76,6 +76,7 @@ ros2 service call /map_save std_srvs/Empty
 |registration_method|string|"NDT"|"NDT" or "GICP"|
 |ndt_resolution|double|5.0|resolution size of voxel[m]|
 |ndt_num_threads|int|0|threads using ndt(if `0` is set, maximum alloawble threads are used.)(The higher the number, the better, but reduce it if the CPU processing is too large to estimate its own position.)|
+|gicp_corr_dist_threshold|double|5.0|the distance threshold between the two corresponding points of the source and target[m]|
 |trans_for_mapupdate|double|1.5|moving distance of map update[m]|
 |vg_size_for_input|double|0.2|down sample size of input cloud[m]|
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|

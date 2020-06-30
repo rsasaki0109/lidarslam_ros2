@@ -5,6 +5,7 @@ scan_matcher:
     registration_method: "NDT"
     ndt_resolution: 2.0
     ndt_num_threads: 1
+    gicp_corr_dist_threshold: 5.0
     trans_for_mapupdate: 2.0
     vg_size_for_input: 1.0
     vg_size_for_map: 0.1
