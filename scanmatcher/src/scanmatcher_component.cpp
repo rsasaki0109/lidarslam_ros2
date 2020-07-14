@@ -361,10 +361,7 @@ void ScanMatcherComponent::publishMapAndPose(
   const Eigen::Matrix4f final_transformation, const rclcpp::Time stamp)
 {
 
-  Eigen::Vector3d position;
-  position.x() = static_cast<double>(final_transformation(0, 3));
-  position.y() = static_cast<double>(final_transformation(1, 3));
-  position.z() = static_cast<double>(final_transformation(2, 3));
+  Eigen::Vector3d position = final_transformation.block<3, 1>(0, 3).cast<double>();
 
   Eigen::Matrix3d rot_mat = final_transformation.block<3, 3>(0, 0).cast<double>();
   Eigen::Quaterniond quat_eig(rot_mat);
