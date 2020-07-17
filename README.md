@@ -80,6 +80,7 @@ ros2 service call /map_save std_srvs/Empty
 |trans_for_mapupdate|double|1.5|moving distance of map update[m]|
 |vg_size_for_input|double|0.2|down sample size of input cloud[m]|
 |vg_size_for_map|double|0.05|down sample size of map cloud[m]|
+|use_min_max_filter|bool|false|whether or not to use minmax filter|
 |scan_max_range|double|100.0|max range of input cloud[m]|
 |scan_min_range|double|1.0|min range of input cloud[m]|
 |scan_period|double|0.1|scan period of input cloud[sec]|

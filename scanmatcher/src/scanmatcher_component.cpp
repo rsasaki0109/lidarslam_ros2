@@ -37,6 +37,8 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   get_parameter("vg_size_for_input", vg_size_for_input_);
   declare_parameter("vg_size_for_map", 0.1);
   get_parameter("vg_size_for_map", vg_size_for_map_);
+  declare_parameter("use_min_max_filter", false);
+  get_parameter("use_min_max_filter", use_min_max_filter_);
   declare_parameter("scan_min_range", 0.1);
   get_parameter("scan_min_range", scan_min_range_);
   declare_parameter("scan_max_range", 100.0);
@@ -83,6 +85,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   std::cout << "trans_for_mapupdate[m]:" << trans_for_mapupdate_ << std::endl;
   std::cout << "vg_size_for_input[m]:" << vg_size_for_input_ << std::endl;
   std::cout << "vg_size_for_map[m]:" << vg_size_for_map_ << std::endl;
+  std::cout << "use_min_max_filter:" << std::boolalpha << use_min_max_filter_ << std::endl;
   std::cout << "scan_min_range[m]:" << scan_min_range_ << std::endl;
   std::cout << "scan_max_range[m]:" << scan_max_range_ << std::endl;
   std::cout << "set_initial_pose:" << std::boolalpha << set_initial_pose_ << std::endl;
@@ -192,12 +195,16 @@ void ScanMatcherComponent::initializePubSub()
           lidar_undistortion_.adjustDistortion(tmp_ptr, scan_time);
         }
 
-        double r;
-        pcl::PointCloud<pcl::PointXYZI> tmp;
-        for (const auto & p : tmp_ptr->points) {
-          r = sqrt(pow(p.x, 2.0) + pow(p.y, 2.0));
-          if (scan_min_range_ < r && r < scan_max_range_) {tmp.push_back(p);}
+        if (use_min_max_filter_) {
+          double r;
+          pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr2(new pcl::PointCloud<pcl::PointXYZI>());
+          for (const auto & p : tmp_ptr->points) {
+            r = sqrt(pow(p.x, 2.0) + pow(p.y, 2.0));
+            if (scan_min_range_ < r && r < scan_max_range_) {tmp_ptr2->points.push_back(p);}
+          }
+          tmp_ptr = tmp_ptr2;
         }
+        
 
         if (!initial_cloud_received_) {
           RCLCPP_INFO(get_logger(), "create a first map");
@@ -494,15 +501,14 @@ void ScanMatcherComponent::publishMap()
 {
   RCLCPP_INFO(get_logger(), "publish a map");
 
-  pcl::PointCloud<pcl::PointXYZI> map;
+  pcl::PointCloud<pcl::PointXYZI>::Ptr  map_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   for (auto & submap : map_array_msg_.submaps) {
     pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg(submap.cloud, *submap_cloud_ptr);
-    map += *submap_cloud_ptr;
+    *map_ptr += *submap_cloud_ptr;
   }
-  std::cout << "number of map　points: " << map.size() << std::endl;
+  std::cout << "number of map　points: " << map_ptr->size() << std::endl;
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>(map));
   sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);
   map_msg_ptr->header.frame_id = global_frame_id_;

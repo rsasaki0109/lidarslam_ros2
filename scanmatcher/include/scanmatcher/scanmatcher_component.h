@@ -138,6 +138,7 @@ private:
     double trans_for_mapupdate_;
     double vg_size_for_input_;
     double vg_size_for_map_;
+    bool use_min_max_filter_ {false};
     double scan_min_range_ {0.1};
     double scan_max_range_ {100.0};
     double map_publish_period_;
