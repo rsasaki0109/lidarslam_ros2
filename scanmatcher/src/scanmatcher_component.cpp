@@ -12,7 +12,6 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   listener_(tfbuffer_),
   broadcaster_(this)
 {
-  std::string registration_method;
   double ndt_resolution;
   int ndt_num_threads;
   double gicp_corr_dist_threshold;
@@ -24,7 +23,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   declare_parameter("odom_frame_id", "odom");
   get_parameter("odom_frame_id", odom_frame_id_);
   declare_parameter("registration_method", "NDT");
-  get_parameter("registration_method", registration_method);
+  get_parameter("registration_method", registration_method_);
   declare_parameter("ndt_resolution", 5.0);
   get_parameter("ndt_resolution", ndt_resolution);
   declare_parameter("ndt_num_threads", 0);
@@ -78,7 +77,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   declare_parameter("debug_flag", false);
   get_parameter("debug_flag", debug_flag_);
 
-  std::cout << "registration_method:" << registration_method << std::endl;
+  std::cout << "registration_method:" << registration_method_ << std::endl;
   std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;
   std::cout << "ndt_num_threads:" << ndt_num_threads << std::endl;
   std::cout << "gicp_corr_dist_threshold[m]:" << gicp_corr_dist_threshold << std::endl;
@@ -97,7 +96,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   std::cout << "num_targeted_cloud:" << num_targeted_cloud_ << std::endl;
   std::cout << "------------------" << std::endl;
 
-  if (registration_method == "NDT") {
+  if (registration_method_ == "NDT") {
 
     pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>::Ptr
       ndt(new pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>());
@@ -290,7 +289,16 @@ void ScanMatcherComponent::receiveCloud(
       if (is_map_updated_ == true) {
         pcl::PointCloud<pcl::PointXYZI>::Ptr targeted_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>(
             targeted_cloud_));
-        registration_->setInputTarget(targeted_cloud_ptr);
+        if (registration_method_ == "NDT") {
+          registration_->setInputTarget(targeted_cloud_ptr);
+        } else {
+          pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_targeted_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+          pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
+          voxel_grid.setLeafSize(vg_size_for_input_, vg_size_for_input_, vg_size_for_input_);
+          voxel_grid.setInputCloud(targeted_cloud_ptr);
+          voxel_grid.filter(*filtered_targeted_cloud_ptr);
+          registration_->setInputTarget(filtered_targeted_cloud_ptr);
+        }
         is_map_updated_ = false;
       }
       mapping_flag_ = false;

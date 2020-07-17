@@ -135,6 +135,7 @@ private:
     bool initial_cloud_received_ {false};
 
     // setting parameter
+    std::string registration_method_;
     double trans_for_mapupdate_;
     double vg_size_for_input_;
     double vg_size_for_map_;
