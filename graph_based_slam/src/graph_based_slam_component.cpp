@@ -91,7 +91,7 @@ void GraphBasedSlamComponent::initializePubSub()
 
   map_array_sub_ =
     create_subscription<lidarslam_msgs::msg::MapArray>(
-    "map_array", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(), map_array_callback);
+    "map_array", rclcpp::QoS(rclcpp::KeepLast(1)).reliable(), map_array_callback);
 
   std::chrono::milliseconds period(loop_detection_period_);
   loop_detect_timer_ = create_wall_timer(
@@ -101,18 +101,18 @@ void GraphBasedSlamComponent::initializePubSub()
 
   modified_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
     "modified_map",
-    rclcpp::SystemDefaultsQoS());
+    rclcpp::QoS(10));
 
   loop_candidate_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
     "loop_candidate_map",
-    rclcpp::SystemDefaultsQoS());
+    rclcpp::QoS(10));
 
   modified_map_array_pub_ = create_publisher<lidarslam_msgs::msg::MapArray>(
-    "modified_map_array", rclcpp::SystemDefaultsQoS());
+    "modified_map_array", rclcpp::QoS(10));
 
   modified_path_pub_ = create_publisher<nav_msgs::msg::Path>(
     "modified_path",
-    rclcpp::SystemDefaultsQoS());
+    rclcpp::QoS(10));
 
   RCLCPP_INFO(get_logger(), "initialization end");
 

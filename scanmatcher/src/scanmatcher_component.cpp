@@ -256,7 +256,7 @@ void ScanMatcherComponent::initializePubSub()
 
   initial_pose_sub_ =
     create_subscription<geometry_msgs::msg::PoseStamped>(
-    "initial_pose", rclcpp::SystemDefaultsQoS(), initial_pose_callback);
+    "initial_pose", rclcpp::QoS(10), initial_pose_callback);
 
   imu_sub_ =
     create_subscription<sensor_msgs::msg::Imu>(
@@ -269,14 +269,14 @@ void ScanMatcherComponent::initializePubSub()
   // pub
   pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>(
     "current_pose",
-    rclcpp::SystemDefaultsQoS());
-  map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("map", rclcpp::SystemDefaultsQoS());
+    rclcpp::QoS(10));
+  map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("map", rclcpp::QoS(10));
   map_array_pub_ =
     create_publisher<lidarslam_msgs::msg::MapArray>(
     "map_array", rclcpp::QoS(
       rclcpp::KeepLast(
-        1)).transient_local().reliable());
-  path_pub_ = create_publisher<nav_msgs::msg::Path>("path", rclcpp::SystemDefaultsQoS());
+        1)).reliable());
+  path_pub_ = create_publisher<nav_msgs::msg::Path>("path", rclcpp::QoS(10));
 }
 
 void ScanMatcherComponent::receiveCloud(
