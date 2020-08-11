@@ -1,5 +1,6 @@
 graph_based_slam:
     ros__parameters:
+      registration_method: "GICP"
       ndt_resolution: 1.5
       voxel_leaf_size: 0.2
       loop_detection_period: 3000

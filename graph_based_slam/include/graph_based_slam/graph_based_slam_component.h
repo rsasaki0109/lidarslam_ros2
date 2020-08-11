@@ -69,6 +69,8 @@ extern "C" {
 #include <pclomp/ndt_omp_impl.hpp>
 #include <pclomp/voxel_grid_covariance_omp.h>
 #include <pclomp/voxel_grid_covariance_omp_impl.hpp>
+#include <pclomp/gicp_omp.h>
+#include <pclomp/gicp_omp_impl.hpp>
 
 #include "g2o/core/sparse_optimizer.h"
 #include "g2o/core/optimization_algorithm_levenberg.h"
@@ -94,12 +96,14 @@ public:
     explicit GraphBasedSlamComponent(const rclcpp::NodeOptions & options);
 
 private:
+    std::mutex mtx_;
+
     rclcpp::Clock clock_;
     tf2_ros::Buffer tfbuffer_;
     tf2_ros::TransformListener listener_;
     tf2_ros::TransformBroadcaster broadcaster_;
 
-    pclomp::NormalDistributionsTransform < pcl::PointXYZI, pcl::PointXYZI > ndt_;
+    pcl::Registration < pcl::PointXYZI, pcl::PointXYZI > ::Ptr registration_;
     pcl::VoxelGrid < pcl::PointXYZI > voxelgrid_;
 
     lidarslam_msgs::msg::MapArray map_array_msg_;
@@ -107,7 +111,6 @@ private:
     rclcpp::Publisher < lidarslam_msgs::msg::MapArray > ::SharedPtr modified_map_array_pub_;
     rclcpp::Publisher < nav_msgs::msg::Path > ::SharedPtr modified_path_pub_;
     rclcpp::Publisher < sensor_msgs::msg::PointCloud2 > ::SharedPtr modified_map_pub_;
-    rclcpp::Publisher < sensor_msgs::msg::PointCloud2 > ::SharedPtr loop_candidate_map_pub_;
     rclcpp::TimerBase::SharedPtr loop_detect_timer_;
     rclcpp::Service < std_srvs::srv::Empty > ::SharedPtr map_save_srv_;
 
@@ -116,11 +119,15 @@ private:
     void doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg, bool do_save_map);
     void publishMapAndPose();
 
+    // loop search parameter
     int loop_detection_period_;
     double threshold_loop_closure_score_;
     double distance_loop_closure_;
     double range_of_searching_loop_closure_;
     int search_submap_num_;
+
+    // pose graph optimization parameter
+    int num_adjacent_pose_cnstraints_;
     bool use_save_map_in_loop_ {true};
 
     bool initial_map_array_received_ {false};

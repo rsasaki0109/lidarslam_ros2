@@ -117,7 +117,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   }
 
   map_array_msg_.header.frame_id = global_frame_id_;
-  map_array_msg_.cloud_coordinate = map_array_msg_.GLOBAL;
+  map_array_msg_.cloud_coordinate = map_array_msg_.LOCAL;
 
   path_.header.frame_id = global_frame_id_;
 
@@ -225,15 +225,15 @@ void ScanMatcherComponent::initializePubSub()
           sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
           pcl::toROSMsg(*transformed_cloud_ptr, *map_msg_ptr);
 
-          //map array
-          sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_msg_ptr(
+          // map array
+          sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg_ptr(
             new sensor_msgs::msg::PointCloud2);
-          pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
+          pcl::toROSMsg(*cloud_ptr, *cloud_msg_ptr);
           lidarslam_msgs::msg::SubMap submap;
           submap.header = msg->header;
           submap.distance = 0;
           submap.pose = corrent_pose_stamped_.pose;
-          submap.cloud = *transformed_cloud_msg_ptr;
+          submap.cloud = *cloud_msg_ptr;
           map_array_msg_.header = msg->header;
           map_array_msg_.submaps.push_back(submap);
 
@@ -423,14 +423,14 @@ void ScanMatcherComponent::updateMap(
   const Eigen::Matrix4f final_transformation,
   const geometry_msgs::msg::PoseStamped corrent_pose_stamped)
 {
-  pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
   pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
   voxel_grid.setLeafSize(vg_size_for_map_, vg_size_for_map_, vg_size_for_map_);
   voxel_grid.setInputCloud(cloud_ptr);
-  voxel_grid.filter(*tmp_ptr);
+  voxel_grid.filter(*filtered_cloud_ptr);
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-  pcl::transformPointCloud(*tmp_ptr, *transformed_cloud_ptr, final_transformation);
+  pcl::transformPointCloud(*filtered_cloud_ptr, *transformed_cloud_ptr, final_transformation);
 
   targeted_cloud_.clear();
   targeted_cloud_ += *transformed_cloud_ptr;
@@ -439,13 +439,17 @@ void ScanMatcherComponent::updateMap(
     if (num_submaps - 1 - i < 0) {continue;}
     pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::fromROSMsg(map_array_msg_.submaps[num_submaps - 1 - i].cloud, *tmp_ptr);
-    targeted_cloud_ += *tmp_ptr;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+    Eigen::Affine3d submap_affine;
+    tf2::fromMsg(map_array_msg_.submaps[num_submaps - 1 - i].pose, submap_affine);
+    pcl::transformPointCloud(*tmp_ptr, *transformed_tmp_ptr, submap_affine.matrix());
+    targeted_cloud_ += *transformed_tmp_ptr;
   }
 
   /* map array */
-  sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_msg_ptr(
+  sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
-  pcl::toROSMsg(*transformed_cloud_ptr, *transformed_cloud_msg_ptr);
+  pcl::toROSMsg(*filtered_cloud_ptr, *cloud_msg_ptr);
 
   lidarslam_msgs::msg::SubMap submap;
   submap.header.frame_id = global_frame_id_;
@@ -453,7 +457,7 @@ void ScanMatcherComponent::updateMap(
   latest_distance_ += trans_;
   submap.distance = latest_distance_;
   submap.pose = corrent_pose_stamped.pose;
-  submap.cloud = *transformed_cloud_msg_ptr;
+  submap.cloud = *cloud_msg_ptr;
   submap.cloud.header.frame_id = global_frame_id_;
   map_array_msg_.header.stamp = corrent_pose_stamped.header.stamp;
   map_array_msg_.submaps.push_back(submap);
