@@ -121,10 +121,14 @@ public:
       if (imu_ptr_last_ > 0) {
         imu_ptr_front_ = imu_ptr_last_iter_;
         while (imu_ptr_front_ != imu_ptr_last_) {
-          if (scan_time + rel_time > imu_time_[imu_ptr_front_]) {
+          if (scan_time + rel_time < imu_time_[imu_ptr_front_]) {
             break;
           }
           imu_ptr_front_ = (imu_ptr_front_ + 1) % imu_que_length_;
+        }
+
+        if (std::abs(scan_time + rel_time - imu_time_[imu_ptr_front_]) > scan_period_) {
+          continue;
         }
 
         if (scan_time + rel_time > imu_time_[imu_ptr_front_]) {
@@ -161,11 +165,14 @@ public:
             ratio_back;
         }
 
-        r_c = (
-          Eigen::AngleAxisf(rpy_cur(2), Eigen::Vector3f::UnitZ()) *
-          Eigen::AngleAxisf(rpy_cur(1), Eigen::Vector3f::UnitY()) *
-          Eigen::AngleAxisf(rpy_cur(0), Eigen::Vector3f::UnitX())
-          ).toRotationMatrix();
+        r_c =
+          (Eigen::AngleAxisf(
+            rpy_cur(2),
+            Eigen::Vector3f::UnitZ()) *
+          Eigen::AngleAxisf(
+            rpy_cur(1),
+            Eigen::Vector3f::UnitY()) *
+          Eigen::AngleAxisf(rpy_cur(0), Eigen::Vector3f::UnitX())).toRotationMatrix();
 
         if (i == 0) {
           rpy_start = rpy_cur;

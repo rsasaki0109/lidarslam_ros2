@@ -203,7 +203,7 @@ void ScanMatcherComponent::initializePubSub()
           }
           tmp_ptr = tmp_ptr2;
         }
-        
+
 
         if (!initial_cloud_received_) {
           RCLCPP_INFO(get_logger(), "create a first map");
@@ -292,7 +292,8 @@ void ScanMatcherComponent::receiveCloud(
         if (registration_method_ == "NDT") {
           registration_->setInputTarget(targeted_cloud_ptr);
         } else {
-          pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_targeted_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+          pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_targeted_cloud_ptr(
+            new pcl::PointCloud<pcl::PointXYZI>());
           pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
           voxel_grid.setLeafSize(vg_size_for_input_, vg_size_for_input_, vg_size_for_input_);
           voxel_grid.setInputCloud(targeted_cloud_ptr);
@@ -513,7 +514,7 @@ void ScanMatcherComponent::publishMap()
 {
   RCLCPP_INFO(get_logger(), "publish a map");
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr  map_ptr(new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   for (auto & submap : map_array_msg_.submaps) {
     pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg(submap.cloud, *submap_cloud_ptr);
