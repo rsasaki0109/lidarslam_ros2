@@ -20,7 +20,7 @@
   <depend>pcl_conversions</depend>
   <depend>lidarslam_msgs</depend>
   <depend>ndt_omp_ros2</depend>
-  <depend>g2o</depend>
+  <depend>libg2o</depend>
   <depend>libpcl-all-dev</depend>
 
   <test_depend>ament_lint_auto</test_depend>
