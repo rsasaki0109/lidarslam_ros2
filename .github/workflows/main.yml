@@ -28,10 +28,13 @@ jobs:
               run: |
                   mkdir -p ~/ros2_ws/src/lidarslam_ros2
                   cp -rf . ~/ros2_ws/src/lidarslam_ros2
+            - name: Update rosdep
+              run: |
+                  apt-get update
+                  rosdep update
             - name: Install dependencies
               run: |
                   source /opt/ros/foxy/setup.bash
-                  rosdep update
                   cd ~/ros2_ws/src
                   rosdep install -r -y --from-paths . --ignore-src       
             - name: Build packages
