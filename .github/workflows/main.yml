@@ -31,7 +31,6 @@ jobs:
             - name: Install dependencies
               run: |
                   source /opt/ros/foxy/setup.bash
-                  sudo apt install -y python3-rosdep2
                   rosdep update
                   cd ~/ros2_ws/src
                   rosdep install -r -y --from-paths . --ignore-src       
