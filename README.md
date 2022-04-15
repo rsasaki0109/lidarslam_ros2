@@ -171,3 +171,7 @@ Red and yellow: map
 - PCL(BSD3)
 - g2o(BSD2 except a part)
 - [ndt_omp](https://github.com/koide3/ndt_omp) (BSD2)
+
+## Related packages 
+
+- [li_slam_ros2](https://github.com/rsasaki0109/li_slam_ros2) (BSD2)
