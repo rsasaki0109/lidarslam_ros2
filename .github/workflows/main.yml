@@ -1,6 +1,12 @@
 name: foxy
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - foxy
+  pull_request:
+    branches:
+      - foxy
 
 jobs:
     job1:
