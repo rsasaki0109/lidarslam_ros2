@@ -9,7 +9,7 @@ int main(int argc, char * argv[])
   rclcpp::NodeOptions options;
   options.use_intra_process_comms(true);
 
-  rclcpp::executors::SingleThreadedExecutor exec;
+  rclcpp::executors::MultiThreadedExecutor exec;
 
   auto scanmatcher = std::make_shared<graphslam::ScanMatcherComponent>(options);
   exec.add_node(scanmatcher);
