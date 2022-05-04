@@ -24,6 +24,7 @@ I found that even a four-core laptop with 16GB of memory could work in outdoor e
 You need  [ndt_omp_ros2](https://github.com/rsasaki0109/ndt_omp_ros2) for scan-matcher
 
 clone
+(If you forget to add the --recursive option when you do a git clone, run `git submodule update --init --recursive` in the lidarslam_ros2 directory)
 ```
 cd ~/ros2_ws/src
 git clone --recursive https://github.com/rsasaki0109/lidarslam_ros2
@@ -119,7 +120,8 @@ ros2 service call /map_save std_srvs/Empty
 ## demo
 ### trial environment
 demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)  
-The Velodyne VLP-32 was used in this data.
+The Velodyne VLP-32 was used in this data.  
+To use rosbag in ROS1, use [rosbag2_bag_v2](https://github.com/ros2/rosbag2_bag_v2)  
 ```
 rviz2 -d src/lidarslam_ros2/lidarslam/rviz/mapping.rviz 
 ```

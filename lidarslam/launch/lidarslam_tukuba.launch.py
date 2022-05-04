@@ -29,6 +29,12 @@ def generate_launch_description():
         output='screen'
         )
 
+    tf = launch_ros.actions.Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=['0','0','0','0','0','0','1','base_link','velodyne']
+        )
+
 
     return launch.LaunchDescription([
         launch.actions.DeclareLaunchArgument(
@@ -37,4 +43,5 @@ def generate_launch_description():
             description='Full path to main parameter file to load'),
         mapping,
         graphbasedslam,
+        tf,
             ])

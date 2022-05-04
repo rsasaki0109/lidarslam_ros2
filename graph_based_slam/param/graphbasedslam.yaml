@@ -6,3 +6,4 @@ graph_based_slam:
       loop_detection_period: 3000
       threshold_loop_closure_score: 1.5
       distance_loop_closure: 30.0
+      debug_flag: false

@@ -40,6 +40,8 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   get_parameter("num_adjacent_pose_cnstraints", num_adjacent_pose_cnstraints_);
   declare_parameter("use_save_map_in_loop", true);
   get_parameter("use_save_map_in_loop", use_save_map_in_loop_);
+  declare_parameter("debug_flag", false);
+  get_parameter("debug_flag", debug_flag_);
 
   std::cout << "registration_method:" << registration_method << std::endl;
   std::cout << "voxel_leaf_size[m]:" << voxel_leaf_size << std::endl;
@@ -53,6 +55,7 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   std::cout << "search_submap_num:" << search_submap_num_ << std::endl;
   std::cout << "num_adjacent_pose_cnstraints:" << num_adjacent_pose_cnstraints_ << std::endl;
   std::cout << "use_save_map_in_loop:" << std::boolalpha << use_save_map_in_loop_ << std::endl;
+  std::cout << "debug_flag:" << std::boolalpha << debug_flag_ << std::endl;
   std::cout << "------------------" << std::endl;
 
   voxelgrid_.setLeafSize(voxel_leaf_size, voxel_leaf_size, voxel_leaf_size);
@@ -62,8 +65,8 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
       ndt(new pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>());
     ndt->setMaximumIterations(100);
     ndt->setResolution(ndt_resolution);
-    // ndt->setTransformationEpsilon(0.01);
-    ndt->setTransformationEpsilon(1e-6);
+    ndt->setTransformationEpsilon(0.01);
+    // ndt->setTransformationEpsilon(1e-6);
     ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
     if (ndt_num_threads > 0) {ndt->setNumThreads(ndt_num_threads);}
     registration_ = ndt;
@@ -149,8 +152,11 @@ void GraphBasedSlamComponent::searchLoop()
   lidarslam_msgs::msg::MapArray map_array_msg = map_array_msg_;
   std::lock_guard<std::mutex> lock(mtx_);
   int num_submaps = map_array_msg.submaps.size();
-  std::cout << "----------------------------" << std::endl;
-  std::cout << "searching Loop, num_submaps:" << num_submaps << std::endl;
+
+  if(debug_flag_)
+  {
+    std::cout << "searching Loop, num_submaps:" << num_submaps << std::endl;
+  }
 
   double min_fitness_score = std::numeric_limits<double>::max();
   double distance_min_fitness_score = 0;
