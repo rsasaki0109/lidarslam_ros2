@@ -28,7 +28,7 @@ find_package(nav_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(lidarslam_msgs REQUIRED)
-find_package(ndt_omp_ros2 REQUIRED)
+find_package(ndt_omp REQUIRED)
 find_package(PCL REQUIRED)
 find_package(g2o REQUIRED
 COMPONENTS
@@ -55,15 +55,15 @@ src/graph_based_slam_component.cpp
 target_compile_definitions(graph_based_slam_component PRIVATE "GS_GBS_BUILDING_DLL")
 
 ament_target_dependencies(graph_based_slam_component
-  rclcpp 
-  rclcpp_components 
-  tf2_ros 
-  geometry_msgs 
+  rclcpp
+  rclcpp_components
+  tf2_ros
+  geometry_msgs
   sensor_msgs
   nav_msgs
   std_srvs
   lidarslam_msgs
-  ndt_omp_ros2
+  ndt_omp
 )
 
 add_executable(graph_based_slam_node
@@ -71,7 +71,7 @@ src/graph_based_slam_node.cpp
 )
 
 target_link_libraries(graph_based_slam_node
-graph_based_slam_component 
+graph_based_slam_component
 ${PCL_LIBRARIES}
 g2o::core
 g2o::types_slam3d
@@ -90,7 +90,7 @@ link_directories(
 )
 add_definitions(${PCL_DEFINITIONS})
 
-rclcpp_components_register_nodes(graph_based_slam_component 
+rclcpp_components_register_nodes(graph_based_slam_component
   "graphslam::GraphBasedSlamComponent")
 
 ament_export_libraries(graph_based_slam_component)
@@ -112,7 +112,7 @@ install(TARGETS
   RUNTIME DESTINATION bin
 )
 
-install(TARGETS 
+install(TARGETS
   graph_based_slam_node
   DESTINATION lib/${PROJECT_NAME}
 )
