@@ -18,45 +18,36 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   double ndt_resolution;
   int ndt_num_threads;
 
-  declare_parameter("registration_method", "NDT");
-  get_parameter("registration_method", registration_method);
-  declare_parameter("voxel_leaf_size", 0.2);
-  get_parameter("voxel_leaf_size", voxel_leaf_size);
-  declare_parameter("ndt_resolution", 5.0);
-  get_parameter("ndt_resolution", ndt_resolution);
-  declare_parameter("ndt_num_threads", 0);
-  get_parameter("ndt_num_threads", ndt_num_threads);
-  declare_parameter("loop_detection_period", 1000);
-  get_parameter("loop_detection_period", loop_detection_period_);
-  declare_parameter("threshold_loop_closure_score", 1.0);
-  get_parameter("threshold_loop_closure_score", threshold_loop_closure_score_);
-  declare_parameter("distance_loop_closure", 20.0);
-  get_parameter("distance_loop_closure", distance_loop_closure_);
-  declare_parameter("range_of_searching_loop_closure", 20.0);
-  get_parameter("range_of_searching_loop_closure", range_of_searching_loop_closure_);
-  declare_parameter("search_submap_num", 3);
-  get_parameter("search_submap_num", search_submap_num_);
-  declare_parameter("num_adjacent_pose_cnstraints", 5);
-  get_parameter("num_adjacent_pose_cnstraints", num_adjacent_pose_cnstraints_);
-  declare_parameter("use_save_map_in_loop", true);
-  get_parameter("use_save_map_in_loop", use_save_map_in_loop_);
-  declare_parameter("debug_flag", false);
-  get_parameter("debug_flag", debug_flag_);
+  registration_method = declare_parameter("registration_method", "NDT");
+  voxel_leaf_size = declare_parameter("voxel_leaf_size", 0.2);
+  ndt_resolution = declare_parameter("ndt_resolution", 5.0);
+  ndt_num_threads = declare_parameter("ndt_num_threads", 0);
+  loop_detection_period_ = declare_parameter("loop_detection_period", 1000);
+  threshold_loop_closure_score_ = declare_parameter("threshold_loop_closure_score", 1.0);
+  distance_loop_closure_ = declare_parameter("distance_loop_closure", 20.0);
+  range_of_searching_loop_closure_ = declare_parameter("range_of_searching_loop_closure", 20.0);
+  search_submap_num_ = declare_parameter("search_submap_num", 3);
+  num_adjacent_pose_cnstraints_ = declare_parameter("num_adjacent_pose_cnstraints", 5);
+  use_save_map_in_loop_ = declare_parameter("use_save_map_in_loop", true);
+  use_save_map_in_loop_ = get_parameter("use_save_map_in_loop", use_save_map_in_loop_);
+  debug_flag_ = declare_parameter("debug_flag", false);
 
-  std::cout << "registration_method:" << registration_method << std::endl;
-  std::cout << "voxel_leaf_size[m]:" << voxel_leaf_size << std::endl;
-  std::cout << "ndt_resolution[m]:" << ndt_resolution << std::endl;
-  std::cout << "ndt_num_threads:" << ndt_num_threads << std::endl;
-  std::cout << "loop_detection_period[Hz]:" << loop_detection_period_ << std::endl;
-  std::cout << "threshold_loop_closure_score:" << threshold_loop_closure_score_ << std::endl;
-  std::cout << "distance_loop_closure[m]:" << distance_loop_closure_ << std::endl;
-  std::cout << "range_of_searching_loop_closure[m]:" << range_of_searching_loop_closure_ <<
-    std::endl;
-  std::cout << "search_submap_num:" << search_submap_num_ << std::endl;
-  std::cout << "num_adjacent_pose_cnstraints:" << num_adjacent_pose_cnstraints_ << std::endl;
-  std::cout << "use_save_map_in_loop:" << std::boolalpha << use_save_map_in_loop_ << std::endl;
-  std::cout << "debug_flag:" << std::boolalpha << debug_flag_ << std::endl;
-  std::cout << "------------------" << std::endl;
+  std::stringstream ss;
+  ss << "SETTINGS" << std::endl;
+  ss << "registration_method: " << registration_method << std::endl;
+  ss << "voxel_leaf_size[m]: " << voxel_leaf_size << std::endl;
+  ss << "ndt_resolution[m]: " << ndt_resolution << std::endl;
+  ss << "ndt_num_threads: " << ndt_num_threads << std::endl;
+  ss << "loop_detection_period[Hz]: " << loop_detection_period_ << std::endl;
+  ss << "threshold_loop_closure_score: " << threshold_loop_closure_score_ << std::endl;
+  ss << "distance_loop_closure[m]: " << distance_loop_closure_ << std::endl;
+  ss << "range_of_searching_loop_closure[m]: " << range_of_searching_loop_closure_ << std::endl;
+  ss << "search_submap_num: " << search_submap_num_ << std::endl;
+  ss << "num_adjacent_pose_cnstraints: " << num_adjacent_pose_cnstraints_ << std::endl;
+  ss << "use_save_map_in_loop: " << use_save_map_in_loop_ << std::endl;
+  ss << "debug_flag: " << debug_flag_;
+
+  RCLCPP_INFO(get_logger(), ss.str());
 
   voxelgrid_.setLeafSize(voxel_leaf_size, voxel_leaf_size, voxel_leaf_size);
 
@@ -82,27 +73,6 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
     registration_ = gicp;
   }
 
-  initializePubSub();
-
-  auto map_save_callback =
-    [this](const std::shared_ptr<rmw_request_id_t> request_header,
-      const std::shared_ptr<std_srvs::srv::Empty::Request> request,
-      const std::shared_ptr<std_srvs::srv::Empty::Response> response) -> void
-    {
-      std::cout << "Received an request to save the map" << std::endl;
-      if (initial_map_array_received_ == false) {
-        std::cout << "initial map is not received" << std::endl;
-        return;
-      }
-      doPoseAdjustment(map_array_msg_, true);
-    };
-
-  map_save_srv_ = create_service<std_srvs::srv::Empty>("map_save", map_save_callback);
-
-}
-
-void GraphBasedSlamComponent::initializePubSub()
-{
   RCLCPP_INFO(get_logger(), "initialize Publishers and Subscribers");
 
   auto map_array_callback =
@@ -137,6 +107,22 @@ void GraphBasedSlamComponent::initializePubSub()
 
   RCLCPP_INFO(get_logger(), "initialization end");
 
+
+  auto map_save_callback =
+    [this](const std::shared_ptr<rmw_request_id_t> request_header,
+      const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+      const std::shared_ptr<std_srvs::srv::Empty::Response> response) -> void
+    {
+      RCLCPP_INFO(get_logger(), "Received an request to save the map");
+      if (initial_map_array_received_ == false) {
+        RCLCPP_INFO(get_logger(), "initial map is not received");
+        return;
+      }
+      doPoseAdjustment(map_array_msg_, true);
+    };
+
+  map_save_srv_ = create_service<std_srvs::srv::Empty>("map_save", map_save_callback);
+
 }
 
 void GraphBasedSlamComponent::searchLoop()
@@ -155,7 +141,7 @@ void GraphBasedSlamComponent::searchLoop()
 
   if(debug_flag_)
   {
-    std::cout << "searching Loop, num_submaps:" << num_submaps << std::endl;
+    RCLCPP_INFO(get_logger(), "searching Loop, num_submaps: %i", num_submaps);
   }
 
   double min_fitness_score = std::numeric_limits<double>::max();
@@ -211,7 +197,7 @@ void GraphBasedSlamComponent::searchLoop()
       pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_submap_cloud_ptr(
         new pcl::PointCloud<pcl::PointXYZI>);
       Eigen::Affine3d affine;
-      tf2::fromMsg(near_submap.pose, affine);
+      tf2::fromMsg(near_submappose, affine);
       pcl::transformPointCloud(
         *submap_cloud_ptr, *transformed_submap_cloud_ptr,
         affine.matrix().cast<float>());
@@ -243,21 +229,21 @@ void GraphBasedSlamComponent::searchLoop()
       loop_edge.relative_pose = Eigen::Isometry3d(from.inverse() * to);
       loop_edges_.push_back(loop_edge);
 
-      std::cout << "---" << std::endl;
-      std::cout << "PoseAdjustment" << std::endl;
-      std::cout << "distance:" << min_submap.distance << ", score:" << fitness_score << std::endl;
-      std::cout << "id_loop_point 1:" << id_min << std::endl;
-      std::cout << "id_loop_point 2:" << num_submaps - 1 << std::endl;
-      std::cout << "final transformation:" << std::endl;
-      std::cout << registration_->getFinalTransformation() << std::endl;
+      std::stringstream ss;
+      ss << "PoseAdjustment" << std::endl;
+      ss << "distance: " << min_submap.distance << "fitness_score: " << fitness_score << std::endl;
+      ss << "id_loop_point 1: " << id_min << std::endl;
+      ss << "id_loop_point 2: " << num_submaps - 1 << std::endl;
+      ss << "final transformation: " << registration_->getFinalTransformation() << std::endl;
+
+      RCLCPP_INFO(get_logger(), ss.str());
       doPoseAdjustment(map_array_msg, use_save_map_in_loop_);
 
       return;
     }
 
-    std::cout << "-" << std::endl;
-    std::cout << "min_submap_distance:" << min_submap.distance << std::endl;
-    std::cout << "min_fitness_score:" << fitness_score << std::endl;
+    RCLCPP_INFO(get_logger(), "min_submap_distance: %f", min_submap.distance);
+    RCLCPP_INFO(get_logger(), "fitness_score: %f", fitness_score);
   }
 }
 
@@ -321,7 +307,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(
   optimizer.save("pose_graph.g2o");
 
   /* modified_map publish */
-  std::cout << "modified_map publish" << std::endl;
+  RCLCPP_INFO(get_logger(), "modified_map publish");
   lidarslam_msgs::msg::MapArray modified_map_array_msg;
   modified_map_array_msg.header = map_array_msg.header;
   nav_msgs::msg::Path path;

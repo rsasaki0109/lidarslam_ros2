@@ -86,6 +86,7 @@ extern "C" {
 #include "g2o/types/slam3d/parameter_se3_offset.h"
 
 #include <mutex>
+#include <sstream>
 
 namespace graphslam
 {
@@ -114,7 +115,6 @@ private:
     rclcpp::TimerBase::SharedPtr loop_detect_timer_;
     rclcpp::Service < std_srvs::srv::Empty > ::SharedPtr map_save_srv_;
 
-    void initializePubSub();
     void searchLoop();
     void doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg, bool do_save_map);
     void publishMapAndPose();
