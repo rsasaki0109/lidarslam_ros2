@@ -68,6 +68,7 @@ extern "C" {
 
 #include <mutex>
 #include <thread>
+#include <sstream>
 #include <future>
 
 #include <pcl_conversions/pcl_conversions.h>
@@ -105,7 +106,7 @@ private:
     std::packaged_task < void() > mapping_task_;
     std::future < void > mapping_future_;
 
-    geometry_msgs::msg::PoseStamped corrent_pose_stamped_;
+    geometry_msgs::msg::PoseStamped current_pose_stamped_;
     lidarslam_msgs::msg::MapArray map_array_msg_;
     nav_msgs::msg::Path path_;
     rclcpp::Publisher < geometry_msgs::msg::PoseStamped > ::SharedPtr pose_pub_;
@@ -128,7 +129,7 @@ private:
     void updateMap(
       const pcl::PointCloud < pcl::PointXYZI > ::ConstPtr cloud_ptr,
       const Eigen::Matrix4f final_transformation,
-      const geometry_msgs::msg::PoseStamped corrent_pose_stamped
+      const geometry_msgs::msg::PoseStamped current_pose_stamped
     );
 
     bool initial_pose_received_ {false};
