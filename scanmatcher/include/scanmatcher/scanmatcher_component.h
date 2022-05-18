@@ -91,6 +91,9 @@ private:
     std::string robot_frame_id_;
     std::string odom_frame_id_;
 
+    std::string scan_topic_;
+    std::string imu_topic_;
+
     pcl::Registration < pcl::PointXYZI, pcl::PointXYZI > ::Ptr registration_;
 
     rclcpp::Subscription < geometry_msgs::msg::PoseStamped > ::SharedPtr initial_pose_sub_;

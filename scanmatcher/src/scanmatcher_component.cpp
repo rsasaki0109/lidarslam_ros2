@@ -47,6 +47,9 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   use_imu_ = declare_parameter("use_imu", false);
   debug_flag_ = declare_parameter("debug_flag", false);
 
+  scan_topic_ = declare_parameter("scan_topic", "/input_cloud");
+  imu_topic_ = declare_parameter("imu_topic", "/imu");
+
   std::stringstream ss;
   ss << "SETTINGS" << std::endl;
   ss << "registration_method:" << registration_method_ << std::endl;
@@ -232,11 +235,11 @@ void ScanMatcherComponent::initializePubSub()
 
   imu_sub_ =
     create_subscription<sensor_msgs::msg::Imu>(
-    "imu", rclcpp::SensorDataQoS(), imu_callback);
+    imu_topic_, rclcpp::SensorDataQoS(), imu_callback);
 
   input_cloud_sub_ =
     create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input_cloud", rclcpp::SensorDataQoS(), cloud_callback);
+    scan_topic_, rclcpp::SensorDataQoS(), cloud_callback);
 
   // pub
   pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>(
