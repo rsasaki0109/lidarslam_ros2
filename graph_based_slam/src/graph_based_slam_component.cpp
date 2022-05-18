@@ -197,7 +197,7 @@ void GraphBasedSlamComponent::searchLoop()
       pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_submap_cloud_ptr(
         new pcl::PointCloud<pcl::PointXYZI>);
       Eigen::Affine3d affine;
-      tf2::fromMsg(near_submappose, affine);
+      tf2::fromMsg(near_submap.pose, affine);
       pcl::transformPointCloud(
         *submap_cloud_ptr, *transformed_submap_cloud_ptr,
         affine.matrix().cast<float>());
