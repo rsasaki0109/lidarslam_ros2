@@ -1,16 +1,24 @@
 #include "graph_based_slam/graph_based_slam_component.h"
+
 #include <chrono>
+#include <sstream>
 
 using namespace std::chrono_literals;
 
 namespace graphslam
 {
+
 GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & options)
 : Node("graph_based_slam", options),
   clock_(RCL_ROS_TIME),
   tfbuffer_(std::make_shared<rclcpp::Clock>(clock_)),
   listener_(tfbuffer_),
-  broadcaster_(this)
+  broadcaster_(this),
+  use_save_map_in_loop_(true),
+  initial_map_array_received_(false),
+  is_map_array_updated_(false),
+  previous_submaps_num_(0),
+  debug_flag_(false)
 {
   RCLCPP_INFO(get_logger(), "initialization start");
   std::string registration_method;
@@ -31,6 +39,9 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   use_save_map_in_loop_ = declare_parameter("use_save_map_in_loop", true);
   use_save_map_in_loop_ = get_parameter("use_save_map_in_loop", use_save_map_in_loop_);
   debug_flag_ = declare_parameter("debug_flag", false);
+  map_frame_id_ = declare_parameter("map_frame_id", "map");
+  odom_frame_id_ = declare_parameter("odom_frame_id", "odom");
+  map_array_topic_ = declare_parameter("map_array_topic", "map_array");
 
   std::stringstream ss;
   ss << "SETTINGS" << std::endl;
@@ -73,27 +84,7 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
     registration_ = gicp;
   }
 
-  RCLCPP_INFO(get_logger(), "initialize Publishers and Subscribers");
-
-  auto map_array_callback =
-    [this](const typename lidarslam_msgs::msg::MapArray::SharedPtr msg_ptr) -> void
-    {
-      std::lock_guard<std::mutex> lock(mtx_);
-      map_array_msg_ = *msg_ptr;
-      initial_map_array_received_ = true;
-      is_map_array_updated_ = true;
-    };
-
-  map_array_sub_ =
-    create_subscription<lidarslam_msgs::msg::MapArray>(
-    "map_array", rclcpp::QoS(rclcpp::KeepLast(1)).reliable(), map_array_callback);
-
-  std::chrono::milliseconds period(loop_detection_period_);
-  loop_detect_timer_ = create_wall_timer(
-    std::chrono::duration_cast<std::chrono::nanoseconds>(period),
-    std::bind(&GraphBasedSlamComponent::searchLoop, this)
-  );
-
+  // publishers
   modified_map_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
     "modified_map",
     rclcpp::QoS(10));
@@ -105,29 +96,35 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
     "modified_path",
     rclcpp::QoS(10));
 
-  RCLCPP_INFO(get_logger(), "initialization end");
+  // subscribers
+  map_array_sub_ = create_subscription<lidarslam_msgs::msg::MapArray>(
+    map_array_topic_,
+    rclcpp::QoS(rclcpp::KeepLast(1)).reliable(),
+    std::bind(&GraphBasedSlamComponent::mapArrayCallback, this, std::placeholders::_1)
+  );
 
+  // services
+  map_save_srv_ = create_service<std_srvs::srv::Empty>("map_save",
+    std::bind(&GraphBasedSlamComponent::mapSaveCallback, this, std::placeholders::_1, std::placeholders::_2)
+  );
 
-  auto map_save_callback =
-    [this](const std::shared_ptr<rmw_request_id_t> request_header,
-      const std::shared_ptr<std_srvs::srv::Empty::Request> request,
-      const std::shared_ptr<std_srvs::srv::Empty::Response> response) -> void
-    {
-      RCLCPP_INFO(get_logger(), "Received an request to save the map");
-      if (initial_map_array_received_ == false) {
-        RCLCPP_INFO(get_logger(), "initial map is not received");
-        return;
-      }
-      doPoseAdjustment(map_array_msg_, true);
-    };
+  // timers
+  std::chrono::milliseconds period(loop_detection_period_);
+  loop_detect_timer_ = create_wall_timer(
+    std::chrono::duration_cast<std::chrono::nanoseconds>(period),
+    std::bind(&GraphBasedSlamComponent::searchLoop, this)
+  );
 
-  map_save_srv_ = create_service<std_srvs::srv::Empty>("map_save", map_save_callback);
+  odom2map_timer_ = create_wall_timer(
+    50ms,
+    std::bind(&GraphBasedSlamComponent::broadcastOdom2Map, this)
+  );
 
+  RCLCPP_INFO(get_logger(), "Listening to (%s)...", map_array_topic_.c_str());
 }
 
 void GraphBasedSlamComponent::searchLoop()
 {
-
   if (initial_map_array_received_ == false) {return;}
   if (is_map_array_updated_ == false) {return;}
   if (map_array_msg_.cloud_coordinate != map_array_msg_.LOCAL) {
@@ -136,13 +133,9 @@ void GraphBasedSlamComponent::searchLoop()
   is_map_array_updated_ = false;
 
   lidarslam_msgs::msg::MapArray map_array_msg = map_array_msg_;
-  std::lock_guard<std::mutex> lock(mtx_);
   int num_submaps = map_array_msg.submaps.size();
 
-  if(debug_flag_)
-  {
-    RCLCPP_INFO(get_logger(), "searching Loop, num_submaps: %i", num_submaps);
-  }
+  RCLCPP_INFO(get_logger(), "searching Loop, num_submaps: %i", num_submaps);
 
   double min_fitness_score = std::numeric_limits<double>::max();
   double distance_min_fitness_score = 0;
@@ -167,14 +160,18 @@ void GraphBasedSlamComponent::searchLoop()
     latest_submap.pose.position.x,
     latest_submap.pose.position.y,
     latest_submap.pose.position.z};
+
   int id_min = 0;
   double min_dist = std::numeric_limits<double>::max();
   lidarslam_msgs::msg::SubMap min_submap;
-  for (int i = 0; i < num_submaps; i++) {
+  for (int i = 0; i < num_submaps - 1; i++) {
     auto submap = map_array_msg.submaps[i];
     Eigen::Vector3d submap_pos{submap.pose.position.x, submap.pose.position.y,
       submap.pose.position.z};
     double dist = (latest_submap_pos - submap_pos).norm();
+
+    RCLCPP_INFO(get_logger(), ss.str());
+
     if (latest_moving_distance - submap.distance > distance_loop_closure_ &&
       dist < range_of_searching_loop_closure_)
     {
@@ -186,8 +183,8 @@ void GraphBasedSlamComponent::searchLoop()
       }
     }
   }
-
   if (is_candidate) {
+    RCLCPP_INFO(get_logger(), "candidate found");
     pcl::PointCloud<pcl::PointXYZI>::Ptr submap_clouds_ptr(new pcl::PointCloud<pcl::PointXYZI>);
     for (int j = 0; j <= 2 * search_submap_num_; ++j) {
       if (id_min + j - search_submap_num_ < 0) {continue;}
@@ -212,7 +209,7 @@ void GraphBasedSlamComponent::searchLoop()
     pcl::PointCloud<pcl::PointXYZI>::Ptr output_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
     registration_->align(*output_cloud_ptr);
     double fitness_score = registration_->getFitnessScore();
-
+    RCLCPP_INFO(get_logger(), "fitness: %f, threshold: %f ", fitness_score, threshold_loop_closure_score_);
     if (fitness_score < threshold_loop_closure_score_) {
 
       Eigen::Affine3d init_affine;
@@ -237,7 +234,7 @@ void GraphBasedSlamComponent::searchLoop()
       ss << "final transformation: " << registration_->getFinalTransformation() << std::endl;
 
       RCLCPP_INFO(get_logger(), ss.str());
-      doPoseAdjustment(map_array_msg, use_save_map_in_loop_);
+      doPoseAdjustment(use_save_map_in_loop_);
 
       return;
     }
@@ -247,11 +244,8 @@ void GraphBasedSlamComponent::searchLoop()
   }
 }
 
-void GraphBasedSlamComponent::doPoseAdjustment(
-  lidarslam_msgs::msg::MapArray map_array_msg,
-  bool do_save_map)
+void GraphBasedSlamComponent::doPoseAdjustment(bool save_map)
 {
-
   g2o::SparseOptimizer optimizer;
   optimizer.setVerbose(false);
   std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType> linear_solver =
@@ -261,11 +255,11 @@ void GraphBasedSlamComponent::doPoseAdjustment(
 
   optimizer.setAlgorithm(solver);
 
-  int submaps_size = map_array_msg.submaps.size();
+  int submaps_size = map_array_msg_.submaps.size();
   Eigen::Matrix<double, 6, 6> info_mat = Eigen::Matrix<double, 6, 6>::Identity();
   for (int i = 0; i < submaps_size; i++) {
     Eigen::Affine3d affine;
-    Eigen::fromMsg(map_array_msg.submaps[i].pose, affine);
+    Eigen::fromMsg(map_array_msg_.submaps[i].pose, affine);
     Eigen::Isometry3d pose(affine.matrix());
 
     g2o::VertexSE3 * vertex_se3 = new g2o::VertexSE3();
@@ -278,7 +272,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(
       for (int j = 0; j < num_adjacent_pose_cnstraints_; j++) {
         Eigen::Affine3d pre_affine;
         Eigen::fromMsg(
-          map_array_msg.submaps[i - num_adjacent_pose_cnstraints_ + j].pose,
+          map_array_msg_.submaps[i - num_adjacent_pose_cnstraints_ + j].pose,
           pre_affine);
         Eigen::Isometry3d pre_pose(pre_affine.matrix());
         Eigen::Isometry3d relative_pose = pre_pose.inverse() * pose;
@@ -304,12 +298,11 @@ void GraphBasedSlamComponent::doPoseAdjustment(
 
   optimizer.initializeOptimization();
   optimizer.optimize(10);
-  optimizer.save("pose_graph.g2o");
 
   /* modified_map publish */
   RCLCPP_INFO(get_logger(), "modified_map publish");
   lidarslam_msgs::msg::MapArray modified_map_array_msg;
-  modified_map_array_msg.header = map_array_msg.header;
+  modified_map_array_msg.header = map_array_msg_.header;
   nav_msgs::msg::Path path;
   path.header.frame_id = "map";
   pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>());
@@ -320,12 +313,12 @@ void GraphBasedSlamComponent::doPoseAdjustment(
 
     /* map */
     Eigen::Affine3d previous_affine;
-    tf2::fromMsg(map_array_msg.submaps[i].pose, previous_affine);
+    tf2::fromMsg(map_array_msg_.submaps[i].pose, previous_affine);
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(
       new pcl::PointCloud<pcl::PointXYZI>());
-    pcl::fromROSMsg(map_array_msg.submaps[i].cloud, *cloud_ptr);
+    pcl::fromROSMsg(map_array_msg_.submaps[i].cloud, *cloud_ptr);
 
     pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, se3.matrix().cast<float>());
     sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
@@ -334,7 +327,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(
 
     /* submap */
     lidarslam_msgs::msg::SubMap submap;
-    submap.header = map_array_msg.submaps[i].header;
+    submap.header = map_array_msg_.submaps[i].header;
     submap.pose = pose;
     submap.cloud = *cloud_msg_ptr;
     modified_map_array_msg.submaps.push_back(submap);
@@ -346,7 +339,6 @@ void GraphBasedSlamComponent::doPoseAdjustment(
     path.poses.push_back(pose_stamped);
 
   }
-
   modified_map_array_pub_->publish(modified_map_array_msg);
   modified_path_pub_->publish(path);
 
@@ -354,11 +346,57 @@ void GraphBasedSlamComponent::doPoseAdjustment(
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);
   map_msg_ptr->header.frame_id = "map";
   modified_map_pub_->publish(*map_msg_ptr);
-  if (do_save_map) {pcl::io::savePCDFileASCII("map.pcd", *map_ptr);} // too heavy
 
+  if (save_map) {
+    optimizer.save("pose_graph.g2o");
+    pcl::io::savePCDFileASCII("map.pcd", *map_ptr);
+  }
 }
 
+void GraphBasedSlamComponent::broadcastOdom2Map()
+{
+  if (!initial_map_array_received_)
+  {
+    // no pose to broadcast yet
+    return;
+  }
+  auto first_kf_pose = map_array_msg_.submaps[0].pose;
+  geometry_msgs::msg::TransformStamped transform_msg;
+
+  transform_msg.header.stamp = get_clock()->now();
+  transform_msg.header.frame_id = map_frame_id_;
+  transform_msg.child_frame_id = odom_frame_id_;
+  transform_msg.transform.translation.x = first_kf_pose.position.x;
+  transform_msg.transform.translation.y = first_kf_pose.position.y;
+  transform_msg.transform.translation.z = first_kf_pose.position.y;
+  transform_msg.transform.rotation.x = first_kf_pose.orientation.x;
+  transform_msg.transform.rotation.y = first_kf_pose.orientation.y;
+  transform_msg.transform.rotation.z = first_kf_pose.orientation.z;
+  transform_msg.transform.rotation.w = first_kf_pose.orientation.w;
+
+  broadcaster_.sendTransform(transform_msg);
 }
+
+void GraphBasedSlamComponent::mapArrayCallback(const lidarslam_msgs::msg::MapArray::SharedPtr msg_ptr)
+{
+    map_array_msg_ = *msg_ptr;
+    initial_map_array_received_ = true;
+    is_map_array_updated_ = true;
+}
+
+void GraphBasedSlamComponent::mapSaveCallback(const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+  const std::shared_ptr<std_srvs::srv::Empty::Response> response)
+{
+  RCLCPP_INFO(get_logger(), "Received an request to save the map");
+  if (initial_map_array_received_ == false) {
+    RCLCPP_INFO(get_logger(), "initial map is not received");
+    return;
+  }
+  doPoseAdjustment(true);
+}
+
+} // namespace graphslam
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(graphslam::GraphBasedSlamComponent)
+

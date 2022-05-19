@@ -97,27 +97,35 @@ public:
     explicit GraphBasedSlamComponent(const rclcpp::NodeOptions & options);
 
 private:
-    std::mutex mtx_;
 
+    void searchLoop();
+    void doPoseAdjustment(bool save_map);
+    void publishMapAndPose();
+    void broadcastOdom2Map();
+    void mapArrayCallback(const lidarslam_msgs::msg::MapArray::SharedPtr msg_ptr);
+    void mapSaveCallback(const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+      const std::shared_ptr<std_srvs::srv::Empty::Response> response);
+
+private:
     rclcpp::Clock clock_;
     tf2_ros::Buffer tfbuffer_;
     tf2_ros::TransformListener listener_;
     tf2_ros::TransformBroadcaster broadcaster_;
 
-    pcl::Registration < pcl::PointXYZI, pcl::PointXYZI > ::Ptr registration_;
-    pcl::VoxelGrid < pcl::PointXYZI > voxelgrid_;
-
+    pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration_;
+    pcl::VoxelGrid<pcl::PointXYZI> voxelgrid_;
     lidarslam_msgs::msg::MapArray map_array_msg_;
-    rclcpp::Subscription < lidarslam_msgs::msg::MapArray > ::SharedPtr map_array_sub_;
-    rclcpp::Publisher < lidarslam_msgs::msg::MapArray > ::SharedPtr modified_map_array_pub_;
-    rclcpp::Publisher < nav_msgs::msg::Path > ::SharedPtr modified_path_pub_;
-    rclcpp::Publisher < sensor_msgs::msg::PointCloud2 > ::SharedPtr modified_map_pub_;
-    rclcpp::TimerBase::SharedPtr loop_detect_timer_;
-    rclcpp::Service < std_srvs::srv::Empty > ::SharedPtr map_save_srv_;
 
-    void searchLoop();
-    void doPoseAdjustment(lidarslam_msgs::msg::MapArray map_array_msg, bool do_save_map);
-    void publishMapAndPose();
+    rclcpp::Subscription<lidarslam_msgs::msg::MapArray>::SharedPtr map_array_sub_;
+
+    rclcpp::Publisher<lidarslam_msgs::msg::MapArray>::SharedPtr modified_map_array_pub_;
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr modified_path_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr modified_map_pub_;
+
+    rclcpp::TimerBase::SharedPtr loop_detect_timer_;
+    rclcpp::TimerBase::SharedPtr odom2map_timer_;
+
+    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr map_save_srv_;
 
     // loop search parameter
     int loop_detection_period_;
@@ -128,22 +136,25 @@ private:
 
     // pose graph optimization parameter
     int num_adjacent_pose_cnstraints_;
-    bool use_save_map_in_loop_ {true};
+    bool use_save_map_in_loop_;
 
-    bool initial_map_array_received_ {false};
-    bool is_map_array_updated_ {false};
-    int previous_submaps_num_ {0};
+    bool initial_map_array_received_;
+    bool is_map_array_updated_;
+    int previous_submaps_num_;
 
     struct LoopEdge
     {
       std::pair < int, int > pair_id;
       Eigen::Isometry3d relative_pose;
     };
-    std::vector < LoopEdge > loop_edges_;
+    std::vector<LoopEdge> loop_edges_;
 
-    bool debug_flag_ {false};
+    bool debug_flag_;
 
+    std::string map_frame_id_;
+    std::string odom_frame_id_;
+    std::string map_array_topic_;
   };
-}
+} // namespace graphslam
 
 #endif  //GS_GBS_COMPONENT_H_INCLUDED
