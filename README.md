@@ -32,7 +32,7 @@ git clone --recursive https://github.com/rsasaki0109/lidarslam_ros2
 build
 ```
 cd ~/ros2_ws
-colcon build
+colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
 ## io
