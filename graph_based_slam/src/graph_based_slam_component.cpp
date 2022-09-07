@@ -61,7 +61,7 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   voxelgrid_.setLeafSize(voxel_leaf_size, voxel_leaf_size, voxel_leaf_size);
 
   if (registration_method == "NDT") {
-    pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>::Ptr
+	  boost::shared_ptr<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>
       ndt(new pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>());
     ndt->setMaximumIterations(100);
     ndt->setResolution(ndt_resolution);
@@ -71,7 +71,7 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
     if (ndt_num_threads > 0) {ndt->setNumThreads(ndt_num_threads);}
     registration_ = ndt;
   } else {
-    pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>::Ptr
+	  boost::shared_ptr<pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>
       gicp(new pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>());
     gicp->setMaxCorrespondenceDistance(30);
     gicp->setMaximumIterations(100);
