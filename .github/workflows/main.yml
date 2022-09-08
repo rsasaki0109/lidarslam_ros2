@@ -1,12 +1,12 @@
-name: foxy
+name: humble
 
 on:
   push:
     branches:
-      - foxy
+      - humble
   pull_request:
     branches:
-      - foxy
+      - humble
 
 jobs:
     job1:
@@ -15,7 +15,6 @@ jobs:
         steps:
             - name: ROS2 Install
               run: |
-                  # Ref: https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Install-Debians/
                   sudo locale-gen en_US en_US.UTF-8
                   sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
                   export LANG=en_US.UTF-8
@@ -23,8 +22,8 @@ jobs:
                   curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
                   sudo sh -c 'echo "deb [arch=amd64,arm64] http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
                   sudo apt update
-                  sudo apt install ros-foxy-desktop
-                  source /opt/ros/foxy/setup.bash
+                  sudo apt install ros-humble-desktop
+                  source /opt/ros/humble/setup.bash
             - uses: actions/checkout@v1
               with:
                 submodules: true
@@ -34,14 +33,14 @@ jobs:
                   cp -rf . ~/ros2_ws/src/lidarslam_ros2
             - name: Install dependencies
               run: |
-                  source /opt/ros/foxy/setup.bash
+                  source /opt/ros/humble/setup.bash
                   sudo apt install -y python3-rosdep2
                   rosdep update
                   cd ~/ros2_ws/src
                   rosdep install -r -y --from-paths . --ignore-src       
             - name: Build packages
               run: |
-                  source /opt/ros/foxy/setup.bash
+                  source /opt/ros/humble/setup.bash
                   # Install colcon
                   # Ref: https://index.ros.org/doc/ros2/Tutorials/Colcon-Tutorial/
                   sudo apt install python3-colcon-common-extensions
