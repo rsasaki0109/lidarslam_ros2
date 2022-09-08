@@ -1,4 +1,4 @@
 [submodule "Thirdparty/ndt_omp_ros2"]
 	path = Thirdparty/ndt_omp_ros2
-	url = https://github.com/amadeuszsz/ndt_omp_ros2
+	url = https://github.com/rsasaki0109/ndt_omp_ros2
 	branch = humble
