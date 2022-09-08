@@ -44,9 +44,9 @@ extern "C" {
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <geometry_msgs/msg/point.hpp>
@@ -103,7 +103,7 @@ private:
     tf2_ros::TransformListener listener_;
     tf2_ros::TransformBroadcaster broadcaster_;
 
-    pcl::Registration < pcl::PointXYZI, pcl::PointXYZI > ::Ptr registration_;
+    boost::shared_ptr<pcl::Registration < pcl::PointXYZI, pcl::PointXYZI >> registration_;
     pcl::VoxelGrid < pcl::PointXYZI > voxelgrid_;
 
     lidarslam_msgs::msg::MapArray map_array_msg_;
