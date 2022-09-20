@@ -285,7 +285,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(
     g2o::VertexSE3 * vertex_se3 = new g2o::VertexSE3();
     vertex_se3->setId(i);
     vertex_se3->setEstimate(pose);
-    if (i == submaps_size - 1) {vertex_se3->setFixed(true);}
+    if (i == 0) {vertex_se3->setFixed(true);}
     optimizer.addVertex(vertex_se3);
 
     if (i > num_adjacent_pose_cnstraints_) {
