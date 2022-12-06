@@ -12,6 +12,8 @@ jobs:
     job1:
         name: Build
         runs-on: ubuntu-22.04
+        container:
+          image: ubuntu:jammy 
         steps:
             - name: ROS2 Install
               run: |
