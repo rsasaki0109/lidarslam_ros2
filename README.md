@@ -60,7 +60,9 @@ colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 /modified_map  (sensor_msgs/PointCloud2)  
 
 - srv  
-/map_save  (std_srvs/Empty)
+/map_save  (std_srvs/Empty)　　
+
+## how to save the map
 
 `pose_graph.g2o` and `map.pcd` are saved in loop closing or using the following service call.
 
