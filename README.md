@@ -33,7 +33,6 @@ rosdep install --from-paths src --ignore-src -r -y
 ```
 build
 ```
-cd ~/ros2_ws
 colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
