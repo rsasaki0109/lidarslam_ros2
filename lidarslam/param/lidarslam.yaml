@@ -24,7 +24,7 @@ scan_matcher:
     initial_pose_qz: 0.0
     initial_pose_qw: 1.0
     use_imu: false
-    use_odom: true
+    use_odom: false
     debug_flag: false
 
 graph_based_slam:
