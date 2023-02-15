@@ -36,6 +36,21 @@ find_package(ndt_omp_ros2 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(OpenMP)
 
+set(dependencies
+  rclcpp 
+  rclcpp_components 
+  tf2_ros 
+  tf2_geometry_msgs 
+  tf2_sensor_msgs 
+  tf2_eigen 
+  pcl_conversions
+  geometry_msgs 
+  sensor_msgs
+  nav_msgs
+  lidarslam_msgs
+  ndt_omp_ros2
+)
+
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -52,20 +67,7 @@ src/scanmatcher_component.cpp
 
 target_compile_definitions(scanmatcher_component PRIVATE "GS_SM_BUILDING_DLL")
 
-ament_target_dependencies(scanmatcher_component
-  rclcpp 
-  rclcpp_components 
-  tf2_ros 
-  tf2_geometry_msgs 
-  tf2_sensor_msgs 
-  tf2_eigen 
-  pcl_conversions
-  geometry_msgs 
-  sensor_msgs
-  nav_msgs
-  lidarslam_msgs
-  ndt_omp_ros2
-)
+ament_target_dependencies(scanmatcher_component ${dependencies})
 
 add_executable(scanmatcher_node
 src/scanmatcher_node.cpp
@@ -114,4 +116,5 @@ install(TARGETS
 )
 
 ament_export_include_directories(include)
+ament_export_dependencies(${dependencies})
 ament_package()
