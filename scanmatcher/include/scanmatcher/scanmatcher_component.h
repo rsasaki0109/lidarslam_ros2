@@ -146,6 +146,7 @@ private:
     int num_targeted_cloud_;
 
     bool set_initial_pose_ {false};
+    bool publish_tf_ {true};
     bool use_odom_ {false};
     bool use_imu_ {false};
     bool debug_flag_ {false};
