@@ -45,7 +45,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   declare_parameter("scan_period", 0.1);
   get_parameter("scan_period", scan_period_);
   declare_parameter("map_publish_period", 15.0);
-  get_parameter("map_publish_period", map_publish_period_);
+  get_parameter("map_publish_period", map_publish_period_);  
   declare_parameter("num_targeted_cloud", 10);
   get_parameter("num_targeted_cloud", num_targeted_cloud_);
   if (num_targeted_cloud_ < 1) {
@@ -70,6 +70,8 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
 
   declare_parameter("set_initial_pose", false);
   get_parameter("set_initial_pose", set_initial_pose_);
+  declare_parameter("publish_tf", true);
+  get_parameter("publish_tf", publish_tf_);
   declare_parameter("use_odom", false);
   get_parameter("use_odom", use_odom_);
   declare_parameter("use_imu", false);
@@ -88,6 +90,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   std::cout << "scan_min_range[m]:" << scan_min_range_ << std::endl;
   std::cout << "scan_max_range[m]:" << scan_max_range_ << std::endl;
   std::cout << "set_initial_pose:" << std::boolalpha << set_initial_pose_ << std::endl;
+  std::cout << "publish_tf:" << std::boolalpha << publish_tf_ << std::endl;
   std::cout << "use_odom:" << std::boolalpha << use_odom_ << std::endl;
   std::cout << "use_imu:" << std::boolalpha << use_imu_ << std::endl;
   std::cout << "scan_period[sec]:" << scan_period_ << std::endl;
@@ -383,15 +386,17 @@ void ScanMatcherComponent::publishMapAndPose(
   Eigen::Quaterniond quat_eig(rot_mat);
   geometry_msgs::msg::Quaternion quat_msg = tf2::toMsg(quat_eig);
 
-  geometry_msgs::msg::TransformStamped transform_stamped;
-  transform_stamped.header.stamp = stamp;
-  transform_stamped.header.frame_id = global_frame_id_;
-  transform_stamped.child_frame_id = robot_frame_id_;
-  transform_stamped.transform.translation.x = position.x();
-  transform_stamped.transform.translation.y = position.y();
-  transform_stamped.transform.translation.z = position.z();
-  transform_stamped.transform.rotation = quat_msg;
-  broadcaster_.sendTransform(transform_stamped);
+  if(publish_tf_){
+    geometry_msgs::msg::TransformStamped transform_stamped;
+    transform_stamped.header.stamp = stamp;
+    transform_stamped.header.frame_id = global_frame_id_;
+    transform_stamped.child_frame_id = robot_frame_id_;
+    transform_stamped.transform.translation.x = position.x();
+    transform_stamped.transform.translation.y = position.y();
+    transform_stamped.transform.translation.z = position.z();
+    transform_stamped.transform.rotation = quat_msg;
+    broadcaster_.sendTransform(transform_stamped);
+  }
 
   corrent_pose_stamped_.header.stamp = stamp;
   corrent_pose_stamped_.pose.position.x = position.x();
