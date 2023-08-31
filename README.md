@@ -99,6 +99,7 @@ ros2 service call /map_save std_srvs/Empty
 |initial_pose_qy|double|0.0|Quaternion y of the initial pose value|
 |initial_pose_qz|double|0.0|Quaternion z of the initial pose value|
 |initial_pose_qw|double|1.0|Quaternion w of the initial pose value|
+|publish_tf|bool|true|Whether or not to publish tf from global frame to robot frame|
 |use_odom|bool|false|whether odom is used or not for initial attitude in point cloud registration|
 |use_imu|bool|false|whether 9-axis imu(Angular velocity, acceleration and orientation must be included.) is used or not for point cloud distortion correction.(Note that you must also set the `scan_period`.)|
 |debug_flag|bool|false|Whether or not to display the registration information|
