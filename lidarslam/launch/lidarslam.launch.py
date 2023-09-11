@@ -13,6 +13,13 @@ def generate_launch_description():
             get_package_share_directory('lidarslam'),
             'param',
             'lidarslam.yaml'))
+    
+    rviz_param_dir = launch.substitutions.LaunchConfiguration(
+        'rviz_param_dir',
+        default=os.path.join(
+            get_package_share_directory('lidarslam'),
+            'rviz',
+            'mapping.rviz'))
 
     mapping = launch_ros.actions.Node(
         package='scanmatcher',
@@ -35,6 +42,12 @@ def generate_launch_description():
         parameters=[main_param_dir],
         output='screen'
         )
+    
+    rviz = launch_ros.actions.Node(
+        package='rviz2',
+        executable='rviz2',
+        arguments=['-d', rviz_param_dir]
+        )
 
 
     return launch.LaunchDescription([
@@ -45,4 +58,5 @@ def generate_launch_description():
         mapping,
         tf,
         graphbasedslam,
+        rviz,
             ])

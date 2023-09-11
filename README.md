@@ -33,7 +33,7 @@ rosdep install --from-paths src --ignore-src -r -y
 ```
 build
 ```
-colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
 ## io
@@ -126,9 +126,7 @@ ros2 service call /map_save std_srvs/Empty
 demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)  
 The Velodyne VLP-32 was used in this data.  
 To use rosbag in ROS1, use [rosbag2_bag_v2](https://github.com/ros2/rosbag2_bag_v2)  
-```
-rviz2 -d src/lidarslam_ros2/lidarslam/rviz/mapping.rviz 
-```
+
 
 ```
 ros2 launch lidarslam lidarslam.launch.py
@@ -150,10 +148,6 @@ demo data(ROS1) by Autoware Foundation
 https://data.tier4.jp/rosbag_details/?id=212  
 The Velodyne VLP-16 was used in this data.
 
-
-```
-rviz2 -d src/lidarslam_ros2/lidarslam/rviz/mapping_tukuba.rviz 
-```
 
 ```
 ros2 launch lidarslam lidarslam_tukuba.launch.py

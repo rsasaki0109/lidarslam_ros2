@@ -13,6 +13,13 @@ def generate_launch_description():
             get_package_share_directory('lidarslam'),
             'param',
             'lidarslam_tukuba.yaml'))
+    
+    rviz_param_dir = launch.substitutions.LaunchConfiguration(
+        'rviz_param_dir',
+        default=os.path.join(
+            get_package_share_directory('lidarslam'),
+            'rviz',
+            'mapping_tukuba.rviz'))
 
     mapping = launch_ros.actions.Node(
         package='scanmatcher',
@@ -36,6 +43,12 @@ def generate_launch_description():
         )
 
 
+    rviz = launch_ros.actions.Node(
+        package='rviz2',
+        executable='rviz2',
+        arguments=['-d', rviz_param_dir]
+        )
+    
     return launch.LaunchDescription([
         launch.actions.DeclareLaunchArgument(
             'main_param_dir',
@@ -44,4 +57,5 @@ def generate_launch_description():
         mapping,
         graphbasedslam,
         tf,
+        rviz,
             ])
