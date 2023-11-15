@@ -125,7 +125,7 @@ ros2 service call /map_save std_srvs/Empty
 ### trial environment
 demo data(ROS1) is `hdl_400.bag` in [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)  
 The Velodyne VLP-32 was used in this data.  
-To use rosbag in ROS1, use [rosbag2_bag_v2](https://github.com/ros2/rosbag2_bag_v2)  
+To use rosbag in ROS1, use [rosbags](https://pypi.org/project/rosbags/)  
 
 
 ```
@@ -133,7 +133,7 @@ ros2 launch lidarslam lidarslam.launch.py
 ```
 
 ```
-ros2 bag play -s rosbag_v2 hdl_400.bag 
+ros2 bag play hdl_400/
 ```
 
 <img src="./lidarslam/images/path.png" width="640px">
@@ -154,7 +154,7 @@ ros2 launch lidarslam lidarslam_tukuba.launch.py
 ```
 
 ```
-ros2 bag play -s rosbag_v2 tc_2017-10-15-15-34-02_free_download.bag 
+ros2 bag play tc_2017-10-15-15-34-02_free_download/ 
 ```
 
 <img src="./lidarslam/images/path_tukuba.png" width="640px">  
