@@ -1,10 +1,6 @@
 name: humble
 
 on:
-  push:
-    branches:
-      - humble
-      - develop
   pull_request:
     branches:
       - humble
