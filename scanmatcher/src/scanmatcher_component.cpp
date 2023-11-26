@@ -474,7 +474,7 @@ void ScanMatcherComponent::updateMap(
   rclcpp::Time map_time = clock_.now();
   double dt = map_time.seconds() - last_map_time_.seconds();
   if (dt > map_publish_period_) {
-    publishMap();
+    publishMap(map_array_msg_, global_frame_id_);
     last_map_time_ = map_time;
   }
 }
@@ -515,17 +515,17 @@ void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu msg)
 
 }
 
-void ScanMatcherComponent::publishMap()
+void ScanMatcherComponent::publishMap(const lidarslam_msgs::msg::MapArray & map_array_msg , const std::string & map_frame_id)
 {
   RCLCPP_INFO(get_logger(), "publish a map");
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-  for (auto & submap : map_array_msg_.submaps) {
+  for (auto & submap : map_array_msg.submaps) {
     pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_submap_cloud_ptr(
         new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg(submap.cloud, *submap_cloud_ptr);
-    
+
     Eigen::Affine3d affine;
     tf2::fromMsg(submap.pose, affine);
     pcl::transformPointCloud(
@@ -534,11 +534,11 @@ void ScanMatcherComponent::publishMap()
 
     *map_ptr += *transformed_submap_cloud_ptr;
   }
-  std::cout << "number of map　points: " << map_ptr->size() << std::endl;
+  RCLCPP_INFO(get_logger(), "number of map points: %d", map_ptr->size());
 
   sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);
-  map_msg_ptr->header.frame_id = global_frame_id_;
+  map_msg_ptr->header.frame_id = map_frame_id;
   map_pub_->publish(*map_msg_ptr);
 }
 

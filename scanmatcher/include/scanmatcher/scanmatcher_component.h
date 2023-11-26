@@ -124,7 +124,7 @@ private:
       const rclcpp::Time stamp
     );
     Eigen::Matrix4f getTransformation(const geometry_msgs::msg::Pose pose);
-    void publishMap();
+    void publishMap(const lidarslam_msgs::msg::MapArray & map_array_msg, const std::string & map_frame_id);
     void updateMap(
       const pcl::PointCloud < pcl::PointXYZI > ::ConstPtr cloud_ptr,
       const Eigen::Matrix4f final_transformation,
