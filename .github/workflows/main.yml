@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: |
             apt-get update
-            apt-get install -y python3-rosdep
+            apt-get install -y git python3-rosdep
             rosdep init
             rosdep update
             cd ~/ros2_ws/src
