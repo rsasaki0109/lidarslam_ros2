@@ -4,16 +4,16 @@ on:
   push:
     branches:
       - humble
+      - develop
   pull_request:
     branches:
       - humble
+      - develop
 
 jobs:
     job1:
         name: Build
         runs-on: ubuntu-22.04
-        # container:
-        #   image: ubuntu:jammy 
         steps:
             - name: ROS2 Install
               run: |
@@ -40,7 +40,7 @@ jobs:
                   sudo apt install -y python3-rosdep2
                   rosdep update
                   cd ~/ros2_ws/src
-                  rosdep install -r -y --from-paths . --ignore-src       
+                  rosdep install -r -y --from-paths . --ignore-src
             - name: Build packages
               run: |
                   source /opt/ros/humble/setup.bash

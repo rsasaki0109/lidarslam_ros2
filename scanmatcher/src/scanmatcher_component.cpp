@@ -221,6 +221,7 @@ void ScanMatcherComponent::initializePubSub()
         RCLCPP_INFO(get_logger(), "initial_cloud is received");
         initial_cloud_received_ = true;
         initializeMap(tmp_ptr, msg->header);
+        last_map_time_ = clock_.now();
       }
 
       if (initial_cloud_received_) {receiveCloud(tmp_ptr, msg->header.stamp);}
@@ -290,8 +291,6 @@ void ScanMatcherComponent::initializeMap(const pcl::PointCloud <pcl::PointXYZI>:
   map_array_msg_.submaps.push_back(submap);
 
   map_pub_->publish(submap.cloud);
-
-  last_map_time_ = clock_.now();
 }
 
 void ScanMatcherComponent::receiveCloud(
@@ -529,8 +528,6 @@ void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu msg)
 
 void ScanMatcherComponent::publishMap(const lidarslam_msgs::msg::MapArray & map_array_msg , const std::string & map_frame_id)
 {
-  RCLCPP_INFO(get_logger(), "publish a map");
-
   pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   for (auto & submap : map_array_msg.submaps) {
     pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
@@ -546,7 +543,7 @@ void ScanMatcherComponent::publishMap(const lidarslam_msgs::msg::MapArray & map_
 
     *map_ptr += *transformed_submap_cloud_ptr;
   }
-  RCLCPP_INFO(get_logger(), "number of map points: %ld", map_ptr->size());
+  RCLCPP_INFO(get_logger(), "publish a map, number of points in the map : %ld", map_ptr->size());
 
   sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);

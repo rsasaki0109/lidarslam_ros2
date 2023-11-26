@@ -70,7 +70,7 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
     ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
     if (ndt_num_threads > 0) {ndt->setNumThreads(ndt_num_threads);}
     registration_ = ndt;
-  } else {
+  } else if (registration_method == "GICP") {
 	  boost::shared_ptr<pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>
       gicp(new pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>());
     gicp->setMaxCorrespondenceDistance(30);
@@ -80,6 +80,9 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
     gicp->setEuclideanFitnessEpsilon(1e-6);
     gicp->setRANSACIterations(0);
     registration_ = gicp;
+  } else {
+    RCLCPP_ERROR(get_logger(), "invalid registration_method");
+    exit(1);
   }
 
   initializePubSub();
@@ -155,7 +158,7 @@ void GraphBasedSlamComponent::searchLoop()
 
   if(debug_flag_)
   {
-    std::cout << "searching Loop, num_submaps:" << num_submaps << std::endl;
+    RCLCPP_INFO(get_logger(), "searching Loop, num_submaps:%d", num_submaps);
   }
 
   double min_fitness_score = std::numeric_limits<double>::max();
@@ -244,20 +247,15 @@ void GraphBasedSlamComponent::searchLoop()
       loop_edges_.push_back(loop_edge);
 
       std::cout << "---" << std::endl;
-      std::cout << "PoseAdjustment" << std::endl;
-      std::cout << "distance:" << min_submap.distance << ", score:" << fitness_score << std::endl;
-      std::cout << "id_loop_point 1:" << id_min << std::endl;
-      std::cout << "id_loop_point 2:" << num_submaps - 1 << std::endl;
+      std::cout << "PoseAdjustment distance:" << min_submap.distance << ", score:" << fitness_score << std::endl;
+      std::cout << "id_loop_point 1:" << id_min << " id_loop_point 2:" << num_submaps - 1 << std::endl;
       std::cout << "final transformation:" << std::endl;
       std::cout << registration_->getFinalTransformation() << std::endl;
       doPoseAdjustment(map_array_msg, use_save_map_in_loop_);
 
       return;
     }
-
-    std::cout << "-" << std::endl;
-    std::cout << "min_submap_distance:" << min_submap.distance << std::endl;
-    std::cout << "min_fitness_score:" << fitness_score << std::endl;
+    std::cout << "min_submap_distance:" << min_submap.distance << " min_fitness_score:" << fitness_score << std::endl;
   }
 }
 
