@@ -114,8 +114,9 @@ private:
     rclcpp::Publisher < nav_msgs::msg::Path > ::SharedPtr path_pub_;
 
     void initializePubSub();
+    void initializeMap(const pcl::PointCloud <pcl::PointXYZI>::Ptr & cloud_ptr, const std_msgs::msg::Header & header);
     void receiveCloud(
-      const pcl::PointCloud < pcl::PointXYZI > ::ConstPtr & input_cloud_ptr,
+      const pcl::PointCloud < pcl::PointXYZI> ::ConstPtr & input_cloud_ptr,
       const rclcpp::Time stamp);
     void receiveImu(const sensor_msgs::msg::Imu imu_msg);
     void publishMapAndPose(
@@ -124,7 +125,7 @@ private:
       const rclcpp::Time stamp
     );
     Eigen::Matrix4f getTransformation(const geometry_msgs::msg::Pose pose);
-    void publishMap();
+    void publishMap(const lidarslam_msgs::msg::MapArray & map_array_msg, const std::string & map_frame_id);
     void updateMap(
       const pcl::PointCloud < pcl::PointXYZI > ::ConstPtr cloud_ptr,
       const Eigen::Matrix4f final_transformation,
@@ -173,6 +174,6 @@ private:
     LidarUndistortion lidar_undistortion_;
 
   };
-}
+} // namespace graphslam
 
 #endif  //GS_SM_COMPONENT_H_INCLUDED

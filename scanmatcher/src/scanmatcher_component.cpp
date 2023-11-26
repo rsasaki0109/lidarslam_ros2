@@ -12,6 +12,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   listener_(tfbuffer_),
   broadcaster_(this)
 {
+  RCLCPP_INFO(get_logger(), "initialization start");
   double ndt_resolution;
   int ndt_num_threads;
   double gicp_corr_dist_threshold;
@@ -111,12 +112,15 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
 
     registration_ = ndt;
 
-  } else {
+  } else if (registration_method_ == "GICP") {
 	  boost::shared_ptr<pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>
       gicp(new pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>());
     gicp->setMaxCorrespondenceDistance(gicp_corr_dist_threshold);
     gicp->setTransformationEpsilon(1e-8);
     registration_ = gicp;
+  } else {
+    RCLCPP_ERROR(get_logger(), "invalid registration method");
+    exit(1);
   }
 
   map_array_msg_.header.frame_id = global_frame_id_;
@@ -129,6 +133,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
   initializePubSub();
 
   if (set_initial_pose_) {
+    RCLCPP_INFO(get_logger(), "set initial pose");
     auto msg = std::make_shared<geometry_msgs::msg::PoseStamped>();
     msg->header.stamp = now();
     msg->header.frame_id = global_frame_id_;
@@ -174,80 +179,52 @@ void ScanMatcherComponent::initializePubSub()
   auto cloud_callback =
     [this](const typename sensor_msgs::msg::PointCloud2::SharedPtr msg) -> void
     {
-      if (initial_pose_received_) {
-        sensor_msgs::msg::PointCloud2 transformed_msg;
-        try {
-          tf2::TimePoint time_point = tf2::TimePoint(
-            std::chrono::seconds(msg->header.stamp.sec) +
-            std::chrono::nanoseconds(msg->header.stamp.nanosec));
-          const geometry_msgs::msg::TransformStamped transform = tfbuffer_.lookupTransform(
-            robot_frame_id_, msg->header.frame_id, time_point);
-          tf2::doTransform(*msg, transformed_msg, transform); // TODO:slow now(https://github.com/ros/geometry2/pull/432)
-        } catch (tf2::TransformException & e) {
-          RCLCPP_ERROR(this->get_logger(), "%s", e.what());
-          return;
-        }
-
-        pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-        pcl::fromROSMsg(transformed_msg, *tmp_ptr);
-
-        if (use_imu_) {
-          double scan_time = msg->header.stamp.sec +
-            msg->header.stamp.nanosec * 1e-9;
-          lidar_undistortion_.adjustDistortion(tmp_ptr, scan_time);
-        }
-
-        if (use_min_max_filter_) {
-          double r;
-          pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr2(new pcl::PointCloud<pcl::PointXYZI>());
-          for (const auto & p : tmp_ptr->points) {
-            r = sqrt(pow(p.x, 2.0) + pow(p.y, 2.0));
-            if (scan_min_range_ < r && r < scan_max_range_) {tmp_ptr2->points.push_back(p);}
-          }
-          tmp_ptr = tmp_ptr2;
-        }
-
-
-        if (!initial_cloud_received_) {
-          RCLCPP_INFO(get_logger(), "create a first map");
-          pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-          pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
-          voxel_grid.setLeafSize(vg_size_for_map_, vg_size_for_map_, vg_size_for_map_);
-          voxel_grid.setInputCloud(tmp_ptr);
-          voxel_grid.filter(*cloud_ptr);
-
-          initial_cloud_received_ = true;
-
-          Eigen::Matrix4f sim_trans = getTransformation(corrent_pose_stamped_.pose);
-          pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(
-            new pcl::PointCloud<pcl::PointXYZI>());
-          pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, sim_trans);
-          registration_->setInputTarget(transformed_cloud_ptr);
-
-          // map
-          sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
-          pcl::toROSMsg(*transformed_cloud_ptr, *map_msg_ptr);
-
-          // map array
-          sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg_ptr(
-            new sensor_msgs::msg::PointCloud2);
-          pcl::toROSMsg(*cloud_ptr, *cloud_msg_ptr);
-          lidarslam_msgs::msg::SubMap submap;
-          submap.header = msg->header;
-          submap.distance = 0;
-          submap.pose = corrent_pose_stamped_.pose;
-          submap.cloud = *cloud_msg_ptr;
-          map_array_msg_.header = msg->header;
-          map_array_msg_.submaps.push_back(submap);
-
-          map_pub_->publish(submap.cloud);
-
-          last_map_time_ = clock_.now();
-
-        }
-
-        if (initial_cloud_received_) {receiveCloud(tmp_ptr, msg->header.stamp);}
+      if (!initial_pose_received_)
+      {
+        RCLCPP_WARN(get_logger(), "initial_pose is not received");
+        return;
       }
+
+      sensor_msgs::msg::PointCloud2 transformed_msg;
+      try {
+        tf2::TimePoint time_point = tf2::TimePoint(
+          std::chrono::seconds(msg->header.stamp.sec) +
+          std::chrono::nanoseconds(msg->header.stamp.nanosec));
+        const geometry_msgs::msg::TransformStamped transform = tfbuffer_.lookupTransform(
+          robot_frame_id_, msg->header.frame_id, time_point);
+        tf2::doTransform(*msg, transformed_msg, transform); // TODO:slow now(https://github.com/ros/geometry2/pull/432)
+      } catch (tf2::TransformException & e) {
+        RCLCPP_ERROR(this->get_logger(), "%s", e.what());
+        return;
+      }
+
+      pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+      pcl::fromROSMsg(transformed_msg, *tmp_ptr);
+
+      if (use_imu_) {
+        double scan_time = msg->header.stamp.sec +
+          msg->header.stamp.nanosec * 1e-9;
+        lidar_undistortion_.adjustDistortion(tmp_ptr, scan_time);
+      }
+
+      if (use_min_max_filter_) {
+        double r;
+        pcl::PointCloud<pcl::PointXYZI>::Ptr tmp_ptr2(new pcl::PointCloud<pcl::PointXYZI>());
+        for (const auto & p : tmp_ptr->points) {
+          r = sqrt(pow(p.x, 2.0) + pow(p.y, 2.0));
+          if (scan_min_range_ < r && r < scan_max_range_) {tmp_ptr2->points.push_back(p);}
+        }
+        tmp_ptr = tmp_ptr2;
+      }
+
+      if (!initial_cloud_received_) {
+        RCLCPP_INFO(get_logger(), "initial_cloud is received");
+        initial_cloud_received_ = true;
+        initializeMap(tmp_ptr, msg->header);
+        last_map_time_ = clock_.now();
+      }
+
+      if (initial_cloud_received_) {receiveCloud(tmp_ptr, msg->header.stamp);}
 
     };
 
@@ -280,6 +257,40 @@ void ScanMatcherComponent::initializePubSub()
       rclcpp::KeepLast(
         1)).reliable());
   path_pub_ = create_publisher<nav_msgs::msg::Path>("path", rclcpp::QoS(10));
+}
+
+void ScanMatcherComponent::initializeMap(const pcl::PointCloud <pcl::PointXYZI>::Ptr & tmp_ptr, const std_msgs::msg::Header & header)
+{
+  RCLCPP_INFO(get_logger(), "create a first map");
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
+  voxel_grid.setLeafSize(vg_size_for_map_, vg_size_for_map_, vg_size_for_map_);
+  voxel_grid.setInputCloud(tmp_ptr);
+  voxel_grid.filter(*cloud_ptr);
+
+  Eigen::Matrix4f sim_trans = getTransformation(corrent_pose_stamped_.pose);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud_ptr(
+    new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::transformPointCloud(*cloud_ptr, *transformed_cloud_ptr, sim_trans);
+  registration_->setInputTarget(transformed_cloud_ptr);
+
+  // map
+  sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
+  pcl::toROSMsg(*transformed_cloud_ptr, *map_msg_ptr);
+
+  // map array
+  sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg_ptr(
+    new sensor_msgs::msg::PointCloud2);
+  pcl::toROSMsg(*cloud_ptr, *cloud_msg_ptr);
+  lidarslam_msgs::msg::SubMap submap;
+  submap.header = header;
+  submap.distance = 0;
+  submap.pose = corrent_pose_stamped_.pose;
+  submap.cloud = *cloud_msg_ptr;
+  map_array_msg_.header = header;
+  map_array_msg_.submaps.push_back(submap);
+
+  map_pub_->publish(submap.cloud);
 }
 
 void ScanMatcherComponent::receiveCloud(
@@ -474,7 +485,7 @@ void ScanMatcherComponent::updateMap(
   rclcpp::Time map_time = clock_.now();
   double dt = map_time.seconds() - last_map_time_.seconds();
   if (dt > map_publish_period_) {
-    publishMap();
+    publishMap(map_array_msg_, global_frame_id_);
     last_map_time_ = map_time;
   }
 }
@@ -515,17 +526,15 @@ void ScanMatcherComponent::receiveImu(const sensor_msgs::msg::Imu msg)
 
 }
 
-void ScanMatcherComponent::publishMap()
+void ScanMatcherComponent::publishMap(const lidarslam_msgs::msg::MapArray & map_array_msg , const std::string & map_frame_id)
 {
-  RCLCPP_INFO(get_logger(), "publish a map");
-
   pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-  for (auto & submap : map_array_msg_.submaps) {
+  for (auto & submap : map_array_msg.submaps) {
     pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_submap_cloud_ptr(
         new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg(submap.cloud, *submap_cloud_ptr);
-    
+
     Eigen::Affine3d affine;
     tf2::fromMsg(submap.pose, affine);
     pcl::transformPointCloud(
@@ -534,15 +543,15 @@ void ScanMatcherComponent::publishMap()
 
     *map_ptr += *transformed_submap_cloud_ptr;
   }
-  std::cout << "number of map　points: " << map_ptr->size() << std::endl;
+  RCLCPP_INFO(get_logger(), "publish a map, number of points in the map : %ld", map_ptr->size());
 
   sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);
-  map_msg_ptr->header.frame_id = global_frame_id_;
+  map_msg_ptr->header.frame_id = map_frame_id;
   map_pub_->publish(*map_msg_ptr);
 }
 
-}
+} // namespace graphslam
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(graphslam::ScanMatcherComponent)

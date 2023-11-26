@@ -4,49 +4,44 @@ on:
   push:
     branches:
       - humble
+      - develop
   pull_request:
     branches:
       - humble
+      - develop
 
 jobs:
-    job1:
-        name: Build
-        runs-on: ubuntu-22.04
-        # container:
-        #   image: ubuntu:jammy 
-        steps:
-            - name: ROS2 Install
-              run: |
-                  sudo apt update && sudo apt install locales
-                  sudo locale-gen en_US en_US.UTF-8
-                  sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
-                  export LANG=en_US.UTF-8
-                  sudo apt update && sudo apt install curl gnupg2 lsb-release
-                  curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
-                  sudo sh -c 'echo "deb [arch=amd64,arm64] http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
-                  sudo apt update
-                  sudo apt install ros-humble-desktop
-                  source /opt/ros/humble/setup.bash
-            - uses: actions/checkout@v1
-              with:
-                submodules: true
-            - name: Copy repository
-              run: |
-                  mkdir -p ~/ros2_ws/src/lidarslam_ros2
-                  cp -rf . ~/ros2_ws/src/lidarslam_ros2
-            - name: Install dependencies
-              run: |
-                  source /opt/ros/humble/setup.bash
-                  sudo apt install -y python3-rosdep2
-                  rosdep update
-                  cd ~/ros2_ws/src
-                  rosdep install -r -y --from-paths . --ignore-src       
-            - name: Build packages
-              run: |
-                  source /opt/ros/humble/setup.bash
-                  # Install colcon
-                  # Ref: https://index.ros.org/doc/ros2/Tutorials/Colcon-Tutorial/
-                  sudo apt install python3-colcon-common-extensions
-                  cd ~/ros2_ws
-                  colcon build
-                  source ~/ros2_ws/install/setup.bash
+  job1:
+    name: Build
+    runs-on: ubuntu-22.04
+    container: ros:humble-ros-core
+    steps:
+      - name: Install Git
+        run: |
+            apt-get update
+            apt-get install -y git
+        shell: bash
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Copy repository
+        run: |
+            mkdir -p ~/ros2_ws/src/lidarslam_ros2
+            cp -rf . ~/ros2_ws/src/lidarslam_ros2
+        shell: bash
+      - name: Install dependencies
+        run: |
+            apt-get install -y python3-rosdep
+            rosdep init
+            rosdep update
+            cd ~/ros2_ws/src
+            rosdep install -r -y --from-paths . --ignore-src
+        shell: bash
+      - name: Build packages
+        run: |
+            source /opt/ros/humble/setup.bash
+            apt-get install -y python3-colcon-common-extensions
+            cd ~/ros2_ws
+            colcon build
+            source ~/ros2_ws/install/setup.bash
+        shell: bash
