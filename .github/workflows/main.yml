@@ -16,6 +16,11 @@ jobs:
     runs-on: ubuntu-22.04
     container: ros:humble-ros-core
     steps:
+      - name: Install Git
+        run: |
+            apt-get update
+            apt-get install -y git
+        shell: bash
       - uses: actions/checkout@v2
         with:
           submodules: true
@@ -26,8 +31,7 @@ jobs:
         shell: bash
       - name: Install dependencies
         run: |
-            apt-get update
-            apt-get install -y git python3-rosdep
+            apt-get install -y python3-rosdep
             rosdep init
             rosdep update
             cd ~/ros2_ws/src
@@ -36,7 +40,6 @@ jobs:
       - name: Build packages
         run: |
             source /opt/ros/humble/setup.bash
-            apt-get update
             apt-get install -y python3-colcon-common-extensions
             cd ~/ros2_ws
             colcon build
