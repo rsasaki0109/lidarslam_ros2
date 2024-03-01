@@ -142,7 +142,7 @@ Green: path with loopclosure, Yellow: path without loopclosure
 <img src="./lidarslam/images/map.png" width="640px">
 
 ### The larger environment
-
+(This data is not available at the moment...)
 demo data(ROS1) by Autoware Foundation  
 https://data.tier4.jp/rosbag_details/?id=212  
 The Velodyne VLP-16 was used in this data.
