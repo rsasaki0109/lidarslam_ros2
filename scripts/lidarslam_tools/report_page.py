@@ -72,7 +72,20 @@ def render_page(
             """
         )
 
-    sections_html = "\n".join(render_section(group, output_root) for group in groups[:8])
+    shown_groups = groups[:8]
+    sections_html = "\n".join(
+        render_section(group, output_root) for group in shown_groups)
+    if len(groups) > len(shown_groups):
+        sections_html += (
+            "\n<p class=\"muted\">Showing the 8 most recent of "
+            f"{len(groups)} experiment groups (latest first).</p>"
+        )
+    spotlights_html = (
+        f"\n        <div class=\"spotlights\">\n"
+        f"          {''.join(spotlight)}\n"
+        f"        </div>"
+        if spotlight else ""
+    )
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     return f"""<!doctype html>
@@ -449,10 +462,7 @@ def render_page(
       <div class="hero-grid">
         <div class="hero-cards">
           {''.join(f"<article class='card'><span>{html.escape(title)}</span><strong>{html.escape(value)}</strong><span>{html.escape(note)}</span></article>" for title, value, note in hero_cards)}
-        </div>
-        <div class="spotlights">
-          {''.join(spotlight)}
-        </div>
+        </div>{spotlights_html}
       </div>
     </section>
     {sections_html}
