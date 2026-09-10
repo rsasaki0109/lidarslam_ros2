@@ -48,6 +48,24 @@ def _load(name: str, path: Path):
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
+    # Alias the canonical package name to the same object so scripts that
+    # import through lidarslam_benchmark_tools share this instance instead
+    # of executing the file a second time.
+    try:
+        relative = path.resolve().relative_to(ROOT)
+    except ValueError:
+        relative = None
+    alias = None
+    if relative is not None:
+        parts = relative.with_suffix('').parts
+        if parts[:1] == ('scripts',) and len(parts) == 2:
+            alias = f'lidarslam_benchmark_tools.{parts[1]}'
+        elif parts[:2] == ('scripts', 'lidarslam_tools'):
+            alias = f'lidarslam_benchmark_tools.lidarslam_tools.{parts[2]}'
+        elif parts[:2] == ('tools', 'gaussian_splatting'):
+            alias = f'lidarslam_benchmark_tools.gaussian_splatting.{parts[2]}'
+    if alias is not None:
+        sys.modules[alias] = module
     spec.loader.exec_module(module)
     return module
 
