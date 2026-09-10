@@ -78,7 +78,7 @@ MONITOR_CONTRACT = "m6a10-v12-host-interference-gate-v1"
 AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v12_formal.py"
 # This pin is intentionally one-way: the authorization receipt does not pin
 # this launcher, avoiding a self-referential receipt/source hash cycle.
-AUTHORIZER_SHA256 = "9fba9864d6aa887c5907085abef37bfbfaecb9f5ec88d0f5489d7d1e19638c63"
+AUTHORIZER_SHA256 = "3b32a56050fb8ca8f432763493364b0430253331c9411195ec075c0972f39993"
 
 BUILD_RECEIPT_PATH = Path(
     "/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/"

@@ -35,9 +35,9 @@ import lidarslam_benchmark_tools.run_fast_livo2_m6a10_v14_formal as candidate  #
 PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v14_formal_candidate.yaml"
 PROFILE_SHA256 = "849585ae1d2bb118db9a261f42305886b0305628473cea964781695f01b63996"
 CANDIDATE_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v14_formal.py"
-CANDIDATE_LAUNCHER_SHA256 = "26610f1de4f0cec2d231e54641c88300dbe3fefb8fb1dfbbec686a2acb266459"
+CANDIDATE_LAUNCHER_SHA256 = "695d61d4883f0398e2d1cc859d33133570bb5a6e9cd0a4ce2c988261fc6609a3"
 CANDIDATE_TEST_PATH = ROOT / "graph_based_slam/test/test_fast_livo2_m6a10_v14_formal.py"
-CANDIDATE_TEST_SHA256 = "633e2db908c442b2c4fdcfe23c0db14499ed69a314d18c214e181298fffa5879"
+CANDIDATE_TEST_SHA256 = "a8dbbb455f75bde86152568266c5cad869c069fdf4cfa969452034374deb3d77"
 AUTHORIZED_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v14_formal_authorized.py"
 IMAGE_TAG = candidate.IMAGE_TAG
 IMAGE_ID = candidate.IMAGE_ID

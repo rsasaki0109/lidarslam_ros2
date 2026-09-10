@@ -70,11 +70,11 @@ MONITOR_CONTRACT = v15.MONITOR_CONTRACT
 RECEIPT_NAME = "closure_receipt.json"
 
 V16_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v16_formal.py"
-V16_LAUNCHER_SHA256 = "77cf40effb3e578d0c2c95e48ea34b6dc5aa77d7d2fbc7bdd954936b63949bcd"
+V16_LAUNCHER_SHA256 = "82c666c3c6b72993efc752821ce57ef132e86015e9a16e626ffbb50d4a209dc9"
 V15_PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v15_formal_candidate.yaml"
 V15_PROFILE_SHA256 = "017e8583e1085b1f11da4117a1c53497cdcb1055c6c6224568df2f73ba751bc7"
 V16_AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v16_formal.py"
-V16_AUTHORIZER_SHA256 = "3f26dd7c1b530d7eb6828a39c49a9829f692c8528e3da12f7515ea76bd397b26"
+V16_AUTHORIZER_SHA256 = "9590ef394707e57d2c649469ea8514cdba3c87da55755714658a53ab2b2a3129"
 
 BUILD_RECEIPT_PATH = Path("/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_build_correction_20260823T224017Z_agentv17/build_identity.receipt.json")
 BUILD_RECEIPT_SHA256 = "23811d4200f9ed3ac464083ef339eb6d0437815ffdd82a2f37cc4180195bc2f7"

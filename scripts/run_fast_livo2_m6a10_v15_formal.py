@@ -66,7 +66,7 @@ MONITOR_CONTRACT = "m6a10-v12-host-interference-gate-v1"
 CONTRACT_VERSION = "m6a10-v15-formal-candidate-closure-v1"
 RECEIPT_NAME = "closure_receipt.json"
 AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v15_formal.py"
-AUTHORIZER_SHA256 = "9dddcc4bc3e00eebab371da79df1cffbcd7662cf2870bf287fbe84e8ed7189cd"
+AUTHORIZER_SHA256 = "2ca414d3dae1a492591038f677ccc046c27196e6150e1685fd3caf5c7c5db9fc"
 
 BUILD_RECEIPT_PATH = Path(
     "/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/"

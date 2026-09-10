@@ -37,7 +37,7 @@ import lidarslam_benchmark_tools.run_fast_livo2_m6a10_v13_formal as v13  # noqa:
 PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v13_persistence_candidate.yaml"
 PROFILE_SHA256 = "4559f7c359156ea878ae962fab334263481a649c32c12610581ba81536eb9760"
 V13_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v13_formal.py"
-V13_LAUNCHER_SHA256 = "a5df42e56cb55201dd428a3a9a6a164b0c7394299a18fd9059fe7d829d104efa"
+V13_LAUNCHER_SHA256 = "bc4d176e6a0d4ac17fd3ee132e317cbc5f2fbbe356fbae51901a155a945c601b"
 V12_WRAPPER_PATH = ROOT / "scripts/fast_livo2_m6a10_v12_formal_container_run.sh"
 V12_WRAPPER_SHA256 = "32fce2c054b92f0d695fd4d32c7737ab75dd3a467fdee1c579c82c63398894e6"
 IMAGE_TAG = "m6a10-v2c-v12-nonlidar-boundary-transport-20260824-fast-livo2-benchmark:ros1-pinned"
