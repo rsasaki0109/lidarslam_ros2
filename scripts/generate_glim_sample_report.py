@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Render the GLIM MID-360 sample HTML report from the latest run."""
+import argparse
 import json
 import math
 from html import escape
@@ -8,6 +10,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "output"
 REPORT = OUTPUT / "glim_sample_report.html"
+
+
+def _parser():
+    parser = argparse.ArgumentParser(
+        description='Render glim_sample_report.html from the latest '
+                    'glim_mid360_sample_* run.')
+    parser.add_argument('--output-root', type=Path, default=OUTPUT,
+                        help=f'run directory root (default: {OUTPUT})')
+    parser.add_argument('--report', type=Path, default=REPORT,
+                        help=f'HTML output path (default: {REPORT})')
+    return parser
 
 
 def load_traj(path: Path):
@@ -66,8 +79,8 @@ def bbox(rows, key):
     return (min(vals), max(vals)) if vals else (0.0, 0.0)
 
 
-def find_latest_run():
-    runs = sorted(OUTPUT.glob("glim_mid360_sample_*"))
+def find_latest_run(output_root=OUTPUT):
+    runs = sorted(output_root.glob("glim_mid360_sample_*"))
     return runs[-1] if runs else None
 
 
@@ -134,10 +147,12 @@ def make_xy_svg(rows, width=900, height=420, margin=24):
     )
 
 
-def main():
-    run_dir = find_latest_run()
+def main(argv=None):
+    args = _parser().parse_args(argv)
+    run_dir = find_latest_run(args.output_root)
     if run_dir is None:
-        raise SystemExit("no glim_mid360_sample_* run found")
+        raise SystemExit(
+            f"no glim_mid360_sample_* run found under {args.output_root}")
 
     traj_path = run_dir / "dump" / "traj_lidar.txt"
     log_path = run_dir / "glim_rosbag.log"
@@ -328,8 +343,8 @@ def main():
 </html>
 """
 
-    REPORT.write_text(html, encoding="utf-8")
-    print(REPORT)
+    args.report.write_text(html, encoding="utf-8")
+    print(args.report)
 
 
 if __name__ == "__main__":

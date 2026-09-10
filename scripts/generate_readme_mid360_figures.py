@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+"""Render the README MID-360 comparison figures from the latest runs."""
 from __future__ import annotations
 
+import argparse
 import bisect
 import math
 from pathlib import Path
@@ -20,6 +22,27 @@ MAP_OUT = IMAGE_DIR / "mid360_glim_map_compare.png"
 ATTITUDE_OUT = IMAGE_DIR / "mid360_glim_attitude_compare.png"
 BAG_PATH = ROOT / "demo_data" / "glim_mid360" / "rosbag2_2024_04_16-14_17_01"
 POINTS_TOPIC = "/livox/lidar"
+
+
+def _parser():
+    parser = argparse.ArgumentParser(
+        description='Render README MID-360 comparison figures from the '
+                    'latest GLIM and lidarslam runs.')
+    parser.add_argument('--output-root', type=Path, default=OUTPUT,
+                        help=f'run directory root (default: {OUTPUT})')
+    parser.add_argument('--image-dir', type=Path, default=IMAGE_DIR,
+                        help=f'figure output directory (default: {IMAGE_DIR})')
+    return parser
+
+
+def _apply_output_dirs(output_root: Path, image_dir: Path) -> None:
+    global OUTPUT, IMAGE_DIR, XY_OUT, ERR_OUT, MAP_OUT, ATTITUDE_OUT
+    OUTPUT = output_root
+    IMAGE_DIR = image_dir
+    XY_OUT = IMAGE_DIR / "mid360_glim_compare_xy.svg"
+    ERR_OUT = IMAGE_DIR / "mid360_glim_compare_error.svg"
+    MAP_OUT = IMAGE_DIR / "mid360_glim_map_compare.png"
+    ATTITUDE_OUT = IMAGE_DIR / "mid360_glim_attitude_compare.png"
 
 
 def find_latest_any(patterns: list[str]) -> Path | None:
@@ -648,7 +671,9 @@ def build_error_svg(
     return "\n".join(parts)
 
 
-def main() -> None:
+def main(argv=None) -> None:
+    args = _parser().parse_args(argv)
+    _apply_output_dirs(args.output_root, args.image_dir)
     glim_dir = find_latest_any(["glim_mid360_sample_*"])
     lid_dir = find_latest_any(
         [
@@ -659,7 +684,8 @@ def main() -> None:
         ]
     )
     if glim_dir is None or lid_dir is None:
-        raise SystemExit("required MID360 runs not found")
+        raise SystemExit(
+            f"required MID360 runs not found under {args.output_root}")
 
     glim_rows = load_tum(glim_dir / "dump" / "traj_lidar.txt")
     lid_rows = load_tum(lid_dir / "traj_lidarslam.tum")
