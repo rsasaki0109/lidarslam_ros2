@@ -46,7 +46,7 @@ WRAPPER = ROOT / 'scripts/fast_livo2_m6a10_v12_formal_container_run.sh'
 V11 = ROOT / 'scripts/fast_livo2_m6a10_v11_container_run.sh'
 CONTRACT = 'm6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary'
 PROFILE_SHA = '675996a7a5fd81d59d752de4bbea1d4373487a17d03ee085aa08ae9493a0b28d'
-FEEDER_SHA = '1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831'
+FEEDER_SHA = '869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf'
 
 
 def _text() -> str:

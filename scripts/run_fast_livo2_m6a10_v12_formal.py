@@ -115,7 +115,7 @@ SOURCE_PINS = {
     "v12_validator": ("scripts/benchmark_phase_contract.py", "d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7"),
     "v12_wrapper": ("scripts/fast_livo2_m6a10_v12_formal_container_run.sh", "32fce2c054b92f0d695fd4d32c7737ab75dd3a467fdee1c579c82c63398894e6"),
     "v12_no_input_payload": ("scripts/fast_livo2_m6a10_v12_no_input_container_payload.sh", "2c1c9b86fadc0d1d83e7874542f92ff33b99b23421397374ecd9e880ad1b73aa"),
-    "v12_feeder": ("scripts/fast_livo2_m6a10_feeder.py", "1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831"),
+    "v12_feeder": ("scripts/fast_livo2_m6a10_feeder.py", "869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf"),
     "binder": ("scripts/bind_fast_livo2_v12_consumer_evidence.py", "3a708c87137f81330b479579dbcb184ac25853596546263c406473dbef106aab"),
     "compositor": ("scripts/compose_fast_livo2_v12_terminal_evidence.py", "e37c2f22ac6220f7cfc5739d27f7c24360c395bac7b2dd0f90ff80ca9e8db99f"),
     "monitor": ("scripts/monitor_m6a10_host_interference.py", "d19cac9b7755b30e7cf45adcdb3fe7869855c4eb9814e337a50b102048dd5e7d"),

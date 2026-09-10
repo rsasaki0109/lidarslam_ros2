@@ -21,7 +21,7 @@ candidate:
   feeder_underlying_nonzero_cause: v14_schema2_only_status_gate
   correction_scope: additive_schema2_schema3_dispatch
   legacy_cli_preserved: true
-  legacy_feeder_sha256: 1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831
+  legacy_feeder_sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
   v15_feeder_sha256: 6921d159ca4c45bcecfaf9db7fbd6f8a3d92783d100a51ba3ca76abbaf477bb7
 
 image:

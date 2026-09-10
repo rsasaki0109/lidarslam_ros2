@@ -17,7 +17,7 @@ V12_PATCH_PATH="${ROOT_DIR}/docker/patches/fast_livo2.m6a10-v2c-v12-nonlidar-bou
 
 EXPECTED_BASE_ID="sha256:03dfa4c3e7c3f1ea9160ba2276ea23bfbdef43d441bc8afc628f907bd50743a7"
 EXPECTED_V15_FEEDER_SHA256="6921d159ca4c45bcecfaf9db7fbd6f8a3d92783d100a51ba3ca76abbaf477bb7"
-EXPECTED_LEGACY_FEEDER_SHA256="1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831"
+EXPECTED_LEGACY_FEEDER_SHA256="869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf"
 EXPECTED_PROFILE_SHA256="070fb2b762881a7126caf021c7a98ab59c8fa55e10be220b6482d7f2ef97899f"
 EXPECTED_V12_PATCH_SHA256="39c77535a7557365dac6b0f2c99849038b29670a57c3101be3a39138317c6333"
 EXPECTED_V12_WRAPPER_SHA256="32fce2c054b92f0d695fd4d32c7737ab75dd3a467fdee1c579c82c63398894e6"
@@ -94,7 +94,7 @@ labels = json.loads(sys.argv[1])
 expected = {
     'benchmark.fast_livo2.m6a10_v12_base_id': 'sha256:03dfa4c3e7c3f1ea9160ba2276ea23bfbdef43d441bc8afc628f907bd50743a7',
     'benchmark.fast_livo2.m6a10_v15_feeder_sha256': '6921d159ca4c45bcecfaf9db7fbd6f8a3d92783d100a51ba3ca76abbaf477bb7',
-    'benchmark.fast_livo2.m6a10_legacy_feeder_sha256': '1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831',
+    'benchmark.fast_livo2.m6a10_legacy_feeder_sha256': '869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf',
     'benchmark.fast_livo2.m6a10_v15_wrapper_sha256': sys.argv[2],
     'benchmark.fast_livo2.m6a10_v15_profile_sha256': '070fb2b762881a7126caf021c7a98ab59c8fa55e10be220b6482d7f2ef97899f',
     'benchmark.fast_livo2.m6a10_v15_fixture_sha256': sys.argv[3],
@@ -180,7 +180,7 @@ value = {
     'image': {'tag': os.environ['RECEIPT_IMAGE_TAG'], 'id': os.environ['RECEIPT_IMAGE_ID'],
               'base_tag': os.environ['RECEIPT_BASE_TAG'], 'base_id': os.environ['RECEIPT_BASE_ID']},
     'source': {'v15_feeder_sha256': '6921d159ca4c45bcecfaf9db7fbd6f8a3d92783d100a51ba3ca76abbaf477bb7',
-               'legacy_feeder_sha256': '1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831',
+               'legacy_feeder_sha256': '869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf',
                'v15_wrapper_sha256': os.environ['RECEIPT_WRAPPER_SHA'],
                'v15_profile_sha256': '070fb2b762881a7126caf021c7a98ab59c8fa55e10be220b6482d7f2ef97899f',
                'v15_dockerfile_sha256': os.environ['RECEIPT_DOCKERFILE_SHA'],

@@ -277,4 +277,4 @@ def test_source_is_lazy_ros_import_and_python38_friendly():
     assert 'dict[' not in source
     assert LEGACY_SOURCE.is_file()
     assert hashlib.sha256(LEGACY_SOURCE.read_bytes()).hexdigest() == \
-        '1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831'
+        '869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf'

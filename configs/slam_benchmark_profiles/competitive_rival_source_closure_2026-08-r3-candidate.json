@@ -2,7 +2,7 @@
   "benchmark_eligible": false,
   "candidate_hash_kind": "canonical_competitive_rival_source_closure_r3_candidate_sha256_v1",
   "candidate_id": "competitive-rival-source-closure-2026-08-r3-candidate",
-  "candidate_identity_sha256": "e2fee18f14e1b21c4724c9297248c2361befe11cdd93711c2c66c7111c23a716",
+  "candidate_identity_sha256": "2abadbc9ae006ff6685492c0e218dfa3c925762f17c4efcf8ad34c134566a713",
   "candidate_kind": "competitive_rival_source_closure_r3_candidate_v1",
   "claim_eligible": false,
   "current_recipe_bindings": {
@@ -17,12 +17,12 @@
           "status": "CURRENT_BYTES_MATCH"
         },
         {
-          "current_sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1",
+          "current_sha256": "3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde",
           "hash_kind": "file_sha256",
           "path": "scripts/build_competitive_benchmark_images.sh",
           "r2_sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1",
           "role": "build_script",
-          "status": "CURRENT_BYTES_MATCH"
+          "status": "CURRENT_BYTES_REBOUND"
         },
         {
           "current_sha256": "77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f",
@@ -81,12 +81,12 @@
           "status": "CURRENT_BYTES_MATCH"
         },
         {
-          "current_sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1",
+          "current_sha256": "3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde",
           "hash_kind": "file_sha256",
           "path": "scripts/build_competitive_benchmark_images.sh",
           "r2_sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1",
           "role": "build_script",
-          "status": "CURRENT_BYTES_MATCH"
+          "status": "CURRENT_BYTES_REBOUND"
         },
         {
           "current_sha256": "fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5",
