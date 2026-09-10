@@ -41,6 +41,7 @@ nav:
   - 3DGS Photoreal Map: 3dgs-map-tutorial.md
   - 3DGS Map Viewer: 3dgs-viewer.md
   - Benchmarking And Release Gate: benchmarking.md
+  - Benchmark Python Surface: benchmark-python-surface.md
   - rosdistro Binary Release: rosdistro-release.md
   - DDS / Large-Message Tuning: dds-tuning.md
   - Comparison: comparison.md
