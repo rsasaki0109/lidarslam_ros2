@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive_execution_source_worktree_snapshot_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "benchmark_eligible",
+    "claim_eligible", "active_profile_switch", "campaign_id", "captured_at",
+    "candidate_binding", "profile_binding", "source_manifest", "worktree",
+    "capture_policy", "snapshot_identity_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "competitive_execution_source_worktree_snapshot_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "NOT_REVIEWED_EXTERNAL"},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "active_profile_switch": {"const": false},
+    "campaign_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "candidate_binding": {"$ref": "#/$defs/candidate"},
+    "profile_binding": {"$ref": "#/$defs/profile"},
+    "source_manifest": {"$ref": "#/$defs/sourceManifest"},
+    "worktree": {"$ref": "#/$defs/worktree"},
+    "capture_policy": {"$ref": "#/$defs/capturePolicy"},
+    "snapshot_identity_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "candidate_identity_sha256", "candidate_id", "status"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_identity_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"},
+        "status": {"const": "NOT_READY"}
+      }
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "canonical_hash_kind"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_hash_kind": {"const": "canonical_profile_sha256_v1"}
+      }
+    },
+    "fileRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "file_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "sourceManifest": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "schema_version", "candidate_path", "candidate_file_sha256",
+        "candidate_identity_sha256", "source_bindings_sha256", "source_bindings",
+        "source_provenance_status", "producer_bindings"
+      ],
+      "properties": {
+        "schema": {"const": "competitive_execution_selection_r3_source_manifest_v1"},
+        "schema_version": {"const": 1},
+        "candidate_path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json"},
+        "candidate_file_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_identity_sha256": {"$ref": "#/$defs/sha"},
+        "source_bindings_sha256": {"$ref": "#/$defs/sha"},
+        "source_bindings": {"type": "object", "minProperties": 1},
+        "source_provenance_status": {"type": "string", "minLength": 1},
+        "producer_bindings": {
+          "type": "object", "additionalProperties": false,
+          "required": ["snapshot_producer", "snapshot_schema", "snapshot_strict_schema", "snapshot_sidecar_schema", "snapshot_implementation", "identity_contract"],
+          "properties": {
+            "snapshot_producer": {"$ref": "#/$defs/fileRefWithSchema"},
+            "snapshot_schema": {"$ref": "#/$defs/fileRef"},
+            "snapshot_strict_schema": {"$ref": "#/$defs/strictSchemaRef"},
+            "snapshot_sidecar_schema": {"$ref": "#/$defs/sidecarSchemaRef"},
+            "snapshot_implementation": {"$ref": "#/$defs/implementationRef"},
+            "identity_contract": {"$ref": "#/$defs/fileRef"}
+          }
+        }
+      }
+    },
+    "fileRefWithSchema": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "schema_path"],
+      "properties": {
+        "path": {"const": "scripts/capture_competitive_execution_r3_source_worktree.py"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "schema_path": {"const": "configs/slam_benchmark_profiles/competitive_execution_r3_source_worktree_v1.schema.json"}
+      }
+    },
+    "implementationRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256"],
+      "properties": {
+        "path": {"const": "scripts/capture_competitive_execution_source_worktree.py"},
+        "file_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "sidecarSchemaRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_r3_source_worktree_sidecar_v1.schema.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "strictSchemaRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_source_worktree_snapshot_v1.schema.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "untracked": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "bytes"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "bytes": {"type": "integer", "minimum": 0, "maximum": 16777216}
+      }
+    },
+    "submodule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "revision", "status"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"},
+        "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "status": {"enum": ["clean", "modified", "uninitialized", "conflicted"]}
+      }
+    },
+    "worktree": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "root", "root_device", "root_inode", "root_mode", "revision",
+        "worktree_dirty", "tracked_diff_sha256", "tracked_diff_bytes",
+        "untracked_content_sha256", "untracked_files", "untracked_file_count",
+        "submodules", "submodule_identity_sha256", "clean_provenance_sha256", "status"
+      ],
+      "properties": {
+        "root": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+        "root_device": {"type": "integer", "minimum": 0},
+        "root_inode": {"type": "integer", "minimum": 1},
+        "root_mode": {"type": "integer", "minimum": 0, "maximum": 4095},
+        "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "worktree_dirty": {"type": "boolean"},
+        "tracked_diff_sha256": {"$ref": "#/$defs/sha"},
+        "tracked_diff_bytes": {"type": "integer", "minimum": 0, "maximum": 67108864},
+        "untracked_content_sha256": {"$ref": "#/$defs/sha"},
+        "untracked_files": {"type": "array", "maxItems": 8192, "uniqueItems": true, "items": {"$ref": "#/$defs/untracked"}},
+        "untracked_file_count": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "submodules": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/submodule"}},
+        "submodule_identity_sha256": {"$ref": "#/$defs/sha"},
+        "clean_provenance_sha256": {"$ref": "#/$defs/sha"},
+        "status": {"const": "observed"}
+      }
+    },
+    "capturePolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fixed_git_probes", "network", "docker", "dataset_gt_scorer", "raw_untracked_content_in_artifact", "symlink_policy", "hardlink_policy", "max_git_output_bytes", "max_untracked_file_bytes", "max_untracked_total_bytes"],
+      "properties": {
+        "fixed_git_probes": {"type": "array", "minItems": 6, "items": {"type": "array", "items": {"type": "string"}}},
+        "network": {"const": "none"},
+        "docker": {"const": "not_used"},
+        "dataset_gt_scorer": {"const": "not_opened"},
+        "raw_untracked_content_in_artifact": {"const": false},
+        "symlink_policy": {"const": "reject"},
+        "hardlink_policy": {"const": "reject"},
+        "max_git_output_bytes": {"const": 67108864},
+        "max_untracked_file_bytes": {"const": 16777216},
+        "max_untracked_total_bytes": {"const": 134217728}
+      }
+    }
+  }
+}

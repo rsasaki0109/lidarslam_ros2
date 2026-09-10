@@ -1,0 +1,79 @@
+# Additive v21 root-reservation candidate.  This profile is unauthorized by
+# default; v20 authorization/closure/source artifacts remain immutable lineage.
+schema_version: 1
+status: V21_FORMAL_CANDIDATE_UNAUTHORIZED
+formal_replay_forbidden: true
+formal_replay_authorized: false
+formal_replay_started: false
+replay_count: 0
+
+candidate:
+  contract_version: m6a10-v21-formal-exact-root-authorization-v1
+  status: UNAUTHORIZED_NOT_RUN
+  authorization_required: true
+  authorization_status: UNAUTHORIZED_NOT_INSTALLED
+  root_reservation:
+    exact_atomic_mkdir: true
+    reserve_before_output: true
+    reserve_before_monitor: true
+    reserve_before_closure: true
+    existing_root_rejected: true
+    symlink_root_rejected: true
+    non_directory_root_rejected: true
+    parent_must_be_existing_regular_writable_directory: true
+  v20_failure_closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v20_formal_replay_20260824T011000Z_agentv20formal/closure_receipt.json
+  v20_failure_closure_sha256: ff786cc763e9f73bbeef7d94b2df5a12e7902f6d2d3c1446811fc5ade3f9f1c8
+  v20_failure_closure_sidecar_sha256: 1cd28060d6db840e731ba10b417ea9acaaae41d7194e48525e71b3305b4ff313
+  v20_failure_kind: OUTPUT_ROOT_NOT_RESERVED
+  v20_authorizer_sha256: e5f6beafa8043512c7ea62f9785cd36295084cc947c42c090c0e5dec40d54dcc
+  v20_launcher_sha256: 2fe3ba3cb577ee82433290d3a2a9867af6a1fd186a274af02b629061bef7e351
+  v20_profile_sha256: 49ebb47a33f69a41545be9b2333d01d07ddd6f10cd23f7fb10cec0aa0cf91392
+  v21_authorizer_path: scripts/authorize_fast_livo2_m6a10_v21_formal.py
+  v21_authorizer_sha256: 4997dc4def61ae064e2a838f7d6e0f58d1d15a9fd179a5aa4c178acfd0a30870
+  v21_launcher_path: scripts/run_fast_livo2_m6a10_v21_formal.py
+
+image:
+  tag: m6a10-v2c-v17-retryable-abort-correction-20260823t224017z-fast-livo2-benchmark:ros1-pinned
+  id: sha256:f1432426af64e76d9ad9c655a8727d35c2fb0a03753502ada3b21187638f747c
+  status: BUILT_NO_INPUT_PASS
+
+phase:
+  contract: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+  transport_contract: m6a10-v12-callback-ack-transport-outstanding-v1
+  mode: unpaced_ack
+  expected_messages: 236687
+  expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+  required_end_timestamp_seconds: 1623491515.148352
+  sensor_duration_seconds: 579.278127298
+
+lineage:
+  v20_authorization_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v20_formal_authorization_20260824T011000Z_agentv20/formal_authorization.receipt.json
+  v20_authorization_sha256: 10e38c08baf04899fb478b35f9e9342d6478a218d5d50e84a5502c6ac8bd16ad
+  v20_authorization_sidecar_sha256: 2c4210c1f8c05335cb45a663df72c4d62add421fef5bf79b6f36234dd0140e46
+  v20_closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v20_formal_replay_20260824T011000Z_agentv20formal/closure_receipt.json
+  v20_closure_sha256: ff786cc763e9f73bbeef7d94b2df5a12e7902f6d2d3c1446811fc5ade3f9f1c8
+  v20_closure_sidecar_sha256: 1cd28060d6db840e731ba10b417ea9acaaae41d7194e48525e71b3305b4ff313
+  v20_failure_kind: OUTPUT_ROOT_NOT_RESERVED
+  v19_adapter_sha256: 61b3396aa54079773aa7066e5652527e27ddaa46121650b711f61807d0c82846
+  v19_launcher_sha256: 854c138fe0673fd82766e0c26a262616c3c883577d1ab781ebabc3822fb8528a
+
+execution:
+  status: FORMAL_UNAUTHORIZED_NOT_RUN
+  formal_replay_forbidden: true
+  one_start: true
+  retry: false
+  manual_stop: false
+  watchdog_seconds: 1200
+  monitor_interval_seconds: 4.0
+  continuous_quiescence_windows: 3
+  exact_window_filename_regex: '^quiescence_window_(\\d{2})\\.receipt\\.json$'
+  actual_v19_runtime_surface_required: true
+  shell_free_popen_required: true
+  natural_completion_required: true
+
+safety:
+  formal_replay_started: false
+  input_opened: false
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false

@@ -27,7 +27,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Safety tests for the networked fresh-holdout freezer.
+"""
+Safety tests for the networked fresh-holdout freezer.
 
 The fixture HTTP server is local and serves only tiny synthetic artifacts.  No
 repository or benchmark data is contacted by these tests.

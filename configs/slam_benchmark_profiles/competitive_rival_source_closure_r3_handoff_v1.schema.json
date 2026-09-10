@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-rival-source-closure-r3-handoff-v1",
+  "title": "Unsigned rival source closure r3 custodian handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "handoff_kind", "status", "benchmark_eligible",
+    "claim_eligible", "candidate_binding", "selection_binding",
+    "r2_lineage", "legal_review", "promotion_policy",
+    "handoff_identity_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "handoff_kind": {"const": "competitive_rival_source_closure_r3_handoff_v1"},
+    "status": {"const": "UNSIGNED_REVIEW_REQUIRED"},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "candidate_binding": {"$ref": "#/$defs/candidateBinding"},
+    "selection_binding": {"$ref": "#/$defs/selectionBinding"},
+    "r2_lineage": {"$ref": "#/$defs/lineage"},
+    "legal_review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "required_blockers", "external_packet", "auto_review"],
+      "properties": {
+        "status": {"const": "NOT_PROVIDED"},
+        "required_blockers": {"const": [
+          "glim_ros2_license_text_missing",
+          "fast_livo2_license_declaration_conflict",
+          "rpg_vikit_license_artifacts_incomplete",
+          "sophus_license_artifact_missing",
+          "external_custodian_legal_review_required"
+        ]},
+        "external_packet": {"type": "null"},
+        "auto_review": {"const": false}
+      }
+    },
+    "promotion_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["active_profile_switch", "r2_immutable", "requires_reviewed_external_packet", "requires_candidate_and_profile_reseal", "signer_or_private_key_included", "benchmark_eligible"],
+      "properties": {
+        "active_profile_switch": {"const": false},
+        "r2_immutable": {"const": true},
+        "requires_reviewed_external_packet": {"const": true},
+        "requires_candidate_and_profile_reseal": {"const": true},
+        "signer_or_private_key_included": {"const": false},
+        "benchmark_eligible": {"const": false}
+      }
+    },
+    "handoff_identity_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "path": {
+      "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+    },
+    "candidateBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "candidate_identity_sha256", "candidate_id"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-candidate.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_identity_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_id": {"const": "competitive-rival-source-closure-2026-08-r3-candidate"}
+      }
+    },
+    "selectionBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "selection_identity_sha256", "selection_id"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-selection-candidate.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "selection_identity_sha256": {"$ref": "#/$defs/sha"},
+        "selection_id": {"const": "competitive-rival-source-closure-selection-2026-08-r3-candidate"}
+      }
+    },
+    "lineage": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "closure_id", "closure_revision", "closure_identity_hash_kind",
+        "closure_identity_sha256", "r2_selection_path", "r2_selection_id",
+        "r2_selection_sha256", "historical_selection_path",
+        "historical_selection_sha256", "supersedes_status"
+      ],
+      "properties": {
+        "closure_id": {"const": "competitive-rival-source-closure-2026-08-r2"},
+        "closure_revision": {"const": 2},
+        "closure_identity_hash_kind": {"const": "canonical_rival_source_closure_identity_sha256_v1"},
+        "closure_identity_sha256": {"$ref": "#/$defs/sha"},
+        "r2_selection_path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml"},
+        "r2_selection_id": {"const": "competitive-execution-selection-2026-08-r2"},
+        "r2_selection_sha256": {"$ref": "#/$defs/sha"},
+        "historical_selection_path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml"},
+        "historical_selection_sha256": {"$ref": "#/$defs/sha"},
+        "supersedes_status": {"const": "R2_IMMUTABLE_NOT_REWRITTEN"}
+      }
+    }
+  }
+}

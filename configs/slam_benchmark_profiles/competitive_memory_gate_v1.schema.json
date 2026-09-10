@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-memory-gate-v1",
+  "title": "Competitive process RSS gate policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "source_kind",
+    "measurement_version",
+    "measurement_scope",
+    "primary_metric",
+    "primary_metric_definition",
+    "max_peak_rss_ratio_vs_best_rival",
+    "minimum_matched_complete_runs",
+    "aggregate",
+    "per_sequence",
+    "uncertainty",
+    "resource_identity",
+    "forbidden_source_kinds"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "status": {"const": "READY"},
+    "source_kind": {"const": "benchmark_process_rss_authoritative_v1"},
+    "measurement_version": {"const": "m6a7-container-memory-v2"},
+    "measurement_scope": {"const": "container_cgroup_v2_with_pid_rss"},
+    "primary_metric": {"const": "aggregate_process_tree_peak_rss_bytes"},
+    "primary_metric_definition": {
+      "const": "sum_of_per_process_vmrss_peaks_shared_pages_may_be_recounted"
+    },
+    "max_peak_rss_ratio_vs_best_rival": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "minimum_matched_complete_runs": {
+      "type": "integer",
+      "minimum": 3
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rival_selection",
+        "compare_every_pinned_rival",
+        "threshold_source",
+        "aggregation"
+      ],
+      "properties": {
+        "rival_selection": {"const": "best_rival"},
+        "compare_every_pinned_rival": {"const": true},
+        "threshold_source": {
+          "const": "max_peak_rss_ratio_vs_best_rival"
+        },
+        "aggregation": {
+          "const": "max_peak_over_repetitions_and_sequences_v1"
+        }
+      }
+    },
+    "per_sequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "serious_regression_ceiling_ratio",
+        "threshold_source"
+      ],
+      "properties": {
+        "status": {"const": "READY"},
+        "serious_regression_ceiling_ratio": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "threshold_source": {
+          "const": "max_peak_rss_ratio_vs_best_rival"
+        }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "required",
+        "scope",
+        "rss_ci_claim",
+        "method",
+        "reason"
+      ],
+      "properties": {
+        "status": {"const": "NOT_APPLICABLE"},
+        "required": {"const": false},
+        "scope": {"const": "APE_ONLY"},
+        "rss_ci_claim": {"const": false},
+        "method": {"type": ["null", "string"]},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "resource_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_fields",
+        "tool_revision",
+        "sampler_script_path",
+        "sampler_script_sha256",
+        "memory_helper_script_path",
+        "memory_helper_script_sha256",
+        "gate_script_path",
+        "gate_script_sha256"
+      ],
+      "properties": {
+        "required_fields": {
+          "const": [
+            "tool_revision",
+            "sampler_script_sha256",
+            "memory_helper_script_sha256",
+            "config_sha256",
+            "thread_policy_sha256",
+            "hardware_fingerprint",
+            "machine_id",
+            "release"
+          ]
+        },
+        "tool_revision": {"type": "string", "minLength": 1},
+        "sampler_script_path": {"type": "string", "minLength": 1},
+        "sampler_script_sha256": {"$ref": "#/$defs/sha256"},
+        "memory_helper_script_path": {"type": "string", "minLength": 1},
+        "memory_helper_script_sha256": {"$ref": "#/$defs/sha256"},
+        "gate_script_path": {"type": "string", "minLength": 1},
+        "gate_script_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "forbidden_source_kinds": {
+      "type": "array",
+      "contains": {"const": "functional_non_authoritative_v1"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

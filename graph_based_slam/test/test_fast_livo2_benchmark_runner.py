@@ -34,6 +34,10 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+import subprocess
+import sys
+
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,6 +50,21 @@ SUMMARY_SPEC = importlib.util.spec_from_file_location(
     ROOT / 'scripts/summarize_fast_livo2_benchmark.py')
 SUMMARY = importlib.util.module_from_spec(SUMMARY_SPEC)
 SUMMARY_SPEC.loader.exec_module(SUMMARY)
+
+
+def test_direct_source_cli_help_works_without_pythonpath():
+    result = subprocess.run(
+        [sys.executable, str(ROOT / 'scripts/run_fast_livo2_benchmark.py'),
+         '--help'],
+        cwd=ROOT,
+        env={'PATH': str(Path(sys.executable).parent)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert 'usage: run_fast_livo2_benchmark.py' in result.stdout
+    assert '--phase-contract' in result.stdout
 
 
 def test_parse_time_report(tmp_path):
@@ -109,7 +128,7 @@ def test_frozen_input_manifest_must_match_selected_representation(tmp_path):
 def test_map_export_mount_is_separate_and_opt_in(tmp_path):
     assert RUNNER.map_output_binding(tmp_path, False) == []
     mount = RUNNER.map_output_binding(tmp_path, True)
-    assert mount == ['-v', f'{tmp_path / "fast_log"}:/bench/FAST-LIVO2/Log']
+    assert mount == ['-v', f"{tmp_path / 'fast_log'}:/bench/FAST-LIVO2/Log"]
     assert (tmp_path / 'fast_log' / 'pcd').is_dir()
 
 
@@ -144,13 +163,17 @@ def test_odometry_csv_normalizes_ros1_nanosecond_stamp(tmp_path):
 def test_scored_summary_rejects_mixed_provenance(tmp_path):
     reference = tmp_path / 'gt.tum'
     reference.write_text('1 0 0 0 0 0 0 1\n')
+    closure_identity = SUMMARY.current_rival_source_closure_identity(
+        yaml.safe_load((ROOT / 'configs/slam_benchmark_profiles/'
+                       'competitive_slam_v1.yaml').read_text()), root=ROOT)
     for index, bag_hash in enumerate(('a', 'b'), start=1):
         run = tmp_path / f'run_{index:02d}'
         run.mkdir()
         (run / 'run.json').write_text(json.dumps({
             'provenance': {'bag_sha256': bag_hash,
                            'source': {'revision': 'revision'},
-                           'container_image_id': 'image'},
+                           'container_image_id': 'image',
+                           'rival_source_closure': closure_identity},
             'completion': {'trajectory_complete': True,
                            'process_exit_status': 0,
                            'trajectory_end_gap_seconds': 0.01},

@@ -1,0 +1,201 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive_execution_selection_r3_acceptance_response_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "benchmark_eligible",
+    "claim_eligible", "active_profile_switch", "promotion_allowed",
+    "execution_authorized", "publication_authorized",
+    "sota_claim_authorized", "requires_separate_publication_review",
+    "campaign_id", "nonce", "issued_at", "expires_at",
+    "candidate_binding", "profile_binding", "required_closures", "closures",
+    "trust_policy", "verifier", "signature", "promotion_policy",
+    "receipt_identity_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "competitive_execution_selection_r3_acceptance_response_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "READY_FOR_SEPARATE_PUBLICATION_REVIEW"},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "active_profile_switch": {"const": false},
+    "promotion_allowed": {"const": false},
+    "execution_authorized": {"const": true},
+    "publication_authorized": {"const": false},
+    "sota_claim_authorized": {"const": false},
+    "requires_separate_publication_review": {"const": true},
+    "campaign_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"},
+    "nonce": {"type": "string", "pattern": "^[A-Za-z0-9_-]{32,128}$"},
+    "issued_at": {"type": "integer", "minimum": 0},
+    "expires_at": {"type": "integer", "minimum": 1},
+    "candidate_binding": {"$ref": "#/definitions/candidate"},
+    "profile_binding": {"$ref": "#/definitions/profile"},
+    "required_closures": {
+      "const": [
+        "selection_handoff", "rival_source_closure", "dataset_source_closure",
+        "fresh_holdout_authorization", "machine_identity",
+        "image_toolchain_review", "source_worktree_review"
+      ]
+    },
+    "closures": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selection_handoff", "rival_source_closure", "dataset_source_closure",
+        "fresh_holdout_authorization", "machine_identity",
+        "image_toolchain_review", "source_worktree_review"
+      ],
+      "properties": {
+        "selection_handoff": {"$ref": "#/definitions/closure"},
+        "rival_source_closure": {"$ref": "#/definitions/closure"},
+        "dataset_source_closure": {"$ref": "#/definitions/closure"},
+        "fresh_holdout_authorization": {"$ref": "#/definitions/closure"},
+        "machine_identity": {"$ref": "#/definitions/closure"},
+        "image_toolchain_review": {"$ref": "#/definitions/closure"},
+        "source_worktree_review": {"$ref": "#/definitions/closure"}
+      }
+    },
+    "trust_policy": {"$ref": "#/definitions/trustPolicyRef"},
+    "verifier": {"$ref": "#/definitions/verifier"},
+    "signature": {"$ref": "#/definitions/signature"},
+    "promotion_policy": {
+      "const": {
+        "benchmark_eligible": false,
+        "claim_eligible": false,
+        "active_profile_switch": false,
+        "promotion_allowed": false,
+        "execution_authorized": true,
+        "publication_authorized": false,
+        "sota_claim_authorized": false,
+        "requires_separate_publication_review": true,
+        "offline_only": true,
+        "requires_acceptance_aggregator": true,
+        "requires_candidate_profile_reseal": true
+      }
+    },
+    "receipt_identity_sha256": {"$ref": "#/definitions/sha"}
+  },
+  "definitions": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "absolutePath": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "candidate_identity_sha256", "candidate_id", "status"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json"},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "candidate_identity_sha256": {"$ref": "#/definitions/sha"},
+        "candidate_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"},
+        "status": {"const": "NOT_READY"}
+      }
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "canonical_hash_kind"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "canonical_sha256": {"$ref": "#/definitions/sha"},
+        "canonical_hash_kind": {"const": "canonical_profile_sha256_v1"}
+      }
+    },
+    "fileRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256"],
+      "properties": {
+        "path": {"$ref": "#/definitions/absolutePath"},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "canonical_sha256": {"$ref": "#/definitions/sha"}
+      }
+    },
+    "validator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "implementation"],
+      "properties": {
+        "path": {"$ref": "#/definitions/absolutePath"},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "implementation": {"type": "string", "minLength": 1, "maxLength": 256}
+      }
+    },
+    "trustPolicyRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_bytes", "file_sha256", "canonical_sha256", "schema"],
+      "properties": {
+        "path": {"$ref": "#/definitions/absolutePath"},
+        "file_bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "canonical_sha256": {"$ref": "#/definitions/sha"},
+        "schema": {"const": "competitive_execution_selection_r3_acceptance_trust_policy_v1"}
+      }
+    },
+    "closureResult": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "status", "verified", "campaign_id", "candidate_identity_sha256",
+        "profile_canonical_sha256", "closure_kind", "closure_identity_sha256", "signature_valid",
+        "replay_protected", "benchmark_eligible", "claim_eligible"
+      ],
+      "properties": {
+        "status": {"const": "VERIFIED"}, "verified": {"const": true},
+        "campaign_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"},
+        "candidate_identity_sha256": {"$ref": "#/definitions/sha"},
+        "profile_canonical_sha256": {"$ref": "#/definitions/sha"},
+        "closure_kind": {"enum": [
+          "selection_handoff", "rival_source_closure", "dataset_source_closure",
+          "fresh_holdout_authorization", "machine_identity",
+          "image_toolchain_review", "source_worktree_review"
+        ]},
+        "closure_identity_sha256": {"$ref": "#/definitions/sha"},
+        "signature_valid": {"const": true}, "replay_protected": {"const": true},
+        "benchmark_eligible": {"const": false}, "claim_eligible": {"const": false}
+      }
+    },
+    "closure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "path", "file_sha256", "canonical_sha256", "validator", "trust_policy", "result"],
+      "properties": {
+        "status": {"const": "VERIFIED"},
+        "path": {"$ref": "#/definitions/absolutePath"},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "canonical_sha256": {"$ref": "#/definitions/sha"},
+        "validator": {"$ref": "#/definitions/validator"},
+        "trust_policy": {"$ref": "#/definitions/fileRef"},
+        "result": {"$ref": "#/definitions/closureResult"}
+      }
+    },
+    "backend": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "implementation", "implementation_file", "implementation_sha256"],
+      "properties": {
+        "name": {"const": "python-cryptography"},
+        "version": {"type": "string", "minLength": 1},
+        "implementation": {"const": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify"},
+        "implementation_file": {"type": "string", "minLength": 1, "maxLength": 512},
+        "implementation_sha256": {"$ref": "#/definitions/sha"}
+      }
+    },
+    "verifier": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "implementation", "backend"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "maxLength": 512},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "implementation": {"const": "competitive_execution_selection_r3_acceptance_v1"},
+        "backend": {"$ref": "#/definitions/backend"}
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "public_key_sha256", "payload_sha256", "signature_base64", "backend"],
+      "properties": {
+        "algorithm": {"const": "Ed25519"},
+        "key_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "public_key_sha256": {"$ref": "#/definitions/sha"},
+        "payload_sha256": {"$ref": "#/definitions/sha"},
+        "signature_base64": {"type": "string", "pattern": "^[A-Za-z0-9+/]{86}==?$"},
+        "backend": {"$ref": "#/definitions/backend"}
+      }
+    }
+  }
+}

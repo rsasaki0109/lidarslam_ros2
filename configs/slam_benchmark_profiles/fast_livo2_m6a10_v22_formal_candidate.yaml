@@ -1,0 +1,104 @@
+# Additive v22 synthetic-persistence candidate.  Formal replay remains
+# unauthorized; this profile records only input-free evidence and immutable
+# failure lineage.  It makes no SOTA, GT, scorer, or map claim.
+schema_version: 1
+status: V22_FORMAL_CANDIDATE_UNAUTHORIZED
+formal_replay_forbidden: true
+formal_replay_authorized: false
+formal_replay_started: false
+replay_count: 0
+
+candidate:
+  contract_version: m6a10-v22-formal-synthetic-persistence-v1
+  status: UNAUTHORIZED_NOT_RUN
+  authorization_required: true
+  authorization_status: UNAUTHORIZED_NOT_INSTALLED
+  v22_authorizer_path: scripts/authorize_fast_livo2_m6a10_v22_formal.py
+  v22_authorizer_sha256: 3d42b3b99efd9e42e0d2c3974aea0027a1f8bd3c87f9cb425260d03bf98bfa7b
+  v22_launcher_path: scripts/run_fast_livo2_m6a10_v22_formal.py
+  v22_wrapper_path: scripts/fast_livo2_m6a10_v22_formal_container_run.sh
+  v22_wrapper_sha256: 6e74246d2b7ee60086f3b316b22c6ef69ca3f16307ffdecea3eae9ad2d794f67
+  v22_gate_path: scripts/run_fast_livo2_m6a10_v22_synthetic_gate.py
+  v22_gate_sha256: 950d115937ced346116c116cdcf25b0f70d05c8dea3052efbae7394b9e74930a
+  v22_gate_test_path: graph_based_slam/test/test_fast_livo2_m6a10_v22_synthetic_gate.py
+  v22_gate_test_sha256: 0b03253e498acf75f8fa0050c4dba6188477f649fe1ae0d87cc7895671927dd7
+  v22_formal_test_path: graph_based_slam/test/test_fast_livo2_m6a10_v22_formal.py
+  v22_formal_test_sha256: 2d43b7847536c0321cf81d10f3fbebda96cdf512d41201a3aa71fc0121d7555c
+  persistence_contract:
+    feeder_exit_status: atomic_fsync_o_excl
+    failure_reason: explicit_nonzero_status_and_reason
+    artifact_manifest: atomic_fsync_o_excl
+    timing: created_only_after_terminal_raw_validation
+    overwrite_refusal: true
+    symlink_refusal: true
+
+image:
+  tag: m6a10-v2c-v17-retryable-abort-correction-20260823t224017z-fast-livo2-benchmark:ros1-pinned
+  id: sha256:f1432426af64e76d9ad9c655a8727d35c2fb0a03753502ada3b21187638f747c
+  status: BUILT_NO_INPUT_PASS
+  build_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_build_correction_20260823T224017Z_agentv17/build_identity.receipt.json
+  build_receipt_sha256: 23811d4200f9ed3ac464083ef339eb6d0437815ffdd82a2f37cc4180195bc2f7
+  build_receipt_sidecar_sha256: 76e9859832412f0310e685b376324ff53ce4dbe033d2d440fce940421b1de15b
+  no_input_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_no_input_correction2_20260823T225359Z_agentv17/no_input.receipt.json
+  no_input_receipt_sha256: ac1df6f390ad3e348e572ced668f4971bc05ac835c55cc83fef9ea4ad5fa3d74
+  no_input_receipt_sidecar_sha256: 8dfa1520c1e2024af3f0710de4ee8c38c9cf4a1402389891ac77d423d1848164
+
+phase:
+  contract: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+  transport_contract: m6a10-v12-callback-ack-transport-outstanding-v1
+  mode: unpaced_ack
+  expected_messages: 236687
+  expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+  required_end_timestamp_seconds: 1623491515.148352
+  sensor_duration_seconds: 579.278127298
+
+synthetic_gate:
+  contract_version: m6a10-v22-synthetic-wrapper-persistence-v1
+  success:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v22_synthetic_success_20260824T023200Z_agentv22/synthetic_gate.receipt.json
+    sha256: 87a054210b36d6015272a177d6c1d86f4535bee3334a6b1bf6ee06bf595899d0
+    sidecar_sha256: 0537e9b3db974af501fc1f3f11a8fef60ea4647c90db66170e1f798980dcdce2
+    status: PASS
+  failure:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v22_synthetic_failure_20260824T023300Z_agentv22/synthetic_gate.receipt.json
+    sha256: 73b37d869af9460c10d97e74c5e424bd831959eae1aea32eafcfbaf35088998f
+    sidecar_sha256: 178d2e0f83d42d91099615c12aab9e8618f95da624db93fe3ca9ee16c51721e9
+    status: FAIL_CLOSED
+  execution:
+    actual_docker: true
+    network: none
+    rootfs: read_only
+    input_mount_count: 0
+    output_rw_destination: /out
+    retry: false
+    manual_stop: false
+    no_formal_replay: true
+
+lineage:
+  v21_cleanup_correction_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v21_formal_replay_20260824T012000Z_agentv21formal/cleanup_correction.receipt.json
+  v21_cleanup_correction_sha256: 3e68466eda1b22954bd7e81b132ea2b6decb7b72e0e745ed88d82ce4e1bb8988
+  v21_cleanup_correction_sidecar_sha256: 43bff7f7cafae1f2dc2b8cde21da2c4080eb0738f27d919f0f3d1295def66279
+  v21_closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v21_formal_replay_20260824T012000Z_agentv21formal/closure_receipt.json
+  v21_closure_sha256: 8b2c5ed3ea1b7eeab130838f7c92a620549e5ffe50a52752a710360d8bd9875c
+  v21_closure_sidecar_sha256: acfc839d02f1c96db7e642253700d9e157f29977135a7f2489a649e1a5e528be
+  v21_failure_kind: FEEDER_PERSISTENCE
+  v21_cleanup_container_id: 799f9d334ff251a992e1257a4ea7242cb1fd05d6c17dc617dc6b76feacc0927f
+
+execution:
+  status: FORMAL_UNAUTHORIZED_NOT_RUN
+  formal_replay_forbidden: true
+  one_start: true
+  retry: false
+  manual_stop: false
+  watchdog_seconds: 1200
+  monitor_interval_seconds: 4.0
+  natural_completion_required: true
+  actual_runtime_not_authorized: true
+
+safety:
+  formal_replay_started: false
+  input_opened: false
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false
+  README_SOTA_claim: false

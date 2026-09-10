@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive_execution_selection_r3_external_artifacts_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_kind", "artifacts"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "manifest_kind": {"const": "competitive_execution_selection_r3_external_artifacts_v1"},
+    "artifacts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rival_source_closure", "dataset_source_closure", "fresh_holdout_authorization", "machine_identity", "image_inspect", "toolchain_capture", "execution_receipt"],
+      "properties": {
+        "rival_source_closure": {"$ref": "#/definitions/externalArtifact"},
+        "dataset_source_closure": {"$ref": "#/definitions/externalArtifact"},
+        "fresh_holdout_authorization": {"$ref": "#/definitions/externalArtifact"},
+        "machine_identity": {"$ref": "#/definitions/externalArtifact"},
+        "image_inspect": {"$ref": "#/definitions/externalArtifact"},
+        "toolchain_capture": {"$ref": "#/definitions/externalArtifact"},
+        "execution_receipt": {"$ref": "#/definitions/externalArtifact"}
+      }
+    }
+  },
+  "definitions": {
+    "externalArtifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "path", "sha256"],
+      "properties": {
+        "status": {"const": "REVIEWED_EXTERNAL"},
+        "path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

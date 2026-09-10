@@ -51,6 +51,41 @@ def test_offline_completion_does_not_wait_for_trailing_imu_buffer():
     assert 'imu_buffer.empty() && lidar_buffer.empty()' not in offline_node
 
 
+def test_v2_drain_fixture_pass_and_timeout_are_distinct_fail_closed_states():
+    offline_node = (RKO_ROS_DIR / 'offline_node.cpp').read_text(encoding='utf-8')
+
+    # Keep the fixture deliberately small and representation-only: a pass is
+    # valid only for an empty lidar queue, while a timeout remains invalid even
+    # when all input counters happen to match.  This mirrors the production
+    # diagnostic's fail-closed meaning without opening a bag or GT.
+    passing_snapshot = {
+        'status': 'eof_observed',
+        'lidar_buffer_size': 0,
+        'registration_active': False,
+        'expected_messages': 3,
+        'received_messages': 3,
+        'processed_messages': 3,
+        'dropped_messages': 0,
+        'queue_overflow': 0,
+        'processing_failures': 0,
+    }
+    timeout_snapshot = dict(passing_snapshot, status='timeout', lidar_buffer_size=1)
+    assert (
+        passing_snapshot['status'] == 'eof_observed'
+        and passing_snapshot['lidar_buffer_size'] == 0
+        and not passing_snapshot['registration_active']
+    )
+    assert not (
+        timeout_snapshot['status'] == 'eof_observed'
+        and timeout_snapshot['lidar_buffer_size'] == 0
+        and not timeout_snapshot['registration_active']
+    )
+    assert 'write_benchmark_drain_diagnostic("eof"' in offline_node
+    assert 'write_benchmark_drain_diagnostic(' in offline_node
+    assert '"timeout", "benchmark drain timeout before lidar buffer became empty"' in offline_node
+    assert 'exit_status = diagnostic_written ? 124 : 1' in offline_node
+
+
 def test_rko_lio_has_kidnap_relocalization_recovery_path():
     rko_core_dir = REPO_ROOT / 'Thirdparty' / 'rko_lio' / 'rko_lio' / 'core'
     config_path = (

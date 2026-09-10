@@ -1,0 +1,122 @@
+# FAST-LIVO2 M6A10 v13 additive formal candidate.
+#
+# This profile is unauthorized until a separate exact-root authorization is
+# sealed.  v13 fixes only evidence persistence at the Docker mount boundary;
+# it does not claim to fix the feeder's underlying nonzero cause.  Formal
+# replay remains forbidden in this document.
+name: fast_livo2_m6a10_v2c_v13_formal_candidate
+schema_version: 1
+status: V13_FORMAL_CANDIDATE_UNAUTHORIZED
+formal_replay_forbidden: true
+formal_replay_authorized: false
+formal_replay_started: false
+replay_count: 0
+input_opened: false
+ground_truth_content_opened: false
+scorer_invoked: false
+map_saved: false
+
+candidate:
+  contract_version: m6a10-v13-formal-candidate-v1
+  authorization_required: true
+  evidence_persistence_candidate: true
+  feeder_root_cause_fixed: false
+  feeder_underlying_nonzero_cause: unknown
+  output_loss_mechanism_proven: duplicate_out_tmpfs_before_bind
+  phase_contract: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+  transport_contract: m6a10-v12-callback-ack-transport-outstanding-v1
+  terminal_contract: m6a10-fast-livo2-consumer-terminal-v1
+  phase_mode: unpaced_ack
+  expected_messages: 236687
+  expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+  required_end_timestamp_seconds: 1623491515.148352
+  maximum_end_gap_seconds: 0.25
+  sensor_duration_seconds: 579.278127298
+
+image:
+  tag: m6a10-v2c-v12-nonlidar-boundary-transport-20260824-fast-livo2-benchmark:ros1-pinned
+  id: sha256:03dfa4c3e7c3f1ea9160ba2276ea23bfbdef43d441bc8afc628f907bd50743a7
+
+input:
+  path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+  bytes: 11290464091
+  sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+  opened: false
+
+lineage:
+  v12_candidate_profile:
+    path: configs/slam_benchmark_profiles/fast_livo2_m6a10_v12_formal_candidate.yaml
+    sha256: 93bba16eb88d13a8f02de2178ae5c9a8e8466a4c5ad4fc2e730875e2ebd8c1ed
+  v13_persistence_profile:
+    path: configs/slam_benchmark_profiles/fast_livo2_m6a10_v13_persistence_candidate.yaml
+    sha256: 4559f7c359156ea878ae962fab334263481a649c32c12610581ba81536eb9760
+  v13_base_launcher:
+    path: scripts/run_fast_livo2_m6a10_v13_formal.py
+    sha256: a5df42e56cb55201dd428a3a9a6a164b0c7394299a18fd9059fe7d829d104efa
+  v12_wrapper:
+    path: scripts/fast_livo2_m6a10_v12_formal_container_run.sh
+    sha256: 32fce2c054b92f0d695fd4d32c7737ab75dd3a467fdee1c579c82c63398894e6
+  v12_image_build_receipt:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v12_build_20260823T161850Z_agentv12/build_identity.receipt.json
+    sha256: e0e5c924025a24083661a6838bc5af28f07c34c419ce6e103c37890ed1382dda
+  v12_no_input_attempt6:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v12_dual_service_attempt6_20260823T175000Z_agentv12/no_input_dual_evidence.receipt.json
+    sha256: c5afa2452f96588bf46dc7f0d0b4504e816d0069bbd3a107009eb2c3beac0b45
+    sidecar_sha256: 076cd96e10c78d0bf73a6a7ed66d3549aaa2dd0f75c7503d5d88e19237d608e3
+  v12_host_evidence:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v12_host_evidence_gate_20260823T180718Z_agentv12/host_evidence_gate.receipt.json
+    sha256: 3a603bc4ece0e9167b0b3943df6be569f2e64bce196beb18da29ff09ad69f643
+    sidecar_sha256: ff50620daf076ed357032111d33197da1903b840605fa34259f3880ae0e49f66
+  v13_persistence_gate:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v13_persistence_20260823T192720Z_agentv13/persistence_gate.receipt.json
+    sha256: 18998f6177418eaf7e98fe517691d0642d59ac48f2faeb9b45ef0bc8fef62c72
+    sidecar_sha256: 1988676efabdf1276ca3bb635f784941d2539aa15f58f94a8f249bcb730eabb7
+    marker_sha256: 2a0c9a7168b2618139bbd3924090df20301d780ffee68fec8eba9d548be2606d
+    stderr_sha256: e3f2071dce4642529794c0e2a7d90bde68fcbf523508f9d891ba7c9262bba6ba
+    feeder_receipt_sha256: ac45a26be1f2d1aeefef5fc2f9660c028c7aeff60d56d3ac965e82e8b00a5e67
+  v12_failed_formal_attempt:
+    root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v12_formal_replay_20260823T190641Z_agentv12
+    closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v12_formal_replay_20260823T190641Z_agentv12/closure_receipt.json
+    closure_sha256: 499e739ecba7f79eefcc1a50f9d7c88c6860ae441b4c037acdf58e7ada82111c
+    inspect_sha256: f82008ca5a12f88279d13168a354066fec052548b9afdf038c9b31acaf786316
+    logs_sha256: 9ebcdbb9936de7138db2039a90ae8a4e94cd17a269937bfe4b223a5afb4ae048
+    diff_sha256: 5746c35982671142f4d49f085f3024f37e675b4e438e9e145329205a66676559
+    failure_kind: NOT_REGULAR
+    output_loss_mechanism: duplicate_out_tmpfs_before_bind
+    feeder_underlying_nonzero_cause: unknown
+
+sources:
+  v12_delta_patch_sha256: 39c77535a7557365dac6b0f2c99849038b29670a57c3101be3a39138317c6333
+  v12_validator_sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+  v12_binder_sha256: 3a708c87137f81330b479579dbcb184ac25853596546263c406473dbef106aab
+  v12_compositor_sha256: e37c2f22ac6220f7cfc5739d27f7c24360c395bac7b2dd0f90ff80ca9e8db99f
+  v12_monitor_sha256: d19cac9b7755b30e7cf45adcdb3fe7869855c4eb9814e337a50b102048dd5e7d
+  v12_feeder_sha256: 1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831
+  v13_persistence_runner_sha256: 86bf21d139d516b89205a758c63d220976546a294d741c86a38fb8e8a81ba967
+
+execution:
+  status: UNAUTHORIZED_NOT_RUN
+  authorization_required: true
+  formal_replay_forbidden: true
+  one_start: true
+  retry: false
+  manual_stop: false
+  watchdog_seconds: 1200
+  launcher_owned_quiescence_windows: 3
+  quiescence_window_seconds: 5.0
+  monitor_interval_seconds: 4.0
+  network: none
+  rootfs: read_only
+  output_mount: type=bind,dst=/out,readonly=false
+  output_tmpfs: false
+  duplicate_output_destinations: false
+  input_mounts: 1
+  ground_truth_mount: false
+  scorer_mount: false
+  map_save: false
+
+safety:
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false
+  formal_replay_started: false

@@ -1,0 +1,5 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive_execution_r3_source_worktree_v1",
+  "$ref": "competitive_execution_source_worktree_snapshot_v1.schema.json"
+}

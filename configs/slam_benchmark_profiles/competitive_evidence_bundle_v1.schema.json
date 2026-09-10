@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-evidence-bundle-v1",
+  "title": "Competitive SLAM evidence bundle manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_kind",
+    "manifest_path",
+    "canonical_root",
+    "claim_status",
+    "manifest_sha256",
+    "manifest_sidecar_path",
+    "manifest_sidecar_sha256",
+    "profile",
+    "scorer",
+    "revision",
+    "artifacts",
+    "run_artifact_bindings"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "manifest_kind": {"const": "competitive_slam_evidence_bundle"},
+    "manifest_path": {"$ref": "#/$defs/relativePath"},
+    "canonical_root": {"const": "."},
+    "claim_status": {"const": "claim_eligible"},
+    "manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "manifest_sidecar_path": {"$ref": "#/$defs/relativePath"},
+    "manifest_sidecar_sha256": {"$ref": "#/$defs/sha256"},
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "sha256_kind", "canonical_sha256", "canonical_sha256_kind", "name"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "sha256_kind": {"const": "sha256_file_v1"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "canonical_sha256_kind": {"const": "canonical_profile_sha256_v1"},
+        "name": {"type": "string", "minLength": 1}
+      }
+    },
+    "scorer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "fingerprint"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "score_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "receipt_sha256", "scorer_fingerprint",
+        "input_evidence_sha256", "scored_evidence_sha256"
+      ],
+      "properties": {
+        "status": {"const": "PASS"},
+        "receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "scorer_fingerprint": {"$ref": "#/$defs/sha256"},
+        "input_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "scored_evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "systems"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "systems": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+        }
+      }
+    },
+    "authorization": {
+      "$ref": "competitive_fresh_holdout_authorization_v1.schema.json"
+    },
+    "artifacts": {
+      "description": "For claim-eligible publication, the failure role must contain canonical UTF-8 JSON {schema_version:1,failure_log:<exact authorization failure_log>}; the publisher reopens and validates these bytes.",
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "role", "size_bytes", "sha256", "sidecar_path", "sidecar_sha256"],
+        "properties": {
+          "path": {"$ref": "#/$defs/relativePath"},
+          "role": {
+            "enum": ["input", "result", "config", "calibration", "revision", "scorer", "trajectory", "resource", "map_metric", "failure"]
+          },
+          "size_bytes": {"type": "integer", "minimum": 0},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "sidecar_path": {"$ref": "#/$defs/relativePath"},
+          "sidecar_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "run_artifact_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/runArtifactBinding"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*//)(?!.*(^|/)\\.\\.?(/|$))[^\\u0000]+$"
+    },
+    "runArtifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256", "sidecar_path", "sidecar_sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "sidecar_path": {"$ref": "#/$defs/relativePath"},
+        "sidecar_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "runArtifactBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system", "dataset", "run_index", "trajectory", "map", "resource", "score", "execution"],
+      "properties": {
+        "system": {"type": "string", "minLength": 1},
+        "dataset": {"type": "string", "minLength": 1},
+        "run_index": {"type": "integer", "minimum": 1},
+        "trajectory": {"$ref": "#/$defs/runArtifactRef"},
+        "map": {"$ref": "#/$defs/runArtifactRef"},
+        "resource": {"$ref": "#/$defs/runArtifactRef"},
+        "score": {"$ref": "#/$defs/runArtifactRef"},
+        "execution": {"$ref": "#/$defs/runArtifactRef"}
+      }
+    }
+  }
+}

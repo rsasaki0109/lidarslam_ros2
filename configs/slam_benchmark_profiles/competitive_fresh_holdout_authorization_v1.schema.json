@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-fresh-holdout-authorization-v1",
+  "title": "Competitive SLAM fresh-holdout authorization v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status", "receipt_hash_kind", "precommit",
+    "gt_manifest", "receipt_chain", "chain_head_sha256", "replay",
+    "scoring", "leakage_audit", "failure_log", "external_attestation"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "status": {"enum": ["READY", "NOT_READY", "INVALID"]},
+    "receipt_hash_kind": {"const": "canonical_authorization_receipt_sha256_v1"},
+    "precommit": {"$ref": "#/$defs/precommit"},
+    "gt_manifest": {"$ref": "#/$defs/gtManifest"},
+    "receipt_chain": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/receipt"}
+    },
+    "chain_head_sha256": {"$ref": "#/$defs/sha256"},
+    "external_attestation_binding_sha256": {"$ref": "#/$defs/sha256"},
+    "replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "process_id", "gt_mounts", "gt_content_opened", "scorer_invoked"],
+      "properties": {
+        "role": {"const": "replay_only"},
+        "process_id": {"type": "string", "minLength": 1},
+        "gt_mounts": {"const": false},
+        "gt_content_opened": {"const": false},
+        "scorer_invoked": {"const": false}
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "process_id", "status", "authorized_event_count", "events", "overwrite_or_retry"],
+      "properties": {
+        "role": {"const": "scoring_only"},
+        "process_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["NOT_RUN", "PASS", "COMPLETE", "INVALIDATED"]},
+        "authorized_event_count": {"type": "integer", "minimum": 0},
+        "events": {"type": "array", "maxItems": 1, "items": {"type": "object"}},
+        "overwrite_or_retry": {"const": false},
+        "invalidation": {"type": "object"}
+      }
+    },
+    "leakage_audit": {"$ref": "#/$defs/leakageAudit"},
+    "failure_log": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["complete", "events"],
+      "properties": {
+        "complete": {"const": true},
+        "events": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "external_attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["PASS", "NOT_READY", "INVALID"]},
+        "signer_id": {"type": "string", "minLength": 1},
+        "algorithm": {"const": "Ed25519"},
+        "key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+        "signature": {"type": "string", "minLength": 1},
+        "public_key_sha256": {"$ref": "#/$defs/sha256"},
+        "payload_sha256": {"$ref": "#/$defs/sha256"},
+        "issued_at_utc": {"type": "string", "format": "date-time"},
+        "expires_at_utc": {"type": "string", "format": "date-time"}
+      },
+      "oneOf": [
+        {
+          "properties": {"status": {"enum": ["NOT_READY", "INVALID"]}}
+        },
+        {
+          "required": [
+            "signer_id", "algorithm", "key_id", "signature", "public_key_sha256",
+            "payload_sha256", "issued_at_utc", "expires_at_utc"
+          ],
+          "properties": {"status": {"const": "PASS"}}
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["external_attestation"],
+        "properties": {
+          "external_attestation": {
+            "required": ["status"],
+            "properties": {"status": {"const": "PASS"}}
+          }
+        }
+      },
+      "then": {"required": ["external_attestation_binding_sha256"]}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "precommit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_ids", "holdout_slots", "systems", "run_count", "scorer",
+        "metric_gate_sha256", "profile_sha256", "hardware_fingerprint",
+        "thread_policy_sha256", "release"
+      ],
+      "properties": {
+        "dataset_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "holdout_slots": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/slot"}},
+        "systems": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/system"}},
+        "run_count": {"type": "integer", "minimum": 1},
+        "scorer": {"$ref": "#/$defs/scorer"},
+        "metric_gate_sha256": {"$ref": "#/$defs/sha256"},
+        "profile_sha256": {"$ref": "#/$defs/sha256"},
+        "hardware_fingerprint": {"$ref": "#/$defs/sha256"},
+        "thread_policy_sha256": {"$ref": "#/$defs/sha256"},
+        "release": {"const": "Release"}
+      }
+    },
+    "slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "dataset_id", "input_manifest_sha256", "ground_truth_sha256", "ground_truth_size_bytes", "calibration_archive_sha256"],
+      "properties": {
+        "sequence": {"type": "string", "minLength": 1},
+        "dataset_id": {"type": "string", "minLength": 1},
+        "input_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "ground_truth_sha256": {"$ref": "#/$defs/sha256"},
+        "ground_truth_size_bytes": {"type": "integer", "minimum": 1},
+        "calibration_archive_sha256": {"$ref": "#/$defs/sha256"},
+        "hash_kind": {"type": "string", "minLength": 1}
+      }
+    },
+    "system": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "config_sha256", "hardware_fingerprint", "thread_policy_sha256", "release"],
+      "properties": {
+        "revision": {"$ref": "#/$defs/revision"},
+        "config_sha256": {"$ref": "#/$defs/sha256"},
+        "hardware_fingerprint": {"$ref": "#/$defs/sha256"},
+        "thread_policy_sha256": {"$ref": "#/$defs/sha256"},
+        "release": {"const": "Release"}
+      }
+    },
+    "scorer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "config_sha256", "fingerprint"],
+      "properties": {
+        "revision": {"$ref": "#/$defs/revision"},
+        "config_sha256": {"$ref": "#/$defs/sha256"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "kind", "timestamp_utc", "payload_sha256", "previous_sha256", "receipt_sha256"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "kind": {"type": "string", "minLength": 1},
+        "timestamp_utc": {"type": "string", "format": "date-time"},
+        "payload_sha256": {"$ref": "#/$defs/sha256"},
+        "previous_sha256": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/sha256"}]},
+        "receipt_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "gtManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_only", "entries"],
+      "properties": {
+        "identity_only": {"const": true},
+        "entries": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/gtEntry"}}
+      }
+    },
+    "gtEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slot_id", "sequence", "ground_truth_sha256", "ground_truth_size_bytes"],
+      "properties": {
+        "slot_id": {"type": "string", "minLength": 1},
+        "sequence": {"type": "string", "minLength": 1},
+        "ground_truth_sha256": {"$ref": "#/$defs/sha256"},
+        "ground_truth_size_bytes": {"type": "integer", "minimum": 1},
+        "hash_kind": {"type": "string", "minLength": 1}
+      }
+    },
+    "leakageAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gt_content_opened", "gt_path_exposed_to_runner", "prior_gt_access", "development_tuning", "result_dependent_selection", "reused_holdout", "gt_available_before_precommit", "selection_before_gt_access", "failure_records_complete"],
+      "properties": {
+        "gt_content_opened": {"const": false},
+        "gt_path_exposed_to_runner": {"const": false},
+        "prior_gt_access": {"const": false},
+        "development_tuning": {"const": false},
+        "result_dependent_selection": {"const": false},
+        "reused_holdout": {"const": false},
+        "gt_available_before_precommit": {"const": false},
+        "selection_before_gt_access": {"const": true},
+        "failure_records_complete": {"const": true}
+      }
+    }
+  }
+}

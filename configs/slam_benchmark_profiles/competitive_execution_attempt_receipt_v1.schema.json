@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-execution-attempt-receipt-v1",
+  "title": "GT-blind competitive execution attempt receipt v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version", "receipt_kind", "receipt_hash_kind",
+    "execution_receipt_sha256", "campaign_id", "schedule", "identity",
+    "argv", "mounts", "execution", "completion", "artifact_hashes",
+    "output_tree_sha256", "gt_blind_proof"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "receipt_kind": {"const": "competitive_execution_attempt_receipt_v1"},
+    "receipt_hash_kind": {
+      "const": "canonical_execution_attempt_receipt_sha256_v1"
+    },
+    "execution_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "execution_receipt_file_sha256": {"$ref": "#/$defs/sha256"},
+    "campaign_id": {"$ref": "#/$defs/sha256"},
+    "schedule": {
+      "type": "object",
+      "required": ["system", "sequence", "repetition"],
+      "properties": {
+        "system": {"type": "string", "minLength": 1},
+        "sequence": {"type": "string", "minLength": 1},
+        "repetition": {"type": "integer", "minimum": 1}
+      }
+    },
+    "identity": {"type": "object"},
+    "argv": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "mounts": {"type": "array"},
+    "execution": {
+      "type": "object",
+      "required": ["exit_status", "timed_out"],
+      "properties": {
+        "exit_status": {"type": "integer"},
+        "timed_out": {"type": "boolean"}
+      }
+    },
+    "completion": {
+      "type": "object",
+      "required": ["complete"],
+      "properties": {"complete": {"type": "boolean"}}
+    },
+    "artifact_hashes": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/sha256"}
+    },
+    "output_tree_sha256": {"$ref": "#/$defs/sha256"},
+    "gt_blind_proof": {
+      "type": "object",
+      "required": ["ground_truth_content_opened", "scorer_invoked"],
+      "properties": {
+        "ground_truth_content_opened": {"const": false},
+        "scorer_invoked": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

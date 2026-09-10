@@ -207,3 +207,5 @@ def test_sigterm_publishes_atomic_report_and_excludes_sampler(tmp_path):
     assert document['atomic'] is True
     assert document['sampler_excluded'] is True
     assert document['peak']['process_count'] == 1
+    assert document['scheduler_nice'] == 10
+    assert document['scheduler_nice_effective'] >= document['scheduler_nice']

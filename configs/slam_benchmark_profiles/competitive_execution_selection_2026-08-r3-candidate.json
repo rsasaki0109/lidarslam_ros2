@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "candidate_kind": "competitive_execution_selection_r3_candidate_v1",
+  "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
+  "status": "NOT_READY",
+  "benchmark_eligible": false,
+  "claim_eligible": false,
+  "candidate_hash_kind": "canonical_competitive_execution_selection_r3_candidate_sha256_v1",
+  "candidate_identity_sha256": "b79d6fb6b6eba73d0db1dbe094a283b33ec2fe78a5d0e27933e892401df1c584",
+  "profile_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
+    "file_sha256": "ba426b7b7fbe543c56fc813a144c0079633b447591ba8b565a910e1745d137bd",
+    "canonical_sha256": "b9a454ae9fbb3ffc01348b76aa5086f6c3f8965c7d86721dd6cc3c9396431d31",
+    "canonical_hash_kind": "canonical_profile_sha256_v1"
+  },
+  "r2_selection_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
+    "file_sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b",
+    "canonical_sha256": "1a4d9db60612e0202c9d77851752da2d4269f38ff3c842fdd132e5a3f949fa62",
+    "selection_id": "competitive-execution-selection-2026-08-r2",
+    "status": "CURRENT",
+    "closure_id": "competitive-rival-source-closure-2026-08-r2",
+    "closure_revision": 2,
+    "closure_identity_hash_kind": "canonical_rival_source_closure_identity_sha256_v1",
+    "closure_identity_sha256": "e876339f843b28c1be5d835e8f6a9a062c52715498c85d93afbdb83c6dbae4e8"
+  },
+  "prior_campaign_lineage": {
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml",
+    "file_sha256": "da10e28026b414fac3d52f95377d25aaeda9416d75495e1826c35f5545ac54ac",
+    "receipt_kind": "competitive_execution_selection",
+    "recorded_status": "ready",
+    "promotion_status": "REJECTED_HISTORICAL_INVALID",
+    "superseded_by": "competitive-execution-selection-2026-08-r2"
+  },
+  "required_systems": ["ours", "glim", "fast_livo2"],
+  "release_binding": {
+    "release": "Release",
+    "status": "RECORDED_NOT_READY_EXTERNAL_EXECUTION"
+  },
+  "thread_policy_binding": {
+    "status": "RECORDED_NOT_READY_EXTERNAL_MACHINE",
+    "required_keys": ["cpu_affinity", "max_threads", "omp_num_threads", "openblas_num_threads", "mkl_num_threads", "tbb_num_threads", "accelerator_policy"],
+    "values": {
+      "cpu_affinity": [0, 1, 2, 3, 4, 5, 6, 7],
+      "max_threads": 8,
+      "omp_num_threads": 8,
+      "openblas_num_threads": 8,
+      "mkl_num_threads": 8,
+      "tbb_num_threads": 8,
+      "accelerator_policy": "cpu_only"
+    },
+    "canonical_sha256": "262d656a7c382cd27696b3150215ae563a014796de69718754858bcb814ba993"
+  },
+  "source_bindings": {
+    "runner": {
+      "ours": {"path": "scripts/run_ours_competitive_benchmark.py", "sha256": "7c58f645f82f82305e1efc84f148169cb76535eb89a7e7340f13ad4a2c276c61"},
+      "ours_entrypoint": {"path": "scripts/ours_container_gt_blind_run.sh", "sha256": "806857afec65c16105446e75fb32450e2b0efe1116268ce4412ffb44559db8a6"},
+      "glim": {"path": "scripts/run_glim_benchmark.py", "sha256": "1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1"},
+      "glim_entrypoint": {"path": "scripts/glim_container_run.sh", "sha256": "6b9948a1319ba5eaeba1bd53fca9d35ae6b3f93cda41ebea3e8d79a2b467b19e"},
+      "fast_livo2": {"path": "scripts/run_fast_livo2_benchmark.py", "sha256": "eda2373a1f04098851ffc48ccb0b1d8ba282b8b84c2a3f8102e18e3b45284352"},
+      "fast_livo2_entrypoint": {"path": "scripts/fast_livo2_container_run.sh", "sha256": "f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20"},
+      "gt_blind_driver": {"path": "scripts/run_competitive_gt_blind_benchmark.py", "sha256": "b286bac1ea5cd6df6164a37e96639f80106eb17f8141b2c85d66e586547f6a8a"}
+    },
+    "scorer": {
+      "trajectory": {"path": "scripts/ape_from_tum.py", "sha256": "c0c9eab03baabd39617f8410aca70a6ea1aba1237ac09979d9553ef7edc0e9af"},
+      "map_quality": {"path": "scripts/run_map_quality_check.sh", "sha256": "b0a41e29f89d607a9621a966b90d140bc85ccdcaec38a71886d482380342a492"},
+      "paired_map_regression": {"path": "scripts/check_map_quality_regression.py", "sha256": "079a05cb042561745209a7fae4b7860c0a002436d8f9ee9440b33a8f2771aa6a"},
+      "sequence_gate": {"path": "scripts/evaluate_competitive_sequence_gate.py", "sha256": "b056b04e1014dbecde6f3ac59f5dc103256251f7c56d330dea299a8e9684bb1d"},
+      "suite_gate": {"path": "scripts/evaluate_competitive_suite_gate.py", "sha256": "6b3120bb3923edcf34cd1e976d7bf0c408d9875596ef7535d343bd3e9ffa8065"},
+      "result_composer": {"path": "scripts/compose_competitive_result.py", "sha256": "838c2027db190acc325399b841ceceb2313c0639c14ab4afe0f9f6bb9aea7f81"}
+    },
+    "memory": {
+      "sampler": {"path": "scripts/sample_container_process_rss.py", "sha256": "0b45345942b188d4c97e55e4ff849dae020a90ce3c76f683b027bddff32eb547"},
+      "helper": {"path": "scripts/container_memory_evidence.py", "sha256": "f526cd3e526d870982ccf12657e09397f6b048c0b446c5b57b9e5c63433ef9cf"},
+      "gate": {"path": "scripts/competitive_memory_gate.py", "sha256": "ec4e316f33acd253565fef7ccbbaa04401be87b9d21c575018871b0ea0f2ac04"}
+    }
+  },
+  "system_bindings": {
+    "ours": {
+      "profile_image_pointer": "competitive_slam_profile.runtime_policy.phase_contract_v2.ours_m6a10_v2a_unpaced_ack_fixed10_v10.execution.image_digest",
+      "image_digest": "sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69",
+      "image_status": "NOT_READY_EXTERNAL_IMAGE_REVALIDATION",
+      "toolchain_fingerprint": null,
+      "toolchain_status": "NOT_READY_EXTERNAL_IMAGE_REVALIDATION",
+      "release": "Release"
+    },
+    "glim": {
+      "profile_image_pointer": "competitive_slam_profile.m6a10_glim_v2b_fixed10_v4.build.image_digest",
+      "image_digest": "sha256:010c0019a077116edf4d1e7462dfa28561c4fb17db3b5db52e3652c8a875eb41",
+      "image_status": "NOT_READY_EXTERNAL_IMAGE_REVALIDATION",
+      "toolchain_fingerprint": null,
+      "toolchain_status": "NOT_READY_EXTERNAL_IMAGE_REVALIDATION",
+      "release": "Release"
+    },
+    "fast_livo2": {
+      "profile_image_pointer": "competitive_slam_profile.m6a10_fast_livo2_v2c.retry_v5.image.image_digest",
+      "image_digest": "sha256:98271cfa19056d985b982d1fe3af74ea807ab195137b00ba313f0d94f8387849",
+      "image_status": "NOT_READY_EXTERNAL_IMAGE_REVALIDATION",
+      "toolchain_fingerprint": null,
+      "toolchain_status": "NOT_READY_EXTERNAL_IMAGE_REVALIDATION",
+      "release": "Release"
+    }
+  },
+  "external_closures": {
+    "rival_source": {
+      "status": "NOT_READY",
+      "identity": {
+        "closure_id": "competitive-rival-source-closure-2026-08-r2",
+        "closure_revision": 2,
+        "closure_identity_hash_kind": "canonical_rival_source_closure_identity_sha256_v1",
+        "closure_identity_sha256": "e876339f843b28c1be5d835e8f6a9a062c52715498c85d93afbdb83c6dbae4e8",
+        "selection_id": "competitive-execution-selection-2026-08-r2",
+        "selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
+        "selection_sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b"
+      },
+      "selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
+      "selection_file_sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b",
+      "legal_status": "BLOCKED"
+    },
+    "dataset_source": {
+      "status": "NOT_READY",
+      "section_sha256": "19db3333ff5351094748c37c9b1806db0613276cd4d757ddaaccf130e11275ed",
+      "selection_path": "configs/slam_benchmark_profiles/ntu_viral_selection_2026-08.yaml",
+      "selection_file_sha256": "51b81f5bb10d660f3a99ee44be559e088e206ea78339b95c713f0d2eb0838d8c",
+      "selection_schema_path": "configs/slam_benchmark_profiles/ntu_viral_selection_v1.schema.json",
+      "selection_schema_sha256": "6a967132cfdba8e282e8939d4ab14a78952ae0b07324d6a52e59f6b7b0ad2500",
+      "reviewed_pin_status": "NOT_CONFIGURED"
+    },
+    "fresh_holdout_authorization": {
+      "status": "NOT_READY",
+      "section_sha256": "ea05df4b9bb7c291fd0102b302a8637b637a2549e130a8f13eb60c5aee7fd52e",
+      "external_attestation_status": "NOT_READY",
+      "required_systems": ["ours", "glim", "fast_livo2"],
+      "run_count": 3
+    },
+    "machine_identity": {
+      "status": "NOT_READY",
+      "path": null,
+      "sha256": null,
+      "reason": "no externally reviewed execution-environment identity artifact"
+    },
+    "image_identity": {
+      "status": "NOT_READY_EXTERNAL_REVALIDATION",
+      "systems": ["ours", "glim", "fast_livo2"],
+      "required_evidence": "host-owned image inspect and immutable build receipt per system"
+    },
+    "toolchain_identity": {
+      "status": "NOT_READY_EXTERNAL_REVALIDATION",
+      "required_evidence": "container-owned compiler/linker/ROS/dependency probe bound to image digest",
+      "fingerprints": {"ours": null, "glim": null, "fast_livo2": null}
+    }
+  },
+  "source_provenance": {
+    "status": "DIRTY_EXTERNAL_REVIEW_REQUIRED",
+    "reason": "current checkout has unrelated pending changes; hashes above are exact current bytes, not a clean promotion"
+  },
+  "blockers": [
+    "active_profile_points_to_historical_execution_receipt",
+    "historical_selection_receipt_rejected_after_r2_closure_revision",
+    "rival_source_closure_not_ready_legal_provenance",
+    "dataset_source_closure_not_ready_revalidation_or_pin",
+    "fresh_holdout_authorization_not_ready_external_custodian",
+    "machine_identity_not_ready_external_execution_artifact",
+    "image_identity_not_ready_external_inspect",
+    "toolchain_identity_not_ready_external_capture",
+    "source_worktree_requires_external_review"
+  ],
+  "promotion_policy": {
+    "active_profile_switch": false,
+    "historical_receipts_immutable": true,
+    "requires_separately_reviewed_ready_receipt": true,
+    "requires_profile_canonical_reseal": true,
+    "handoff_status": "UNSIGNED_REVIEW_REQUIRED"
+  }
+}

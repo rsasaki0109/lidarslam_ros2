@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-evidence-bundle-handoff-v1",
+  "title": "Post-score competitive evidence bundle handoff request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "evidence_path", "profile", "scorer", "revision",
+    "artifacts", "expected_runs", "run_artifact_sources", "scoring_authorization"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "evidence_path": {"type": "string", "minLength": 1},
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "canonical_sha256"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "scorer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fingerprint"],
+      "properties": {"fingerprint": {"$ref": "#/$defs/sha256"}}
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["systems"],
+      "properties": {
+        "systems": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string", "pattern": "^[0-9a-f]{40}$"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 10,
+      "items": {"$ref": "#/$defs/globalArtifact"}
+    },
+    "expected_runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/runIdentity"}
+    },
+    "run_artifact_sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/runArtifactSource"}
+    },
+    "scoring_authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_path", "status", "scorer_fingerprint", "input_evidence_sha256"
+      ],
+      "properties": {
+        "receipt_path": {"type": "string", "minLength": 1},
+        "status": {"const": "PASS"},
+        "scorer_fingerprint": {"$ref": "#/$defs/sha256"},
+        "input_evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sourceDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_root", "source_path", "size_bytes", "sha256"],
+      "properties": {
+        "source_root": {"type": "string", "minLength": 1},
+        "source_path": {
+          "type": "string", "minLength": 1,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*//)(?!.*(^|/)\\.\\.?(/|$))[^\\u0000]+$"
+        },
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "receipt_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "globalArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "source_root", "source_path", "size_bytes", "sha256"],
+      "properties": {
+        "role": {
+          "enum": [
+            "input", "result", "config", "calibration", "revision",
+            "scorer", "trajectory", "resource", "map_metric", "failure"
+          ]
+        },
+        "source_root": {"type": "string", "minLength": 1},
+        "source_path": {
+          "type": "string", "minLength": 1,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*//)(?!.*(^|/)\\.\\.?(/|$))[^\\u0000]+$"
+        },
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "runArtifactSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "system", "dataset", "run_index", "trajectory", "map", "resource",
+        "execution"
+      ],
+      "properties": {
+        "system": {"type": "string", "minLength": 1},
+        "dataset": {"type": "string", "minLength": 1},
+        "run_index": {"type": "integer", "minimum": 1},
+        "trajectory": {"$ref": "#/$defs/sourceDescriptor"},
+        "map": {"$ref": "#/$defs/sourceDescriptor"},
+        "resource": {"$ref": "#/$defs/sourceDescriptor"},
+        "execution": {"$ref": "#/$defs/sourceDescriptor"}
+      }
+    },
+    "runIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system", "dataset", "run_index"],
+      "properties": {
+        "system": {"type": "string", "minLength": 1},
+        "dataset": {"type": "string", "minLength": 1},
+        "run_index": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

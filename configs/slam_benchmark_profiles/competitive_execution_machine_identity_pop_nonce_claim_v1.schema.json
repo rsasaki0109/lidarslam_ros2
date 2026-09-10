@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive_execution_machine_identity_pop_nonce_claim_v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "campaign_domain", "campaign_id", "challenge_file_sha256", "challenge_payload_sha256", "final_output_name", "nonce_sha256", "claimed_at", "canonical_sha256"],
+  "properties": {"schema": {"const": "competitive_execution_machine_identity_pop_nonce_claim_v1"}, "schema_version": {"const": 1}, "campaign_domain": {"const": "lidarslam/competitive-execution-r3/machine-identity-pop/ed25519/v1"}, "campaign_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"}, "challenge_file_sha256": {"$ref": "#/$defs/sha"}, "challenge_payload_sha256": {"$ref": "#/$defs/sha"}, "final_output_name": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"}, "nonce_sha256": {"$ref": "#/$defs/sha"}, "claimed_at": {"type": "integer", "minimum": 0}, "canonical_sha256": {"$ref": "#/$defs/sha"}},
+  "$defs": {"sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

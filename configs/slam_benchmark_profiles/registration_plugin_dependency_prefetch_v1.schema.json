@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lidarslam.invalid/schemas/registration-plugin-dependency-prefetch-v1.schema.json",
+  "title": "Registration plugin dependency prefetch v1",
+  "description": "Strict sealed host prefetch and manifest projections. Runtime validation also enforces byte, path, link, sidecar, URL, and profile-pin identity.",
+  "oneOf": [
+    {
+      "title": "Prefetch receipt",
+      "type": "object",
+      "required": [
+        "schema", "schema_version", "status", "authority", "distro",
+        "base_image_digest", "provisioning_network_used",
+        "archive_fetch_network_used", "manifest", "records", "canonical_sha256"
+      ],
+      "properties": {
+        "schema": {"const": "registration-plugin-dependency-prefetch-v1"},
+        "schema_version": {"const": 1},
+        "status": {"const": "PASS"},
+        "authority": {"enum": ["HOST_PROMOTION", "FUNCTIONAL_CI_NON_PROMOTING"]},
+        "distro": {"enum": ["humble", "jazzy"]},
+        "base_image_digest": {"pattern": "^sha256:[0-9a-f]{64}$"},
+        "provisioning_network_used": {"const": true},
+        "archive_fetch_network_used": {"const": true},
+        "manifest": {"$ref": "#/$defs/manifestBinding"},
+        "records": {"type": "array", "minItems": 1},
+        "canonical_sha256": {"pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Prefetch manifest",
+      "type": "object",
+      "required": ["schema", "schema_version", "status", "entries", "entry_count", "canonical_sha256"],
+      "properties": {
+        "schema": {"const": "registration-plugin-dependency-prefetch-manifest-v1"},
+        "schema_version": {"const": 1},
+        "status": {"const": "PASS"},
+        "entries": {"type": "array", "minItems": 1},
+        "entry_count": {"type": "integer", "minimum": 1},
+        "canonical_sha256": {"pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "manifestBinding": {
+      "type": "object",
+      "required": ["path_relative", "sha256", "sidecar_path_relative", "sidecar_sha256"],
+      "properties": {
+        "path_relative": {"const": "dependency_prefetch_manifest.json"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "sidecar_path_relative": {"const": "dependency_prefetch_manifest.json.sha256"},
+        "sidecar_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

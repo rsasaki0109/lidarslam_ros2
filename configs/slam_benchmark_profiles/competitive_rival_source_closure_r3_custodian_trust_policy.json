@@ -1,0 +1,42 @@
+{
+  "schema": "competitive_rival_source_closure_r3_custodian_trust_policy_v1",
+  "schema_version": 1,
+  "status": "NOT_READY",
+  "benchmark_eligible": false,
+  "candidate_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-candidate.json",
+    "file_sha256": "32b1ea2601d71d582cfd2b4476abd00a12a41fc77c06614f25c6e9f8819fa6d6",
+    "canonical_sha256": "26280f37d7fb0f18574b90042f932409013ff0d9c3f5e8d40d8daaffe1089dfa",
+    "candidate_id": "competitive-rival-source-closure-2026-08-r3-candidate"
+  },
+  "selection_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-selection-candidate.json",
+    "file_sha256": "28829bf6470545dcaae30825591f02e69bbe5c9bf962eb7545f24d203552b661",
+    "canonical_sha256": "d946cf3d862618b48d45a5f7143b17e31138de5a5da227cea412bd1e1b7670b8",
+    "selection_id": "competitive-rival-source-closure-selection-2026-08-r3-candidate"
+  },
+  "response_schema_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_r3_custodian_response_v1.schema.json",
+    "file_sha256": "8d88ae0c96b757fc38dbd44488055c5a0b9d42dc47ad125c61892a8ed52c76d4",
+    "schema": "competitive_rival_source_closure_r3_custodian_response_v1"
+  },
+  "verifier": {
+    "path": "scripts/validate_competitive_rival_source_closure_r3_custodian_response.py",
+    "file_sha256": "66772f039313ab823d4bc239aa6283b9c774e753409fb66d6028fc03dac8c3a5",
+    "implementation": "rival_source_closure_custodian_response_v1"
+  },
+  "backend": {
+    "name": "python-cryptography",
+    "version": "46.0.5",
+    "implementation": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify",
+    "implementation_file": "scripts/validate_competitive_rival_source_closure_r3_custodian_response.py",
+    "implementation_sha256": "66772f039313ab823d4bc239aa6283b9c774e753409fb66d6028fc03dac8c3a5"
+  },
+  "authorized_keys": [],
+  "nonce_policy": {
+    "minimum_length": 32,
+    "maximum_length": 128,
+    "one_shot_ledger_required": true
+  },
+  "policy_identity_sha256": "7d506d0bd8ea412836350047e9c57b411de3b1cc357fd89087e6a6e867117661"
+}

@@ -1,0 +1,45 @@
+# Current recipe-selection revision.  The historical selection receipt is
+# immutable and explicitly superseded; it is not claim-eligible.
+schema_version: 1
+selection_kind: competitive_execution_selection_revision
+selection_id: competitive-execution-selection-2026-08-r2
+status: CURRENT
+closure_id: competitive-rival-source-closure-2026-08-r2
+closure_revision: 2
+closure_identity_hash_kind: canonical_rival_source_closure_identity_sha256_v1
+closure_identity_sha256: e876339f843b28c1be5d835e8f6a9a062c52715498c85d93afbdb83c6dbae4e8
+profile_path: configs/slam_benchmark_profiles/competitive_slam_v1.yaml
+profile_revision_id: competitive-slam-v1-2026-08-r2
+current_recipe_bindings:
+  glim:
+    dockerfile: {path: docker/glim_cpu_benchmark.Dockerfile, hash_kind: file_sha256, sha256: dcd01d013eeb5cb50e2582646548c06f2c3b1a93820412b110b7fb25b769d70d}
+    build_script: {path: scripts/build_competitive_benchmark_images.sh, hash_kind: file_sha256, sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1}
+    runner: {path: scripts/run_glim_benchmark.py, hash_kind: file_sha256, sha256: 2345b930ce8b679d92d315bae8ed372d99fde1c43fb744f5d8b7c7fc77588794}
+    wrapper: {path: scripts/glim_container_run.sh, hash_kind: file_sha256, sha256: 6b9948a1319ba5eaeba1bd53fca9d35ae6b3f93cda41ebea3e8d79a2b467b19e}
+    configs:
+      - {path: configs/glim/hilti2022_cpu, hash_kind: canonical_tree_sha256, sha256: 844efce77c2c9bde697f2811e0c32441706b3c74a559a152bb04efeaf38c798d}
+      - {path: configs/glim/hilti2022_cpu/config_sensors.json, hash_kind: file_sha256, sha256: 8d998b97ffa2eea685be27b727e48a8269f0f630ba96a4f5e0133074fff62ac8}
+      - {path: configs/glim/hilti2022_cpu/config_ros.json, hash_kind: file_sha256, sha256: 50ca0b66110b35ee05d80530f38a8d61b8175743e6eb0b42907ee486bbf666cd}
+    patches:
+      - {order: 1, path: docker/patches/glim.m6a10-v2b.patch, sha256: f3e7549ee1730df37125f17c4be00b5643a6b9db9eacbc96c9ecb2f682b08867}
+      - {order: 2, path: docker/patches/glim_ros2.m6a10-v2b.patch, sha256: ede64c7a00f409a19138f41c19685f08d58b5c8c8d9d9ffa47b6c7dcb774c0f2}
+  fast_livo2:
+    dockerfile: {path: docker/fast_livo2_benchmark.Dockerfile, hash_kind: file_sha256, sha256: 1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5}
+    build_script: {path: scripts/build_competitive_benchmark_images.sh, hash_kind: file_sha256, sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1}
+    runner: {path: scripts/run_fast_livo2_benchmark.py, hash_kind: file_sha256, sha256: b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30}
+    wrapper: {path: scripts/fast_livo2_container_run.sh, hash_kind: file_sha256, sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20}
+    configs:
+      - {path: configs/fast_livo2/mapping_hesaixt32_hilti22_benchmark_map.launch, hash_kind: file_sha256, sha256: 5d1f213d48488161da438e76d9fb359278fa5993e99247a94f52b9c09e2bf742}
+      - {path: config/HILTI22.yaml, path_kind: pinned_upstream_archive_relative_path, hash_kind: upstream_archive_file_sha256, sha256: efae9e702c71c770b19002b6e19d4e1b6f46c67df3727e984981d932258f0b4a, source: fast_livo2, role: benchmark_hilti22_config, status: READY}
+    patches:
+      - {order: 1, path: docker/patches/fast_livo2.m6a10-v2c.patch, sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297}
+supersession_policy:
+  status: SUPERSEDED_RECIPE_REVISION
+  claim_eligible: false
+  reason: every receipt lacking this current closure_id and revision is ineligible
+supersedes:
+  - path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml
+    sha256: 721588a7ec44090daae66c318c30945df529abfc33875871d42131d1ed1324db
+    status: SUPERSEDED_RECIPE_REVISION
+    claim_eligible: false
+    reason: historical receipt binds the pre-r2 Dockerfile/build-script recipe revision

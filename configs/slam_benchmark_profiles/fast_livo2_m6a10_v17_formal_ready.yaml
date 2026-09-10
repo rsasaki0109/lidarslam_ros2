@@ -1,0 +1,151 @@
+# FAST-LIVO2 M6A10 v17 additive production retry-boundary candidate.
+#
+# v12-v16 images, wrappers, profiles, receipts, and formal attempts are
+# immutable lineage.  v17 changes only the producer's empty synchronization
+# retry disposition: an empty retry is non-sticky, while an acquired record,
+# explicit discard, processing failure, or conservation failure remains
+# sticky invalid.  This profile is not a formal replay authorization.
+name: fast_livo2_m6a10_v2c_v17_formal_ready
+schema_version: 1
+status: V17_FORMAL_CANDIDATE_UNAUTHORIZED
+formal_replay_forbidden: true
+formal_replay_authorized: false
+formal_replay_started: false
+replay_count: 0
+input_opened: false
+ground_truth_content_opened: false
+scorer_invoked: false
+map_saved: false
+
+formal_candidate:
+  contract_version: m6a10-v17-formal-candidate-closure-v1
+  status: UNAUTHORIZED_NOT_RUN
+  authorization_required: true
+  authorization_status: UNAUTHORIZED_NOT_INSTALLED
+  predecessor_profile: configs/slam_benchmark_profiles/fast_livo2_m6a10_v16_formal_candidate.yaml
+  predecessor_profile_sha256: a9ca34982cfb22fe7e3bb0e2a5437a10875990926fddb820fb6a29f6abc6461f
+  predecessor_launcher: scripts/run_fast_livo2_m6a10_v16_formal.py
+  predecessor_launcher_sha256: 77cf40effb3e578d0c2c95e48ea34b6dc5aa77d7d2fbc7bdd954936b63949bcd
+  predecessor_failure_lineage: v16_terminal_invalid_sticky_empty_retry
+  prior_v17_build_failure_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_build_20260823T222625Z_agentv17/build_identity.receipt.json
+  prior_v17_build_failure_receipt_sha256: 1eccad6bd1c714a7807a830520db202f0fd3843d3d0d55b3171a17c74f4d0343
+  prior_v17_build_failure_kind: INSTALLED_SOURCE_HASH_MISMATCH
+  root_cause_scope: production_empty_synchronization_retry_disposition
+  schema_transport_algorithm_calibration_unchanged: true
+  retryable_empty_unit_non_sticky: true
+  acquired_record_retry_sticky_invalid: true
+  explicit_discard_sticky_invalid: true
+  processing_failure_sticky_invalid: true
+  conservation_failure_sticky_invalid: true
+
+image:
+  tag: m6a10-v2c-v17-retryable-abort-correction-20260823t224017z-fast-livo2-benchmark:ros1-pinned
+  id: sha256:f1432426af64e76d9ad9c655a8727d35c2fb0a03753502ada3b21187638f747c
+  id_required: true
+  base_tag: m6a10-v2c-v15-schema3-feeder-20260823t203230z-correction-fast-livo2-benchmark:ros1-pinned
+  base_id: sha256:f103a0f61f7ec9b19cbae02da6c6b8a28f17475dbc3f51fba3206b954ca4ca7a
+  status: BUILT_NO_INPUT_PASS
+
+source:
+  v16_launcher_path: scripts/run_fast_livo2_m6a10_v16_formal.py
+  v16_launcher_sha256: 77cf40effb3e578d0c2c95e48ea34b6dc5aa77d7d2fbc7bdd954936b63949bcd
+  v16_authorizer_path: scripts/authorize_fast_livo2_m6a10_v16_formal.py
+  v16_authorizer_sha256: 3f26dd7c1b530d7eb6828a39c49a9829f692c8528e3da12f7515ea76bd397b26
+  v17_patch_path: docker/patches/fast_livo2.m6a10-v2c-v17-retryable-abort.patch
+  v17_patch_sha256: c9254497b21846b2de6a028aa5fd60927a80da641c2fb47943c49ff3636ca001
+  v17_production_selftest_path: tools/m6a10_terminal_support_context_v17_production_selftest.cpp
+  v17_production_selftest_sha256: f81bde7cabe54ebfa702908afa9ef071f2436ce5fee2f50bf67e3c494972bc84
+  v17_wrapper_path: scripts/fast_livo2_m6a10_v17_formal_container_run.sh
+  v17_wrapper_sha256: 506c6a8c72bca9fa66cf49abaead79eabc5b177fa9b1b30f868383a98a5ab67e
+  v17_no_input_payload_path: scripts/fast_livo2_m6a10_v17_no_input_container_payload.sh
+  v17_no_input_payload_sha256: a8043f751db0638f34e79254133ac5974527c609f7574c616ee219a685cd8ed5
+  v17_no_input_gate_path: scripts/run_fast_livo2_m6a10_v17_no_input_gate.sh
+  v17_no_input_gate_sha256: fcfa3da6908f17d5cf06c999345afd0a8eccabc83d95625b212314f6051406a9
+  v15_feeder_path: scripts/fast_livo2_m6a10_v15_feeder.py
+  v15_feeder_sha256: 6921d159ca4c45bcecfaf9db7fbd6f8a3d92783d100a51ba3ca76abbaf477bb7
+  v12_patch_path: docker/patches/fast_livo2.m6a10-v2c-v12-nonlidar-boundary-transport.patch
+  v12_patch_sha256: 39c77535a7557365dac6b0f2c99849038b29670a57c3101be3a39138317c6333
+  v15_image_source_header_sha256: 2c6c6f4ac77dace1eaa794ef7b3b78ac940b2b5a2c1f3f3b82c7012ab5bd1e36
+  v15_image_source_mapper_sha256: 217f91e06bbb5abc2153d036fc5c1616f1f4f1edc95053a858c0a4d4e3c33a31
+  v17_installed_header_sha256: e45aace02cf153e1eeb00981628e545b8cc5fd279c185a627ce6b3ba18a16778
+  v17_installed_mapper_sha256: c2a62cf0a6943a8c68084e70585955212bbe944b8788d285e4ca41845492ba94
+
+evidence:
+  build_receipt:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_build_correction_20260823T224017Z_agentv17/build_identity.receipt.json
+    status: PASS
+    sha256: 23811d4200f9ed3ac464083ef339eb6d0437815ffdd82a2f37cc4180195bc2f7
+    sidecar_sha256: 76e9859832412f0310e685b376324ff53ce4dbe033d2d440fce940421b1de15b
+    predecessor_failure_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_build_20260823T222625Z_agentv17/build_identity.receipt.json
+    predecessor_failure_receipt_sha256: 1eccad6bd1c714a7807a830520db202f0fd3843d3d0d55b3171a17c74f4d0343
+  no_input_gate:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_no_input_correction2_20260823T225359Z_agentv17/no_input.receipt.json
+    status: PASS
+    sha256: ac1df6f390ad3e348e572ced668f4971bc05ac835c55cc83fef9ea4ad5fa3d74
+    sidecar_sha256: 8dfa1520c1e2024af3f0710de4ee8c38c9cf4a1402389891ac77d423d1848164
+    predecessor_fail_closed_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_no_input_correction_20260823T224017Z_agentv17/no_input.receipt.json
+    predecessor_fail_closed_receipt_sha256: 93296e2d47e37aeea739daf3c44d4c7bf988c7a9bcfc61f11a4cbab31ec1203a
+  v16_failure_closure_sha256: a7a5bfaaaf99a0851cb1b5b19759cdc568c3d4f681f8f2ac81c438944d1c1ccc
+  v16_terminal_raw_sha256: 56523b593676961b83ca9f9340706e964086b6aa3916e47902219b81dc41d21a
+
+input_contract:
+  path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+  bytes: 11290464091
+  sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+  expected_messages: 236687
+  expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+  required_end_timestamp_seconds: 1623491515.148352
+  sensor_duration_seconds: 579.278127298
+  opened: false
+  mount_performed: false
+
+phase:
+  schema_version: 3
+  contract_version: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+  mode: unpaced_ack
+  maximum_end_gap_seconds: 0.25
+  required_end_timestamp_seconds: 1623491515.148352
+  sensor_duration_seconds: 579.278127298
+  transport:
+    contract_version: m6a10-v12-callback-ack-transport-outstanding-v1
+    callback_schema_version: 3
+    maximum_allowed_outstanding_messages: 1
+    mapper_internal_deque_is_diagnostic_only: true
+  producer_change: empty_synchronization_retry_is_non_sticky_only
+  formal_replay_forbidden: true
+
+mount_contract:
+  network: none
+  rootfs: read_only
+  formal_input_mounts: 1
+  no_input_mounts: 0
+  output_destination: /out
+  output_readonly: false
+  output_tmpfs: false
+  wrapper_readonly: true
+  feeder_readonly: true
+  duplicate_output_destinations: false
+  extra_capabilities: false
+
+execution:
+  status: FORMAL_UNAUTHORIZED_NOT_RUN
+  formal_replay_forbidden: true
+  one_build: true
+  one_no_input_container: true
+  one_start: true
+  retry: false
+  manual_stop: false
+  watchdog_seconds: 1200
+  monitor_interval_seconds: 4.0
+  source_patch_applied_to_actual_header: true
+  production_selftest_required: true
+  no_input_schema3_feeder_required: true
+  no_input_real_discard_negative_required: true
+  no_input_retry_nonsticky_required: true
+
+safety:
+  formal_replay_started: false
+  input_opened: false
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false

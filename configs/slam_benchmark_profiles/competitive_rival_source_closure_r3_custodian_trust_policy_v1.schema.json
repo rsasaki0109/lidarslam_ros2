@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-rival-source-closure-r3-custodian-trust-policy-v1",
+  "title": "Fixed trust policy for rival-source r3 custodian responses",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "benchmark_eligible",
+    "candidate_binding", "selection_binding", "response_schema_binding", "verifier",
+    "backend", "authorized_keys", "nonce_policy", "policy_identity_sha256"],
+  "properties": {
+    "schema": {"const": "competitive_rival_source_closure_r3_custodian_trust_policy_v1"},
+    "schema_version": {"const": 1},
+    "status": {"enum": ["NOT_READY", "READY"]},
+    "benchmark_eligible": {"const": false},
+    "candidate_binding": {"$ref": "#/$defs/candidateBinding"},
+    "selection_binding": {"$ref": "#/$defs/selectionBinding"},
+    "response_schema_binding": {"$ref": "#/$defs/schemaBinding"},
+    "verifier": {"$ref": "#/$defs/verifier"},
+    "backend": {"$ref": "#/$defs/backend"},
+    "authorized_keys": {"type": "array", "items": {"$ref": "#/$defs/key"}},
+    "nonce_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["minimum_length", "maximum_length", "one_shot_ledger_required"],
+      "properties": {
+        "minimum_length": {"const": 32},
+        "maximum_length": {"const": 128},
+        "one_shot_ledger_required": {"const": true}
+      }
+    },
+    "policy_identity_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidateBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "candidate_id"],
+      "properties": {
+        "path": {"type": "string", "const": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-candidate.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_id": {"const": "competitive-rival-source-closure-2026-08-r3-candidate"}
+      }
+    },
+    "selectionBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "selection_id"],
+      "properties": {
+        "path": {"type": "string", "const": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-selection-candidate.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "selection_id": {"const": "competitive-rival-source-closure-selection-2026-08-r3-candidate"}
+      }
+    },
+    "schemaBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "schema"],
+      "properties": {
+        "path": {"type": "string", "const": "configs/slam_benchmark_profiles/competitive_rival_source_closure_r3_custodian_response_v1.schema.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "schema": {"const": "competitive_rival_source_closure_r3_custodian_response_v1"}
+      }
+    },
+    "verifier": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "implementation"],
+      "properties": {
+        "path": {"const": "scripts/validate_competitive_rival_source_closure_r3_custodian_response.py"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "implementation": {"const": "rival_source_closure_custodian_response_v1"}
+      }
+    },
+    "backend": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "implementation", "implementation_file", "implementation_sha256"],
+      "properties": {
+        "name": {"const": "python-cryptography"},
+        "version": {"type": "string", "minLength": 1},
+        "implementation": {"type": "string", "minLength": 1},
+        "implementation_file": {"const": "scripts/validate_competitive_rival_source_closure_r3_custodian_response.py"},
+        "implementation_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "key": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key_id", "algorithm", "status", "public_key_base64",
+        "public_key_sha256", "not_before", "not_after"],
+      "properties": {
+        "key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+        "algorithm": {"const": "Ed25519"},
+        "status": {"const": "ACTIVE"},
+        "public_key_base64": {"type": "string", "minLength": 43},
+        "public_key_sha256": {"$ref": "#/$defs/sha"},
+        "not_before": {"type": "integer", "minimum": 0},
+        "not_after": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

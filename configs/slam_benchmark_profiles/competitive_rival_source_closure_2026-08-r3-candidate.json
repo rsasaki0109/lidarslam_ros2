@@ -1,0 +1,886 @@
+{
+  "benchmark_eligible": false,
+  "candidate_hash_kind": "canonical_competitive_rival_source_closure_r3_candidate_sha256_v1",
+  "candidate_id": "competitive-rival-source-closure-2026-08-r3-candidate",
+  "candidate_identity_sha256": "26280f37d7fb0f18574b90042f932409013ff0d9c3f5e8d40d8daaffe1089dfa",
+  "candidate_kind": "competitive_rival_source_closure_r3_candidate_v1",
+  "claim_eligible": false,
+  "current_recipe_bindings": {
+    "fast_livo2": {
+      "artifacts": [
+        {
+          "current_sha256": "1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5",
+          "hash_kind": "file_sha256",
+          "path": "docker/fast_livo2_benchmark.Dockerfile",
+          "r2_sha256": "1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5",
+          "role": "dockerfile",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1",
+          "hash_kind": "file_sha256",
+          "path": "scripts/build_competitive_benchmark_images.sh",
+          "r2_sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1",
+          "role": "build_script",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "eda2373a1f04098851ffc48ccb0b1d8ba282b8b84c2a3f8102e18e3b45284352",
+          "hash_kind": "file_sha256",
+          "path": "scripts/run_fast_livo2_benchmark.py",
+          "r2_sha256": "b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30",
+          "role": "runner",
+          "status": "CURRENT_BYTES_REBOUND"
+        },
+        {
+          "current_sha256": "f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20",
+          "hash_kind": "file_sha256",
+          "path": "scripts/fast_livo2_container_run.sh",
+          "r2_sha256": "f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20",
+          "role": "wrapper",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "5d1f213d48488161da438e76d9fb359278fa5993e99247a94f52b9c09e2bf742",
+          "hash_kind": "file_sha256",
+          "path": "configs/fast_livo2/mapping_hesaixt32_hilti22_benchmark_map.launch",
+          "r2_sha256": "5d1f213d48488161da438e76d9fb359278fa5993e99247a94f52b9c09e2bf742",
+          "role": "config[0]",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": null,
+          "hash_kind": "upstream_archive_file_sha256",
+          "path": "config/HILTI22.yaml",
+          "path_kind": "pinned_upstream_archive_relative_path",
+          "r2_sha256": "efae9e702c71c770b19002b6e19d4e1b6f46c67df3727e984981d932258f0b4a",
+          "role": "config[1]",
+          "source": "fast_livo2",
+          "source_role": "benchmark_hilti22_config",
+          "status": "PINNED_UPSTREAM_ARCHIVE_UNOBSERVED"
+        },
+        {
+          "current_sha256": "33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297",
+          "hash_kind": "file_sha256",
+          "path": "docker/patches/fast_livo2.m6a10-v2c.patch",
+          "r2_sha256": "33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297",
+          "role": "patch[0]",
+          "status": "CURRENT_BYTES_MATCH"
+        }
+      ],
+      "r2_recipe_sha256": "722ed0e26bc85111407b20c85c21cf7effe1e81a5f1c445024c18b667be011eb"
+    },
+    "glim": {
+      "artifacts": [
+        {
+          "current_sha256": "dcd01d013eeb5cb50e2582646548c06f2c3b1a93820412b110b7fb25b769d70d",
+          "hash_kind": "file_sha256",
+          "path": "docker/glim_cpu_benchmark.Dockerfile",
+          "r2_sha256": "dcd01d013eeb5cb50e2582646548c06f2c3b1a93820412b110b7fb25b769d70d",
+          "role": "dockerfile",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1",
+          "hash_kind": "file_sha256",
+          "path": "scripts/build_competitive_benchmark_images.sh",
+          "r2_sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1",
+          "role": "build_script",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1",
+          "hash_kind": "file_sha256",
+          "path": "scripts/run_glim_benchmark.py",
+          "r2_sha256": "2345b930ce8b679d92d315bae8ed372d99fde1c43fb744f5d8b7c7fc77588794",
+          "role": "runner",
+          "status": "CURRENT_BYTES_REBOUND"
+        },
+        {
+          "current_sha256": "6b9948a1319ba5eaeba1bd53fca9d35ae6b3f93cda41ebea3e8d79a2b467b19e",
+          "hash_kind": "file_sha256",
+          "path": "scripts/glim_container_run.sh",
+          "r2_sha256": "6b9948a1319ba5eaeba1bd53fca9d35ae6b3f93cda41ebea3e8d79a2b467b19e",
+          "role": "wrapper",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "844efce77c2c9bde697f2811e0c32441706b3c74a559a152bb04efeaf38c798d",
+          "hash_kind": "canonical_tree_sha256",
+          "path": "configs/glim/hilti2022_cpu",
+          "r2_sha256": "844efce77c2c9bde697f2811e0c32441706b3c74a559a152bb04efeaf38c798d",
+          "role": "config[0]",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "8d998b97ffa2eea685be27b727e48a8269f0f630ba96a4f5e0133074fff62ac8",
+          "hash_kind": "file_sha256",
+          "path": "configs/glim/hilti2022_cpu/config_sensors.json",
+          "r2_sha256": "8d998b97ffa2eea685be27b727e48a8269f0f630ba96a4f5e0133074fff62ac8",
+          "role": "config[1]",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "50ca0b66110b35ee05d80530f38a8d61b8175743e6eb0b42907ee486bbf666cd",
+          "hash_kind": "file_sha256",
+          "path": "configs/glim/hilti2022_cpu/config_ros.json",
+          "r2_sha256": "50ca0b66110b35ee05d80530f38a8d61b8175743e6eb0b42907ee486bbf666cd",
+          "role": "config[2]",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "f3e7549ee1730df37125f17c4be00b5643a6b9db9eacbc96c9ecb2f682b08867",
+          "hash_kind": "file_sha256",
+          "path": "docker/patches/glim.m6a10-v2b.patch",
+          "r2_sha256": "f3e7549ee1730df37125f17c4be00b5643a6b9db9eacbc96c9ecb2f682b08867",
+          "role": "patch[0]",
+          "status": "CURRENT_BYTES_MATCH"
+        },
+        {
+          "current_sha256": "ede64c7a00f409a19138f41c19685f08d58b5c8c8d9d9ffa47b6c7dcb774c0f2",
+          "hash_kind": "file_sha256",
+          "path": "docker/patches/glim_ros2.m6a10-v2b.patch",
+          "r2_sha256": "ede64c7a00f409a19138f41c19685f08d58b5c8c8d9d9ffa47b6c7dcb774c0f2",
+          "role": "patch[1]",
+          "status": "CURRENT_BYTES_MATCH"
+        }
+      ],
+      "r2_recipe_sha256": "5643597c038184a5857d4b01325d1b92a3a3c2c2fc31e1440faf74052908ae04"
+    }
+  },
+  "current_runner_bindings": {
+    "fast_livo2": {
+      "current_sha256": "eda2373a1f04098851ffc48ccb0b1d8ba282b8b84c2a3f8102e18e3b45284352",
+      "hash_kind": "file_sha256",
+      "path": "scripts/run_fast_livo2_benchmark.py",
+      "r2_sha256": "b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30",
+      "status": "CURRENT_BYTES_REBOUND"
+    },
+    "glim": {
+      "current_sha256": "1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1",
+      "hash_kind": "file_sha256",
+      "path": "scripts/run_glim_benchmark.py",
+      "r2_sha256": "2345b930ce8b679d92d315bae8ed372d99fde1c43fb744f5d8b7c7fc77588794",
+      "status": "CURRENT_BYTES_REBOUND"
+    }
+  },
+  "legal_capture_contract": {
+    "auto_review": false,
+    "producer": {
+      "file_sha256": "273c9354ca2b745c912a226262a9f23412e3497737f4d26589d463a962ec6316",
+      "path": "scripts/capture_competitive_rival_legal_provenance.py",
+      "status": "CONTRACT_BOUND_NOT_REVIEWED"
+    },
+    "schema": {
+      "file_sha256": "e3f28f61cc524318de76492b021c87dba116993fbadc6cab1fe3f5adf815e008",
+      "path": "configs/slam_benchmark_profiles/competitive_rival_legal_provenance_capture_v1.schema.json",
+      "status": "CONTRACT_BOUND_NOT_REVIEWED"
+    },
+    "status": "NOT_READY_EXTERNAL_REVIEW_REQUIRED"
+  },
+  "legal_status": {
+    "blockers": [
+      "glim_ros2_license_text_missing",
+      "fast_livo2_license_declaration_conflict",
+      "rpg_vikit_license_artifacts_incomplete",
+      "sophus_license_artifact_missing",
+      "external_custodian_legal_review_required"
+    ],
+    "external_review_required": true,
+    "package_metadata_is_not_license_text": true,
+    "status": "NOT_READY"
+  },
+  "profile_binding": {
+    "canonical_hash_kind": "canonical_profile_sha256_v1",
+    "canonical_sha256": "b9a454ae9fbb3ffc01348b76aa5086f6c3f8965c7d86721dd6cc3c9396431d31",
+    "file_sha256": "ba426b7b7fbe543c56fc813a144c0079633b447591ba8b565a910e1745d137bd",
+    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"
+  },
+  "promotion_policy": {
+    "active_profile_switch": false,
+    "benchmark_eligible_until_review": false,
+    "handoff_status": "UNSIGNED_REVIEW_REQUIRED",
+    "r2_immutable": true,
+    "requires_external_reviewed_packet": true,
+    "requires_profile_canonical_reseal": true
+  },
+  "r2_inherited_closure": {
+    "active_selection": {
+      "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
+      "selection_id": "competitive-execution-selection-2026-08-r2",
+      "sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b",
+      "status": "CURRENT",
+      "supersedes": [
+        {
+          "claim_eligible": false,
+          "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml",
+          "reason": "historical receipt binds the pre-r2 Dockerfile/build-script recipe revision",
+          "sha256": "dd0ed7c5d80f22a279d18126c5df64dc0685c007e8343a89983c1a01df0089e5",
+          "status": "SUPERSEDED_RECIPE_REVISION"
+        }
+      ]
+    },
+    "archive_hash_kind": "downloaded_commit_archive_sha256_v1",
+    "closure_id": "competitive-rival-source-closure-2026-08-r2",
+    "closure_identity_hash_kind": "canonical_rival_source_closure_identity_sha256_v1",
+    "closure_revision": 2,
+    "legal_policy": {
+      "claim_eligibility": "BLOCKED",
+      "image_publication_status": "BLOCKED_PENDING_LICENSE_PROVENANCE",
+      "nonredistributable_sources": [
+        "glim_ros2",
+        "fast_livo2",
+        "rpg_vikit",
+        "sophus"
+      ],
+      "redistribution_mode": "PROHIBITED_UNPROVEN_LICENSE",
+      "source_fetch_mode": "SOURCE_FETCH_ONLY_NO_REDISTRIBUTION",
+      "warning": "pinned upstream bytes may be fetched for reproducibility only; no source, binary, or image redistribution is permitted while component license provenance is unresolved"
+    },
+    "official_source_policy": "github_primary_upstream_commit_and_archive_only",
+    "required": true,
+    "required_systems": [
+      "ours",
+      "glim",
+      "fast_livo2"
+    ],
+    "revision_policy": "exact_40_hex_commit_only_no_branch_latest_or_tag_only",
+    "rivals": {
+      "fast_livo2": {
+        "local_patches": [
+          {
+            "applies_to": "fast_livo2",
+            "order": 1,
+            "path": "docker/patches/fast_livo2.m6a10-v2c.patch",
+            "sha256": "33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297"
+          }
+        ],
+        "not_ready_reasons": [
+          "fast_livo2_component_license_metadata_requires_upstream_resolution",
+          "rpg_vikit_component_license_artifacts_are_absent_or_mixed",
+          "sophus_component_has_no_upstream_license_artifact"
+        ],
+        "recipe": {
+          "base_image": {
+            "digest": "sha256:72b8bc59035dc0a5b8e07aae28c16caa84192971d72d207c72ed734fb1d5e97d",
+            "name": "docker.io/library/ros:noetic-ros-base"
+          },
+          "build_options": {
+            "catkin_jobs": 2,
+            "cpu_flags_policy": "portable_x86_64_v1",
+            "fast_livo2_native_flags": "disabled",
+            "fast_math": "disabled",
+            "generator": "Ninja",
+            "parallel": 2,
+            "release": "Release",
+            "rpg_vikit_native_flags": "disabled_and_replaced_with_x86_64_generic",
+            "sophus_compatibility_edits": [
+              "real_setter_call",
+              "imag_setter_call"
+            ]
+          },
+          "build_script": {
+            "hash_kind": "file_sha256",
+            "path": "scripts/build_competitive_benchmark_images.sh",
+            "sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1"
+          },
+          "configs": [
+            {
+              "hash_kind": "file_sha256",
+              "path": "configs/fast_livo2/mapping_hesaixt32_hilti22_benchmark_map.launch",
+              "sha256": "5d1f213d48488161da438e76d9fb359278fa5993e99247a94f52b9c09e2bf742"
+            },
+            {
+              "hash_kind": "upstream_archive_file_sha256",
+              "path": "config/HILTI22.yaml",
+              "path_kind": "pinned_upstream_archive_relative_path",
+              "role": "benchmark_hilti22_config",
+              "sha256": "efae9e702c71c770b19002b6e19d4e1b6f46c67df3727e984981d932258f0b4a",
+              "source": "fast_livo2",
+              "status": "READY"
+            }
+          ],
+          "dockerfile": {
+            "hash_kind": "file_sha256",
+            "path": "docker/fast_livo2_benchmark.Dockerfile",
+            "sha256": "1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5"
+          },
+          "runner": {
+            "hash_kind": "file_sha256",
+            "path": "scripts/run_fast_livo2_benchmark.py",
+            "sha256": "b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30"
+          },
+          "wrapper": {
+            "hash_kind": "file_sha256",
+            "path": "scripts/fast_livo2_container_run.sh",
+            "sha256": "f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20"
+          }
+        },
+        "sources": [
+          {
+            "archive_artifacts": [
+              {
+                "hash_kind": "upstream_archive_file_sha256",
+                "path": "config/HILTI22.yaml",
+                "role": "benchmark_hilti22_config",
+                "sha256": "efae9e702c71c770b19002b6e19d4e1b6f46c67df3727e984981d932258f0b4a",
+                "status": "READY"
+              }
+            ],
+            "archive_sha256": "1da2652f835f2efb02c0992bc4d64e8dcde48571e538f35dddaf6ba6a61c17d1",
+            "archive_url": "https://github.com/hku-mars/FAST-LIVO2/archive/0d2c0346107b75b59934975adec9a6eeeb913c64.tar.gz",
+            "citation": {
+              "commit_url": "https://github.com/hku-mars/FAST-LIVO2/commit/0d2c0346107b75b59934975adec9a6eeeb913c64",
+              "compatibility_note": "license identity must be resolved before a claim-eligible build",
+              "compatibility_status": "NOT_READY",
+              "primary_upstream": true
+            },
+            "license": {
+              "components": [
+                {
+                  "declarations": [
+                    {
+                      "identity": "BSD",
+                      "path": "package.xml",
+                      "sha256": "0839b4814f283626faafc65a9bed37da754fe04092fcfc1859e52330fe206bde"
+                    }
+                  ],
+                  "files": [
+                    {
+                      "identity": "GPL-2.0-only",
+                      "path": "LICENSE",
+                      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+                    }
+                  ],
+                  "name": "fast_livo2",
+                  "not_ready_reasons": [
+                    "package_xml_license_declaration_conflicts_with_upstream_LICENSE"
+                  ],
+                  "status": "NOT_READY_LEGAL_PROVENANCE"
+                }
+              ],
+              "files": [
+                {
+                  "identity": "GPL-2.0-only",
+                  "path": "LICENSE",
+                  "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+                }
+              ],
+              "not_ready_reasons": [
+                "package_xml_declares_BSD_while_LICENSE_and_README_declare_GPLv2"
+              ],
+              "status": "NOT_READY_LEGAL_PROVENANCE"
+            },
+            "name": "fast_livo2",
+            "not_ready_reasons": [
+              "package_xml_declares_BSD_while_LICENSE_and_README_declare_GPLv2"
+            ],
+            "observed_ref": "refs/heads/main",
+            "repository_url": "https://github.com/hku-mars/FAST-LIVO2.git",
+            "revision": "0d2c0346107b75b59934975adec9a6eeeb913c64",
+            "revision_kind": "immutable_commit",
+            "source_tree_hash_kind": "relative_path_content_sha256_v1",
+            "source_tree_sha256": "4b7df0a03cbfb5c4d46eee86b408d61045e1f34db7187e65af751b97cd7dc14b",
+            "status": "NOT_READY",
+            "submodules": []
+          },
+          {
+            "archive_sha256": "8162d0b616c443118a52e654394d3eb0807d6dac3b782f4dc3d6823c8815fede",
+            "archive_url": "https://github.com/xuankuzcr/rpg_vikit/archive/6c886c8e5d83997806e00294826d528cea3581dd.tar.gz",
+            "citation": {
+              "commit_url": "https://github.com/xuankuzcr/rpg_vikit/commit/6c886c8e5d83997806e00294826d528cea3581dd",
+              "compatibility_note": "package license declarations require upstream clarification",
+              "compatibility_status": "NOT_READY",
+              "primary_upstream": true
+            },
+            "license": {
+              "components": [
+                {
+                  "declarations": [
+                    {
+                      "identity": "GPL-3.0-only",
+                      "path": "vikit_common/package.xml",
+                      "sha256": "557a69ea7c36a2b5a3142466fa8c392e0db6707d310d57447bb091f3085f7328"
+                    }
+                  ],
+                  "files": [],
+                  "name": "vikit_common",
+                  "not_ready_reasons": [
+                    "upstream_license_text_artifact_absent"
+                  ],
+                  "status": "NOT_READY_LEGAL_PROVENANCE"
+                },
+                {
+                  "declarations": [
+                    {
+                      "identity": "BSD",
+                      "path": "vikit_py/package.xml",
+                      "sha256": "d91466ba0fc4814114f843b2020aae6853a46acca24cbb1c3844eae82e7a93ff"
+                    }
+                  ],
+                  "files": [],
+                  "name": "vikit_py",
+                  "not_ready_reasons": [
+                    "upstream_license_text_artifact_absent"
+                  ],
+                  "status": "NOT_READY_LEGAL_PROVENANCE"
+                },
+                {
+                  "declarations": [
+                    {
+                      "identity": "GPL-3.0-only",
+                      "path": "vikit_ros/package.xml",
+                      "sha256": "52424cae1abfa5e5c7ad0109e636c1c287473a132a6fdd31bbd2629d2e78054f"
+                    }
+                  ],
+                  "files": [],
+                  "name": "vikit_ros",
+                  "not_ready_reasons": [
+                    "upstream_license_text_artifact_absent"
+                  ],
+                  "status": "NOT_READY_LEGAL_PROVENANCE"
+                }
+              ],
+              "files": [],
+              "not_ready_reasons": [
+                "upstream_component_license_text_artifacts_absent_and_package_declarations_mixed"
+              ],
+              "status": "NOT_READY_LEGAL_PROVENANCE"
+            },
+            "name": "rpg_vikit",
+            "not_ready_reasons": [
+              "upstream_root_license_artifact_missing_and_package_declarations_mixed"
+            ],
+            "observed_ref": "refs/heads/master",
+            "repository_url": "https://github.com/xuankuzcr/rpg_vikit.git",
+            "revision": "6c886c8e5d83997806e00294826d528cea3581dd",
+            "revision_kind": "immutable_commit",
+            "source_tree_hash_kind": "relative_path_content_sha256_v1",
+            "source_tree_sha256": "3ae228148396236869cc8f64837431858f8d2ca333d39afdae649fd6f3114b5f",
+            "status": "NOT_READY",
+            "submodules": []
+          },
+          {
+            "archive_sha256": "67deb7b0ea38ac6a44967ceee2875507ea9d64a352195080223d5ca3e1584fa4",
+            "archive_url": "https://github.com/strasdat/Sophus/archive/a621ff2e56c56c839a6c40418d42c3c254424b5c.tar.gz",
+            "citation": {
+              "commit_url": "https://github.com/strasdat/Sophus/commit/a621ff2e56c56c839a6c40418d42c3c254424b5c",
+              "compatibility_note": "legacy compatibility edits are declared but license identity is unresolved",
+              "compatibility_status": "NOT_READY",
+              "primary_upstream": true
+            },
+            "license": {
+              "components": [
+                {
+                  "declarations": [],
+                  "files": [],
+                  "name": "sophus",
+                  "not_ready_reasons": [
+                    "no_license_copying_notice_or_package_license_in_pinned_upstream_tree"
+                  ],
+                  "status": "NOT_READY_LEGAL_PROVENANCE"
+                }
+              ],
+              "files": [],
+              "not_ready_reasons": [
+                "no_license_copying_notice_or_package_license_in_pinned_upstream_tree"
+              ],
+              "status": "NOT_READY_LEGAL_PROVENANCE"
+            },
+            "name": "sophus",
+            "not_ready_reasons": [
+              "pinned_legacy_commit_contains_no_license_or_copyright_artifact"
+            ],
+            "observed_ref": "refs/heads/master",
+            "repository_url": "https://github.com/strasdat/Sophus.git",
+            "revision": "a621ff2e56c56c839a6c40418d42c3c254424b5c",
+            "revision_kind": "immutable_commit",
+            "source_tree_hash_kind": "relative_path_content_sha256_v1",
+            "source_tree_sha256": "383fcd09914533085a82e7767790fa61c05c43f0d7973ba6b98b4111c40c2122",
+            "status": "NOT_READY",
+            "submodules": []
+          }
+        ],
+        "status": "NOT_READY"
+      },
+      "glim": {
+        "local_patches": [
+          {
+            "applies_to": "glim",
+            "order": 1,
+            "path": "docker/patches/glim.m6a10-v2b.patch",
+            "sha256": "f3e7549ee1730df37125f17c4be00b5643a6b9db9eacbc96c9ecb2f682b08867"
+          },
+          {
+            "applies_to": "glim_ros2",
+            "order": 2,
+            "path": "docker/patches/glim_ros2.m6a10-v2b.patch",
+            "sha256": "ede64c7a00f409a19138f41c19685f08d58b5c8c8d9d9ffa47b6c7dcb774c0f2"
+          }
+        ],
+        "not_ready_reasons": [
+          "glim_ros2_component_license_artifact_absent"
+        ],
+        "recipe": {
+          "base_image": {
+            "digest": "sha256:31daab66eef9139933379fb67159449944f4e2dcf2e22c2d12cc715f29873e0f",
+            "name": "docker.io/library/ros:jazzy-ros-base"
+          },
+          "build_options": {
+            "benchmark_cpu_threads": 8,
+            "generator": "Ninja",
+            "glim": {
+              "cuda": false,
+              "cv_bridge": true,
+              "march_native": false,
+              "viewer": false
+            },
+            "gtsam": {
+              "examples": false,
+              "march_native": false,
+              "system_eigen": true,
+              "tbb": false,
+              "tests": false
+            },
+            "gtsam_points": {
+              "cuda": false,
+              "march_native": false,
+              "tests": false
+            },
+            "parallel": 2,
+            "release": "Release"
+          },
+          "build_script": {
+            "hash_kind": "file_sha256",
+            "path": "scripts/build_competitive_benchmark_images.sh",
+            "sha256": "136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1"
+          },
+          "configs": [
+            {
+              "hash_kind": "canonical_tree_sha256",
+              "path": "configs/glim/hilti2022_cpu",
+              "sha256": "844efce77c2c9bde697f2811e0c32441706b3c74a559a152bb04efeaf38c798d"
+            },
+            {
+              "hash_kind": "file_sha256",
+              "path": "configs/glim/hilti2022_cpu/config_sensors.json",
+              "sha256": "8d998b97ffa2eea685be27b727e48a8269f0f630ba96a4f5e0133074fff62ac8"
+            },
+            {
+              "hash_kind": "file_sha256",
+              "path": "configs/glim/hilti2022_cpu/config_ros.json",
+              "sha256": "50ca0b66110b35ee05d80530f38a8d61b8175743e6eb0b42907ee486bbf666cd"
+            }
+          ],
+          "dockerfile": {
+            "hash_kind": "file_sha256",
+            "path": "docker/glim_cpu_benchmark.Dockerfile",
+            "sha256": "dcd01d013eeb5cb50e2582646548c06f2c3b1a93820412b110b7fb25b769d70d"
+          },
+          "runner": {
+            "hash_kind": "file_sha256",
+            "path": "scripts/run_glim_benchmark.py",
+            "sha256": "2345b930ce8b679d92d315bae8ed372d99fde1c43fb744f5d8b7c7fc77588794"
+          },
+          "wrapper": {
+            "hash_kind": "file_sha256",
+            "path": "scripts/glim_container_run.sh",
+            "sha256": "6b9948a1319ba5eaeba1bd53fca9d35ae6b3f93cda41ebea3e8d79a2b467b19e"
+          }
+        },
+        "sources": [
+          {
+            "archive_sha256": "d8176e85199a2297269d34fcfb57e4cb2c2d53e593439f665f614cae57972c25",
+            "archive_url": "https://github.com/koide3/glim/archive/faa264a1bce1bda406f73457e35511f56cdc2eaa.tar.gz",
+            "citation": {
+              "commit_url": "https://github.com/koide3/glim/commit/faa264a1bce1bda406f73457e35511f56cdc2eaa",
+              "compatibility_note": "official GLIM v1.2.2 source used by the pinned ROS 2 Jazzy CPU recipe",
+              "compatibility_status": "READY",
+              "primary_upstream": true
+            },
+            "license": {
+              "components": [
+                {
+                  "declarations": [],
+                  "files": [
+                    {
+                      "identity": "MIT",
+                      "path": "LICENSE",
+                      "sha256": "e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4"
+                    }
+                  ],
+                  "name": "glim",
+                  "status": "READY"
+                }
+              ],
+              "files": [
+                {
+                  "identity": "MIT",
+                  "path": "LICENSE",
+                  "sha256": "e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4"
+                }
+              ],
+              "status": "READY"
+            },
+            "name": "glim",
+            "observed_ref": "refs/tags/v1.2.2",
+            "repository_url": "https://github.com/koide3/glim.git",
+            "revision": "faa264a1bce1bda406f73457e35511f56cdc2eaa",
+            "revision_kind": "immutable_commit",
+            "source_tree_hash_kind": "relative_path_content_sha256_v1",
+            "source_tree_sha256": "2394e58c0c7fe218770b6db20cdab71395c885608783966ae94491e85899260e",
+            "status": "READY",
+            "submodules": []
+          },
+          {
+            "archive_sha256": "cdb99188e20c93b20ed86c4b95a42643c1a659cd4e9e06d7cc3ffb2639aeae17",
+            "archive_url": "https://github.com/koide3/glim_ros2/archive/4a9e7a4cb084967c8525a1be529ad3ba2a118ae7.tar.gz",
+            "citation": {
+              "commit_url": "https://github.com/koide3/glim_ros2/commit/4a9e7a4cb084967c8525a1be529ad3ba2a118ae7",
+              "compatibility_note": "official GLIM ROS 2 bridge commit paired with the pinned GLIM source",
+              "compatibility_status": "READY",
+              "primary_upstream": true
+            },
+            "license": {
+              "components": [
+                {
+                  "declarations": [
+                    {
+                      "identity": "MIT",
+                      "path": "package.xml",
+                      "sha256": "eb9505cc2aa44e11900f708c02d8364442cbe57666531e9d91e570e593abcbb1"
+                    }
+                  ],
+                  "files": [],
+                  "name": "glim_ros2",
+                  "not_ready_reasons": [
+                    "upstream_license_text_artifact_absent_package_xml_metadata_only"
+                  ],
+                  "status": "NOT_READY_LEGAL_PROVENANCE"
+                }
+              ],
+              "files": [],
+              "not_ready_reasons": [
+                "upstream_license_text_artifact_absent_package_xml_metadata_only"
+              ],
+              "status": "NOT_READY_LEGAL_PROVENANCE"
+            },
+            "name": "glim_ros2",
+            "not_ready_reasons": [
+              "upstream_license_text_artifact_absent_package_xml_metadata_only"
+            ],
+            "observed_ref": "refs/heads/main",
+            "repository_url": "https://github.com/koide3/glim_ros2.git",
+            "revision": "4a9e7a4cb084967c8525a1be529ad3ba2a118ae7",
+            "revision_kind": "immutable_commit",
+            "source_tree_hash_kind": "relative_path_content_sha256_v1",
+            "source_tree_sha256": "b5bc8504577d1fda52289e8e627da857f0834fa81b228ec9c8feaeb3118d9f52",
+            "status": "NOT_READY",
+            "submodules": []
+          },
+          {
+            "archive_sha256": "50bd99ddbb363f03f145d814995df234c83ad38f867080fba5b60f6c151b348a",
+            "archive_url": "https://github.com/borglab/gtsam/archive/2f3e56c0ddbd3a1aa54ed043643b553d26a069f6.tar.gz",
+            "citation": {
+              "commit_url": "https://github.com/borglab/gtsam/commit/2f3e56c0ddbd3a1aa54ed043643b553d26a069f6",
+              "compatibility_note": "official GTSAM source pinned by the GLIM CPU recipe",
+              "compatibility_status": "READY",
+              "primary_upstream": true
+            },
+            "license": {
+              "components": [
+                {
+                  "declarations": [
+                    {
+                      "identity": "BSD-3-Clause",
+                      "path": "package.xml",
+                      "sha256": "d1a4ccac3af13c50f8d32d97ec4328f05fd19c9d2a0a9849c2a1173d449c37b5"
+                    }
+                  ],
+                  "files": [
+                    {
+                      "identity": "BSD-3-Clause",
+                      "path": "LICENSE",
+                      "sha256": "38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775"
+                    },
+                    {
+                      "identity": "BSD-3-Clause",
+                      "path": "LICENSE.BSD",
+                      "sha256": "ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0"
+                    }
+                  ],
+                  "name": "gtsam",
+                  "status": "READY"
+                },
+                {
+                  "declarations": [],
+                  "files": [
+                    {
+                      "identity": "BSD-3-Clause",
+                      "path": "gtsam/3rdparty/CCOLAMD/Doc/License.txt",
+                      "sha256": "27e1fb1934109aec52982bea8cda801e3791c683690c2eb0c089c496ba394ac6"
+                    }
+                  ],
+                  "name": "gtsam_3rdparty_ccolamd",
+                  "status": "READY"
+                },
+                {
+                  "declarations": [],
+                  "files": [
+                    {
+                      "identity": "BSD-3-Clause",
+                      "path": "gtsam/3rdparty/ceres/jet.h",
+                      "sha256": "9c98af085ddc729768ca22879825cc95c875ac05e2b6dc268211bdff254011b7"
+                    }
+                  ],
+                  "name": "gtsam_3rdparty_ceres",
+                  "status": "READY"
+                },
+                {
+                  "declarations": [],
+                  "files": [
+                    {
+                      "identity": "MPL-2.0",
+                      "path": "gtsam/3rdparty/Eigen/COPYING.README",
+                      "sha256": "c83230b770f17ef1386ea1fd3681271dd98aa93646bdbfb5bff3a1b7050fff9d"
+                    }
+                  ],
+                  "name": "gtsam_3rdparty_eigen",
+                  "status": "READY"
+                },
+                {
+                  "declarations": [],
+                  "files": [
+                    {
+                      "identity": "Apache-2.0",
+                      "path": "gtsam/3rdparty/metis/LICENSE.txt",
+                      "sha256": "64ab947d7b289ad76e935adff51b31e4ac160df7dfad24480dbaa452e39bbe79"
+                    }
+                  ],
+                  "name": "gtsam_3rdparty_metis",
+                  "status": "READY"
+                },
+                {
+                  "declarations": [],
+                  "files": [
+                    {
+                      "identity": "MPL-2.0",
+                      "path": "gtsam/3rdparty/Spectra/GenEigsSolver.h",
+                      "sha256": "328d5075d23d78d8d70a32bb8fa6d04a5d871236614c226f510a121a14398382"
+                    }
+                  ],
+                  "name": "gtsam_3rdparty_spectra",
+                  "status": "READY"
+                }
+              ],
+              "files": [
+                {
+                  "identity": "BSD-3-Clause",
+                  "path": "LICENSE",
+                  "sha256": "38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775"
+                },
+                {
+                  "identity": "BSD-3-Clause",
+                  "path": "LICENSE.BSD",
+                  "sha256": "ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0"
+                }
+              ],
+              "status": "READY"
+            },
+            "name": "gtsam",
+            "observed_ref": "refs/tags/4.3a1",
+            "repository_url": "https://github.com/borglab/gtsam.git",
+            "revision": "2f3e56c0ddbd3a1aa54ed043643b553d26a069f6",
+            "revision_kind": "immutable_commit",
+            "source_tree_hash_kind": "relative_path_content_sha256_v1",
+            "source_tree_sha256": "324cb31256326ef4fb1306af7f7f1f5be062a04f23c227dd48eb49b6d538b4bd",
+            "status": "READY",
+            "submodules": []
+          },
+          {
+            "archive_sha256": "dc977a8b2a6aeda5d48107920e2cdd7e0e45e1478c3590e45f053335eb975479",
+            "archive_url": "https://github.com/koide3/gtsam_points/archive/9d32e7dbecf6015560d84b4901d6b0a6f483ec46.tar.gz",
+            "citation": {
+              "commit_url": "https://github.com/koide3/gtsam_points/commit/9d32e7dbecf6015560d84b4901d6b0a6f483ec46",
+              "compatibility_note": "official GTSAM points source pinned by the GLIM CPU recipe",
+              "compatibility_status": "READY",
+              "primary_upstream": true
+            },
+            "license": {
+              "components": [
+                {
+                  "declarations": [],
+                  "files": [
+                    {
+                      "identity": "MIT",
+                      "path": "LICENSE",
+                      "sha256": "e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4"
+                    }
+                  ],
+                  "name": "gtsam_points",
+                  "status": "READY"
+                }
+              ],
+              "files": [
+                {
+                  "identity": "MIT",
+                  "path": "LICENSE",
+                  "sha256": "e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4"
+                }
+              ],
+              "status": "READY"
+            },
+            "name": "gtsam_points",
+            "observed_ref": "refs/tags/v1.2.2",
+            "repository_url": "https://github.com/koide3/gtsam_points.git",
+            "revision": "9d32e7dbecf6015560d84b4901d6b0a6f483ec46",
+            "revision_kind": "immutable_commit",
+            "source_tree_hash_kind": "relative_path_content_sha256_v1",
+            "source_tree_sha256": "f3b3ac9b29a49a28e3f9e79fd36cc764caf2e46e961f229283507ff1cc8ffc00",
+            "status": "READY",
+            "submodules": []
+          }
+        ],
+        "status": "NOT_READY"
+      }
+    },
+    "schema_version": 1,
+    "source_tree_hash_kind": "relative_path_content_sha256_v1",
+    "status": "NOT_READY",
+    "status_reason": [
+      "fast_livo2_component_license_provenance_requires_upstream_resolution",
+      "glim_ros2_component_license_artifact_absent",
+      "historical_selection_receipt_superseded_recipe_revision"
+    ]
+  },
+  "r2_lineage": {
+    "closure_id": "competitive-rival-source-closure-2026-08-r2",
+    "closure_identity_hash_kind": "canonical_rival_source_closure_identity_sha256_v1",
+    "closure_identity_sha256": "e876339f843b28c1be5d835e8f6a9a062c52715498c85d93afbdb83c6dbae4e8",
+    "closure_revision": 2,
+    "historical_selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml",
+    "historical_selection_sha256": "da10e28026b414fac3d52f95377d25aaeda9416d75495e1826c35f5545ac54ac",
+    "r2_selection_id": "competitive-execution-selection-2026-08-r2",
+    "r2_selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
+    "r2_selection_sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b",
+    "supersedes_status": "R2_IMMUTABLE_NOT_REWRITTEN"
+  },
+  "r2_selection_binding": {
+    "canonical_sha256": "1a4d9db60612e0202c9d77851752da2d4269f38ff3c842fdd132e5a3f949fa62",
+    "closure_id": "competitive-rival-source-closure-2026-08-r2",
+    "closure_identity_hash_kind": "canonical_rival_source_closure_identity_sha256_v1",
+    "closure_identity_sha256": "e876339f843b28c1be5d835e8f6a9a062c52715498c85d93afbdb83c6dbae4e8",
+    "closure_revision": 2,
+    "file_sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b",
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
+    "selection_id": "competitive-execution-selection-2026-08-r2",
+    "status": "CURRENT"
+  },
+  "schema_version": 1,
+  "source_provenance": {
+    "execution": "NOT_RUN",
+    "remote_observation": "NOT_RUN",
+    "status": "CURRENT_BYTES_REBOUND_NOT_LEGAL_REVIEWED"
+  },
+  "status": "NOT_READY"
+}

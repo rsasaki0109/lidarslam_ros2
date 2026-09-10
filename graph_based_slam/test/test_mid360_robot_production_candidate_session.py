@@ -306,7 +306,7 @@ def test_production_candidate_record_only_run_records_fake_bag(tmp_path: Path):
     bag_root = tmp_path / 'bags'
     output_dir = tmp_path / 'out'
     env = os.environ.copy()
-    env['PATH'] = f'{fake_bin}:{env["PATH"]}'
+    env['PATH'] = f"{fake_bin}:{env['PATH']}"
 
     result = subprocess.run(
         [

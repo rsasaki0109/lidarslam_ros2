@@ -1,0 +1,58 @@
+schema_version: 1
+status: V18_FORMAL_CANDIDATE_UNAUTHORIZED
+formal_replay_forbidden: true
+formal_replay_authorized: false
+replay_count: 0
+
+candidate:
+  status: UNAUTHORIZED_NOT_RUN
+  authorization_status: UNAUTHORIZED_NOT_INSTALLED
+  predecessor_profile: configs/slam_benchmark_profiles/fast_livo2_m6a10_v17_formal_ready.yaml
+  predecessor_profile_sha256: 10ddffb6eed647eb3b7a2ee7ede49505923755eb917d8b87737675853e35d9c5
+  shared_verifier: scripts/verify_fast_livo2_m6a10_v18_authorization.py
+  shared_verifier_sha256: e780507f186112607995e38695cc5a50e80b8a49c01ecf1e1d2348f7332fbfe7
+  authorization_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v18_formal_authorization_20260824T003000Z_agentv18b/formal_authorization.receipt.json
+  formal_attempt_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v18_formal_replay_20260824T003000Z_agentv18bformal
+  previous_preflight_failure:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_formal_replay_20260823T230500Z_agentv17formal/closure_receipt.json
+    sha256: d52df67a0f28bf778ae956f5fdf2ddb875d50fcee3af1e1d6c3c1911201bf662
+    failure_kind: V16_FORMAL_REPLAY_UNAUTHORIZED
+    formal_replay_started: false
+  previous_v18_failure:
+    authorization_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v18_formal_authorization_20260823T234000Z_agentv18/formal_authorization.receipt.json
+    authorization_sha256: 523fcb57d42099fd91e4551ab08952f7daf0f0a33fabb43dfaab4dc9b7542a95
+    closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v18_formal_replay_20260823T234000Z_agentv18formal/closure_receipt.json
+    closure_sha256: c4b068ebbfedea4727776c2785ee6d40df4baa17d3cadc60283fa2cf15bc5145
+    failure_kind: QUIESCENCE_FAIL_CLOSED
+    formal_replay_started: false
+
+image:
+  tag: m6a10-v2c-v17-retryable-abort-correction-20260823t224017z-fast-livo2-benchmark:ros1-pinned
+  id: sha256:f1432426af64e76d9ad9c655a8727d35c2fb0a03753502ada3b21187638f747c
+
+authorization_fixture:
+  path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v17_formal_authorization_20260823T230500Z_agentv17/formal_authorization.receipt.json
+  sha256: 7304f81e70c0ece68d49fd24de05862d1c5cdac36fd041acb5e709df78ef3c83
+  sidecar_sha256: 8bcb71b86cb0d27af5e34970d30b190b1afd7269e9cd73f944aebfde7057b429
+
+lineage:
+  v17_launcher_sha256: 769aaa1b2f818bb8f4eeac1b57f45e4734949e4510cb3a4557d47348d847c686
+  v17_authorizer_sha256: 55175630af6be95149c50583c6d68bd2486690acdfd25757f945a2e2efdf7e6d
+  v17_build_receipt_sha256: 23811d4200f9ed3ac464083ef339eb6d0437815ffdd82a2f37cc4180195bc2f7
+  v17_no_input_pass_receipt_sha256: ac1df6f390ad3e348e572ced668f4971bc05ac835c55cc83fef9ea4ad5fa3d74
+  v17_no_input_failure_receipt_sha256: 93296e2d47e37aeea739daf3c44d4c7bf988c7a9bcfc61f11a4cbab31ec1203a
+
+phase:
+  expected_messages: 236687
+  expected_topic_counts:
+    lidar: 5793
+    imu: 225102
+    image: 5792
+  required_end_timestamp_seconds: 1623491515.148352
+  sensor_duration_seconds: 579.278127298
+
+safety:
+  input_opened: false
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false

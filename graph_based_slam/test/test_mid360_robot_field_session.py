@@ -152,7 +152,7 @@ def test_field_session_records_fake_bag_and_runs_post_check(tmp_path: Path):
     bag_root = tmp_path / 'bags'
     output_dir = tmp_path / 'out'
     env = os.environ.copy()
-    env['PATH'] = f'{fake_bin}:{env["PATH"]}'
+    env['PATH'] = f"{fake_bin}:{env['PATH']}"
 
     result = subprocess.run(
         [

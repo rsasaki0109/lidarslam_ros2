@@ -1,0 +1,59 @@
+{
+  "authorized_keys": [],
+  "benchmark_eligible": false,
+  "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
+  "candidate_binding": {
+    "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
+    "candidate_identity_sha256": "b79d6fb6b6eba73d0db1dbe094a283b33ec2fe78a5d0e27933e892401df1c584",
+    "file_sha256": "08548ed7f4afafc7575657477601bdc063415e248a3c345ca9e9576c522849c7",
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
+    "status": "NOT_READY"
+  },
+  "nonce_policy": {
+    "maximum_length": 128,
+    "minimum_length": 32,
+    "one_shot_ledger_required": true
+  },
+  "policy_identity_sha256": "c18764911c87465cf86b760c26b2b81b952144e2ef1c1ceedd27035cb24e422a",
+  "profile_binding": {
+    "canonical_hash_kind": "canonical_profile_sha256_v1",
+    "canonical_sha256": "b9a454ae9fbb3ffc01348b76aa5086f6c3f8965c7d86721dd6cc3c9396431d31",
+    "file_sha256": "ba426b7b7fbe543c56fc813a144c0079633b447591ba8b565a910e1745d137bd",
+    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"
+  },
+  "response_schema_binding": {
+    "file_sha256": "06065e18e701b402c997858c14066e45cf7e5ebed78c6e0f29abe435c26b361a",
+    "path": "configs/slam_benchmark_profiles/competitive_execution_r3_source_worktree_review_response_v1.schema.json",
+    "schema": "competitive_execution_r3_source_worktree_review_response_v1"
+  },
+  "schema": "competitive_execution_r3_source_worktree_review_trust_policy_v1",
+  "schema_version": 1,
+  "source_manifest_identity_sha256": "9b8c48c0cb0d93452d2bddfb499a42fdb8c01498eae06e5296b14c7817134904",
+  "source_schema_bindings": {
+    "sidecar": {
+      "file_sha256": "f5cc318e8036897f1a965e1a167779b7ad5720f2b1608e5cd435b4fdeeac3a7e",
+      "path": "configs/slam_benchmark_profiles/competitive_execution_r3_source_worktree_sidecar_v1.schema.json"
+    },
+    "strict": {
+      "file_sha256": "ec277ddb50a8145fa515fcdbdd7540b5f0209a600c1ccf76d64e8bb2e70dfbd3",
+      "path": "configs/slam_benchmark_profiles/competitive_execution_source_worktree_snapshot_v1.schema.json"
+    },
+    "wrapper": {
+      "file_sha256": "6ea84e085ad1da5e83cc2468fc879ce1dbc1ec2be6756387387bb457c04c0b00",
+      "path": "configs/slam_benchmark_profiles/competitive_execution_r3_source_worktree_v1.schema.json"
+    }
+  },
+  "status": "NOT_READY",
+  "verifier": {
+    "backend": {
+      "implementation": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify",
+      "implementation_file": "scripts/validate_competitive_execution_r3_source_worktree_review.py",
+      "implementation_sha256": "8507ae558b247bdc97c9016e03ad6d21dbd7ae806e127f44fc1b554b0a5650d0",
+      "name": "python-cryptography",
+      "version": "46.0.5"
+    },
+    "file_sha256": "8507ae558b247bdc97c9016e03ad6d21dbd7ae806e127f44fc1b554b0a5650d0",
+    "implementation": "competitive_execution_r3_source_worktree_review_v1",
+    "path": "scripts/validate_competitive_execution_r3_source_worktree_review.py"
+  }
+}

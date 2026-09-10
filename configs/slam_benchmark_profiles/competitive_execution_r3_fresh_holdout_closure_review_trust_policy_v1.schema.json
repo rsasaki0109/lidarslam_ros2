@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive_execution_r3_fresh_holdout_closure_review_trust_policy_v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "benchmark_eligible", "campaign_id", "closure_kind", "candidate_binding", "profile_binding", "response_schema_binding", "verifier", "authorized_keys", "nonce_policy", "policy_identity_sha256"],
+  "properties": {
+    "schema": {"const": "competitive_execution_r3_fresh_holdout_closure_review_trust_policy_v1"}, "schema_version": {"const": 1},
+    "status": {"enum": ["NOT_READY", "READY"]}, "benchmark_eligible": {"const": false},
+    "campaign_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"}, "closure_kind": {"const": "fresh_holdout_authorization"},
+    "candidate_binding": {"$ref": "#/definitions/candidate"}, "profile_binding": {"$ref": "#/definitions/profile"},
+    "response_schema_binding": {"$ref": "#/definitions/schema_binding"}, "verifier": {"$ref": "#/definitions/verifier"},
+    "authorized_keys": {"type": "array", "maxItems": 1, "items": {"$ref": "#/definitions/key"}},
+    "nonce_policy": {"$ref": "#/definitions/nonce"}, "policy_identity_sha256": {"$ref": "#/definitions/sha"}
+  },
+  "definitions": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {"type": "object", "additionalProperties": false, "required": ["path", "file_sha256", "candidate_identity_sha256", "candidate_id", "status"], "properties": {"path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json"}, "file_sha256": {"$ref": "#/definitions/sha"}, "candidate_identity_sha256": {"$ref": "#/definitions/sha"}, "candidate_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"}, "status": {"const": "NOT_READY"}}},
+    "profile": {"type": "object", "additionalProperties": false, "required": ["path", "file_sha256", "canonical_sha256", "canonical_hash_kind"], "properties": {"path": {"const": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"}, "file_sha256": {"$ref": "#/definitions/sha"}, "canonical_sha256": {"$ref": "#/definitions/sha"}, "canonical_hash_kind": {"const": "canonical_profile_sha256_v1"}}},
+    "schema_binding": {"type": "object", "additionalProperties": false, "required": ["path", "file_sha256", "schema"], "properties": {"path": {"const": "configs/slam_benchmark_profiles/competitive_execution_r3_fresh_holdout_closure_review_response_v1.schema.json"}, "file_sha256": {"$ref": "#/definitions/sha"}, "schema": {"const": "competitive_execution_r3_fresh_holdout_closure_review_response_v1"}}},
+    "backend": {"type": "object", "additionalProperties": false, "required": ["name", "version", "implementation", "implementation_file", "implementation_sha256"], "properties": {"name": {"const": "python-cryptography"}, "version": {"type": "string", "minLength": 1}, "implementation": {"const": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify"}, "implementation_file": {"const": "scripts/validate_competitive_execution_r3_runtime_closure_review.py"}, "implementation_sha256": {"$ref": "#/definitions/sha"}}},
+    "verifier": {"type": "object", "additionalProperties": false, "required": ["path", "file_sha256", "implementation", "backend"], "properties": {"path": {"const": "scripts/validate_competitive_execution_r3_runtime_closure_review.py"}, "file_sha256": {"$ref": "#/definitions/sha"}, "implementation": {"const": "competitive_execution_r3_runtime_closure_review_v1"}, "backend": {"$ref": "#/definitions/backend"}}},
+    "key": {"type": "object", "additionalProperties": false, "required": ["key_id", "algorithm", "status", "public_key_base64", "public_key_sha256", "not_before", "not_after"], "properties": {"key_id": {"type": "string", "minLength": 1}, "algorithm": {"const": "Ed25519"}, "status": {"const": "ACTIVE"}, "public_key_base64": {"type": "string", "pattern": "^[A-Za-z0-9+/]{43}=$"}, "public_key_sha256": {"$ref": "#/definitions/sha"}, "not_before": {"type": "integer", "minimum": 0}, "not_after": {"type": "integer", "minimum": 1}}},
+    "nonce": {"type": "object", "additionalProperties": false, "required": ["minimum_length", "maximum_length", "one_shot_ledger_required"], "properties": {"minimum_length": {"const": 32}, "maximum_length": {"const": 128}, "one_shot_ledger_required": {"const": true}}}
+  }
+}

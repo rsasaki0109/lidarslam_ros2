@@ -1,0 +1,30 @@
+{
+  "authorized_keys": [],
+  "authorized_runtime": false,
+  "backend": {
+    "implementation": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify",
+    "name": "python-cryptography",
+    "version": "46.0.5"
+  },
+  "benchmark_eligible": false,
+  "campaign_domain": "lidarslam/competitive-execution-r3/machine-identity-pop/ed25519/v1",
+  "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
+  "candidate_binding": {
+    "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
+    "candidate_identity_sha256": "b79d6fb6b6eba73d0db1dbe094a283b33ec2fe78a5d0e27933e892401df1c584",
+    "file_sha256": "08548ed7f4afafc7575657477601bdc063415e248a3c345ca9e9576c522849c7",
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
+    "status": "NOT_READY"
+  },
+  "canonical_sha256": "21982880a73ed9b875c30a1b5399ecc317e32d31f0ecd65129dfcfcb5e5cdb2a",
+  "profile_binding": {
+    "canonical_hash_kind": "canonical_profile_sha256_v1",
+    "canonical_sha256": "b9a454ae9fbb3ffc01348b76aa5086f6c3f8965c7d86721dd6cc3c9396431d31",
+    "file_sha256": "ba426b7b7fbe543c56fc813a144c0079633b447591ba8b565a910e1745d137bd",
+    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"
+  },
+  "schema": "competitive_execution_machine_identity_pop_trust_policy_v1",
+  "schema_version": 1,
+  "status": "NOT_READY",
+  "verifier_source_sha256": "712d413716166fc3eb1db8c06f851bb10952a31bceddd16848195e0cbc3e74d8"
+}

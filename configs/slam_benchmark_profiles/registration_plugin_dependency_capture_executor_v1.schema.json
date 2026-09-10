@@ -1,0 +1,1580 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lidarslam.example.invalid/schema/registration-plugin-dependency-capture-executor-v1.json",
+  "title": "Registration-plugin dependency capture executor receipt v1",
+  "description": "Strict host-owned receipt for one connected provisioning row. Both complete and partial captures remain REVIEW_REQUIRED; this receipt never authorizes runtime promotion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "outcome", "benchmark_eligible",
+    "distro", "dependency_leg", "campaign_set", "campaign_id", "profile",
+    "source_manifest", "plan", "contract_bindings", "capture_contract", "image", "container", "root", "phases", "restore_owner",
+    "artifacts", "directory_contract", "release_evidence", "package_evidence", "signature_evidence", "signature_references", "signature_count", "reference_map", "reference_counts", "verification_chain", "safety", "cleanup", "started_at_unix",
+    "ended_at_unix", "error", "canonical_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "registration-plugin-dependency-capture-executor-v1"},
+    "schema_version": {"const": 1},
+    "status": {"enum": ["REVIEW_REQUIRED", "PARTIAL_FAILURE_REVIEW_REQUIRED"]},
+    "outcome": {"enum": ["PASS_REVIEW_REQUIRED", "PARTIAL_FAILURE"]},
+    "benchmark_eligible": {"const": false},
+    "distro": {"enum": ["humble", "jazzy"]},
+    "dependency_leg": {"enum": ["absent", "present"]},
+    "campaign_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{7,127}$"},
+    "campaign_set": {"$ref": "#/$defs/campaignSet"},
+    "profile": {"$ref": "#/$defs/profile"},
+    "source_manifest": {"$ref": "#/$defs/sourceManifest"},
+    "plan": {"$ref": "#/$defs/plan"},
+    "contract_bindings": {"$ref": "#/$defs/contractBindings"},
+    "capture_contract": {"$ref": "#/$defs/captureContract"},
+    "restore_owner": {"$ref": "#/$defs/restoreOwner"},
+    "rosdep_prepare": {"$ref": "#/$defs/rosdepPrepareProjection"},
+    "image": {"$ref": "#/$defs/image"},
+    "container": {"$ref": "#/$defs/container"},
+    "root": {"$ref": "#/$defs/rootIdentity"},
+    "phases": {"type": "array", "minItems": 1, "maxItems": 19,
+      "description": "An observed phase list is an ordered prefix of the fixed 19-phase plan; a partial receipt may not claim a future phase.",
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "image_inspect"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "preexisting_container_check"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "container_start"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "apt_update"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "base_status_snapshot"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "apt_source_snapshot"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "resolver_build"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "download_build"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "restore_build_partial_owner"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "resolver_runtime"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "download_runtime"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "restore_runtime_partial_owner"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "dependency_install"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "network_disconnect"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "rosdep_prepare"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "rosdep_resolution"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "dependency_capture"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "archive_prefetch"}}}]},
+        {"allOf": [{"$ref": "#/$defs/phase"}, {"properties": {"phase": {"const": "post_disconnect_inspect"}}}]}
+      ],
+      "items": false},
+    "artifacts": {"$ref": "#/$defs/artifacts"},
+    "directory_contract": {"$ref": "#/$defs/sealedPair"},
+    "release_evidence": {"type": "array", "items": {"$ref": "#/$defs/releaseEvidence"}},
+    "package_evidence": {"type": "array", "items": {"$ref": "#/$defs/packageEvidence"}},
+    "signature_evidence": {"$ref": "#/$defs/signature"},
+    "signature_references": {"type": "array", "items": {"$ref": "#/$defs/signatureReference"}},
+    "signature_count": {"type": "integer", "minimum": 0, "maximum": 4096},
+    "reference_map": {"$ref": "#/$defs/referenceMap"},
+    "reference_counts": {"$ref": "#/$defs/referenceCounts"},
+    "verification_chain": {"$ref": "#/$defs/verificationChain"},
+    "safety": {"$ref": "#/$defs/safety"},
+    "cleanup": {"$ref": "#/$defs/cleanup"},
+    "started_at_unix": {"type": "integer", "minimum": 0},
+    "ended_at_unix": {"type": "integer", "minimum": 0},
+    "error": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/error"}]},
+    "canonical_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "REVIEW_REQUIRED"}}},
+      "then": {
+        "properties": {
+          "outcome": {"const": "PASS_REVIEW_REQUIRED"},
+          "phases": {"minItems": 18, "maxItems": 19},
+          "error": {"type": "null"}
+        }
+      },
+      "else": {
+        "properties": {
+          "outcome": {"const": "PARTIAL_FAILURE"},
+          "error": {"$ref": "#/$defs/error"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "PARTIAL_FAILURE_REVIEW_REQUIRED"}}},
+      "then": {"not": {"properties": {"outcome": {"const": "PASS_REVIEW_REQUIRED"}}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "plan": {"required": ["rosdep_prepare_contract"]}
+        }
+      },
+      "then": {"required": ["rosdep_prepare"]}
+    },
+    {
+      "if": {
+        "allOf": [
+          {"properties": {"plan": {"required": ["rosdep_prepare_contract"]}}},
+          {"properties": {"status": {"const": "REVIEW_REQUIRED"}}}
+        ]
+      },
+      "then": {"properties": {"phases": {"minItems": 19, "maxItems": 19}}},
+      "else": {"properties": {"phases": {"minItems": 1, "maxItems": 19}}}
+    }
+  ],
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "absolute": {"type": "string", "pattern": "^/[^\\u0000\\r\\n]*$"},
+    "campaignSet": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "campaign_id", "rows",
+        "row_set_sha256", "identity_sha256"],
+      "properties": {
+        "schema": {"const": "registration-plugin-campaign-set-v1"},
+        "schema_version": {"const": 1},
+        "campaign_id": {"type": "string", "minLength": 8},
+        "rows": {"type": "array", "minItems": 4, "maxItems": 4,
+          "prefixItems": [
+            {"$ref": "#/$defs/humbleAbsent"},
+            {"$ref": "#/$defs/humblePresent"},
+            {"$ref": "#/$defs/jazzyAbsent"},
+            {"$ref": "#/$defs/jazzyPresent"}
+          ], "items": false},
+        "row_set_sha256": {"$ref": "#/$defs/sha"},
+        "identity_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "humbleAbsent": {"type": "object", "additionalProperties": false,
+      "required": ["distro", "dependency_leg"],
+      "properties": {"distro": {"const": "humble"}, "dependency_leg": {"const": "absent"}}},
+    "humblePresent": {"type": "object", "additionalProperties": false,
+      "required": ["distro", "dependency_leg"],
+      "properties": {"distro": {"const": "humble"}, "dependency_leg": {"const": "present"}}},
+    "jazzyAbsent": {"type": "object", "additionalProperties": false,
+      "required": ["distro", "dependency_leg"],
+      "properties": {"distro": {"const": "jazzy"}, "dependency_leg": {"const": "absent"}}},
+    "jazzyPresent": {"type": "object", "additionalProperties": false,
+      "required": ["distro", "dependency_leg"],
+      "properties": {"distro": {"const": "jazzy"}, "dependency_leg": {"const": "present"}}},
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/absolute"}, "sha256": {"$ref": "#/$defs/sha"}}
+    },
+    "sourceManifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "hash_kind", "files", "manifest_sha256", "mismatches"],
+      "properties": {
+        "status": {"const": "PASS"},
+        "hash_kind": {"const": "relative_path_content_sha256_v1"},
+        "files": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/sourceFile"}},
+        "manifest_sha256": {"$ref": "#/$defs/sha"},
+        "mismatches": {"type": "array", "maxItems": 0, "items": {"type": "string"}},
+        "v2_snapshot": {"$ref": "#/$defs/v2SnapshotAudit"}
+      }
+    },
+    "sourceFile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "expected_sha256", "status", "actual_sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\\\u0000\\r\\n]+(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "expected_sha256": {"$ref": "#/$defs/sha"},
+        "status": {"const": "PASS"},
+        "actual_sha256": {"$ref": "#/$defs/sha"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "error": {"type": "string", "maxLength": 512}
+      }
+    },
+    "v2SnapshotAudit": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false,
+          "required": ["status", "checked", "promotion"],
+          "properties": {
+            "status": {"const": "NOT_CONFIGURED"},
+            "checked": {"const": false},
+            "promotion": {"const": "NOT_AUTHORIZED"}
+          }},
+        {"type": "object", "additionalProperties": false,
+          "required": ["status", "checked", "promotion", "root", "manifest", "manifest_sha256"],
+          "properties": {
+            "status": {"const": "PASS_REOPENED_REVIEW_REQUIRED"},
+            "checked": {"const": true},
+            "promotion": {"const": "NOT_AUTHORIZED"},
+            "root": {"$ref": "#/$defs/absolute"},
+            "manifest": {"$ref": "#/$defs/safeRelative"},
+            "manifest_sha256": {"$ref": "#/$defs/sha"}
+          }},
+        {"type": "object", "additionalProperties": false,
+          "required": ["status", "checked", "promotion", "root", "manifest", "reason"],
+          "properties": {
+            "status": {"const": "FAIL_CLOSED"},
+            "checked": {"const": true},
+            "promotion": {"const": "NOT_AUTHORIZED"},
+            "root": {"$ref": "#/$defs/absolute"},
+            "manifest": {"$ref": "#/$defs/safeRelative"},
+            "reason": {"type": "string", "maxLength": 2048}
+          }}
+      ]
+    },
+    "plan": {
+      "type": "object", "additionalProperties": false,
+      "required": ["identity_sha256", "phase_argv_sha256", "apt_source_url_policy",
+        "release_declaration_policy", "packages_format_policy", "gpgv_status_policy",
+        "rosdep_prepare_contract", "apt_transient_owner", "rosdep_prepare_mounts", "rosdep_prepare_bundle",
+        "rosdep_prepare_discovery", "rosdep_prepare_argv",
+        "rosdep_prepare_input_binding", "restore_owner_policy",
+        "restore_owner_reference_mounts", "verification_chain"],
+      "properties": {
+        "identity_sha256": {"$ref": "#/$defs/sha"},
+        "apt_source_url_policy": {"$ref": "#/$defs/aptSourceUrlPolicy"},
+        "release_declaration_policy": {"$ref": "#/$defs/releaseDeclarationPolicy"},
+        "packages_format_policy": {"$ref": "#/$defs/packagesFormatPolicy"},
+        "gpgv_status_policy": {"$ref": "#/$defs/gpgvStatusPolicy"},
+        "rosdep_prepare_contract": {"$ref": "#/$defs/rosdepPrepareContract"},
+        "apt_transient_owner": {"$ref": "#/$defs/aptTransientOwnerBinding"},
+        "rosdep_prepare_mounts": {
+          "type": "array", "minItems": 8, "maxItems": 8,
+          "prefixItems": [
+            {"$ref": "#/$defs/prepareMount"}, {"$ref": "#/$defs/prepareMount"},
+            {"$ref": "#/$defs/prepareMount"}, {"$ref": "#/$defs/prepareMount"},
+            {"$ref": "#/$defs/prepareMount"}, {"$ref": "#/$defs/prepareMount"},
+            {"$ref": "#/$defs/prepareMount"}, {"$ref": "#/$defs/prepareMount"}
+          ], "items": false
+        },
+        "rosdep_prepare_bundle": {"$ref": "#/$defs/prepareInputBundle"},
+        "rosdep_prepare_discovery": {"$ref": "#/$defs/prepareDiscoveryContract"},
+        "rosdep_prepare_argv": {"$ref": "#/$defs/prepareArgv"},
+        "rosdep_prepare_input_binding": {
+          "oneOf": [{"$ref": "#/$defs/prepareInputBinding"}, {"type": "null"}]
+        },
+        "restore_owner_policy": {"$ref": "#/$defs/restoreOwnerPolicy"},
+        "restore_owner_reference_mounts": {
+          "type": "array", "minItems": 2, "maxItems": 2,
+          "prefixItems": [
+            {"$ref": "#/$defs/restoreOwnerMountSpec"},
+            {"$ref": "#/$defs/restoreOwnerMountSpec"}
+          ], "items": false
+        },
+        "verification_chain": {"$ref": "#/$defs/verificationChain"},
+        "phase_argv_sha256": {
+          "type": "object", "additionalProperties": false,
+          "required": ["image_inspect", "preexisting_container_check", "container_start",
+            "apt_update", "base_status_snapshot", "apt_source_snapshot", "resolver_build",
+            "download_build", "restore_build_partial_owner", "resolver_runtime",
+            "download_runtime", "restore_runtime_partial_owner", "dependency_install",
+            "network_disconnect", "rosdep_prepare", "rosdep_resolution", "dependency_capture", "archive_prefetch",
+            "post_disconnect_inspect"],
+          "properties": {
+            "image_inspect": {"$ref": "#/$defs/sha"},
+            "preexisting_container_check": {"$ref": "#/$defs/sha"},
+            "container_start": {"$ref": "#/$defs/sha"},
+            "apt_update": {"$ref": "#/$defs/sha"},
+            "base_status_snapshot": {"$ref": "#/$defs/sha"},
+            "apt_source_snapshot": {"$ref": "#/$defs/sha"},
+            "resolver_build": {"$ref": "#/$defs/sha"},
+            "download_build": {"$ref": "#/$defs/sha"},
+            "restore_build_partial_owner": {"$ref": "#/$defs/sha"},
+            "resolver_runtime": {"$ref": "#/$defs/sha"},
+            "download_runtime": {"$ref": "#/$defs/sha"},
+            "restore_runtime_partial_owner": {"$ref": "#/$defs/sha"},
+            "dependency_install": {"$ref": "#/$defs/sha"},
+            "rosdep_prepare": {"$ref": "#/$defs/sha"},
+            "rosdep_resolution": {"$ref": "#/$defs/sha"},
+            "dependency_capture": {"$ref": "#/$defs/sha"},
+            "archive_prefetch": {"$ref": "#/$defs/sha"},
+            "network_disconnect": {"$ref": "#/$defs/sha"},
+            "post_disconnect_inspect": {"$ref": "#/$defs/sha"}
+          }
+        }
+      }
+    },
+    "referencePolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "schema_version", "identity_domains",
+        "identity_token_hex_length", "artifact_naming", "prefix_collision",
+        "cache_semantics", "release_deduplication", "keyring_deduplication",
+        "signature_deduplication", "reference_projection", "partial_projection",
+        "promotion"
+      ],
+      "properties": {
+        "schema": {"const": "registration-plugin-capture-reference-policy-v1"},
+        "schema_version": {"const": 1},
+        "identity_domains": {
+          "type": "object", "additionalProperties": false,
+          "required": ["release", "keyring", "signature", "package"],
+          "properties": {
+            "release": {"const": "registration-plugin-release-artifact-identity-v1"},
+            "keyring": {"const": "registration-plugin-gpg-keyring-identity-v1"},
+            "signature": {"const": "registration-plugin-release-signature-identity-v1"},
+            "package": {"const": "registration-plugin-packages-artifact-identity-v1"}
+          }
+        },
+        "identity_token_hex_length": {"const": 24},
+        "artifact_naming": {"const": "basename-plus-full-identity-sha256-prefix"},
+        "prefix_collision": {"const": "reject-before-write"},
+        "cache_semantics": {"const": "first-attempt-retained-deep-copy"},
+        "release_deduplication": {"const": "immutable-release-identity"},
+        "keyring_deduplication": {"const": "source-scoped-keyring-identity"},
+        "signature_deduplication": {"const": "release-keyring-signer-policy-identity"},
+        "reference_projection": {"const": "exact-map-and-counts"},
+        "partial_projection": {"const": "raw-release-before-later-validation"},
+        "promotion": {"const": "non-promoting-until-signed-receipt"}
+      }
+    },
+    "contractBindings": {
+      "type": "object", "additionalProperties": false,
+        "required": ["capture_tool", "capture_schema", "closure_tool", "closure_schema", "directory_tool", "directory_schema", "source_validator", "source_schema", "rosdep_prepare_tool", "rosdep_prepare_schema"],
+      "properties": {
+        "capture_tool": {"$ref": "#/$defs/sourceBinding"},
+        "capture_schema": {"$ref": "#/$defs/sourceBinding"},
+        "closure_tool": {"$ref": "#/$defs/sourceBinding"},
+        "closure_schema": {"$ref": "#/$defs/sourceBinding"},
+        "directory_tool": {"$ref": "#/$defs/sourceBinding"},
+        "directory_schema": {"$ref": "#/$defs/sourceBinding"},
+        "source_validator": {"$ref": "#/$defs/sourceBinding"},
+        "source_schema": {"$ref": "#/$defs/sourceBinding"},
+        "rosdep_prepare_tool": {"$ref": "#/$defs/sourceBinding"},
+        "rosdep_prepare_schema": {"$ref": "#/$defs/sourceBinding"}
+      }
+    },
+    "captureContract": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "schema_version", "status", "benchmark_eligible",
+        "contract_bindings", "required_artifacts", "artifact_policy",
+        "directory_policy", "managed_directory_paths", "release_declaration_policy", "source_snapshot", "promotion",
+        "packages_format_policy", "gpgv_status_policy", "gpg_inventory_policy",
+        "reference_policy", "restore_owner_policy", "rosdep_prepare"
+      ],
+      "properties": {
+        "schema": {"const": "registration-plugin-dependency-capture-integration-v1"},
+        "schema_version": {"const": 1},
+        "status": {"const": "REVIEW_REQUIRED"},
+        "benchmark_eligible": {"const": false},
+        "contract_bindings": {"$ref": "#/$defs/contractBindings"},
+        "required_artifacts": {"const": [
+          "capture_input", "base_status", "apt_source_capture", "dependency_capture", "rosdep_prepare"
+        ]},
+        "artifact_policy": {"const": "exact_existing_sidecar_sealed_allowlist_v1"},
+        "directory_policy": {"const": "host_precreated_0700_owner_bound_nofollow_v1"},
+        "managed_directory_paths": {"const": ["logs", "gpg-inventory-work", "restore-owner-references", "restore-owner-references/build-partial", "restore-owner-references/runtime-partial", "apt-source", "apt-source/etc", "apt-source/etc/apt", "apt-source/etc/apt/sources.list.d", "apt-source/indices", "apt-keyrings", "apt-index", "raw-indexes", "signatures", "captured-debs", "captured-debs/build", "captured-debs/runtime", "rosdep", "rosdep/cache", "licenses", "licenses/build", "licenses/runtime", "debs-build", "debs-build/partial", "debs-runtime", "debs-runtime/partial", "rosdep-prepare", "rosdep-prepare/input", "rosdep-prepare/commands", "rosdep-prepare/artifacts", "rosdep-prepare/artifacts/rosdep", "rosdep-prepare/artifacts/rosdep/sources.list.d", "rosdep-prepare/artifacts/rosdep/cache", "rosdep-prepare/work", "rosdep-prepare/work/rosdistro", "rosdep-prepare/work/rosdistro/files", "rosdep-prepare/work/rosdistro/sources.list.d", "rosdep-prepare/work/rosdep-cache", "rosdep-prepare/work/ros-home","rosdep-prepare/work/ros-home/rosdep","rosdep-prepare/work/ros-home/rosdep/meta.cache","rosdep-prepare/work/ros-home/rosdep/sources.cache"]},
+        "release_declaration_policy": {"$ref": "#/$defs/releaseDeclarationPolicy"},
+        "packages_format_policy": {"$ref": "#/$defs/packagesFormatPolicy"},
+        "gpgv_status_policy": {"$ref": "#/$defs/gpgvStatusPolicy"},
+        "gpg_inventory_policy": {"$ref": "#/$defs/gpgInventoryPolicy"},
+        "reference_policy": {"$ref": "#/$defs/referencePolicy"},
+        "restore_owner_policy": {"$ref": "#/$defs/restoreOwnerPolicy"},
+        "rosdep_prepare": {"$ref": "#/$defs/rosdepPreparePolicy"},
+        "source_snapshot": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "schema", "schema_path", "schema_sha256", "validator_path",
+            "validator_sha256"
+          ],
+          "properties": {
+            "schema": {"const": "glim_clean_room_r3_apt_source_snapshot_v2"},
+            "schema_path": {"const": "configs/slam_benchmark_profiles/registration_plugin_apt_source_snapshot_v2.schema.json"},
+            "schema_sha256": {"$ref": "#/$defs/sha"},
+            "validator_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_composer.py"},
+            "validator_sha256": {"$ref": "#/$defs/sha"}
+          }
+        },
+        "promotion": {"const": "FORBIDDEN_UNTIL_SIGNED_RECEIPT"}
+      }
+    },
+    "sourceBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?/)[^/\\\\\\u0000\\r\\n]+(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reference", "digest", "platform", "observed"],
+      "properties": {
+        "reference": {"type": "string", "minLength": 1, "maxLength": 2048},
+        "digest": {"$ref": "#/$defs/digest"},
+        "platform": {"const": {"os": "linux", "architecture": "amd64"}},
+        "observed": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/imageObservation"}]}
+      }
+    },
+    "imageObservation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "repo_digests", "os", "architecture"],
+      "properties": {
+        "id": {"$ref": "#/$defs/digest"},
+        "repo_digests": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "os": {"const": "linux"}, "architecture": {"const": "amd64"}
+      }
+    },
+    "container": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "output_root"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{0,62}$"},
+        "output_root": {"$ref": "#/$defs/absolute"}
+      }
+    },
+    "rootIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "device", "inode", "mode", "nlink"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1},
+        "mode": {"const": 448},
+        "nlink": {"type": "integer", "minimum": 2}
+      }
+    },
+    "logDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\\\u0000\\r\\n]+(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 8388608},
+        "sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "phase": {
+      "type": "object", "additionalProperties": false,
+      "required": ["phase", "argv", "argv_sha256", "returncode", "network_used",
+        "timeout_seconds", "attempts", "stdout", "stderr", "timed_out", "signal",
+        "observed_returncode"],
+      "properties": {
+        "phase": {"enum": ["image_inspect", "preexisting_container_check", "container_start",
+          "apt_update", "base_status_snapshot", "apt_source_snapshot", "resolver_build",
+          "download_build", "restore_build_partial_owner", "resolver_runtime",
+          "download_runtime", "restore_runtime_partial_owner", "dependency_install",
+          "network_disconnect", "rosdep_prepare", "rosdep_resolution", "dependency_capture", "archive_prefetch",
+          "post_disconnect_inspect"]},
+        "argv": {"type": "array", "minItems": 1, "items": {"type": "string", "maxLength": 2048}},
+        "argv_sha256": {"$ref": "#/$defs/sha"},
+        "returncode": {"type": "integer", "minimum": -255, "maximum": 255},
+        "observed_returncode": {"type": "integer", "minimum": -255, "maximum": 255},
+        "network_used": {"type": "boolean"},
+        "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 600},
+        "attempts": {"const": 1},
+        "stdout": {"$ref": "#/$defs/logDescriptor"},
+        "stderr": {"$ref": "#/$defs/logDescriptor"},
+        "timed_out": {"type": "boolean"},
+        "signal": {"type": ["integer", "null"], "minimum": 1, "maximum": 64}
+      }
+    },
+    "artifactDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode", "sidecar"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "sha256": {"$ref": "#/$defs/sha"}, "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1}, "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}, "sidecar": {"$ref": "#/$defs/artifactSidecar"}
+      }
+    },
+    "artifactSidecar": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"}, "bytes": {"type": "integer", "minimum": 1, "maximum": 512},
+        "sha256": {"$ref": "#/$defs/sha"}, "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1}, "device": {"type": "integer", "minimum": 0}, "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "artifacts": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "capture_input": {"$ref": "#/$defs/artifactDescriptor"},
+        "closure": {"$ref": "#/$defs/artifactDescriptor"},
+        "requirements": {"$ref": "#/$defs/artifactDescriptor"},
+        "base_status": {"$ref": "#/$defs/artifactDescriptor"},
+        "source_manifest": {"$ref": "#/$defs/artifactDescriptor"},
+        "signature_evidence": {"$ref": "#/$defs/artifactDescriptor"},
+        "apt_source_capture": {"$ref": "#/$defs/artifactDescriptor"},
+        "dependency_capture": {"$ref": "#/$defs/artifactDescriptor"},
+        "rosdep_prepare": {"$ref": "#/$defs/artifactDescriptor"},
+        "build_resolver": {"$ref": "#/$defs/artifactDescriptor"},
+        "runtime_resolver": {"$ref": "#/$defs/artifactDescriptor"}
+      }
+    },
+    "sealedPair": {
+      "type": "object", "additionalProperties": false,
+      "required": ["file", "sidecar"],
+      "properties": {
+        "file": {"$ref": "#/$defs/sealedFileDescriptor"},
+        "sidecar": {"$ref": "#/$defs/artifactSidecar"}
+      }
+    },
+    "sealedFileDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "sha256": {"$ref": "#/$defs/sha"}, "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1}, "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "runtime", "required", "promotion"],
+      "properties": {
+        "status": {"const": "REQUIRED_NOT_PROVEN"}, "runtime": {"const": "NOT_RUN"},
+        "required": {"const": true}, "promotion": {"const": "FORBIDDEN_UNTIL_SIGNED_RECEIPT"}
+      }
+    },
+    "aptUrl": {
+      "type": "string", "maxLength": 2048,
+      "oneOf": [
+        {"pattern": "^https://[^\\u0000\\r\\n?#]+$"},
+        {"pattern": "^http://archive\\.ubuntu\\.com(?::80)?/ubuntu(?:/[^\\u0000\\r\\n?#]*)?$"},
+        {"pattern": "^http://packages\\.ros\\.org(?::80)?/ros2/ubuntu(?:/[^\\u0000\\r\\n?#]*)?$"},
+        {"pattern": "^http://security\\.ubuntu\\.com(?::80)?/ubuntu(?:/[^\\u0000\\r\\n?#]*)?$"}
+      ]
+    },
+    "aptSourceUrlPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "https", "http_prefixes",
+        "http_default_port", "redirect_policy"],
+      "properties": {
+        "schema": {"const": "registration-plugin-apt-source-url-policy-v1"},
+        "schema_version": {"const": 1}, "https": {"const": "allowed"},
+        "http_prefixes": {"const": [
+          "http://archive.ubuntu.com/ubuntu",
+          "http://packages.ros.org/ros2/ubuntu",
+          "http://security.ubuntu.com/ubuntu"
+        ]},
+        "http_default_port": {"const": 80},
+        "redirect_policy": {"const": "same-host-only-and-requested-url-recorded"}
+      }
+    },
+    "releaseDeclarationPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "max_declared_bytes", "decimal_grammar", "zero_allowed"],
+      "properties": {
+        "schema": {"const": "registration-plugin-release-declaration-size-policy-v1"},
+        "schema_version": {"const": 1},
+        "max_declared_bytes": {"const": 17179869184},
+        "decimal_grammar": {"const": "0|[1-9][0-9]*"},
+        "zero_allowed": {"const": true}
+      }
+    },
+    "packagesFormatPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "selection_order", "allowed_formats", "compressed_max_bytes", "decoded_max_bytes", "max_expansion_ratio", "trailing_data", "concatenated_streams", "terminal_empty_stream_policy", "signed_empty_packages_policy"],
+      "properties": {
+        "schema": {"const": "registration-plugin-packages-format-policy-v1"},
+        "schema_version": {"const": 1},
+        "selection_order": {"const": ["xz", "gz", "plain"]},
+        "allowed_formats": {"const": ["xz", "gz", "plain"]},
+        "compressed_max_bytes": {"const": 67108864},
+        "decoded_max_bytes": {"const": 268435456},
+        "max_expansion_ratio": {"const": 256},
+        "trailing_data": {"const": "reject"},
+        "concatenated_streams": {"const": "reject"},
+        "terminal_empty_stream_policy": {"$ref": "#/$defs/terminalEmptyStreamPolicy"},
+        "signed_empty_packages_policy": {"$ref": "#/$defs/signedEmptyPackagesPolicy"}
+      }
+    },
+    "terminalEmptyStreamPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "enabled", "max_streams", "compressed_bytes", "decoded_bytes", "padding", "binding"],
+      "properties": {
+        "schema": {"const": "registration-plugin-xz-terminal-empty-stream-policy-v1"},
+        "schema_version": {"const": 1}, "enabled": {"const": true},
+        "max_streams": {"const": 2}, "compressed_bytes": {"const": 32},
+        "decoded_bytes": {"const": 0}, "padding": {"const": "forbidden"},
+        "binding": {"const": "index-offset-bytes-sha256-decoded-bytes"}
+      }
+    },
+    "signedEmptyPackagesPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "enabled", "signed_empty", "decoded_sha256", "decoded_bytes", "allowed_formats", "xz_stream_count", "xz_compressed_bytes", "padding", "trailing_data", "binding"],
+      "properties": {
+        "schema": {"const": "registration-plugin-signed-empty-packages-policy-v1"},
+        "schema_version": {"const": 1}, "enabled": {"const": true},
+        "signed_empty": {"const": true},
+        "decoded_sha256": {"const": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+        "decoded_bytes": {"const": 0}, "allowed_formats": {"const": ["xz"]},
+        "xz_stream_count": {"const": 1}, "xz_compressed_bytes": {"const": 32},
+        "padding": {"const": "forbidden"}, "trailing_data": {"const": "reject"},
+        "binding": {"const": "signed-release-pair-compressed-bytes-and-exact-empty-decode"}
+      }
+    },
+    "gpgvStatusPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "schema_version", "gnupg_version", "required_proof_tags",
+        "optional_informational_tags", "informational_pair", "status_order",
+        "key_considered_fields", "key_considered_fingerprint",
+        "key_considered_flags", "verification_compliance_mode_fields",
+        "verification_compliance_mode", "informational_only", "proof",
+        "keyring_input"
+      ],
+      "properties": {
+        "schema": {"const": "registration-plugin-gpgv-status-policy-v1"},
+        "schema_version": {"const": 1},
+        "gnupg_version": {"const": "2.2.27"},
+        "required_proof_tags": {"const": ["NEWSIG", "GOODSIG", "VALIDSIG"]},
+        "optional_informational_tags": {
+          "const": ["KEY_CONSIDERED", "VERIFICATION_COMPLIANCE_MODE"]
+        },
+        "informational_pair": {"const": "independently-optional"},
+        "status_order": {"const": [
+          "NEWSIG", "KEY_CONSIDERED", "SIG_ID", "GOODSIG", "VALIDSIG",
+          "VERIFICATION_COMPLIANCE_MODE"
+        ]},
+        "key_considered_fields": {"const": 4},
+        "key_considered_fingerprint": {"const": "validsig-primary-or-signer"},
+        "key_considered_flags": {"const": "canonical-decimal-0..2147483647"},
+        "verification_compliance_mode_fields": {"const": 3},
+        "verification_compliance_mode": {"const": "canonical-decimal-0..2147483647"},
+        "informational_only": {"const": true},
+        "proof": {"const": "GOODSIG_VALIDSIG_only"},
+        "keyring_input": {"const": "dearmored_path_only"}
+      }
+    },
+    "gpgInventoryPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "schema_version", "executable", "versions", "version_argv",
+        "argv_template", "homedir", "environment", "shell", "network",
+        "version_timeout_seconds", "inventory_timeout_seconds", "failure_status"
+        , "metadata_residue_schema", "metadata_residue_policy",
+        "metadata_residue_names", "metadata_residue_mode",
+        "metadata_residue_max_bytes", "metadata_residue_retention"
+      ],
+      "properties": {
+        "schema": {"const": "registration-plugin-gpg-key-inventory-policy-v1"},
+        "schema_version": {"const": 1},
+        "executable": {"const": "/usr/bin/gpg"},
+        "versions": {"const": ["gpg (GnuPG) 2.2.27", "gpg (GnuPG) 2.4.4"]},
+        "version_argv": {"const": ["/usr/bin/gpg", "--version"]},
+        "argv_template": {"const": [
+          "/usr/bin/gpg", "--batch", "--no-options", "--no-default-keyring",
+          "--no-auto-key-retrieve", "--no-auto-key-import", "--no-auto-key-locate",
+          "--no-autostart", "--homedir", "<fresh-homedir>", "--with-colons",
+          "--with-fingerprint", "--with-subkey-fingerprint", "--import-options",
+          "show-only", "--import", "<dearmored-keyring>"
+        ]},
+        "homedir": {
+          "type": "object", "additionalProperties": false,
+          "required": ["parent", "parent_relative", "prefix", "token_hex_length", "mode",
+            "post_absent", "parent_empty_before_after", "cleanup"],
+          "properties": {
+            "parent": {"const": "/workspace/evidence-parent/gpg-inventory-work"},
+            "parent_relative": {"const": "gpg-inventory-work"},
+            "prefix": {"const": "glim-clean-room-r3-gpg-inventory-"},
+            "token_hex_length": {"const": 24}, "mode": {"const": 448},
+            "post_absent": {"const": true},
+            "parent_empty_before_after": {"const": true},
+            "cleanup": {"const": "owned-tree-only-and-absence-required"}
+          }
+        },
+        "environment": {"const": "fixed-locale-no-home-or-agent"},
+        "shell": {"const": false}, "network": {"const": "none"},
+        "version_timeout_seconds": {"const": 30},
+        "inventory_timeout_seconds": {"const": 120},
+        "metadata_residue_schema": {"const": "registration-plugin-gpg-inventory-metadata-v1"},
+        "metadata_residue_policy": {"const": "exact-pubring.kbx-trustdb.gpg-supported-show-only"},
+        "metadata_residue_names": {"const": ["pubring.kbx", "trustdb.gpg"]},
+        "metadata_residue_mode": {"const": 384},
+        "metadata_residue_max_bytes": {"const": 16777216},
+        "metadata_residue_retention": {"const": "descriptor-only-cleaned"},
+        "failure_status": {"const": "REVIEW_REQUIRED"}
+      }
+    },
+    "packageOutputDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?:raw-indexes|apt-source)/[^/\\\\\\u0000\\r\\n]+(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "sha256": {"$ref": "#/$defs/sha"}, "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1}, "device": {"type": "integer", "minimum": 0}, "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "decodedPackageOutputDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^apt-source/[^/\\\\\\u0000\\r\\n]+(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 268435456},
+        "sha256": {"$ref": "#/$defs/sha"}, "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1}, "device": {"type": "integer", "minimum": 0}, "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "packageArtifactIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["domain", "repository_url", "suite", "component", "architecture", "release_kind", "release_identity", "release_url", "release_record_path", "release_file_sha256", "release_file_bytes", "signed_compressed_path", "signed_plain_path", "format", "packages_url", "compressed_sha256", "compressed_bytes", "decoded_sha256", "decoded_bytes", "signed_empty", "identity"],
+      "properties": {
+        "domain": {"const": "registration-plugin-packages-artifact-identity-v1"},
+        "repository_url": {"$ref": "#/$defs/aptUrl"},
+        "suite": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9+_.-]{0,127}$"},
+        "component": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9+_.-]{0,127}$"},
+        "architecture": {"const": "amd64"},
+        "release_kind": {"enum": ["inrelease", "detached"]},
+        "release_identity": {"$ref": "#/$defs/sha"},
+        "release_url": {"$ref": "#/$defs/aptUrl"},
+        "release_record_path": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "release_file_sha256": {"$ref": "#/$defs/sha"},
+        "release_file_bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "signed_compressed_path": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "signed_plain_path": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "format": {"enum": ["xz", "gz", "plain"]},
+        "packages_url": {"$ref": "#/$defs/aptUrl"},
+        "compressed_sha256": {"$ref": "#/$defs/sha"},
+        "compressed_bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "decoded_sha256": {"$ref": "#/$defs/sha"},
+        "decoded_bytes": {"type": "integer", "minimum": 0, "maximum": 268435456},
+        "signed_empty": {"type": "boolean"},
+        "identity": {"$ref": "#/$defs/sha"}
+      },
+      "allOf": [
+        {"if": {"properties": {"signed_empty": {"const": true}}}, "then": {"properties": {"format": {"const": "xz"}, "compressed_bytes": {"const": 32}, "decoded_bytes": {"const": 0}, "decoded_sha256": {"const": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}},
+        {"if": {"properties": {"signed_empty": {"const": false}}}, "then": {"properties": {"decoded_bytes": {"minimum": 1}}}}
+      ]
+    },
+    "packageEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "url", "final_url", "format", "release_path", "release_sha256", "release_bytes", "bytes", "sha256", "output", "release_record_path", "release_file_sha256", "release_file_bytes", "source_record_path", "decoded_release_path", "decoded_release_sha256", "decoded_release_bytes", "decoded_output", "stream_descriptors", "signed_empty", "artifact_identity"],
+      "properties": {
+        "source": {"enum": ["container-cache", "network"]},
+        "url": {"$ref": "#/$defs/aptUrl"}, "final_url": {"$ref": "#/$defs/aptUrl"},
+        "format": {"enum": ["xz", "gz", "plain"]},
+        "release_path": {"type": "string", "pattern": "^[^/\\\\\\u0000\\r\\n]+/binary-amd64/Packages(?:\\.xz|\\.gz)?$"},
+        "release_sha256": {"$ref": "#/$defs/sha"},
+        "release_bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "output": {"$ref": "#/$defs/packageOutputDescriptor"},
+        "release_record_path": {"type": ["string", "null"]},
+        "release_file_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "release_file_bytes": {"type": ["integer", "null"], "minimum": 1, "maximum": 67108864},
+        "source_record_path": {"type": ["string", "null"]},
+        "decoded_release_path": {"type": ["string", "null"]},
+        "decoded_release_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "decoded_release_bytes": {"type": ["integer", "null"], "minimum": 0, "maximum": 268435456},
+        "decoded_output": {"oneOf": [{"$ref": "#/$defs/decodedPackageOutputDescriptor"}, {"$ref": "#/$defs/signedEmptyPackageOutputDescriptor"}, {"type": "null"}]},
+        "stream_descriptors": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/streamDescriptor"}},
+        "signed_empty": {"type": "boolean"},
+        "artifact_identity": {"$ref": "#/$defs/packageArtifactIdentity"}
+      },
+      "allOf": [
+        {"if": {"properties": {"signed_empty": {"const": true}}}, "then": {"properties": {"format": {"const": "xz"}, "decoded_release_bytes": {"const": 0}, "decoded_release_sha256": {"const": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}},
+        {"if": {"properties": {"signed_empty": {"const": false}}}, "then": {"properties": {"decoded_release_bytes": {"minimum": 1}}}}
+      ]
+    },
+    "signedEmptyPackageOutputDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"pattern": "^apt-source/[^/\\\\\\u0000\\r\\n]+(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "bytes": {"const": 0},
+        "sha256": {"const": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+        "mode": {"const": 292}, "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0}, "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0}, "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "streamDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["index", "compressed_offset", "compressed_bytes", "compressed_sha256", "decoded_bytes"],
+      "properties": {
+        "index": {"type": "integer", "minimum": 0, "maximum": 1},
+        "compressed_offset": {"type": "integer", "minimum": 0, "maximum": 67108864},
+        "compressed_bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "compressed_sha256": {"$ref": "#/$defs/sha"},
+        "decoded_bytes": {"type": "integer", "minimum": 0, "maximum": 268435456}
+      }
+    },
+    "releaseOutputDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?:apt-source/indices/|signatures/)[^/\\u0000\\r\\n]+(?:/[^/\\u0000\\r\\n]+)*$"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "releaseSignatureEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "source", "bytes", "sha256", "output"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "source": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "output": {"$ref": "#/$defs/releaseOutputDescriptor"}
+      }
+    },
+    "releaseEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "source", "url", "repository_url", "kind", "identity", "bytes", "sha256", "output", "signature"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^indices/[^/\\u0000\\r\\n]+(?:/[^/\\u0000\\r\\n]+)*$"},
+        "source": {"$ref": "#/$defs/absolute"},
+        "url": {"type": "string", "maxLength": 2048},
+        "repository_url": {"type": "string", "maxLength": 2048},
+        "kind": {"enum": ["inrelease", "detached"]},
+        "identity": {"$ref": "#/$defs/sha"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "output": {"$ref": "#/$defs/releaseOutputDescriptor"},
+        "signature": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/releaseSignatureEvidence"}]}
+      }
+    },
+    "signatureReference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository_index", "identity", "keyring_identity", "release_kind",
+        "repository_url", "release_url", "release_path", "release_record_path",
+        "release_sha256", "signer_fingerprint", "signer_policy", "packages_url",
+        "packages_path", "packages_sha256"],
+      "properties": {
+        "repository_index": {"type": "integer", "minimum": 0, "maximum": 4095},
+        "identity": {"$ref": "#/$defs/sha"},
+        "keyring_identity": {"$ref": "#/$defs/sha"},
+        "release_kind": {"enum": ["inrelease", "detached"]},
+        "repository_url": {"$ref": "#/$defs/aptUrl"},
+        "release_url": {"$ref": "#/$defs/aptUrl"},
+        "release_path": {"$ref": "#/$defs/absolute"},
+        "release_record_path": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\\\u0000\\r\\n]+(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "release_sha256": {"$ref": "#/$defs/sha"},
+        "signer_fingerprint": {"type": "string", "pattern": "^[0-9A-Fa-f]{40}$"},
+        "signer_policy": {
+          "type": "object", "additionalProperties": false,
+          "required": ["declared_fingerprint"],
+          "properties": {"declared_fingerprint": {
+            "type": ["string", "null"], "pattern": "^[0-9A-Fa-f]{40}$"
+          }}
+        },
+        "packages_url": {"$ref": "#/$defs/aptUrl"},
+        "packages_path": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "packages_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "referenceMap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["release", "keyring", "signature", "packages"],
+      "properties": {
+        "release": {"$ref": "#/$defs/referenceMapEntries"},
+        "keyring": {"$ref": "#/$defs/referenceMapEntries"},
+        "signature": {"$ref": "#/$defs/referenceMapEntries"},
+        "packages": {"$ref": "#/$defs/referenceMapEntries"}
+      }
+    },
+    "referenceMapEntries": {
+      "type": "object", "additionalProperties": false,
+      "patternProperties": {
+        "^(0|[1-9][0-9]*)$": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "referenceCounts": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "repository_references", "release_evidence", "package_evidence",
+        "signature_evidence", "unique_release_references",
+        "unique_keyring_references", "unique_signature_references",
+        "unique_package_references"
+      ],
+      "properties": {
+        "repository_references": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "release_evidence": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "package_evidence": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "signature_evidence": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "unique_release_references": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "unique_keyring_references": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "unique_signature_references": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "unique_package_references": {"type": "integer", "minimum": 0, "maximum": 4096}
+      }
+    },
+    "verificationChain": {
+      "type": "object", "additionalProperties": false,
+      "required": ["release_signature", "release_to_packages", "packages_to_deb"],
+      "properties": {
+        "release_signature": {"const": "gpgv_evidence_required_before_closure"},
+        "release_to_packages": {"const": "signed_release_sha256_size_exact"},
+        "packages_to_deb": {"const": "packages_sha256_size_and_dpkg_metadata_exact"}
+      }
+    },
+    "safety": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provisioning_network_used", "archive_fetch_network_used",
+        "build_test_network_connected", "build_test_network_used", "docker_pull",
+        "docker_build", "bag_opened", "ground_truth_opened", "scorer_opened", "map_written"],
+      "properties": {
+        "provisioning_network_used": {"type": "boolean"},
+        "archive_fetch_network_used": {"type": "boolean"},
+        "build_test_network_connected": {"const": false},
+        "build_test_network_used": {"const": false},
+        "docker_pull": {"const": false}, "docker_build": {"const": false},
+        "bag_opened": {"const": false}, "ground_truth_opened": {"const": false},
+        "scorer_opened": {"const": false}, "map_written": {"const": false}
+      }
+    },
+    "cleanup": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "stop_requested", "remove_requested", "post_remove_absent"],
+      "properties": {
+        "status": {"enum": ["ABSENT", "PASS", "FAIL_CLOSED", "NOT_ATTEMPTED"]},
+        "stop_requested": {"type": "boolean"}, "remove_requested": {"type": "boolean"},
+        "post_remove_absent": {"type": "boolean"},
+        "stop_returncode": {"const": 0}, "remove_returncode": {"const": 0},
+        "error": {"type": "string", "maxLength": 2048}
+      }
+    },
+    "prepareSourceFile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commit_url", "line", "relative_path", "requested_url", "type"],
+      "properties": {
+        "commit_url": {"type": "string", "pattern": "^https://raw\\.githubusercontent\\.com/"},
+        "line": {"type": "integer", "minimum": 1},
+        "relative_path": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\.\\u0000\\r\\n][^/\\\\\\u0000\\r\\n]*(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "requested_url": {"type": "string", "pattern": "^https://raw\\.githubusercontent\\.com/"},
+        "type": {"enum": ["yaml", "gbpdistro"]},
+        "distribution": {"type": "string", "minLength": 1}
+      }
+    },
+    "prepareContractPackage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "architecture", "filename", "uri",
+        "size_bytes", "sha256", "artifact_path"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9+.-]*$"},
+        "version": {"type": "string", "minLength": 1, "maxLength": 256},
+        "architecture": {"const": "all"},
+        "filename": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\.\\u0000\\r\\n][^/\\\\\\u0000\\r\\n]*(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "uri": {"type": "string", "pattern": "^http://packages\\.ros\\.org/"},
+        "size_bytes": {"type": "integer", "minimum": 1, "maximum": 536870912},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "artifact_path": {"type": "string", "pattern": "^artifacts/apt/debs/[^/\\\\\\u0000\\r\\n]+$"}
+      }
+    },
+    "prepareContractSelectedFile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["relative_path", "bytes", "sha256", "artifact_path"],
+      "properties": {
+        "relative_path": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\.\\u0000\\r\\n][^/\\\\\\u0000\\r\\n]*(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "artifact_path": {"type": "string", "pattern": "^artifacts/rosdistro/files/[^\\u0000\\r\\n]+$"}
+      }
+    },
+    "prepareSourceBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?/)[^/\\\\\\u0000\\r\\n]+(?:/[^/\\\\\\u0000\\r\\n]+)*$"}, "sha256": {"$ref": "#/$defs/sha"}}
+    },
+    "prepareMountDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "type", "device", "inode", "uid", "gid", "mode", "nlink"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"}, "type": {"const": "directory"},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "mode": {"const": 448}, "nlink": {"type": "integer", "minimum": 2}
+      }
+    },
+    "prepareMountRuntime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "target", "read_only", "type", "noexec"],
+      "properties": {
+        "source": {"$ref": "#/$defs/absolute"},
+        "target": {"$ref": "#/$defs/absolute"},
+        "read_only": {"type": "boolean"}, "type": {"const": "bind"},
+        "noexec": {"const": false}
+      }
+    },
+    "prepareMount": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "target", "read_only", "type", "noexec", "pre", "post", "runtime"],
+      "properties": {
+        "source": {"$ref": "#/$defs/absolute"},
+        "target": {"$ref": "#/$defs/absolute"},
+        "read_only": {"type": "boolean"}, "type": {"const": "bind"},
+        "noexec": {"const": false},
+        "pre": {"oneOf": [{"$ref": "#/$defs/prepareMountDescriptor"}, {"type": "null"}]},
+        "post": {"oneOf": [{"$ref": "#/$defs/prepareMountDescriptor"}, {"type": "null"}]},
+        "runtime": {"oneOf": [{"$ref": "#/$defs/prepareMountRuntime"}, {"type": "null"}]}
+      }
+    },
+    "prepareArgv": {
+      "type": "object", "additionalProperties": false,
+      "required": ["argv", "argv_sha256", "script_path", "script_sha256"],
+      "properties": {
+        "argv": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "argv_sha256": {"$ref": "#/$defs/sha"},
+        "script_path": {"const": "/opt/registration-plugin/prepare/prepare_registration_plugin_rosdep.py"},
+        "script_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "prepareInputSourceDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"type": "integer", "minimum": 0, "maximum": 511},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "prepareInputSidecar": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 512},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "prepareInputCopiedDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode", "sidecar"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1},
+        "sidecar": {"$ref": "#/$defs/prepareInputSidecar"}
+      }
+    },
+    "prepareInputFile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "source_path", "container_path", "relative_path", "source", "before", "after"],
+      "properties": {
+        "role": {"enum": ["tool", "schema", "discovery_validator", "consumer_profile"]},
+        "source_path": {"type": "string", "pattern": "^(?:scripts/|configs/|<active-profile>$)"},
+        "container_path": {"$ref": "#/$defs/absolute"},
+        "relative_path": {"type": "string", "pattern": "^[^/\\\\.\\u0000\\r\\n][^/\\\\\\u0000\\r\\n]*$"},
+        "source": {"$ref": "#/$defs/prepareInputSourceDescriptor"},
+        "before": {"$ref": "#/$defs/prepareInputCopiedDescriptor"},
+        "after": {"$ref": "#/$defs/prepareInputCopiedDescriptor"}
+      }
+    },
+    "prepareInputBundle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "source_relative_root", "container_root", "mount", "copy_policy", "identity_policy", "files"],
+      "properties": {
+        "schema": {"const": "registration-plugin-rosdep-prepare-input-v1"},
+        "schema_version": {"const": 1},
+        "source_relative_root": {"const": "rosdep-prepare/input"},
+        "container_root": {"const": "/opt/registration-plugin/prepare"},
+        "mount": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source_relative", "target", "read_only", "noexec", "repository_bind"],
+          "properties": {
+            "source_relative": {"const": "rosdep-prepare/input"},
+            "target": {"const": "/opt/registration-plugin/prepare"},
+            "read_only": {"const": true}, "noexec": {"const": false},
+            "repository_bind": {"const": "forbidden"}
+          }
+        },
+        "copy_policy": {"const": "atomic-regular-0444-single-link-host-owned"},
+        "identity_policy": {"const": "source-and-pre-post-copy-descriptor-exact"},
+        "files": {"type": "array", "minItems": 4, "maxItems": 4,
+          "items": {"type": "object", "additionalProperties": false,
+            "required": ["role", "source_path", "container_path"],
+            "properties": {
+              "role": {"enum": ["tool", "schema", "discovery_validator", "consumer_profile"]},
+              "source_path": {"type": "string", "minLength": 1},
+              "container_path": {"$ref": "#/$defs/absolute"},
+              "sha256": {"$ref": "#/$defs/sha"},
+              "sha256_source": {"const": "plan_profile_sha256"}
+            }
+          }
+        }
+      }
+    },
+    "prepareInputBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "relative_root", "container_root", "mount", "files", "identity_sha256"],
+      "properties": {
+        "schema": {"const": "registration-plugin-rosdep-prepare-input-v1"},
+        "schema_version": {"const": 1},
+        "relative_root": {"const": "rosdep-prepare/input"},
+        "container_root": {"const": "/opt/registration-plugin/prepare"},
+        "mount": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source", "target", "read_only", "noexec", "repository_bind"],
+          "properties": {
+            "source": {"$ref": "#/$defs/absolute"},
+            "target": {"const": "/opt/registration-plugin/prepare"},
+            "read_only": {"const": true}, "noexec": {"const": false},
+            "repository_bind": {"const": "forbidden"}
+          }
+        },
+        "files": {"type": "array", "minItems": 4, "maxItems": 4,
+          "prefixItems": [
+            {"allOf": [{"$ref": "#/$defs/prepareInputFile"}, {"properties": {"role": {"const": "tool"}, "source_path": {"const": "scripts/prepare_registration_plugin_rosdep.py"}, "container_path": {"const": "/opt/registration-plugin/prepare/prepare_registration_plugin_rosdep.py"}}}]},
+            {"allOf": [{"$ref": "#/$defs/prepareInputFile"}, {"properties": {"role": {"const": "schema"}, "source_path": {"const": "configs/slam_benchmark_profiles/registration_plugin_rosdep_prepare_v1.schema.json"}, "container_path": {"const": "/opt/registration-plugin/prepare/registration_plugin_rosdep_prepare_v1.schema.json"}}}]},
+            {"allOf": [{"$ref": "#/$defs/prepareInputFile"}, {"properties": {"role": {"const": "discovery_validator"}, "source_path": {"const": "scripts/capture_registration_plugin_rosdep_discovery.py"}, "container_path": {"const": "/opt/registration-plugin/prepare/capture_registration_plugin_rosdep_discovery.py"}}}]},
+            {"allOf": [{"$ref": "#/$defs/prepareInputFile"}, {"properties": {"role": {"const": "consumer_profile"}, "source_path": {"const": "<active-profile>"}, "container_path": {"const": "/opt/registration-plugin/prepare/consumer-profile.json"}}}]}
+          ],
+          "items": false
+        },
+        "identity_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "prepareProfile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/absolute"}, "sha256": {"$ref": "#/$defs/sha"}}
+    },
+    "prepareImage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["digest", "platform", "repo_digests"],
+      "properties": {
+        "digest": {"$ref": "#/$defs/digest"}, "platform": {"const": "linux/amd64"},
+        "repo_digests": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "prepareArchive": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "commit", "archive_url", "archive_bytes", "archive_sha256"],
+      "properties": {
+        "repository": {"const": "https://github.com/ros/rosdistro.git"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "archive_url": {"type": "string", "pattern": "^https://codeload\\.github\\.com/ros/rosdistro/tar\\.gz/[0-9a-f]{40}$"},
+        "archive_bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "archive_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "prepareDiscoveryContract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["discovery_id", "root", "receipt", "profile", "image", "rosdistro",
+        "packages", "selected_files", "source_records", "receipt_bytes_sha256"],
+      "properties": {
+        "discovery_id": {"const": "registration-plugin-rosdep-discovery-20260827-11"},
+        "root": {"$ref": "#/$defs/absolute"},
+        "receipt": {"type": "object", "additionalProperties": false,
+          "required": ["path", "sha256", "canonical_sha256"],
+          "properties": {"path": {"$ref": "#/$defs/absolute"}, "sha256": {"$ref": "#/$defs/sha"}, "canonical_sha256": {"$ref": "#/$defs/sha"}}},
+        "profile": {"$ref": "#/$defs/prepareProfile"},
+        "image": {"$ref": "#/$defs/prepareImage"},
+        "rosdistro": {"$ref": "#/$defs/prepareArchive"},
+        "packages": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/prepareContractPackage"}},
+        "selected_files": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"$ref": "#/$defs/prepareContractSelectedFile"}},
+        "source_records": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"$ref": "#/$defs/prepareSourceFile"}},
+        "receipt_bytes_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "prepareArtifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sidecar", "bytes", "sha256", "mode", "nlink"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\.\\u0000\\r\\n][^/\\\\\\u0000\\r\\n]*(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "sidecar": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\.\\u0000\\r\\n][^/\\\\\\u0000\\r\\n]*(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "bytes": {"type": "integer", "minimum": 0, "maximum": 536870912},
+        "sha256": {"$ref": "#/$defs/sha"}, "mode": {"const": 292}, "nlink": {"const": 1}
+      }
+    },
+    "prepareRoot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "type", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"}, "type": {"const": "directory"},
+        "mode": {"const": 448}, "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0}, "nlink": {"type": "integer", "minimum": 2},
+        "device": {"type": "integer", "minimum": 0}, "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "prepareRootMount": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "target", "read_only", "type", "noexec", "identity"],
+      "properties": {
+        "source": {"$ref": "#/$defs/absolute"}, "target": {"$ref": "#/$defs/absolute"},
+        "read_only": {"const": false}, "type": {"const": "bind"}, "noexec": {"const": false},
+        "identity": {
+          "type": "object", "additionalProperties": false,
+          "required": ["device", "inode", "uid", "gid", "mode", "nlink"],
+          "properties": {
+            "device": {"type": "integer", "minimum": 0}, "inode": {"type": "integer", "minimum": 1},
+            "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+            "mode": {"const": 448}, "nlink": {"type": "integer", "minimum": 2}
+          }
+        }
+      }
+    },
+    "prepareTransportSidecar": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"}, "bytes": {"type": "integer", "minimum": 1, "maximum": 512},
+        "sha256": {"$ref": "#/$defs/sha"}, "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1}, "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "prepareTransportDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode", "sidecar"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"}, "bytes": {"type": "integer", "minimum": 1, "maximum": 536870912},
+        "sha256": {"$ref": "#/$defs/sha"}, "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1}, "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}, "sidecar": {"$ref": "#/$defs/prepareTransportSidecar"}
+      }
+    },
+    "discoveryTransportArtifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "index", "relative_path", "transport_path", "descriptor", "transport_descriptor"],
+      "properties": {
+        "role": {"enum": ["archive", "package", "selected_file"]}, "index": {"type": "integer", "minimum": 0},
+        "relative_path": {"$ref": "#/$defs/safeRelative"}, "transport_path": {"$ref": "#/$defs/absolute"},
+        "descriptor": {"$ref": "#/$defs/prepareArtifact"},
+        "transport_descriptor": {"$ref": "#/$defs/prepareTransportDescriptor"}
+      }
+    },
+    "discoveryTransport": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "logical_root", "transport_root", "mount", "artifact_count", "artifacts", "identity_sha256"],
+      "properties": {
+        "schema": {"const": "registration-plugin-discovery-transport-binding-v1"}, "schema_version": {"const": 1},
+        "logical_root": {"$ref": "#/$defs/absolute"}, "transport_root": {"$ref": "#/$defs/absolute"},
+        "mount": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source", "target", "read_only", "type", "noexec"],
+          "properties": {
+            "source": {"$ref": "#/$defs/absolute"}, "target": {"$ref": "#/$defs/absolute"},
+            "read_only": {"const": true}, "type": {"const": "bind"}, "noexec": {"const": false}
+          }
+        },
+        "artifact_count": {"const": 13},
+        "artifacts": {"type": "array", "minItems": 13, "maxItems": 13, "items": {"$ref": "#/$defs/discoveryTransportArtifact"}},
+        "identity_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "safeRelative": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\.\\u0000\\r\\n][^/\\\\\\u0000\\r\\n]*(?:/[^/\\\\\\u0000\\r\\n]+)*$"
+    },
+    "prepareReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode", "sidecar"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"}, "bytes": {"type": "integer", "minimum": 1, "maximum": 8388608},
+        "sha256": {"$ref": "#/$defs/sha"}, "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1}, "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}, "sidecar": {"$ref": "#/$defs/artifactSidecar"}
+      }
+    },
+    "prepareDiscoveryProjection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["discovery_id", "root", "receipt", "profile", "image", "rosdistro",
+        "packages", "selected_files", "source_records", "receipt_bytes_sha256"],
+      "properties": {
+        "discovery_id": {"const": "registration-plugin-rosdep-discovery-20260827-11"},
+        "root": {"$ref": "#/$defs/absolute"}, "receipt": {"$ref": "#/$defs/prepareReceiptBinding"},
+        "profile": {"$ref": "#/$defs/prepareProfile"}, "image": {"$ref": "#/$defs/prepareImage"},
+        "rosdistro": {"allOf": [{"$ref": "#/$defs/prepareArchive"}, {"type": "object", "required": ["archive_artifact"], "properties": {"archive_artifact": {"$ref": "#/$defs/prepareArtifact"}}}]},
+        "packages": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/prepareProjectionPackage"}},
+        "selected_files": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"$ref": "#/$defs/prepareProjectionSelectedFile"}},
+        "source_records": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"$ref": "#/$defs/prepareSourceFile"}},
+        "receipt_bytes_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "prepareReceiptBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "canonical_sha256", "descriptor", "transport_descriptor"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "descriptor": {"$ref": "#/$defs/prepareReceipt"},
+        "transport_descriptor": {"$ref": "#/$defs/prepareReceipt"}
+      }
+    },
+    "prepareProjectionPackage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "architecture", "filename", "sha256", "uri", "size_bytes", "artifact"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9+.-]*$"}, "version": {"type": "string", "minLength": 1},
+        "architecture": {"const": "all"}, "filename": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha"}, "uri": {"type": "string", "pattern": "^http://packages\\.ros\\.org/"},
+        "size_bytes": {"type": "integer", "minimum": 1, "maximum": 536870912}, "artifact": {"$ref": "#/$defs/prepareArtifact"}
+      }
+    },
+    "prepareProjectionSelectedFile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["relative_path", "bytes", "sha256", "artifact"],
+      "properties": {
+        "relative_path": {"type": "string", "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\\\.\\u0000\\r\\n][^/\\\\\\u0000\\r\\n]*(?:/[^/\\\\\\u0000\\r\\n]+)*$"}, "bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "sha256": {"$ref": "#/$defs/sha"}, "artifact": {"$ref": "#/$defs/prepareArtifact"}
+      }
+    },
+    "prepareExecution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["image_digest", "platform", "pull", "build", "network", "network_disconnect_required", "fallback", "runner"],
+      "properties": {
+        "image_digest": {"$ref": "#/$defs/digest"}, "platform": {"const": "linux/amd64"},
+        "pull": {"const": false}, "build": {"const": false}, "network": {"const": "none"},
+        "network_disconnect_required": {"const": true}, "fallback": {"const": "forbidden"}, "runner": {"const": "existing_prepare_tool"}
+      }
+    },
+    "prepareOutput": {
+      "type": "object", "additionalProperties": false,
+      "required": ["receipt_relative", "source_and_cache", "deb_inputs"],
+      "properties": {
+        "receipt_relative": {"const": "rosdep-prepare/registration_plugin_rosdep_prepare.receipt.json"},
+        "source_and_cache": {"const": "receipt-bound-sealed-descriptors"}, "deb_inputs": {"const": "discovery-11-exact-four"}
+      }
+    },
+    "preparePromotion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "benchmark_eligible", "claim_eligible", "active_profile_switch", "promotion"],
+      "properties": {
+        "status": {"const": "REVIEW_REQUIRED"}, "benchmark_eligible": {"const": false},
+        "claim_eligible": {"const": false}, "active_profile_switch": {"const": false},
+        "promotion": {"const": "FORBIDDEN_UNTIL_SIGNED_REVIEW"}
+      }
+    },
+    "prepareMountPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "identity", "entries"],
+      "properties": {
+        "schema": {"const": "registration-plugin-rosdep-prepare-mount-policy-v1"},
+        "schema_version": {"const": 1},
+        "identity": {"const": "ordered-host-source-container-target-bindings-v1"},
+        "entries": {
+          "type": "array", "minItems": 8, "maxItems": 8,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["role", "source", "target", "read_only", "type", "noexec"],
+            "properties": {
+              "role": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+              "source": {"type": "string", "minLength": 1},
+              "target": {"type": "string", "minLength": 1},
+              "read_only": {"type": "boolean"}, "type": {"const": "bind"},
+              "noexec": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    "rosdepPreparePolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "phase_order", "tool", "schema_binding", "input_bundle", "mount_policy", "discovery", "execution", "output", "promotion"],
+      "properties": {
+        "schema": {"const": "registration-plugin-rosdep-prepare-contract-v1"}, "schema_version": {"const": 1},
+        "phase_order": {"const": ["dependency_install", "network_disconnect", "rosdep_prepare", "rosdep_resolution"]},
+        "tool": {"$ref": "#/$defs/prepareSourceBinding"}, "schema_binding": {"$ref": "#/$defs/prepareSourceBinding"},
+        "input_bundle": {"$ref": "#/$defs/prepareInputBundle"},
+        "mount_policy": {"$ref": "#/$defs/prepareMountPolicy"},
+        "discovery": {"$ref": "#/$defs/prepareDiscoveryContract"}, "execution": {"$ref": "#/$defs/prepareExecution"},
+        "output": {"$ref": "#/$defs/prepareOutput"}, "promotion": {"$ref": "#/$defs/preparePromotion"}
+      }
+    },
+    "rosdepPrepareContract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "required", "phase_order", "tool", "schema_binding", "input_bundle", "mount_policy", "capture_profile", "discovery", "execution", "output", "promotion", "identity_sha256"],
+      "properties": {
+        "schema": {"const": "registration-plugin-rosdep-prepare-contract-v1"}, "schema_version": {"const": 1},
+        "required": {"type": "boolean"},
+        "phase_order": {"const": ["dependency_install", "network_disconnect", "rosdep_prepare", "rosdep_resolution"]},
+        "tool": {"$ref": "#/$defs/prepareSourceBinding"}, "schema_binding": {"$ref": "#/$defs/prepareSourceBinding"}, "input_bundle": {"$ref": "#/$defs/prepareInputBundle"}, "mount_policy": {"$ref": "#/$defs/prepareMountPolicy"},
+        "capture_profile": {"$ref": "#/$defs/prepareProfile"}, "discovery": {"$ref": "#/$defs/prepareDiscoveryContract"},
+        "execution": {"$ref": "#/$defs/prepareExecution"}, "output": {"$ref": "#/$defs/prepareOutput"},
+        "promotion": {"$ref": "#/$defs/preparePromotion"}, "identity_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "rosdepPrepareProjection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required", "status", "receipt", "canonical_sha256", "discovery", "root", "transport_root", "root_mount", "discovery_transport", "source_list", "cache_tree", "deb_artifacts", "input_binding"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "status": {"enum": ["NOT_CONFIGURED", "NOT_RUN", "REVIEW_REQUIRED", "PARTIAL_FAILURE_REVIEW_REQUIRED"]},
+        "receipt": {"oneOf": [{"$ref": "#/$defs/prepareReceipt"}, {"type": "null"}]},
+        "canonical_sha256": {"oneOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]},
+        "discovery": {"oneOf": [{"$ref": "#/$defs/prepareDiscoveryProjection"}, {"type": "null"}]},
+        "root": {"oneOf": [{"$ref": "#/$defs/prepareRoot"}, {"type": "null"}]},
+        "transport_root": {"oneOf": [{"$ref": "#/$defs/prepareRoot"}, {"type": "null"}]},
+        "root_mount": {"oneOf": [{"$ref": "#/$defs/prepareRootMount"}, {"type": "null"}]},
+        "discovery_transport": {"oneOf": [{"$ref": "#/$defs/discoveryTransport"}, {"type": "null"}]},
+        "source_list": {"oneOf": [{"$ref": "#/$defs/prepareArtifact"}, {"type": "null"}]},
+        "cache_tree": {"oneOf": [{"$ref": "#/$defs/prepareArtifact"}, {"type": "null"}]},
+        "deb_artifacts": {"type": "array", "maxItems": 4, "items": {"$ref": "#/$defs/prepareArtifact"}},
+        "input_binding": {"oneOf": [{"$ref": "#/$defs/prepareInputBinding"}, {"type": "null"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"required": {"const": false}}}, "then": {"properties": {"status": {"const": "NOT_CONFIGURED"}, "receipt": {"type": "null"}, "canonical_sha256": {"type": "null"}, "discovery": {"type": "null"}, "root": {"type": "null"}, "transport_root": {"type": "null"}, "root_mount": {"type": "null"}, "discovery_transport": {"type": "null"}, "source_list": {"type": "null"}, "cache_tree": {"type": "null"}, "deb_artifacts": {"const": []}, "input_binding": {"type": "null"}}}},
+        {"if": {"properties": {"status": {"const": "NOT_RUN"}}}, "then": {"properties": {"required": {"const": true}, "receipt": {"type": "null"}, "canonical_sha256": {"type": "null"}, "discovery": {"type": "null"}, "root": {"type": "null"}, "transport_root": {"type": "null"}, "root_mount": {"type": "null"}, "discovery_transport": {"type": "null"}, "source_list": {"type": "null"}, "cache_tree": {"type": "null"}, "deb_artifacts": {"const": []}}}}
+      ]
+    },
+    "restoreOwnerPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "phase_order", "reference_mode",
+        "reference_mount", "mount_access", "command", "mode_policy",
+        "target_children", "identity", "cleanup", "before_policy", "transient_owner"],
+      "properties": {
+        "schema": {"const": "registration-plugin-apt-partial-owner-restore-v1"},
+        "schema_version": {"const": 1},
+        "phase_order": {"const": ["restore_build_partial_owner", "restore_runtime_partial_owner"]},
+        "reference_mode": {"const": 448},
+        "reference_mount": {"const": "ordered-host-source-container-target-bindings-v1"},
+        "mount_access": {"const": "read-only-bind"},
+        "command": {"const": "docker-exec-chown-reference"},
+        "mode_policy": {"const": "reference-mode-verified"},
+        "target_children": {"const": "empty-before-and-after"},
+        "identity": {"const": "host-dev-inode-owner-mode-nlink-pre-post"},
+        "cleanup": {"const": "no-post-hoc-chown-or-chmod"},
+        "before_policy": {"const": "presealed-lstat-only-on-exact-transient-owner"},
+        "transient_owner": {"$ref": "#/$defs/aptTransientOwnerPolicy"}
+      }
+    },
+    "aptTransientOwnerPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "identities", "identity_evidence", "binding"],
+      "properties": {
+        "schema": {"const": "registration-plugin-apt-transient-owner-policy-v2"},
+        "schema_version": {"const": 2},
+        "identities": {"const": [
+          {"distro": "humble", "name": "_apt", "uid": 100, "gid": 0},
+          {"distro": "jazzy", "name": "_apt", "uid": 42, "gid": 0}
+        ]},
+        "identity_evidence": {"const": "profile-distro-image-digest-and-base-status/passwd"},
+        "binding": {"const": "distro-profile-image-digest"}
+      }
+    },
+    "aptTransientOwnerBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "distro", "name", "uid", "gid", "identity_evidence", "binding", "profile_sha256", "image_digest"],
+      "properties": {
+        "schema": {"const": "registration-plugin-apt-transient-owner-binding-v2"},
+        "schema_version": {"const": 2}, "distro": {"enum": ["humble", "jazzy"]},
+        "name": {"const": "_apt"}, "uid": {"enum": [42, 100]}, "gid": {"const": 0},
+        "identity_evidence": {"const": "profile-distro-image-digest-and-base-status/passwd"},
+        "binding": {"const": "distro-profile-image-digest"},
+        "profile_sha256": {"$ref": "#/$defs/sha"},
+        "image_digest": {"$ref": "#/$defs/digest"}
+      },
+      "oneOf": [
+        {"properties": {"distro": {"const": "humble"}, "uid": {"const": 100}}},
+        {"properties": {"distro": {"const": "jazzy"}, "uid": {"const": 42}}}
+      ]
+    },
+    "restoreOwnerMountSpec": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "source", "target", "target_partial", "read_only", "type", "noexec"],
+      "properties": {
+        "role": {"enum": ["build", "runtime"]},
+        "source": {"$ref": "#/$defs/absolute"},
+        "target": {"$ref": "#/$defs/absolute"},
+        "target_partial": {"$ref": "#/$defs/absolute"},
+        "read_only": {"const": true}, "type": {"const": "bind"}, "noexec": {"const": false}
+      }
+    },
+    "restoreOwnerChild": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "type", "device", "inode", "uid", "gid", "mode", "nlink"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[^/\\\\\\u0000\\r\\n]+$"},
+        "type": {"enum": ["regular", "directory", "symlink", "fifo", "socket", "other"]},
+        "device": {"type": "integer", "minimum": 0}, "inode": {"type": "integer", "minimum": 1},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "mode": {"type": "integer", "minimum": 0, "maximum": 511},
+        "nlink": {"type": "integer", "minimum": 1}
+      }
+    },
+    "restoreOwnerDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "type", "device", "inode", "uid", "gid", "mode", "nlink", "children"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"}, "type": {"const": "directory"},
+        "device": {"type": "integer", "minimum": 0}, "inode": {"type": "integer", "minimum": 1},
+        "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0},
+        "mode": {"const": 448}, "nlink": {"type": "integer", "minimum": 2},
+        "children": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/restoreOwnerChild"}}
+      }
+    },
+    "restoreOwnerMountBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "source", "target", "target_partial", "read_only", "type", "noexec", "pre", "post", "runtime"],
+      "properties": {
+        "role": {"enum": ["build", "runtime"]},
+        "source": {"$ref": "#/$defs/absolute"},
+        "target": {"$ref": "#/$defs/absolute"},
+        "target_partial": {"$ref": "#/$defs/absolute"},
+        "read_only": {"const": true}, "type": {"const": "bind"}, "noexec": {"const": false},
+        "pre": {"oneOf": [{"$ref": "#/$defs/restoreOwnerDescriptor"}, {"type": "null"}]},
+        "post": {"oneOf": [{"$ref": "#/$defs/restoreOwnerDescriptor"}, {"type": "null"}]},
+        "runtime": {"oneOf": [{"$ref": "#/$defs/restoreOwnerMountSpec"}, {"type": "null"}]}
+      }
+    },
+    "restoreOwnerPhase": {
+      "type": "object", "additionalProperties": false,
+      "required": ["phase", "role", "argv", "argv_sha256", "returncode", "observed_returncode",
+        "stdout", "stderr", "reference_mount", "target_relative", "target",
+        "apt_identity", "target_presealed", "target_before_observation",
+        "reference_before", "reference_after", "target_before", "target_after",
+        "children_before", "children_after", "status"],
+      "properties": {
+        "phase": {"enum": ["restore_build_partial_owner", "restore_runtime_partial_owner"]},
+        "role": {"enum": ["build", "runtime"]},
+        "argv": {"type": "array", "minItems": 1, "items": {"type": "string", "maxLength": 2048}},
+        "argv_sha256": {"$ref": "#/$defs/sha"},
+        "returncode": {"type": "integer", "minimum": -255, "maximum": 255},
+        "observed_returncode": {"type": "integer", "minimum": -255, "maximum": 255},
+        "stdout": {"$ref": "#/$defs/logDescriptor"}, "stderr": {"$ref": "#/$defs/logDescriptor"},
+        "reference_mount": {"$ref": "#/$defs/restoreOwnerMountSpec"},
+        "target_relative": {"type": "string", "pattern": "^[^/\\\\\\u0000\\r\\n]+(?:/[^/\\\\\\u0000\\r\\n]+)*$"},
+        "target": {"$ref": "#/$defs/absolute"},
+        "apt_identity": {"$ref": "#/$defs/aptTransientOwnerBinding"},
+        "target_presealed": {"$ref": "#/$defs/restoreOwnerDescriptor"},
+        "target_before_observation": {"enum": ["scandir_presealed_empty", "lstat_only_presealed_empty"]},
+        "reference_before": {"$ref": "#/$defs/restoreOwnerDescriptor"},
+        "reference_after": {"$ref": "#/$defs/restoreOwnerDescriptor"},
+        "target_before": {"$ref": "#/$defs/restoreOwnerDescriptor"},
+        "target_after": {"$ref": "#/$defs/restoreOwnerDescriptor"},
+        "children_before": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/restoreOwnerChild"}},
+        "children_after": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/restoreOwnerChild"}},
+        "status": {"enum": ["PASS", "FAILED"]}
+      }
+    },
+    "restoreOwner": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "policy", "references", "phases", "identity_sha256"],
+      "properties": {
+        "schema": {"const": "registration-plugin-apt-partial-owner-restore-v1"},
+        "schema_version": {"const": 1}, "policy": {"$ref": "#/$defs/restoreOwnerPolicy"},
+        "references": {"type": "array", "minItems": 2, "maxItems": 2,
+          "prefixItems": [{"$ref": "#/$defs/restoreOwnerMountBinding"}, {"$ref": "#/$defs/restoreOwnerMountBinding"}], "items": false},
+        "phases": {"type": "array", "maxItems": 2,
+          "prefixItems": [{"$ref": "#/$defs/restoreOwnerPhase"}, {"$ref": "#/$defs/restoreOwnerPhase"}], "items": false},
+        "identity_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "error": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "message"],
+      "properties": {"kind": {"type": "string", "minLength": 1, "maxLength": 128},
+        "message": {"type": "string", "maxLength": 2048}}
+    }
+  }
+}

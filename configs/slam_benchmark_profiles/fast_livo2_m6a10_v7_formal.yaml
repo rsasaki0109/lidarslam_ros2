@@ -1,0 +1,178 @@
+# FAST-LIVO2 M6a10-v2c v7 bounded implementation preregistration.
+#
+# This file binds the immutable v7 build, identity-preflight, and quiescence
+# gates for one input-only formal replay.  The replay result remains null until
+# the single authorized run closes.  Ground-truth and scorer paths are absent
+# by contract.
+name: fast_livo2_m6a10_v2c_v7_bounded
+competitive_slam_profile:
+  m6a10_fast_livo2_v2c_v7:
+    schema_version: 2
+    contract_id: m6a10-v2c-fast-livo2-single-inflight-v2-watchdog-v1
+    status: build_passed_not_executed
+    result: null
+    predecessor:
+      profile_path: configs/slam_benchmark_profiles/fast_livo2_m6a10_v6_formal.yaml
+      output_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v6
+      closure_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v6/closure_receipt_20260823T011820Z.json
+      closure_receipt_sha256: 07c3758cd984210adae1a72d50540d61712eeb3ef60642a2840cba536abc0fb4
+      status: FAIL_CLOSED
+      failure_kind: feeder_stall_before_first_publish_status_rpc
+      result: null
+    input:
+      path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+      bytes: 11290464091
+      sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+      expected_messages: 236687
+      expected_topic_counts:
+        lidar: 5793
+        imu: 225102
+        image: 5792
+    phase:
+      contract_version: m6a10-online-compute-v2
+      drain_timeout_seconds: 60
+      maximum_callback_latency_seconds: 0.25
+      maximum_online_compute_rtf: 1.0
+      maximum_end_gap_seconds: 0.25
+    source:
+      revision: 0d2c0346107b75b59934975adec9a6eeeb913c64
+      rpg_revision: 6c886c8e5d83997806e00294826d528cea3581dd
+      patch_path: docker/patches/fast_livo2.m6a10-v2c.patch
+      patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+    image_labels:
+      patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+      feeder_sha256: 1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831
+      runner_sha256: cf1120f79c0cf2c10eab309ec56e6edc93f6045ec2d80c5821263c8af2f2cf30
+      consumer_contract: m6a10-v2c-fast-livo2-single-inflight-v2-watchdog-v1
+      queue_overflow_capability: single_inflight_exact_count_observed
+      watchdog_contract: m6a10-fast-livo2-host-watchdog-v2
+      consumer_capability: callback_acceptance_eof_service_v1
+      observability_contract: m6a10-fast-livo2-observable-supervision-v2-watchdog
+    execution:
+      image_tag: m6a10-v2c-v7-watchdog-fast-livo2-benchmark:ros1-pinned
+      image_id: sha256:69dc479c131b25bda63ede9e0ab7f12d7654f2c4aaa69f8440db0e57ccd96b45
+      image_digest: sha256:69dc479c131b25bda63ede9e0ab7f12d7654f2c4aaa69f8440db0e57ccd96b45
+      status: build_passed_not_executed
+      image_reuse_forbidden: true
+      build_required: false
+      image_inspect_sha256: ecf75e7c0c47df700ac9ebcecd27f30d6cdd7441918521bbbeb833b84ec50adc
+      labels_canonical_sha256: c2641cc4cc0616476542f312fbd6e69af3498e3313a51eb64fd0f3d38c4e9245
+      labels_raw_sha256: d43052d22066ad2a3ef488371c3ee083b61cba579a98fbf8152d7c65a6824562
+      build_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v7portable-20260823/build_receipt.json
+      build_receipt_sha256: ef23ec3c7dfb91762263d1db17d7d93781d8a93c5bfbbbb494850e897909e700
+      execution_identity_preflight_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-execution-preflight-v7watchdog-20260823-v2/identity_preflight.json
+      execution_identity_preflight_sha256: ad5c70bf82aa2596ce8bb080d529ee3f33aac97adb6c9e7c26d3c48f3043b122
+      execution_identity_preflight_status: PASS
+      recipe_path: docker/fast_livo2_benchmark.Dockerfile
+      recipe_sha256: 1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5
+      build_entrypoint_path: scripts/build_competitive_benchmark_images.sh
+      build_entrypoint_sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
+      network: none
+      rootfs: read_only
+      input_mount: /input/raw_input.bag:ro
+      parent_asset_mount_forbidden: true
+      ground_truth_mount_forbidden: true
+      scorer_mount_forbidden: true
+    feeder:
+      path: scripts/fast_livo2_m6a10_feeder.py
+      sha256: 1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831
+      python_compatibility: python3.8
+      rpc_timeout_mechanism: main_thread_signal_timer_and_transport_socket_timeout
+      rpc_timeout_thread_leak_free: true
+      bounded_operations:
+        - consumer_status
+        - publisher_connection
+        - publisher_publish
+        - callback_status_polling
+        - consumer_ack
+        - consumer_eof
+      publish_phase_marker: feeder_progress.json
+      publish_phase_marker_states:
+        - pre_publish
+        - post_publish
+      failure_diagnostic_path: feeder_failure.json
+      failure_diagnostic_immutable: true
+    runner:
+      path: scripts/run_fast_livo2_benchmark.py
+      sha256: cf1120f79c0cf2c10eab309ec56e6edc93f6045ec2d80c5821263c8af2f2cf30
+      phase_entrypoint_path: scripts/fast_livo2_container_run.sh
+      phase_entrypoint_sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
+      watchdog_child_path: scripts/run_fast_livo2_benchmark.py
+      watchdog_child_contract: m6a10-fast-livo2-host-watchdog-v2
+      run_json_written_on_outer_agent_loss: true
+      lifecycle_written_on_outer_agent_loss: true
+    watchdog:
+      contract_id: m6a10-fast-livo2-host-watchdog-v2
+      enabled: true
+      max_runtime_seconds: 900
+      term_grace_seconds: 15
+      poll_interval_seconds: 2
+      stats_interval_seconds: 5
+      timeout_scope: global_container_and_run_wall_clock
+      diagnostics_before_stop:
+        - docker_inspect
+        - docker_stats
+        - docker_top
+      diagnostic_capture_order:
+        - docker_inspect
+        - docker_stats
+        - docker_top
+      stop_order:
+        - capture_diagnostics
+        - docker_stop_term_with_grace
+        - docker_kill_if_still_running
+        - write_run_json_and_lifecycle
+      bounded_stop_authorized_only_on_watchdog_trigger: true
+      manual_stop_allowed: false
+      manual_retry_allowed: false
+      natural_completion_allowed: true
+      detached_survivor_required: true
+    consumer:
+      expected_messages: 236687
+      expected_topic_counts:
+        lidar: 5793
+        imu: 225102
+        image: 5792
+      maximum_callback_latency_seconds: 0.25
+      maximum_backlog_messages: 100000
+      queue_overflow_observable: true
+      ack_backpressure_verified: true
+    safety:
+      input_only_mount: true
+      ground_truth_mount_exposed: false
+      ground_truth_content_opened: false
+      scorer_invoked: false
+      map_save: false
+    build:
+      status: PASS
+      authoritative: true
+      receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v7portable-20260823/build_receipt.json
+      receipt_sha256: ef23ec3c7dfb91762263d1db17d7d93781d8a93c5bfbbbb494850e897909e700
+    preflight:
+      identity_status: PASS
+      identity_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-execution-preflight-v7watchdog-20260823-v2/identity_preflight.json
+      identity_receipt_sha256: ad5c70bf82aa2596ce8bb080d529ee3f33aac97adb6c9e7c26d3c48f3043b122
+      quiescence_status: PASS
+      quiescence_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-execution-quiescence-v7watchdog-20260823/quiescence.json
+      quiescence_receipt_sha256: c0e0745b99b326d7bb9bb358d1cab3682805c2d110eed03ea578c543f5244a38
+      runner_start_allowed: true
+      input_mount_performed: false
+      ground_truth_mount_forbidden: true
+      scorer_mount_forbidden: true
+    quiescence:
+      status: PASS
+      receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-execution-quiescence-v7watchdog-20260823/quiescence.json
+      receipt_sha256: c0e0745b99b326d7bb9bb358d1cab3682805c2d110eed03ea578c543f5244a38
+      runner_start_allowed: true
+      ground_truth_content_opened: false
+      scorer_invoked: false
+    output:
+      root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_formal_replay_v7_20260823T1058JST
+      overwrite_existing: false
+      repetitions: 1
+      retry_count: 0
+      preregistration_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_formal_replay_v7_20260823T1058JST/preregistration.json
+      run_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_formal_replay_v7_20260823T1058JST/run_01
+      closure_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_formal_replay_v7_20260823T1058JST/closure_receipt.json
+      forbidden_globs: ['*.pcd', '*map*', '*.bag', '*.db3', '*.part']
+      ground_truth_or_scorer_paths: forbidden

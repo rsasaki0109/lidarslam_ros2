@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-claim-readme-publication-v1",
+  "title": "Generated competitive claim README guard configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "config_kind", "status", "repository_root",
+    "readme_path", "markers", "placeholder", "publication_spec",
+    "sealed_root", "legacy_allowlist_policy", "legacy_allowlist_revision",
+    "legacy_allowlist", "forbidden_patterns", "config_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "config_kind": {"const": "competitive_claim_readme_publication"},
+    "status": {"enum": ["NOT_READY", "READY"]},
+    "repository_root": {"type": "string", "minLength": 1},
+    "readme_path": {"$ref": "#/$defs/relativePath"},
+    "markers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["begin", "end"],
+      "properties": {
+        "begin": {"type": "string", "minLength": 1},
+        "end": {"type": "string", "minLength": 1}
+      }
+    },
+    "placeholder": {"type": "string", "minLength": 1},
+    "publication_spec": {
+      "anyOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/relativePath"}
+      ]
+    },
+    "sealed_root": {
+      "anyOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/relativePath"}
+      ]
+    },
+    "legacy_allowlist_policy": {"type": "string", "minLength": 1},
+    "legacy_allowlist_revision": {"type": "integer", "const": 1},
+    "legacy_allowlist": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/legacyParagraph"}
+    },
+    "forbidden_patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "config_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "NOT_READY"}}},
+      "then": {
+        "properties": {
+          "publication_spec": {"type": "null"},
+          "sealed_root": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "READY"}}},
+      "then": {
+        "required": ["publication_spec", "sealed_root"],
+        "properties": {
+          "publication_spec": {"$ref": "#/$defs/relativePath"},
+          "sealed_root": {"$ref": "#/$defs/relativePath"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*//)(?!.*(^|/)\\.\\.?(/|$))[^\\u0000]+$"
+    },
+    "legacyParagraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacy_id", "heading", "sha256"],
+      "properties": {
+        "legacy_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "heading": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

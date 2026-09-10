@@ -1,0 +1,57 @@
+# Additive v23 shared-auth integration candidate.  Existing v22 artifacts and
+# source remain immutable; no formal replay is authorized by this profile.
+schema_version: 1
+status: V23_FORMAL_CANDIDATE_UNAUTHORIZED
+formal_replay_forbidden: true
+formal_replay_authorized: false
+formal_replay_started: false
+replay_count: 0
+
+candidate:
+  status: UNAUTHORIZED_NOT_RUN
+  authorization_status: UNAUTHORIZED_NOT_INSTALLED
+  v23_launcher_path: scripts/run_fast_livo2_m6a10_v23_formal.py
+  shared_auth_path: scripts/fast_livo2_m6a10_v23_shared_auth.py
+  shared_auth_sha256: cee94ad0dfa83f30bd2063856c5108fa5e8f1f6ce82b305dd8f03c713dfbc9b7
+  synthetic_authorizer_path: scripts/authorize_fast_livo2_m6a10_v23_synthetic_runtime.py
+  synthetic_authorizer_sha256: d488754f1afb0094a0d9702135415bce84a406cf85105f73a22e2eac533a93cd
+  synthetic_auth_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v23_synthetic_runtime_authorization_20260824T044145Z_agentv23/synthetic_runtime_authorization.receipt.json
+  synthetic_auth_receipt_sha256: 909b736466c28d1bad32412856984f4c5c7b75b82cae51a22d62911e717fec3b
+  synthetic_auth_sidecar_sha256: 960aa2a813085b01c50b1fc2bec5f2e552c650bc8e3b203caddfdb2d4fa9933b
+  synthetic_runtime_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v23_synthetic_runtime_20260824T044145Z_agentv23
+  v22_authorized_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v22_formal_authorization2_20260824T041708Z_agentv22/formal_authorization.receipt.json
+  v22_authorized_receipt_sha256: 73076240a13335040945c70e1c5b69287f7277e92e6d96948a444e2ec4ae66c4
+  v22_authorized_sidecar_sha256: ca069e5c95e99fe3249942e35a4dc21325b424ce85c1be85dffafda2dc333cc1
+  v22_authorized_attempt_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v22_formal_replay2_20260824T041708Z_agentv22formal
+  v22_pre_popen_failure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v22_formal_authorization_20260824T024547Z_agentv22/formal_authorization.receipt.json
+  v22_pre_popen_failure_sha256: 1eaded90ebf66b208a787cd34201b7433fde026f65b2fecd85e357a1a6ad819c
+  v22_pre_popen_failure_kind: HOST_QUIESCENCE_CPU_LIMIT
+  v19_adapter_path: scripts/fast_livo2_m6a10_v19_base_adapter.py
+  v19_adapter_sha256: 61b3396aa54079773aa7066e5652527e27ddaa46121650b711f61807d0c82846
+  v19_authorizer_path: scripts/authorize_fast_livo2_m6a10_v19_formal.py
+  v19_authorizer_sha256: 0de44fa9a44423c59ab7587acc567a9a7a1dac3b03a64c0672d49e9f7dfb15c9
+  v19_launcher_path: scripts/run_fast_livo2_m6a10_v19_formal.py
+  v19_launcher_sha256: 854c138fe0673fd82766e0c26a262616c3c883577d1ab781ebabc3822fb8528a
+  v22_authorizer_path: scripts/authorize_fast_livo2_m6a10_v22_formal.py
+  v22_authorizer_sha256: 3d42b3b99efd9e42e0d2c3974aea0027a1f8bd3c87f9cb425260d03bf98bfa7b
+  v22_launcher_path: scripts/run_fast_livo2_m6a10_v22_formal.py
+  v22_launcher_sha256: d8c4dcf136cd6d9cecce48e79315cdb7b6aaa02ec07692d34bdacd10f2f10b87
+  v22_profile_path: configs/slam_benchmark_profiles/fast_livo2_m6a10_v22_formal_candidate.yaml
+  v22_profile_sha256: 22340b8a66906b745e334072737e0112df5e2910c33bb66abe5ce36ae867c2aa
+  v22_phase_contract: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+  v22_transport_contract: m6a10-v12-callback-ack-transport-outstanding-v1
+  image_tag: m6a10-v2c-v17-retryable-abort-correction-20260823t224017z-fast-livo2-benchmark:ros1-pinned
+  image_id: sha256:f1432426af64e76d9ad9c655a8727d35c2fb0a03753502ada3b21187638f747c
+
+safety:
+  formal_replay_started: false
+  input_opened: false
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false
+
+lineage:
+  v22_authorized_receipt_is_read_only_fixture: true
+  v22_pre_popen_failure_is_read_only_lineage: true
+  v19_shared_adapter_is_unique_receipt_reader: true
+  production_runtime_installed: false

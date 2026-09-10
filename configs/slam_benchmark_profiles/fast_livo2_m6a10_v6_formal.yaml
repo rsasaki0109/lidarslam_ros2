@@ -1,0 +1,84 @@
+# FAST-LIVO2 M6a10-v2c v6 formal replay profile.
+#
+# This is an additive, input-only profile.  The identity and quiescence
+# receipts named below are immutable gates captured before the single replay.
+# Ground truth and scorer paths are intentionally absent.
+name: fast_livo2_m6a10_v2c_v6_formal
+competitive_slam_profile:
+  m6a10_fast_livo2_v2c:
+    schema_version: 1
+    contract_id: m6a10-v2c-fast-livo2-single-inflight-v1
+    status: build_passed_not_executed
+    result: null
+    input:
+      path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+      bytes: 11290464091
+      sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+      expected_messages: 236687
+    phase:
+      contract_version: m6a10-online-compute-v2
+      drain_timeout_seconds: 60
+      maximum_callback_latency_seconds: 0.25
+      maximum_online_compute_rtf: 1.0
+      maximum_end_gap_seconds: 0.25
+    source:
+      revision: 0d2c0346107b75b59934975adec9a6eeeb913c64
+      rpg_revision: 6c886c8e5d83997806e00294826d528cea3581dd
+      patch_path: docker/patches/fast_livo2.m6a10-v2c.patch
+      patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+    image_labels:
+      patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+      feeder_sha256: 8f23d7283e4df30db5da2df41154a0908566bcf95c5b962619376b1f8267b32e
+      consumer_contract: m6a10-v2c-fast-livo2-single-inflight-v1
+      queue_overflow_capability: single_inflight_exact_count_observed
+    execution:
+      image_tag: m6a10-v2c-v6portable-fast-livo2-benchmark:ros1-pinned
+      image_id: sha256:97ce7d51757610f13d3c0c8561356332b26254f1afed4763589c7b7134620c42
+      image_digest: sha256:97ce7d51757610f13d3c0c8561356332b26254f1afed4763589c7b7134620c42
+      build_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v6portable-20260823/build_receipt.json
+      build_receipt_sha256: fdf80903113ba7a0a93347e9f725dee5abd145e42984c251e520f241d685252c
+      execution_identity_preflight_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-execution-preflight-v6portable-20260823-v3/identity_preflight.json
+      execution_identity_preflight_sha256: e698f94147f2c574d15d6734583f47b78df5da21b5dc993d6de128e4220396a1
+      execution_identity_preflight_status: PASS
+      execution_identity_preflight_script_sha256: 139cad1da81b251bd6fa4aca642960c70c2c768ecf526a9a196683222013063d
+      image_inspect_sha256: 0e45d3600abc0300b0f0e23e8294b62cbf0b53b9edd8451ffcf795393e0f17e8
+      labels_canonical_sha256: 2ad1f273faf7160804e40a865dbe2cd4b74b85f64733f20c9ef5c584b1f67257
+      network: none
+      rootfs: read_only
+      input_mount: /input/raw_input.bag:ro
+      parent_asset_mount_forbidden: true
+      ground_truth_mount_forbidden: true
+      scorer_mount_forbidden: true
+    feeder:
+      path: scripts/fast_livo2_m6a10_feeder.py
+      sha256: 8f23d7283e4df30db5da2df41154a0908566bcf95c5b962619376b1f8267b32e
+    runner:
+      path: scripts/run_fast_livo2_benchmark.py
+      sha256: 54db99e7f9da588baff33973490efb5474d86ca9888b1dae9578621810c38d48
+      phase_entrypoint_path: scripts/fast_livo2_container_run.sh
+      phase_entrypoint_sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
+    consumer:
+      expected_messages: 236687
+      expected_topic_counts:
+        lidar: 5793
+        imu: 225102
+        image: 5792
+      maximum_callback_latency_seconds: 0.25
+      maximum_backlog_messages: 100000
+      queue_overflow_observable: true
+      ack_backpressure_verified: true
+    safety:
+      ground_truth_mount_exposed: false
+      ground_truth_content_opened: false
+      scorer_invoked: false
+    quiescence:
+      status: PASS
+      receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-execution-quiescence-v6portable-20260823/quiescence.json
+      receipt_sha256: 8d5c9c3ced1f64d5f0f3c3f2182da06a4d1f09ddc270bf9ed1dfa954a613d6e0
+      runner_start_allowed: true
+      ground_truth_content_opened: false
+      scorer_invoked: false
+    output:
+      root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v6
+      overwrite_existing: false
+      forbidden_globs: ['*.pcd', '*map*', '*.bag', '*.db3', '*.part']

@@ -1,0 +1,41 @@
+{
+  "schema": "competitive_execution_r3_fresh_holdout_closure_review_trust_policy_v1",
+  "schema_version": 1,
+  "status": "NOT_READY",
+  "benchmark_eligible": false,
+  "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
+  "closure_kind": "fresh_holdout_authorization",
+  "candidate_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
+    "file_sha256": "08548ed7f4afafc7575657477601bdc063415e248a3c345ca9e9576c522849c7",
+    "candidate_identity_sha256": "b79d6fb6b6eba73d0db1dbe094a283b33ec2fe78a5d0e27933e892401df1c584",
+    "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
+    "status": "NOT_READY"
+  },
+  "profile_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
+    "file_sha256": "ba426b7b7fbe543c56fc813a144c0079633b447591ba8b565a910e1745d137bd",
+    "canonical_sha256": "b9a454ae9fbb3ffc01348b76aa5086f6c3f8965c7d86721dd6cc3c9396431d31",
+    "canonical_hash_kind": "canonical_profile_sha256_v1"
+  },
+  "response_schema_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_execution_r3_fresh_holdout_closure_review_response_v1.schema.json",
+    "file_sha256": "49937a6d37a8aaf59660f7b870e2f9d236e766c3f9e1f77b68331ca9515c6eba",
+    "schema": "competitive_execution_r3_fresh_holdout_closure_review_response_v1"
+  },
+  "verifier": {
+    "path": "scripts/validate_competitive_execution_r3_runtime_closure_review.py",
+    "file_sha256": "f3c54d9e919c08bcf91f440ea21f7a01a84b8b85cd192fa52129fae9021f15fa",
+    "implementation": "competitive_execution_r3_runtime_closure_review_v1",
+    "backend": {
+      "name": "python-cryptography",
+      "version": "46.0.5",
+      "implementation": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify",
+      "implementation_file": "scripts/validate_competitive_execution_r3_runtime_closure_review.py",
+      "implementation_sha256": "f3c54d9e919c08bcf91f440ea21f7a01a84b8b85cd192fa52129fae9021f15fa"
+    }
+  },
+  "authorized_keys": [],
+  "nonce_policy": {"minimum_length": 32, "maximum_length": 128, "one_shot_ledger_required": true},
+  "policy_identity_sha256": "45515c1184b42175ccef534cdd61d603de5d4b2ccf5e535ba5af5f472f97bae1"
+}
