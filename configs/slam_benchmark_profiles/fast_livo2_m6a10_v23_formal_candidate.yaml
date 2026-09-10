@@ -35,7 +35,7 @@ candidate:
   v22_authorizer_path: scripts/authorize_fast_livo2_m6a10_v22_formal.py
   v22_authorizer_sha256: 3d42b3b99efd9e42e0d2c3974aea0027a1f8bd3c87f9cb425260d03bf98bfa7b
   v22_launcher_path: scripts/run_fast_livo2_m6a10_v22_formal.py
-  v22_launcher_sha256: d8c4dcf136cd6d9cecce48e79315cdb7b6aaa02ec07692d34bdacd10f2f10b87
+  v22_launcher_sha256: a334aacb1a3a7b09b060ee8e2d3e3f5cc413a7fbb3ee71a484b18c4d62507c65
   v22_profile_path: configs/slam_benchmark_profiles/fast_livo2_m6a10_v22_formal_candidate.yaml
   v22_profile_sha256: 22340b8a66906b745e334072737e0112df5e2910c33bb66abe5ce36ae867c2aa
   v22_phase_contract: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary

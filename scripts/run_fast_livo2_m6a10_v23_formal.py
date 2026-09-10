@@ -25,7 +25,7 @@ import lidarslam_benchmark_tools.fast_livo2_m6a10_v23_shared_auth as shared_auth
 
 ROOT = Path(__file__).resolve().parents[1]
 PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v23_formal_candidate.yaml"
-PROFILE_SHA256 = "115a5e88c6e45131b22680d164273d997b73f1cec72fa6afc9abf96e64f1d7d4"
+PROFILE_SHA256 = "ad10d579c18e697bd3016aa352b717eb798a5d09e997ba7330172edf0e14e908"
 SHARED_AUTH_PATH = ROOT / "scripts/fast_livo2_m6a10_v23_shared_auth.py"
 SHARED_AUTH_SHA256 = "e8cc9cb3105a5225219b7840ffb773e22a4aa8b38fa098a858ae7d33ec1d752a"
 V23_LAUNCHER_PATH = Path(__file__).resolve()
