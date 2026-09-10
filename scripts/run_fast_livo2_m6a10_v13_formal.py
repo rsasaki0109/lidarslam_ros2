@@ -31,13 +31,13 @@ import lidarslam_benchmark_tools.run_fast_livo2_m6a10_v12_formal as v12  # noqa:
 
 CANDIDATE_VERSION = "v13-mount-corrected"
 PARENT_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v12_formal.py"
-PARENT_LAUNCHER_SHA256 = "193515dab3f67b0c063193487de07cdc709b2492286489edde31809c5f5eda17"
+PARENT_LAUNCHER_SHA256 = "d1cb315b2089d27376b47cfe9fd4f6d12b92dd58cbf69dccc56ab9c13446ddaa"
 PARENT_PROFILE_PATH = v12.PROFILE_PATH
 PARENT_PROFILE_SHA256 = v12.PROFILE_SHA256
 IMAGE_ID = v12.IMAGE_ID
 IMAGE_TAG = v12.IMAGE_TAG
 PARENT_WRAPPER_PATH = ROOT / "scripts/fast_livo2_m6a10_v12_formal_container_run.sh"
-PARENT_WRAPPER_SHA256 = "32fce2c054b92f0d695fd4d32c7737ab75dd3a467fdee1c579c82c63398894e6"
+PARENT_WRAPPER_SHA256 = "af6fa54f834ae209758ee5a9903695674f4095c1063ac57b46c2774bfbc5c7a9"
 
 FAILED_ATTEMPT_ROOT = Path(
     "/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/"

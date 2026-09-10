@@ -56,7 +56,7 @@ V21_PROFILE_SHA256 = "9f6e574ba0fe7c927eecdd612f948352dc2bf986b576c4e4c52708e0bf
 V21_AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v21_formal.py"
 V21_AUTHORIZER_SHA256 = "ad7afef771a985b57d165b508f7433b7ebe41e74e8290dfb275a7e122ec5ed81"
 V21_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v21_formal.py"
-V21_LAUNCHER_SHA256 = "9d4fd6e2cffd89301e02d9784651ffdd9fd86afa309aa4f0e540e9aa9541bf9d"
+V21_LAUNCHER_SHA256 = "6d51b39fbc0b0b0eb1fc712a98d2ceff49aef682fc98a74f757726483b951ae5"
 
 V22_SUCCESS_RECEIPT_PATH = Path(
     "/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/"

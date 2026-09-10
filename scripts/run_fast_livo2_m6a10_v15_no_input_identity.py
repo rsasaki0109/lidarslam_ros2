@@ -47,7 +47,7 @@ PROFILE_PATH = Path(
     "configs/slam_benchmark_profiles/fast_livo2_m6a10_v15_formal_ready.yaml"
 )
 PROFILE_SHA256 = (
-    "070fb2b762881a7126caf021c7a98ab59c8fa55e10be220b6482d7f2ef97899f"
+    "1711e33baef08e82d24c5b0bdb0d960ad2e5e1c2c41cfb9a7f8b31a0cc1bcce0"
 )
 WRAPPER_PATH = Path("scripts/fast_livo2_m6a10_v15_formal_container_run.sh")
 WRAPPER_SHA256 = (

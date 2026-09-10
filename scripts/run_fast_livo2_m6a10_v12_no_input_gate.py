@@ -35,7 +35,7 @@ PATCH_PATH = Path(
 )
 PATCH_SHA256 = "39c77535a7557365dac6b0f2c99849038b29670a57c3101be3a39138317c6333"
 WRAPPER_PATH = Path("scripts/fast_livo2_m6a10_v12_formal_container_run.sh")
-WRAPPER_SHA256 = "32fce2c054b92f0d695fd4d32c7737ab75dd3a467fdee1c579c82c63398894e6"
+WRAPPER_SHA256 = "af6fa54f834ae209758ee5a9903695674f4095c1063ac57b46c2774bfbc5c7a9"
 PAYLOAD_PATH = Path(
     "scripts/fast_livo2_m6a10_v12_no_input_container_payload.sh"
 )

@@ -35,7 +35,7 @@ import lidarslam_benchmark_tools.check_m6a10_quiescence as quiescence  # noqa: E
 PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v15_formal_candidate.yaml"
 PROFILE_SHA256 = "017e8583e1085b1f11da4117a1c53497cdcb1055c6c6224568df2f73ba751bc7"
 READY_PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v15_formal_ready.yaml"
-READY_PROFILE_SHA256 = "070fb2b762881a7126caf021c7a98ab59c8fa55e10be220b6482d7f2ef97899f"
+READY_PROFILE_SHA256 = "1711e33baef08e82d24c5b0bdb0d960ad2e5e1c2c41cfb9a7f8b31a0cc1bcce0"
 IMAGE_TAG = "m6a10-v2c-v15-schema3-feeder-20260823t203230z-correction-fast-livo2-benchmark:ros1-pinned"
 IMAGE_ID = "sha256:f103a0f61f7ec9b19cbae02da6c6b8a28f17475dbc3f51fba3206b954ca4ca7a"
 PHASE_CONTRACT = "m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary"

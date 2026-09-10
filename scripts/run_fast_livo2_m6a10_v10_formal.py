@@ -52,7 +52,7 @@ WRAPPER_SHA256 = (
 FEEDER_PATH = Path('scripts/fast_livo2_m6a10_feeder.py')
 FEEDER_CONTAINER_PATH = '/runner/scripts/fast_livo2_m6a10_feeder.py'
 FEEDER_SHA256 = (
-    '1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831')
+    '869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf')
 QUIESCENCE_SCRIPT = Path('scripts/check_m6a10_quiescence.py')
 QUIESCENCE_SCRIPT_SHA256 = (
     'acf8b2e65e7744dd9cfd4127ac5ec12fb381c5a7c1430910b3e769ea259fe85d')
