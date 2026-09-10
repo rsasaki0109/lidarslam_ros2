@@ -23,7 +23,7 @@ AUTHORIZATION_CONTRACT = "m6a10-v22-formal-authorization-v1"
 V22_WRAPPER_PATH = ROOT / "scripts/fast_livo2_m6a10_v22_formal_container_run.sh"
 V22_WRAPPER_SHA256 = "6e74246d2b7ee60086f3b316b22c6ef69ca3f16307ffdecea3eae9ad2d794f67"
 V22_GATE_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v22_synthetic_gate.py"
-V22_GATE_SHA256 = "950d115937ced346116c116cdcf25b0f70d05c8dea3052efbae7394b9e74930a"
+V22_GATE_SHA256 = "c306e9f75011c036e53738d2ab705e1d342288925432dbcac20f05fa82fb87c6"
 V22_GATE_TEST_PATH = ROOT / "graph_based_slam/test/test_fast_livo2_m6a10_v22_synthetic_gate.py"
 V22_GATE_TEST_SHA256 = "b6a34f8cb3a73fe95a93a1bba4927d7c29544ddc930151f79d0ce683eb2f27b7"
 
@@ -56,7 +56,7 @@ V21_PROFILE_SHA256 = "9f6e574ba0fe7c927eecdd612f948352dc2bf986b576c4e4c52708e0bf
 V21_AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v21_formal.py"
 V21_AUTHORIZER_SHA256 = "ad7afef771a985b57d165b508f7433b7ebe41e74e8290dfb275a7e122ec5ed81"
 V21_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v21_formal.py"
-V21_LAUNCHER_SHA256 = "6d51b39fbc0b0b0eb1fc712a98d2ceff49aef682fc98a74f757726483b951ae5"
+V21_LAUNCHER_SHA256 = "894c5b3a3e1259a88ac79e70c34c8ad10f3a386173d42c8208b879d826ade07f"
 
 V22_SUCCESS_RECEIPT_PATH = Path(
     "/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/"

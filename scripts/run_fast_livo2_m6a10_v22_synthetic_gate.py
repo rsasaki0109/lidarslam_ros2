@@ -25,7 +25,7 @@ IMAGE_TAG = "m6a10-v2c-v17-retryable-abort-correction-20260823t224017z-fast-livo
 IMAGE_ID = "sha256:f1432426af64e76d9ad9c655a8727d35c2fb0a03753502ada3b21187638f747c"
 V22_WRAPPER = ROOT / "scripts/fast_livo2_m6a10_v22_formal_container_run.sh"
 V22_WRAPPER_SHA256 = "6e74246d2b7ee60086f3b316b22c6ef69ca3f16307ffdecea3eae9ad2d794f67"
-PROFILE_SHA256 = "1803ba255adfac96a61e1f677be53e84b196ad70bb367a10ebdb9791cb94128b"
+PROFILE_SHA256 = "1f8027c2403077c25a0a5415314cdcfd0e83753113214ac17ccf479fc4a48673"
 BUILD_RECEIPT = Path(
     "/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/"
     "fast_livo2_v2c_v17_build_correction_20260823T224017Z_agentv17/"
