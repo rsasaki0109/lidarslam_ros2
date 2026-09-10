@@ -55,9 +55,9 @@ V18_ATTEMPT_ROOT = Path(
 )
 
 V17_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v17_formal.py"
-V17_LAUNCHER_SHA256 = "0f081ebad0b46a54a7360295f0d0b5759d873b7cb17254a011bd47945f51e48e"
+V17_LAUNCHER_SHA256 = "ab10bd00e06919074c794032314612bfa8781b2097babe88b9f1a6b40ecdf514"
 V17_AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v17_formal.py"
-V17_AUTHORIZER_SHA256 = "2a122303c4dc1c808b1548b188a462f20e4f44a107f71d322efd9b5a2f9bee5f"
+V17_AUTHORIZER_SHA256 = "8fab23da3937c04c8905a6a6b7ac956c1a70807e474f2c78c576fef9262ee0b5"
 V17_PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v17_formal_ready.yaml"
 V17_PROFILE_SHA256 = "10ddffb6eed647eb3b7a2ee7ede49505923755eb917d8b87737675853e35d9c5"
 IMAGE_TAG = "m6a10-v2c-v17-retryable-abort-correction-20260823t224017z-fast-livo2-benchmark:ros1-pinned"
