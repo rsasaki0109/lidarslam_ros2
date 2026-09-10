@@ -37,19 +37,84 @@ from pathlib import Path
 import random
 import re
 import sys
-from typing import Any
+from typing import Any, Mapping
 
 import yaml
 
+# When this canonical source script is invoked directly (``python
+# scripts/evaluate_competitive_suite_gate.py``), Python places ``scripts/``
+# rather than the checkout root on ``sys.path``.  Bootstrap only the exact
+# source checkout that owns this script; an installed package or an ambiguous
+# parent is never accepted as a fallback.  Installed entry points import the
+# package normally and do not take this branch.
+_SCRIPT_SOURCE_ROOT = Path(__file__).resolve().parent.parent
+if (
+        (_SCRIPT_SOURCE_ROOT / 'lidarslam_benchmark_tools' / '__init__.py').is_file()
+        and (_SCRIPT_SOURCE_ROOT / 'scripts' / 'benchmark_phase_contract.py').is_file()
+        and str(_SCRIPT_SOURCE_ROOT) not in sys.path):
+    sys.path.insert(0, str(_SCRIPT_SOURCE_ROOT))
+
 try:
-    from scripts.competitive_identity_hash import (
+    from lidarslam_benchmark_tools.competitive_identity_hash import (
         PROFILE_CANONICAL_HASH_KIND, canonical_profile_sha256)
 except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
-    from competitive_identity_hash import (  # type: ignore[no-redef]
+    from lidarslam_benchmark_tools.competitive_identity_hash import (  # type: ignore[no-redef]
         PROFILE_CANONICAL_HASH_KIND, canonical_profile_sha256)
 
+try:
+    from lidarslam_benchmark_tools.verify_competitive_evidence_bundle import (
+        verify_evidence_bundle)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.verify_competitive_evidence_bundle import (  # type: ignore[no-redef]
+        verify_evidence_bundle)
 
-ROOT = Path(__file__).resolve().parents[1]
+try:
+    from lidarslam_benchmark_tools.competitive_holdout_authorization import (
+        verify_fresh_holdout_authorization)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.competitive_holdout_authorization import (  # type: ignore[no-redef]
+        verify_fresh_holdout_authorization)
+
+try:
+    from lidarslam_benchmark_tools.competitive_memory_gate import evaluate_memory_gate
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.competitive_memory_gate import (  # type: ignore[no-redef]
+        evaluate_memory_gate)
+
+try:
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (
+        current_rival_source_closure_identity,
+        validate_rival_source_closure_receipt_identity,
+        verify_rival_source_closure)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (  # type: ignore[no-redef]
+        current_rival_source_closure_identity,
+        validate_rival_source_closure_receipt_identity,
+        verify_rival_source_closure)
+
+try:
+    from lidarslam_benchmark_tools.check_competitive_dataset_source_closure import (
+        verify_dataset_source_closure)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.check_competitive_dataset_source_closure import (  # type: ignore[no-redef]
+        verify_dataset_source_closure)
+
+try:
+    from lidarslam_benchmark_tools.check_competitive_execution_selection import (
+        evaluate as evaluate_execution_selection)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.check_competitive_execution_selection import (  # type: ignore[no-redef]
+        evaluate as evaluate_execution_selection)
+
+
+try:
+    from lidarslam_benchmark_tools import package_root
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    def package_root() -> Path:
+        return Path(__file__).resolve().parents[1]
+
+
+ROOT = package_root()
 DEFAULT_PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
 REQUIRED_TRACKS = {
     'glim_cpu_lidar_imu', 'fast_livo2_lidar_imu_visual'}
@@ -240,6 +305,73 @@ def _v2_historical_sequences(contract: dict[str, Any]) -> list[str]:
     return _v2_slot_sequences(_v2_historical_slots(contract))
 
 
+def _v2_partition_identity_values(slot: Mapping[str, Any]) -> dict[str, str]:
+    """Return immutable partition identities; shared calibration is excluded."""
+    values: dict[str, str] = {}
+    for field in (
+            'dataset', 'sequence', 'input_manifest_sha256',
+            'ground_truth_sha256', 'raw_rosbag1_sha256', 'bag_sha256',
+            'canonical_rosbag2_tree_sha256'):
+        value = slot.get(field)
+        if isinstance(value, str) and value:
+            values[field] = value.lower()
+        frozen = slot.get('frozen_identity')
+        if isinstance(frozen, Mapping):
+            if field == 'canonical_rosbag2_tree_sha256':
+                nested = frozen.get(field)
+                if isinstance(nested, str) and nested:
+                    values[field] = nested.lower()
+            if field in {'raw_rosbag1_sha256', 'bag_sha256'}:
+                raw_bag = frozen.get('raw_bag')
+                if isinstance(raw_bag, Mapping) and isinstance(raw_bag.get('sha256'), str):
+                    values[field] = raw_bag['sha256'].lower()
+    return values
+
+
+def _v2_fresh_partition_disjointness(contract: dict[str, Any]) -> dict[str, Any]:
+    """Reject fresh IDs/hashes reused by historical or development data."""
+    fresh = _v2_fresh_slots(contract)
+    historical = _v2_historical_slots(contract)
+    identities: dict[tuple[str, str], list[str]] = {}
+    for slot_id, slot in [*historical.items(), *fresh.items()]:
+        if not isinstance(slot, Mapping):
+            continue
+        partition = 'fresh' if slot_id in fresh else 'historical'
+        for field, value in _v2_partition_identity_values(slot).items():
+            identities.setdefault((field, value), []).append(
+                f'{partition}:{slot_id}')
+    datasets = contract.get('datasets')
+    if isinstance(datasets, Mapping):
+        for partition_name in ('bringup', 'development', 'regression_only'):
+            group = datasets.get(partition_name)
+            if isinstance(group, Mapping):
+                for dataset_id, value in group.items():
+                    sequence = (value.get('sequence') if isinstance(value, Mapping)
+                                else None)
+                    for field, item in (
+                            ('dataset', dataset_id), ('sequence', sequence)):
+                        if isinstance(item, str) and item:
+                            identities.setdefault((field, item.lower()), []).append(
+                                f'{partition_name}:{dataset_id}')
+    overlaps: dict[str, list[str]] = {}
+    for (field, value), owners in identities.items():
+        fresh_owners = [owner for owner in owners if owner.startswith('fresh:')]
+        nonfresh_owners = [owner for owner in owners if not owner.startswith('fresh:')]
+        if fresh_owners and nonfresh_owners:
+            overlaps[f'{field}:{value}'] = sorted(set(owners))
+        elif len(fresh_owners) > 1:
+            overlaps[f'{field}:{value}'] = sorted(set(owners))
+    return {
+        'pass': not overlaps,
+        'compared_identity_fields': [
+            'dataset', 'sequence', 'input_manifest_sha256',
+            'ground_truth_sha256', 'raw_rosbag1_sha256', 'bag_sha256',
+            'canonical_rosbag2_tree_sha256'],
+        'overlaps': overlaps,
+        'calibration_hashes_excluded': True,
+    }
+
+
 def _v2_required_systems(contract: dict[str, Any], policy: dict[str, Any]) -> list[str]:
     configured = policy.get('required_systems')
     if isinstance(configured, list) and configured:
@@ -296,6 +428,58 @@ def _v2_provenance(record: dict[str, Any], system: str,
     return valid
 
 
+def _v2_profile_rival_revisions(
+        provenance_values: dict[str, dict[str, Any]],
+        required_systems: list[str], contract: dict[str, Any],
+        errors: list[str], incomplete: list[str]) -> tuple[bool, dict[str, Any]]:
+    """Bind rival evidence to the revisions declared by the profile.
+
+    The generic provenance validator intentionally checks representation (a
+    pinned 40-hex revision), but representation alone does not prove that a
+    run used the preregistered rival.  This gate is the narrow bridge between
+    the profile's named-rival pins and the submitted evidence.  Missing pins
+    remain incomplete; malformed or mismatched pins are invalid.
+    """
+    rivals = contract.get('rivals')
+    if not isinstance(rivals, dict):
+        incomplete.append('profile.rivals is missing or not a mapping')
+        return False, {'status': 'INCOMPLETE', 'expected': {}, 'observed': {}}
+
+    expected: dict[str, str] = {}
+    observed: dict[str, Any] = {}
+    valid = True
+    for system in sorted(name for name in required_systems if name != 'ours'):
+        rival = rivals.get(system)
+        if not isinstance(rival, dict):
+            incomplete.append(f'profile.rivals.{system} is missing')
+            valid = False
+            continue
+        revision = rival.get('revision')
+        if (not isinstance(revision, str) or
+                not re.fullmatch(r'[0-9a-fA-F]{40}', revision)):
+            errors.append(f'profile.rivals.{system}.revision must be a pinned 40-hex commit')
+            valid = False
+            continue
+        expected[system] = revision.lower()
+        provenance = provenance_values.get(system, {})
+        observed_revision = provenance.get('revision', _MISSING)
+        observed[system] = None if observed_revision is _MISSING else observed_revision
+        if observed_revision is _MISSING:
+            incomplete.append(f'{system}.provenance.revision is missing')
+            valid = False
+        elif not isinstance(observed_revision, str) or not re.fullmatch(
+                r'[0-9a-fA-F]{40}', observed_revision):
+            errors.append(f'{system}.provenance.revision is not a pinned 40-hex commit')
+            valid = False
+        elif observed_revision.lower() != revision.lower():
+            errors.append(
+                f'{system}.provenance.revision does not match profile.rivals.{system}.revision')
+            valid = False
+    return valid, {'status': 'PASS' if valid else 'FAIL_CLOSED',
+                   'expected_revision_by_system': expected,
+                   'observed_revision_by_system': observed}
+
+
 def _v2_thread_policy(policy_value: Any, required_keys: list[str],
                       system: str, errors: list[str],
                       incomplete: list[str]) -> bool:
@@ -332,6 +516,56 @@ def _v2_thread_policy(policy_value: Any, required_keys: list[str],
 def _v2_canonical_hash(value: Any) -> str:
     encoded = json.dumps(value, sort_keys=True, separators=(',', ':'),
                          ensure_ascii=True).encode('utf-8')
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _v2_score_artifact_payload(system: str, run: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the non-GT score record whose bytes are bound per run.
+
+    This is intentionally a small, deterministic projection of values used by
+    the v2 metric gates.  It contains no reference/GT identity or raw result
+    content; the bundle verifier only compares its opaque SHA and never parses
+    the file.
+    """
+    trajectory = run.get('trajectory')
+    runtime = run.get('runtime')
+    mapping = run.get('map', run.get('mapping'))
+    if not isinstance(trajectory, Mapping) or not isinstance(runtime, Mapping):
+        raise ValueError('score artifact projection requires trajectory/runtime mappings')
+    if not isinstance(mapping, Mapping):
+        raise ValueError('score artifact projection requires map metrics')
+    runtime_keys = (
+        'processing_rtf', 'online_compute_rtf', 'peak_rss_mb',
+        'phase_contract_version', 'phase_mode',
+        'paced_followability_passed', 'unpaced_throughput_gate_passed',
+    )
+    runtime_projection = {
+        key: runtime[key] for key in runtime_keys if key in runtime}
+    return {
+        'schema': 'competitive_run_score_v1',
+        'system': system,
+        'dataset': run.get('dataset'),
+        'run_index': run.get('run_index'),
+        'completion': {
+            key: run.get(key) for key in (
+                'complete', 'process_exit_status', 'trajectory_complete',
+                'sequence_failure', 'catastrophic_failure',
+                'verified_false_loops')
+        },
+        'trajectory': {'ape_rmse_m': trajectory.get('ape_rmse_m')},
+        'runtime': runtime_projection,
+        'map': {
+            key: mapping.get(key) for key in (
+                'plane_thickness_mean_m', 'plane_thickness_p95_m',
+                'planar_coverage')
+        },
+    }
+
+
+def _v2_score_artifact_sha256(system: str, run: Mapping[str, Any]) -> str:
+    payload = _v2_score_artifact_payload(system, run)
+    encoded = (json.dumps(payload, sort_keys=True, separators=(',', ':'),
+                           ensure_ascii=True) + '\n').encode('utf-8')
     return hashlib.sha256(encoded).hexdigest()
 
 
@@ -374,7 +608,8 @@ def _v2_normalize_runs(
 
 
 def evaluate_evidence_v2(evidence: dict[str, Any],
-                         contract: dict[str, Any]) -> dict[str, Any]:
+                         contract: dict[str, Any],
+                         *, require_bundle: bool = False) -> dict[str, Any]:
     """Fail-closed validator for competitive victory evidence schema v2.
 
     This is intentionally additive to :func:`evaluate`, which is the legacy
@@ -386,6 +621,19 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
     errors: list[str] = []
     incomplete: list[str] = []
     checks: dict[str, dict[str, Any]] = {}
+    phase_policy = policy.get('online_phase_contract_v2', {})
+    if not isinstance(phase_policy, dict):
+        phase_policy = {}
+    configured_unpaced_rtf = phase_policy.get(
+        'maximum_unpaced_throughput_rtf', 1.0)
+    try:
+        configured_unpaced_rtf = _v2_finite(
+            configured_unpaced_rtf,
+            'evidence_gate_v2.online_phase_contract_v2.'
+            'maximum_unpaced_throughput_rtf')
+    except ValueError as exc:
+        errors.append(str(exc))
+        configured_unpaced_rtf = 1.0
 
     def check(name: str, passed: bool, details: Any) -> None:
         checks[name] = {
@@ -417,6 +665,8 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
     execution_receipt_ok = True
     execution_receipt_status = None
     execution_receipt = None
+    execution_closure_identity = None
+    execution_closure_identity_ok = True
     if execution_receipt_path is _MISSING or execution_receipt_sha is _MISSING:
         incomplete.append('profile execution-selection receipt path/SHA is missing')
         execution_receipt_ok = False
@@ -525,6 +775,35 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
                           'hash_kind': receipt_profile_kind,
                           'expected_hash_kind': PROFILE_CANONICAL_HASH_KIND,
                       })
+                closure_policy = policy.get('rival_source_closure', {})
+                if (isinstance(closure_policy, dict) and
+                        closure_policy.get('required') is True):
+                    try:
+                        execution_closure_identity = (
+                            current_rival_source_closure_identity(
+                                {'competitive_slam_profile': contract},
+                                root=ROOT))
+                        closure_errors = (
+                            validate_rival_source_closure_receipt_identity(
+                                execution_receipt,
+                                execution_closure_identity))
+                    except (OSError, ValueError, TypeError, UnicodeError,
+                            yaml.YAMLError) as exc:
+                        closure_errors = [
+                            f'current rival source closure identity is invalid: {exc}']
+                    if closure_errors:
+                        errors.extend(closure_errors)
+                        errors.append(
+                            'execution-selection receipt is not eligible: '
+                            'missing or mismatched rival source closure identity')
+                        execution_closure_identity_ok = False
+                        execution_receipt_ok = False
+                check('execution_receipt_rival_source_closure_identity',
+                      execution_closure_identity_ok, {
+                          'expected': execution_closure_identity,
+                          'observed': receipt_common.get(
+                              'rival_source_closure'),
+                      })
     check('execution_selection_receipt_registered', execution_receipt_ok, {
         'path': None if execution_receipt_path is _MISSING else execution_receipt_path,
         'expected_sha256': None if execution_receipt_sha is _MISSING else execution_receipt_sha,
@@ -544,6 +823,119 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
     declared = source.get('contract', {})
     if not isinstance(declared, dict):
         declared = {}
+    source_closure_requested = bool(
+        require_bundle or source.get('claim_eligible') is True or
+        source.get('evidence_bundle') is not None)
+    # The receipt registration checks above bind only the selected receipt
+    # path/SHA, profile canonical hash, and rival-closure identity.  A claim
+    # must also reopen the registered execution-selection receipt through the
+    # authoritative preflight checker: that is where input/calibration/config,
+    # container/toolchain, scorer, machine/thread, resource, and GT-blind
+    # identities are checked against their bytes and the current profile.
+    # Report-only evidence deliberately remains compatible and does not claim
+    # this stronger execution contract.
+    if source_closure_requested:
+        try:
+            execution_preflight = evaluate_execution_selection(
+                execution_receipt if isinstance(execution_receipt, dict) else {},
+                {'competitive_slam_profile': contract},
+                root=ROOT)
+            if not isinstance(execution_preflight, dict):
+                raise TypeError('execution preflight checker returned a non-mapping')
+        except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
+            # A claim gate must turn a malformed/unreopenable preflight into a
+            # deterministic failure receipt, never fall through to metric
+            # evaluation or expose an exception as an apparent pass.
+            execution_preflight = {
+                'schema_version': 1,
+                'status': 'FAIL_CLOSED',
+                'pass': False,
+                'claim_eligible': False,
+                'errors': [f'checker exception: {exc}'],
+            }
+        execution_preflight_ok = execution_preflight.get('pass') is True
+        check('execution_selection_preflight', execution_preflight_ok,
+              execution_preflight)
+        if not execution_preflight_ok:
+            execution_preflight_errors = execution_preflight.get('errors', [])
+            if execution_preflight.get('status') == 'INCOMPLETE':
+                incomplete.extend(
+                    'execution selection preflight: ' + str(item)
+                    for item in execution_preflight_errors)
+            else:
+                errors.extend(
+                    'execution selection preflight: ' + str(item)
+                    for item in execution_preflight_errors)
+    else:
+        execution_preflight = {
+            'schema_version': 1,
+            'status': 'NOT_REQUESTED',
+            'pass': True,
+            'claim_eligible': False,
+            'errors': [],
+            'reason': 'report-only evidence did not request execution preflight',
+        }
+        check('execution_selection_preflight', True, execution_preflight)
+    if source_closure_requested:
+        rival_source_closure_result = verify_rival_source_closure(
+            {'competitive_slam_profile': contract},
+            root=ROOT,
+            receipt=execution_receipt)
+        source_closure_ok = rival_source_closure_result.get('pass') is True
+        check('rival_source_closure', source_closure_ok,
+              rival_source_closure_result)
+        if not source_closure_ok:
+            if rival_source_closure_result.get('status') == 'NOT_READY':
+                incomplete.extend(
+                    'rival source closure: ' + str(item)
+                    for item in rival_source_closure_result.get('not_ready', [])
+                )
+                incomplete.extend(
+                    'rival source closure incomplete: ' + str(item)
+                    for item in rival_source_closure_result.get('incomplete', [])
+                )
+            else:
+                errors.extend(
+                    'rival source closure: ' + str(item)
+                    for item in rival_source_closure_result.get('errors', [])
+                )
+                incomplete.extend(
+                    'rival source closure incomplete: ' + str(item)
+                    for item in rival_source_closure_result.get('incomplete', [])
+                )
+        dataset_source_closure_result = verify_dataset_source_closure(
+            {'competitive_slam_profile': contract}, root=ROOT)
+        dataset_source_closure_ok = dataset_source_closure_result.get('pass') is True
+        check('dataset_source_closure', dataset_source_closure_ok,
+              dataset_source_closure_result)
+        if not dataset_source_closure_ok:
+            if dataset_source_closure_result.get('status') == 'NOT_READY':
+                incomplete.extend(
+                    'dataset source closure: ' + str(item)
+                    for item in dataset_source_closure_result.get('not_ready', [])
+                )
+            else:
+                errors.extend(
+                    'dataset source closure: ' + str(item)
+                    for item in dataset_source_closure_result.get('errors', [])
+                )
+    else:
+        rival_source_closure_result = {
+            'schema_version': 1,
+            'status': 'NOT_REQUESTED',
+            'pass': True,
+            'claim_eligible': False,
+            'reason': 'report-only evidence did not request a claim',
+        }
+        check('rival_source_closure', True, rival_source_closure_result)
+        dataset_source_closure_result = {
+            'schema_version': 1,
+            'status': 'NOT_REQUESTED',
+            'pass': True,
+            'claim_eligible': False,
+            'reason': 'report-only evidence did not request a claim',
+        }
+        check('dataset_source_closure', True, dataset_source_closure_result)
     declared_execution_sha = declared.get(
         'execution_selection_receipt_sha256', _MISSING)
     declared_execution_ok = True
@@ -808,6 +1200,43 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
             'identity_fields': slot_identity_fields,
         },
     })
+    partition_disjointness = _v2_fresh_partition_disjointness(contract)
+    check('fresh_partition_disjoint_immutable_identities',
+          holdout_ok and partition_disjointness['pass'],
+          partition_disjointness)
+    if not partition_disjointness['pass']:
+        errors.append('fresh holdout partition reuses an immutable dataset ID or hash')
+
+    authorization_policy = policy.get('fresh_holdout_authorization', {})
+    if not isinstance(authorization_policy, Mapping):
+        authorization_policy = {}
+    authorization_requested = bool(
+        require_bundle or source.get('claim_eligible') is True or
+        source.get('evidence_bundle') is not None)
+    if authorization_requested:
+        authorization_result = verify_fresh_holdout_authorization(
+            source,
+            policy=authorization_policy,
+            profile={'competitive_slam_profile': contract},
+            expected_profile_sha256=computed_profile_sha,
+        )
+        check('fresh_holdout_authorization',
+              authorization_result.get('pass') is True,
+              authorization_result)
+        if authorization_result.get('status') == 'NOT_READY':
+            incomplete.extend(
+                'fresh holdout authorization: ' + str(item)
+                for item in authorization_result.get('not_ready', []))
+        else:
+            errors.extend(
+                'fresh holdout authorization: ' + str(item)
+                for item in authorization_result.get('errors', []))
+    else:
+        check('fresh_holdout_authorization', True, {
+            'status': 'NOT_REQUESTED',
+            'claim_eligible': False,
+            'reason': 'report-only evidence did not request a claim',
+        })
 
     fresh_slots_by_sequence = {
         slot.get('sequence'): slot for slot in profile_fresh_slots.values()
@@ -860,6 +1289,39 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
             provenance_ok = False
         if isinstance(record.get('provenance'), dict):
             provenance_values[system] = record['provenance']
+    closure_policy = policy.get('rival_source_closure', {})
+    closure_required = (isinstance(closure_policy, dict) and
+                        closure_policy.get('required') is True)
+    suite_closure_identity = None
+    suite_closure_ok = True
+    if closure_required:
+        try:
+            suite_closure_identity = current_rival_source_closure_identity(
+                {'competitive_slam_profile': contract}, root=ROOT)
+        except (OSError, ValueError, TypeError, UnicodeError, yaml.YAMLError) as exc:
+            errors.append(f'current rival source closure identity is invalid: {exc}')
+            suite_closure_ok = False
+        for system in required_systems:
+            observed = provenance_values.get(system, {}).get(
+                'rival_source_closure', _MISSING)
+            if observed is _MISSING:
+                incomplete.append(
+                    f'{system}.provenance.rival_source_closure is missing')
+                suite_closure_ok = False
+            elif suite_closure_identity is None or observed != suite_closure_identity:
+                errors.append(
+                    f'{system}.provenance.rival_source_closure does not match '
+                    'the current closure')
+                suite_closure_ok = False
+    check('rival_source_closure_identity', suite_closure_ok, {
+        'required': closure_required,
+        'expected': suite_closure_identity,
+        'observed_by_system': {
+            system: provenance_values.get(system, {}).get(
+                'rival_source_closure', _MISSING)
+            for system in required_systems
+        },
+    })
     for field in common_fields:
         values = [row.get(field, _MISSING) for row in provenance_values.values()]
         missing = not values or any(value is _MISSING for value in values)
@@ -875,6 +1337,10 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
         'pinned_fields': pinned_fields,
         'provenance': provenance_values,
     })
+    rival_revision_ok, rival_revision_evidence = _v2_profile_rival_revisions(
+        provenance_values, required_systems, contract, errors, incomplete)
+    check('profile_pinned_rival_revisions', rival_revision_ok,
+          rival_revision_evidence)
     thread_required_keys = list(policy.get('thread_policy_required_keys', [
         'cpu_affinity', 'max_threads', 'omp_num_threads',
         'openblas_num_threads', 'mkl_num_threads', 'tbb_num_threads',
@@ -938,10 +1404,19 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
     errors.extend(run_errors)
 
     complete_rows: dict[str, list[dict[str, Any]]] = {name: [] for name in required_systems}
+    # A claim cannot manufacture repetitions by relabelling one execution.
+    # Metric/result bytes may be equal for deterministic runs, but each
+    # complete run must carry a distinct sealed attempt receipt.  The receipt
+    # is reopened/bound by the bundle verifier below; this map enforces
+    # cross-slot/system uniqueness before any claim can be promoted.
+    execution_receipts_seen: dict[str, str] = {}
+    execution_campaigns_seen: dict[str, str] = {}
     ape_by_dataset: dict[str, dict[str, list[float]]] = {
         name: {dataset: [] for dataset in expected_sequences}
         for name in required_systems}
     runtime_failures: list[str] = []
+    phase_v2_failures: list[str] = []
+    phase_versions_seen: set[str] = set()
     safety_failures: list[str] = []
     map_rows: dict[str, dict[str, list[dict[str, float]]]] = {
         name: {dataset: [] for dataset in expected_sequences}
@@ -1029,24 +1504,90 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
                 safety_failures.append(f'{system}: {dataset}/{index}')
                 complete = False
                 continue
+            if source_closure_requested:
+                try:
+                    execution_sha = _v2_sha256(
+                        run.get('execution_receipt_sha256'),
+                        f'{system}: {dataset}/{index} execution receipt')
+                    _v2_sha256(
+                        run.get('execution_receipt_file_sha256'),
+                        f'{system}: {dataset}/{index} execution receipt file')
+                    campaign_id = _v2_sha256(
+                        run.get('campaign_id'),
+                        f'{system}: {dataset}/{index} campaign identity')
+                except ValueError as exc:
+                    errors.append(str(exc))
+                    complete = False
+                    continue
+                prior = execution_receipts_seen.get(execution_sha)
+                if prior is not None:
+                    errors.append(
+                        'duplicate execution receipt identity: '
+                        f'{execution_sha} reused by {prior} and '
+                        f'{system}: {dataset}/{index}')
+                    complete = False
+                    continue
+                execution_receipts_seen[execution_sha] = (
+                    f'{system}: {dataset}/{index}')
+                prior_campaign = next(iter(execution_campaigns_seen.values()), None)
+                if (prior_campaign is not None and campaign_id != prior_campaign):
+                    errors.append(
+                        'mixed execution campaign identities: '
+                        f'{prior_campaign} and {campaign_id}')
+                    complete = False
+                    continue
+                execution_campaigns_seen[f'{system}:{dataset}:{index}'] = campaign_id
             try:
                 ape_value = _v2_get(run, 'trajectory.ape_rmse_m')
                 rtf_value = _v2_get(run, 'runtime.processing_rtf')
+                online_rtf_value = _v2_get(run, 'runtime.online_compute_rtf')
                 rss_value = _v2_get(run, 'runtime.peak_rss_mb')
+                phase_version = (run.get('runtime') or {}).get(
+                    'phase_contract_version')
                 if ape_value is _MISSING:
                     raise KeyError('trajectory.ape_rmse_m')
                 if rtf_value is _MISSING:
                     raise KeyError('runtime.processing_rtf')
+                if phase_version == 'm6a10-online-compute-v2' and \
+                        online_rtf_value is _MISSING:
+                    raise KeyError('runtime.online_compute_rtf')
                 if rss_value is _MISSING:
                     raise KeyError('runtime.peak_rss_mb')
                 ape = _v2_finite(ape_value,
                                  f'{system}: {dataset}/{index} APE', positive=True)
                 rtf = _v2_finite(rtf_value,
                                  f'{system}: {dataset}/{index} RTF')
+                online_rtf = None
+                if online_rtf_value is not _MISSING:
+                    online_rtf = _v2_finite(
+                        online_rtf_value,
+                        f'{system}: {dataset}/{index} online compute RTF')
                 rss = _v2_finite(rss_value,
                                  f'{system}: {dataset}/{index} RSS', positive=True)
-                if rtf > float(policy.get('maximum_processing_rtf', 1.0)):
-                    runtime_failures.append(f'{system}: {dataset}/{index} RTF={rtf}')
+                phase_versions_seen.add(
+                    phase_version if isinstance(phase_version, str) else 'missing')
+                if phase_version == 'm6a10-online-compute-v2':
+                    phase_mode = (run.get('runtime') or {}).get('phase_mode')
+                    phase_runtime = run.get('runtime') or {}
+                    if phase_mode == 'paced_1x':
+                        if phase_runtime.get('paced_followability_passed') is not True:
+                            phase_v2_failures.append(
+                                f'{system}: {dataset}/{index} paced followability')
+                    elif phase_mode == 'unpaced_ack':
+                        if phase_runtime.get(
+                                'unpaced_throughput_gate_passed') is not True:
+                            phase_v2_failures.append(
+                                f'{system}: {dataset}/{index} unpaced throughput')
+                        if online_rtf is None or online_rtf > configured_unpaced_rtf:
+                            phase_v2_failures.append(
+                                f'{system}: {dataset}/{index} unpaced online_compute_rtf='
+                                f'{online_rtf}')
+                    else:
+                        phase_v2_failures.append(
+                            f'{system}: {dataset}/{index} invalid phase mode')
+                else:
+                    if rtf > float(policy.get('maximum_processing_rtf', 1.0)):
+                        runtime_failures.append(f'{system}: {dataset}/{index} RTF={rtf}')
                 mapping = run.get('map', run.get('mapping'))
                 if not isinstance(mapping, dict):
                     raise ValueError('map metrics are missing')
@@ -1089,10 +1630,44 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
             system: len(rows) for system, rows in complete_rows.items()},
         'failed_or_incomplete': safety_failures,
     })
-    check('processing_rtf_leq_one', all_complete and not runtime_failures, {
-        'maximum': policy.get('maximum_processing_rtf', 1.0),
-        'failures': runtime_failures,
-    })
+    check('distinct_execution_receipt_per_run',
+          (not source_closure_requested) or (
+              all_complete and len(execution_receipts_seen) == sum(
+                  len(rows) for rows in complete_rows.values())),
+          {
+              'status': 'REQUIRED_FOR_CLAIM' if source_closure_requested
+              else 'NOT_REQUESTED',
+              'reopened_unique_receipt_identities': len(execution_receipts_seen),
+              'execution_campaign_ids': sorted(set(execution_campaigns_seen.values())),
+              'complete_run_count': sum(
+                  len(rows) for rows in complete_rows.values()),
+              'identity_kind': 'sealed_per_attempt_execution_receipt_sha256_v1',
+          })
+    only_v2 = phase_versions_seen == {'m6a10-online-compute-v2'}
+    mixed_phase_versions = len(phase_versions_seen) > 1
+    if only_v2:
+        check('processing_rtf_leq_one', all_complete and not phase_v2_failures, {
+            'role': 'diagnostic_only_for_v2',
+            'failures': phase_v2_failures,
+        })
+        check('online_compute_rtf_leq_one', all_complete and not phase_v2_failures, {
+            'role': 'paced_followability_or_unpaced_ack_throughput',
+            'maximum_unpaced_throughput_rtf': configured_unpaced_rtf,
+            'failures': phase_v2_failures,
+        })
+    else:
+        check('processing_rtf_leq_one', all_complete and not runtime_failures and
+              not mixed_phase_versions, {
+                  'maximum': policy.get('maximum_processing_rtf', 1.0),
+                  'failures': runtime_failures,
+              })
+        check('online_compute_rtf_leq_one', all_complete and not runtime_failures and
+              not mixed_phase_versions, {
+                  'role': 'legacy_wall_diagnostic',
+                  'failures': [],
+              })
+    if mixed_phase_versions:
+        errors.append('phase contract versions are mixed within the suite')
     check('zero_catastrophic_or_false_loops', all_complete and not safety_failures,
           {'failures': safety_failures})
 
@@ -1206,14 +1781,53 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
     for system, rows in complete_rows.items():
         if rows:
             rss_max[system] = max(row['_v2_peak_rss_mb'] for row in rows)
-    rss_gate = bool(best_rival and 'ours' in rss_max and best_rival in rss_max and
-                    rss_max['ours'] <= rss_max[best_rival] * float(
-                        policy.get('maximum_peak_rss_ratio_to_rival', 1.20)))
-    check('peak_rss_non_regression', all_complete and rss_gate, {
-        'maximum_ratio': policy.get('maximum_peak_rss_ratio_to_rival', 1.20),
-        'max_mb': rss_max,
-        'best_rival': best_rival,
-    })
+    resource_declared = any(
+        isinstance(run, dict) and any(
+            key in run for key in ('resource_evidence', 'resource_receipt',
+                                   'resource'))
+        for rows in run_records.values() for run in rows.values())
+    memory_claim_requested = bool(
+        require_bundle or source.get('claim_eligible') is True or
+        source.get('evidence_bundle') is not None or resource_declared)
+    memory_policy = policy.get('memory_gate', {})
+    if not isinstance(memory_policy, dict):
+        memory_policy = {}
+    memory_gate_result = evaluate_memory_gate(
+        {system: list(rows.values()) for system, rows in run_records.items()},
+        required_systems=required_systems,
+        expected_sequences=expected_sequences,
+        repetitions=repetitions,
+        policy=memory_policy,
+        best_rival=best_rival,
+        provenance_by_system=provenance_values,
+        claim_requested=memory_claim_requested)
+    if memory_claim_requested:
+        check('peak_rss_non_regression', memory_gate_result.get('pass') is True,
+              memory_gate_result)
+        if not memory_gate_result.get('pass'):
+            memory_messages = [
+                'memory gate: ' + str(item)
+                for item in memory_gate_result.get('errors', [])]
+            if memory_gate_result.get('status') == 'NOT_READY':
+                incomplete.extend(memory_messages)
+            else:
+                errors.extend(memory_messages)
+    else:
+        # Preserve the legacy aggregate as a report-only diagnostic.  It is
+        # never sufficient for a claim: the strict per-run receipt gate above
+        # activates as soon as a claim or resource declaration is present.
+        rss_gate = bool(
+            best_rival and 'ours' in rss_max and best_rival in rss_max and
+            rss_max['ours'] <= rss_max[best_rival] * float(
+                policy.get('maximum_peak_rss_ratio_to_rival', 1.20)))
+        check('peak_rss_non_regression', all_complete and rss_gate, {
+            'maximum_ratio': policy.get('maximum_peak_rss_ratio_to_rival', 1.20),
+            'max_mb': rss_max,
+            'best_rival': best_rival,
+            'status': 'LEGACY_REPORT_ONLY',
+        })
+    check('memory_resource_receipt_gate', memory_gate_result.get('pass') is True,
+          memory_gate_result)
     tolerance = float(policy.get('maximum_mapping_regression_percent', 2.0)) / 100.0
     map_checks: dict[str, Any] = {}
     map_gate = all_complete
@@ -1252,6 +1866,115 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
     check('mapping_non_regression', map_gate, {
         'tolerance_percent': 100.0 * tolerance, 'comparisons': map_checks})
 
+    # A claim-eligible receipt must bind one canonical, deterministic evidence
+    # bundle before it can be promoted.  Existing report-only receipts and
+    # metric fixtures intentionally remain compatible: absence of a bundle is
+    # recorded as NOT_REQUESTED and does not claim eligibility.  As soon as a
+    # producer declares ``claim_eligible`` or ``evidence_bundle``, however,
+    # the filesystem verifier is mandatory and fail-closed.
+    bundle_declaration = source.get('evidence_bundle')
+    bundle_requested = (
+        require_bundle or source.get('claim_eligible') is True or
+        bundle_declaration is not None)
+    bundle_result: dict[str, Any] | None = None
+    if bundle_requested:
+        bundle_ok = isinstance(bundle_declaration, dict)
+        if not bundle_ok:
+            errors.append(
+                'claim-eligible evidence must declare evidence_bundle mapping')
+            bundle_result = {
+                'status': 'FAIL_CLOSED', 'pass': False,
+                'claim_eligible': False,
+                'errors': ['evidence_bundle declaration is missing or malformed'],
+            }
+        else:
+            bundle_root = bundle_declaration.get('root')
+            bundle_manifest = bundle_declaration.get('manifest_path')
+            if not isinstance(bundle_root, str) or not bundle_root:
+                errors.append('evidence_bundle.root is missing')
+                bundle_ok = False
+            if bundle_manifest is not None and not isinstance(bundle_manifest, str):
+                errors.append('evidence_bundle.manifest_path must be relative text')
+                bundle_ok = False
+            if bundle_ok:
+                provenance_revisions = {
+                    system: value.get('revision')
+                    for system, value in provenance_values.items()
+                    if isinstance(value, dict) and isinstance(value.get('revision'), str)
+                }
+                scorer_fingerprints = {
+                    value.get('scorer_fingerprint')
+                    for value in provenance_values.values()
+                    if isinstance(value, dict) and
+                    isinstance(value.get('scorer_fingerprint'), str)
+                }
+                expected_scorer_fingerprint = (
+                    next(iter(scorer_fingerprints))
+                    if len(scorer_fingerprints) == 1 else None)
+                expected_run_artifacts: list[dict[str, Any]] = []
+                for system, rows in complete_rows.items():
+                    for run in rows:
+                        run_artifacts = run.get('artifacts')
+                        resource_document = None
+                        for resource_key in (
+                                'resource_evidence', 'resource_receipt', 'resource'):
+                            candidate = run.get(resource_key)
+                            if isinstance(candidate, Mapping):
+                                resource_document = candidate
+                                break
+                        resource_sha = (
+                            resource_document.get(
+                                'receipt_sha256',
+                                resource_document.get('evidence_sha256'))
+                            if isinstance(resource_document, Mapping) else None)
+                        expected_run_artifacts.append({
+                            'system': system,
+                            'dataset': run.get('dataset'),
+                            'run_index': run.get('run_index'),
+                            'trajectory_sha256': (
+                                run_artifacts.get('trajectory_sha256')
+                                if isinstance(run_artifacts, Mapping) else None),
+                            'map_sha256': (
+                                run_artifacts.get('map_sha256')
+                                if isinstance(run_artifacts, Mapping) else None),
+                            'resource_sha256': resource_sha,
+                            'execution_receipt_sha256': run.get(
+                                'execution_receipt_sha256'),
+                            'execution_receipt_file_sha256': run.get(
+                                'execution_receipt_file_sha256'),
+                            'campaign_id': run.get('campaign_id'),
+                            'score_sha256': _v2_score_artifact_sha256(system, run),
+                        })
+                bundle_result = verify_evidence_bundle(
+                    Path(bundle_root),
+                    Path(bundle_manifest) if bundle_manifest is not None else None,
+                    contract=contract,
+                    profile={'competitive_slam_profile': contract},
+                    expected_profile_sha256=computed_profile_sha,
+                    expected_profile_name=contract.get('name'),
+                    expected_scorer_fingerprint=expected_scorer_fingerprint,
+                    expected_revision_by_system=provenance_revisions or None,
+                    expected_manifest_sha256=bundle_declaration.get(
+                        'manifest_sha256'),
+                    expected_run_artifacts=expected_run_artifacts)
+            else:
+                bundle_result = {
+                    'status': 'FAIL_CLOSED', 'pass': False,
+                    'claim_eligible': False,
+                    'errors': ['bundle declaration is incomplete'],
+                }
+        check('evidence_bundle_integrity', bool(bundle_result and
+              bundle_result.get('pass')), bundle_result or {})
+        if bundle_result and not bundle_result.get('pass'):
+            errors.extend('evidence bundle: ' + str(item)
+                          for item in bundle_result.get('errors', []))
+    else:
+        check('evidence_bundle_integrity', True, {
+            'status': 'NOT_REQUESTED',
+            'claim_eligible': False,
+            'reason': 'report-only evidence did not declare a bundle',
+        })
+
     # A schema-valid receipt with an entirely absent contract/system payload
     # is an incomplete submission, not malformed evidence.  Keep the detailed
     # missing-field diagnostics below, but do not turn this common pre-run
@@ -1263,11 +1986,15 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
               'INVALID' if errors else ('INCOMPLETE' if incomplete else (
                   'PASS' if all(check_row['pass'] for check_row in checks.values())
                   else 'FAIL')))
+    claim_eligible = bool(
+        status == 'PASS' and bundle_result is not None and
+        bundle_result.get('pass'))
     return {
         'schema_version': 2,
         'evidence_kind': 'competitive_slam_victory_evidence_receipt',
         'status': status,
         'pass': status == 'PASS',
+        'claim_eligible': claim_eligible,
         'errors': errors + incomplete,
         'checks': checks,
         'policy': {
@@ -1283,6 +2010,9 @@ def evaluate_evidence_v2(evidence: dict[str, Any],
         },
         'aggregate_ape_m': aggregate,
         'best_rival': best_rival,
+        'memory_gate': memory_gate_result,
+        'rival_source_closure': rival_source_closure_result,
+        'dataset_source_closure': dataset_source_closure_result,
         'aggregate_ape_improvement_percent': improvement,
         'bootstrap_ci': bootstrap,
         'bootstrap_ci_by_rival': bootstrap_by_rival,
@@ -1314,6 +2044,9 @@ def main() -> int:
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--yaml-output', type=Path,
                         help='optional schema-v2 YAML receipt path')
+    parser.add_argument(
+        '--claim-eligible', action='store_true',
+        help='require and verify the declared canonical evidence bundle')
     args = parser.parse_args()
     profile_bytes = args.profile.read_bytes()
     profile_file_sha256 = hashlib.sha256(profile_bytes).hexdigest()
@@ -1326,7 +2059,8 @@ def main() -> int:
         evidence_bytes = args.evidence.read_bytes()
         evidence_sha256 = hashlib.sha256(evidence_bytes).hexdigest()
         evidence = yaml.safe_load(evidence_bytes)
-        result = evaluate_evidence_v2(evidence, contract)
+        result = evaluate_evidence_v2(
+            evidence, contract, require_bundle=args.claim_eligible)
         result['receipt_identity'] = {
             'profile_sha256': profile_sha256,
             'profile_sha256_kind': PROFILE_CANONICAL_HASH_KIND,
@@ -1345,6 +2079,11 @@ def main() -> int:
                 result['errors'].append(str(exc))
                 result['status'] = 'INVALID'
                 result['pass'] = False
+        if args.claim_eligible and not result.get('claim_eligible', False):
+            result['errors'].append(
+                'claim-eligible CLI mode requires a passing evidence bundle')
+            result['status'] = 'FAIL_CLOSED'
+            result['pass'] = False
     else:
         if not args.gate:
             parser.error('--gate must be supplied in legacy mode')

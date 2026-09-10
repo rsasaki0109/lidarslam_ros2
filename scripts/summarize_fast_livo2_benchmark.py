@@ -12,6 +12,26 @@ import statistics
 import sys
 from typing import Any
 
+import yaml
+
+try:
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (
+        current_rival_source_closure_identity)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (  # type: ignore[no-redef]
+        current_rival_source_closure_identity)
+
+
+try:
+    from lidarslam_benchmark_tools import package_root
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    def package_root() -> Path:
+        return Path(__file__).resolve().parents[1]
+
+
+ROOT = package_root()
+DEFAULT_PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
+
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -45,12 +65,22 @@ def summarize(benchmark_dir: Path, reference: Path) -> dict[str, Any]:
     run_paths = sorted(benchmark_dir.glob('run_*/run.json'))
     if not run_paths:
         raise ValueError(f'{benchmark_dir}: no run_*/run.json artifacts')
+    profile = yaml.safe_load(DEFAULT_PROFILE.read_text(encoding='utf-8'))
+    expected_closure = current_rival_source_closure_identity(
+        profile, root=ROOT)
     runs = []
     bag_hashes, revisions, image_ids = set(), set(), set()
+    closure_identities: list[dict[str, Any]] = []
     for run_path in run_paths:
         report = json.loads(run_path.read_text())
         ape = parse_ape(run_path.parent / 'ape_vs_gt.txt')
         provenance = report['provenance']
+        observed_closure = provenance.get('rival_source_closure')
+        if observed_closure != expected_closure:
+            raise ValueError(
+                'run provenance rival source closure is missing or differs '
+                'from the current r2 closure')
+        closure_identities.append(observed_closure)
         bag_hashes.add(provenance['bag_sha256'])
         revisions.add(provenance['source']['revision'])
         image_ids.add(provenance['container_image_id'])
@@ -70,6 +100,8 @@ def summarize(benchmark_dir: Path, reference: Path) -> dict[str, Any]:
         })
     if any(len(values) != 1 for values in (bag_hashes, revisions, image_ids)):
         raise ValueError('run provenance differs across repetitions')
+    if any(identity != expected_closure for identity in closure_identities):
+        raise ValueError('run provenance differs across repetitions')
     ape_values = [run['ape']['rmse'] for run in runs]
     rtf_values = [run['replay_wall_rtf'] for run in runs]
     rss_values = [run['peak_rss_mb'] for run in runs]
@@ -87,6 +119,7 @@ def summarize(benchmark_dir: Path, reference: Path) -> dict[str, Any]:
             'bag_sha256': next(iter(bag_hashes)),
             'reference_path': str(reference.resolve()),
             'reference_sha256': sha256(reference),
+            'rival_source_closure': expected_closure,
         },
         'aggregate': {
             'ape_rmse_median_m': statistics.median(ape_values),

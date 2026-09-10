@@ -8,14 +8,14 @@ import json
 import sys
 from pathlib import Path
 
-from mid360_robot_public_segment_map_cloud_alignment import (
+from lidarslam_benchmark_tools.mid360_robot_public_segment_map_cloud_alignment import (
     PUBLIC_SEGMENT_MAP_CLOUD_ALIGNMENT_JSON,
     PUBLIC_SEGMENT_MAP_CLOUD_ALIGNMENT_MARKDOWN,
     SegmentMapCloudAlignmentOptions,
     PublicSegmentMapCloudAlignmentAnalyzer,
     render_segment_map_cloud_alignment_markdown,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

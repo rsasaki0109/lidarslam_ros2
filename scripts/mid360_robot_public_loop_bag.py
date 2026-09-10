@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_LOOP_BAG_JSON = 'mid360_robot_public_loop_bag.json'

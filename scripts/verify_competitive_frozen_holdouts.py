@@ -50,7 +50,7 @@ SCRIPTS = ROOT / 'scripts'
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from freeze_competitive_fresh_holdouts import (  # noqa: E402
+from lidarslam_benchmark_tools.freeze_competitive_fresh_holdouts import (  # noqa: E402
     _metadata_topics,
     _require_git_blob,
     _require_relative_path,

@@ -12,8 +12,28 @@ from typing import Any
 
 import yaml
 
+try:
+    from lidarslam_benchmark_tools.competitive_memory_gate import evaluate_memory_gate
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.competitive_memory_gate import (  # type: ignore[no-redef]
+        evaluate_memory_gate)
 
-ROOT = Path(__file__).resolve().parents[1]
+try:
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (
+        current_rival_source_closure_identity)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (  # type: ignore[no-redef]
+        current_rival_source_closure_identity)
+
+
+try:
+    from lidarslam_benchmark_tools import package_root
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    def package_root() -> Path:
+        return Path(__file__).resolve().parents[1]
+
+
+ROOT = package_root()
 DEFAULT_PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
 
 
@@ -33,6 +53,54 @@ def finite(document: dict[str, Any], path: str) -> float:
     return float(value)
 
 
+def _memory_policy(contract: dict[str, Any]) -> dict[str, Any]:
+    evidence_policy = contract.get('evidence_gate_v2', {})
+    if isinstance(evidence_policy, dict):
+        value = evidence_policy.get('memory_gate', {})
+        if isinstance(value, dict):
+            return value
+    value = contract.get('memory_gate', {})
+    return value if isinstance(value, dict) else {}
+
+
+def _resource_rows(result: dict[str, Any]) -> list[dict[str, Any]] | None:
+    """Normalize composed per-run resource evidence for the strict gate.
+
+    A result only enters this path when a producer declared resource evidence
+    (or explicitly requested claim eligibility).  Missing entries are kept as
+    rows so the gate can report the exact missing run instead of silently
+    aggregating the remaining repetitions.
+    """
+    declared = result.get('resource_evidence')
+    if declared is None:
+        declared = result.get('resource_receipts', result.get('resources'))
+    if not isinstance(declared, list):
+        return None
+    sequence = result.get('sequence')
+    rows: list[dict[str, Any]] = []
+    for position, item in enumerate(declared, 1):
+        row: dict[str, Any]
+        if isinstance(item, dict):
+            row = dict(item)
+        else:
+            row = {'resource_evidence': item}
+        row.setdefault('dataset', sequence)
+        row.setdefault('sequence', sequence)
+        row.setdefault('run_index', position)
+        if not isinstance(row.get('runtime'), dict):
+            runtime = result.get('runtime')
+            if isinstance(runtime, dict):
+                row['runtime'] = {
+                    'peak_rss_mb': runtime.get('peak_rss_max_mb')}
+        if not any(key in row for key in
+                   ('resource_evidence', 'resource_receipt', 'resource')):
+            # A list item that is itself a receipt is still an explicit
+            # declaration; wrap it without altering its bytes or identity.
+            row['resource_evidence'] = item
+        rows.append(row)
+    return rows
+
+
 def evaluate(ours: dict[str, Any], rival: dict[str, Any],
              contract: dict[str, Any]) -> dict[str, Any]:
     policy = contract['win_policy']
@@ -47,6 +115,28 @@ def evaluate(ours: dict[str, Any], rival: dict[str, Any],
                 for field in identity_fields}
     check('identical_evaluation_contract', all(a == b and a not in (None, '')
           for a, b in identity.values()), identity)
+    closure_policy = contract.get('evidence_gate_v2', {}).get(
+        'rival_source_closure', {})
+    closure_expected = None
+    closure_error = None
+    if isinstance(closure_policy, dict) and closure_policy.get('required') is True:
+        try:
+            closure_expected = current_rival_source_closure_identity(
+                {'competitive_slam_profile': contract}, root=ROOT)
+        except (OSError, ValueError, TypeError, UnicodeError, yaml.YAMLError) as exc:
+            closure_error = str(exc)
+    closure_required = isinstance(closure_policy, dict) and \
+        closure_policy.get('required') is True
+    closure_pass = ((not closure_required) or
+                    (closure_expected is not None and
+                     ours.get('rival_source_closure') == closure_expected and
+                     rival.get('rival_source_closure') == closure_expected))
+    check('rival_source_closure_identity', closure_pass, {
+        'expected': closure_expected,
+        'ours': ours.get('rival_source_closure'),
+        'rival': rival.get('rival_source_closure'),
+        'error': closure_error,
+    })
     check('excluded_capabilities_enforced',
           ours.get('excluded_capabilities') == contract['excluded_capabilities'],
           ours.get('excluded_capabilities'))
@@ -74,15 +164,64 @@ def evaluate(ours: dict[str, Any], rival: dict[str, Any],
            'improvement_percent': improvement,
            'required_percent': policy['minimum_primary_improvement_percent']})
 
-    ours_rtf = finite(ours, 'runtime.processing_rtf_median')
-    check('realtime', ours_rtf <= float(policy['maximum_realtime_factor']),
-          {'ours': ours_rtf, 'maximum': policy['maximum_realtime_factor']})
-    ours_rss = finite(ours, 'runtime.peak_rss_max_mb')
-    rival_rss = finite(rival, 'runtime.peak_rss_max_mb')
-    rss_ratio = ours_rss / rival_rss
-    check('peak_rss', rss_ratio <= float(policy['maximum_peak_rss_ratio_to_rival']),
-          {'ours_mb': ours_rss, 'rival_mb': rival_rss, 'ratio': rss_ratio,
-           'maximum_ratio': policy['maximum_peak_rss_ratio_to_rival']})
+    runtime = ours.get('runtime', {})
+    phase_v2 = runtime.get('phase_contract_version') == 'm6a10-online-compute-v2'
+    if phase_v2:
+        mode = runtime.get('phase_mode')
+        if mode == 'paced_1x':
+            check('paced_followability', runtime.get(
+                'paced_followability_passed') is True, {
+                    'mode': mode,
+                    'primary_metric': 'runtime.paced_followability_passed',
+                    'wall_rtf_role': 'diagnostic_only',
+                })
+        elif mode == 'unpaced_ack':
+            check('unpaced_ack_throughput', runtime.get(
+                'unpaced_throughput_gate_passed') is True, {
+                    'mode': mode,
+                    'primary_metric': 'runtime.unpaced_throughput_gate_passed',
+                    'maximum': contract.get('runtime_policy', {}).get(
+                        'phase_contract_v2', {}).get(
+                        'maximum_unpaced_throughput_rtf', 1.0),
+                })
+        else:
+            check('phase_contract_v2_mode', False, {
+                'mode': mode, 'reason': 'unknown phase mode'})
+        check('realtime', True, {
+            'role': 'legacy_wall_diagnostic',
+            'processing_rtf': runtime.get('processing_rtf_median'),
+            'online_compute_rtf': runtime.get('online_compute_rtf_median'),
+        })
+    else:
+        ours_rtf = finite(ours, 'runtime.processing_rtf_median')
+        check('realtime', ours_rtf <= float(policy['maximum_realtime_factor']),
+              {'ours': ours_rtf, 'maximum': policy['maximum_realtime_factor'],
+               'role': 'legacy_wall_diagnostic'})
+    ours_resource_rows = _resource_rows(ours)
+    rival_resource_rows = _resource_rows(rival)
+    memory_requested = (
+        ours.get('claim_eligible') is True or
+        rival.get('claim_eligible') is True or
+        ours_resource_rows is not None or rival_resource_rows is not None)
+    memory_result: dict[str, Any] | None = None
+    if memory_requested:
+        memory_result = evaluate_memory_gate(
+            {'ours': ours_resource_rows or [], 'rival': rival_resource_rows or []},
+            required_systems=['ours', 'rival'],
+            expected_sequences=[str(ours.get('sequence'))],
+            repetitions=required_repetitions,
+            policy=_memory_policy(contract),
+            best_rival='rival',
+            claim_requested=True)
+        check('peak_rss', memory_result.get('pass') is True, memory_result)
+    else:
+        ours_rss = finite(ours, 'runtime.peak_rss_max_mb')
+        rival_rss = finite(rival, 'runtime.peak_rss_max_mb')
+        rss_ratio = ours_rss / rival_rss
+        check('peak_rss', rss_ratio <= float(policy['maximum_peak_rss_ratio_to_rival']),
+              {'ours_mb': ours_rss, 'rival_mb': rival_rss, 'ratio': rss_ratio,
+               'maximum_ratio': policy['maximum_peak_rss_ratio_to_rival'],
+               'status': 'LEGACY_REPORT_ONLY'})
 
     map_tolerance = float(policy['maximum_mapping_regression_percent']) / 100.0
     ours_map_runs = int(nested(ours, 'mapping.valid_repetitions'))
@@ -152,7 +291,8 @@ def evaluate(ours: dict[str, Any], rival: dict[str, Any],
 
     return {'schema_version': 1, 'sequence': ours.get('sequence'),
             'track': ours.get('track'), 'pass': all(
-                row['pass'] for row in checks.values()), 'checks': checks}
+                row['pass'] for row in checks.values()), 'checks': checks,
+            'memory_gate': memory_result}
 
 
 def main() -> int:

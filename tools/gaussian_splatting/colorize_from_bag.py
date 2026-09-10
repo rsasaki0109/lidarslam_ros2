@@ -56,8 +56,8 @@ from typing import Sequence
 
 import numpy as np
 
-import pointcloud_io as pcio
-import posed_images as pi
+import lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io as pcio
+import lidarslam_benchmark_tools.gaussian_splatting.posed_images as pi
 
 
 # --------------------------------------------------------------------------- #
@@ -305,7 +305,7 @@ def _collect(bag_path, pc_topic, cameras, need_tf=True):
     from rosidl_runtime_py.utilities import get_message
     import tf2_ros
     import rclpy.duration
-    from extract_posed_images import _open_reader
+    from lidarslam_benchmark_tools.gaussian_splatting.extract_posed_images import _open_reader
 
     reader = _open_reader(bag_path)
     types = {t.name: t.type for t in reader.get_all_topics_and_types()}
@@ -356,7 +356,7 @@ def _grab_messages(bag_path, wanted, types):
     """Second pass: deserialize each ``(topic, bag_time)`` in ``wanted`` -> msg."""
     from rclpy.serialization import deserialize_message
     from rosidl_runtime_py.utilities import get_message
-    from extract_posed_images import _open_reader
+    from lidarslam_benchmark_tools.gaussian_splatting.extract_posed_images import _open_reader
 
     out = {key: None for key in wanted}
     remaining = len(wanted)

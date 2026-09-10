@@ -9,22 +9,22 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_dashboard import DASHBOARD_HTML, write_dashboard
-from mid360_robot_record_tools import (
+from lidarslam_benchmark_tools.mid360_robot_dashboard import DASHBOARD_HTML, write_dashboard
+from lidarslam_benchmark_tools.mid360_robot_record_tools import (
     Mid360RecordManifestWriter,
     Mid360RobotRecordPlanner,
     RecordOptions,
     RecordPlan,
 )
-from mid360_robot_recording_check_tools import (
+from lidarslam_benchmark_tools.mid360_robot_recording_check_tools import (
     Mid360RecordingCheckReporter,
     RecordingCheckInputs,
     build_readiness_for_recording,
     load_recording_plan,
     write_readiness_artifacts,
 )
-from mid360_robot_sample_bag import Mid360SampleBagWriter, SampleBagConfig
-from mid360_robot_tools import (
+from lidarslam_benchmark_tools.mid360_robot_sample_bag import Mid360SampleBagWriter, SampleBagConfig
+from lidarslam_benchmark_tools.mid360_robot_tools import (
     RobotProfile,
     RobotProfileLoader,
     payload_to_json,

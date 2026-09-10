@@ -21,8 +21,8 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-import posed_images as pi
-import train_gsplat as tg
+import lidarslam_benchmark_tools.gaussian_splatting.posed_images as pi
+import lidarslam_benchmark_tools.gaussian_splatting.train_gsplat as tg
 
 
 def run(out_dir: str | Path, *, iters: int = 800, views: int = 12,

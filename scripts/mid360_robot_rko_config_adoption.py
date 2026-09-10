@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 RKO_CONFIG_ADOPTION_JSON = 'mid360_robot_rko_config_adoption.json'

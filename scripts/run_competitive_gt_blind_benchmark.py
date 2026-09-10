@@ -50,13 +50,81 @@ from typing import Any, Iterable
 
 import yaml
 
+# Direct source-checkout invocation must resolve the canonical package without
+# requiring PYTHONPATH.  Installed entry points use the package normally.
+_SCRIPT_SOURCE_ROOT = Path(__file__).resolve().parent.parent
+if (
+        (_SCRIPT_SOURCE_ROOT / 'lidarslam_benchmark_tools' / '__init__.py').is_file()
+        and (_SCRIPT_SOURCE_ROOT / 'scripts' / 'benchmark_phase_contract.py').is_file()
+        and str(_SCRIPT_SOURCE_ROOT) not in sys.path):
+    sys.path.insert(0, str(_SCRIPT_SOURCE_ROOT))
+
 try:
-    from scripts.competitive_identity_hash import canonical_profile_sha256
+    from lidarslam_benchmark_tools.competitive_identity_hash import (
+        canonical_profile_sha256)
 except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
-    from competitive_identity_hash import canonical_profile_sha256  # type: ignore[no-redef]
+    from lidarslam_benchmark_tools.competitive_identity_hash import (
+        canonical_profile_sha256)
+
+try:
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (
+        current_rival_source_closure_identity,
+        validate_rival_source_closure_receipt_identity)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (
+        current_rival_source_closure_identity,
+        validate_rival_source_closure_receipt_identity)
+
+try:
+    from lidarslam_benchmark_tools.benchmark_phase_contract import (
+        CONTRACT_VERSION as PHASE_CONTRACT_VERSION,
+        CONTRACT_VERSION_V2 as PHASE_CONTRACT_VERSION_V2,
+        PhaseContractError as PhaseValidationError,
+        validate_evidence as validate_phase_evidence,
+        validate_evidence_v2 as validate_phase_evidence_v2,
+    )
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.benchmark_phase_contract import (
+        CONTRACT_VERSION as PHASE_CONTRACT_VERSION,
+        CONTRACT_VERSION_V2 as PHASE_CONTRACT_VERSION_V2,
+        PhaseContractError as PhaseValidationError,
+        validate_evidence as validate_phase_evidence,
+        validate_evidence_v2 as validate_phase_evidence_v2,
+    )
+
+try:
+    from lidarslam_benchmark_tools.competitive_execution_attempt_receipt import (
+        seal_receipt,
+    )
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.competitive_execution_attempt_receipt import (
+        seal_receipt,
+    )
 
 
-ROOT = Path(__file__).resolve().parents[1]
+try:
+    from lidarslam_benchmark_tools import package_root, resolve_benchmark_resource
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    def package_root() -> Path:
+        return Path(__file__).resolve().parents[1]
+
+    def resolve_benchmark_resource(resource: str, *, executable: bool = False) -> Path:
+        """Resolve a source-checkout benchmark resource without fallback."""
+        relative = Path(resource)
+        if relative.is_absolute() or '..' in relative.parts:
+            raise RuntimeError(f'unsafe benchmark resource: {resource!r}')
+        if relative.parts and relative.parts[0] == 'scripts':
+            relative = Path(*relative.parts[1:])
+        candidate = (Path(__file__).resolve().parent / relative).resolve(strict=True)
+        source_root = Path(__file__).resolve().parent
+        if source_root not in candidate.parents or not candidate.is_file():
+            raise RuntimeError(f'benchmark resource is outside source scripts: {resource!r}')
+        if executable and not os.access(candidate, os.X_OK):
+            raise RuntimeError(f'benchmark resource is not executable: {resource!r}')
+        return candidate
+
+
+ROOT = package_root()
 DEFAULT_PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
 DEFAULT_RECEIPT = ROOT / (
     'configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml')
@@ -83,6 +151,16 @@ CONTAINER_SHA_RE = re.compile(r'^sha256:[0-9a-f]{64}$')
 MEMORY_EVIDENCE_NAME = 'container_memory.json'
 PROCESS_RSS_EVIDENCE_NAME = 'container_process_rss.json'
 PROCESS_RSS_MEASUREMENT_VERSION = 'm6a7-container-process-rss-v1'
+PHASE_EVIDENCE_NAME = 'phase_evidence.json'
+PHASE_CONTRACT_FILE = resolve_benchmark_resource(
+    'scripts/benchmark_phase_contract.py')
+PHASE_HELPER_FILE = resolve_benchmark_resource(
+    'scripts/container_phase_evidence.sh')
+PROCESS_RSS_HELPER_FILE = resolve_benchmark_resource(
+    'scripts/sample_container_process_rss.py')
+MEMORY_HELPER_FILE = resolve_benchmark_resource(
+    'scripts/container_memory_evidence.py')
+PHASE_CONTRACT_CHOICES = ('v1', 'v2-paced', 'v2-unpaced')
 PROCESS_RSS_PRIMARY_METRIC = 'aggregate_process_tree_peak_rss_bytes'
 PROCESS_RSS_METRIC_DEFINITION = (
     'sum_of_per_process_vmrss_peaks_shared_pages_may_be_recounted')
@@ -371,12 +449,23 @@ def _guard_gt(
 
 def docker_command(
         system: str, item: dict[str, Any], image_ref: str,
-        output_dir: Path, schedule_item: dict[str, Any]
+        output_dir: Path, schedule_item: dict[str, Any],
+        *, phase_contract: str = 'v1'
         ) -> tuple[list[str], dict[str, str]]:
+    if phase_contract not in PHASE_CONTRACT_CHOICES:
+        raise ContractError(f'unsupported phase contract selection: {phase_contract}')
     run_id = f'{system}-{schedule_item["schedule_index"]:03d}'
     env = dict(THREAD_ENV)
+    phase_version = (PHASE_CONTRACT_VERSION_V2
+                     if phase_contract != 'v1' else PHASE_CONTRACT_VERSION)
+    phase_mode = ('paced_1x' if phase_contract != 'v2-unpaced' else 'unpaced_ack')
     env.update({'ROS_DOMAIN_ID': str(200 + schedule_item['schedule_index']),
-                'RUN_NAME': run_id, 'GT_BLIND': '1'})
+                'RUN_NAME': run_id, 'GT_BLIND': '1',
+                'M6A10_PHASE_CONTRACT_VERSION': phase_version,
+                'M6A10_PHASE_MODE': phase_mode,
+                'M6A10_MAX_END_GAP_SECONDS': '0.25',
+                'M6A10_MAX_CALLBACK_LATENCY_SECONDS': '0.25',
+                'M6A10_MAX_BACKLOG_MESSAGES': '0'})
     if system == 'glim_cpu':
         env.update({'ROS_HOME': '/out/ros_home', 'ROS_LOG_DIR': '/out/ros_log'})
     elif system == 'fast_livo2':
@@ -518,12 +607,26 @@ def verify_input_identity(item: dict[str, Any], checked_slots: set[str]) -> None
 
 def build_plan(profile_doc: dict[str, Any], receipt: dict[str, Any], selection: dict[str, Any],
                input_root: Path, profile_path: Path, receipt_path: Path,
-               selection_path_value: Path, *, inspect_images: bool) -> dict[str, Any]:
+               selection_path_value: Path, *, inspect_images: bool,
+               phase_contract: str = 'v1') -> dict[str, Any]:
+    if phase_contract not in PHASE_CONTRACT_CHOICES:
+        raise ContractError(f'unsupported phase contract selection: {phase_contract}')
     profile = profile_doc.get('competitive_slam_profile', profile_doc)
     if not isinstance(profile, dict):
         raise ContractError('profile has no competitive_slam_profile')
     if receipt.get('status') not in ('ready', 'frozen'):
         raise ContractError('execution identity receipt is not ready/frozen')
+    try:
+        closure_identity = current_rival_source_closure_identity(
+            {'competitive_slam_profile': profile}, root=ROOT)
+    except (OSError, ValueError, TypeError, UnicodeError, yaml.YAMLError) as exc:
+        raise ContractError(f'current rival source closure is invalid: {exc}') from exc
+    closure_errors = validate_rival_source_closure_receipt_identity(
+        receipt, closure_identity)
+    if closure_errors:
+        raise ContractError(
+            'execution identity receipt is not bound to current r2 rival source '
+            'closure: ' + '; '.join(closure_errors))
     if selection.get('status') != 'frozen_unopened':
         raise ContractError('fresh selection receipt is not frozen_unopened')
     profile_sha = canonical_profile_sha256(profile_doc)
@@ -552,11 +655,12 @@ def build_plan(profile_doc: dict[str, Any], receipt: dict[str, Any], selection: 
         output_placeholder = Path('/M6A_OUTPUT_PLACEHOLDER')
         command, env = docker_command(
             schedule_item['system'], item, image_ref, output_placeholder,
-            schedule_item)
+            schedule_item, phase_contract=phase_contract)
         mounts = _slot_mounts(item, schedule_item['system'])
         guard = _guard_gt(item, mounts, command, env)
         plans.append({
             **schedule_item, 'sequence': item['sequence'],
+            'rival_source_closure': closure_identity,
             'image_ref': image_ref, 'image_digest': image_digest,
             'image_labels': labels, 'argv': command, 'env': env,
             'execution_identity': execution_identity,
@@ -573,6 +677,7 @@ def build_plan(profile_doc: dict[str, Any], receipt: dict[str, Any], selection: 
             }, 'gt_blind_guard': guard,
         })
     identity = {
+        'rival_source_closure': closure_identity,
         'profile_canonical_sha256': profile_sha,
         'execution_receipt_file_sha256': receipt_sha,
         'selection_receipt_file_sha256': selection_sha,
@@ -581,7 +686,39 @@ def build_plan(profile_doc: dict[str, Any], receipt: dict[str, Any], selection: 
         'repetitions': 3, 'ground_truth_content_opened': False,
         'scorer_invoked': False,
         'm6a7_process_rss_contract': process_rss_contract,
+        'm6a10_phase_contract': {
+            'schema_version': 1,
+            'contract_version': PHASE_CONTRACT_VERSION,
+            'maximum_online_compute_rtf': 1.0,
+            'phase_contract_sha256': sha256_file(PHASE_CONTRACT_FILE),
+            'phase_helper_sha256': sha256_file(PHASE_HELPER_FILE),
+            'primary_metric': 'runtime.online_compute_rtf',
+            'wall_metric': 'runtime.wall_realtime_factor',
+            'wall_metric_role': 'diagnostic_only',
+        },
+        'm6a10_phase_contract_v2': {
+            'schema_version': 2,
+            'contract_version': PHASE_CONTRACT_VERSION_V2,
+            'phase_selection': phase_contract,
+            'paced_primary_metric': 'runtime.paced_followability_passed',
+            'unpaced_primary_metric': 'runtime.unpaced_throughput_gate_passed',
+            'wall_metric_role': 'diagnostic_only',
+            'requires_consumer_ack': True,
+            'publisher_counts_are_not_acks': True,
+        },
     }
+    identity['campaign_id'] = canonical_sha({
+        'profile_canonical_sha256': profile_sha,
+        'execution_receipt_file_sha256': receipt_sha,
+        'selection_receipt_file_sha256': selection_sha,
+        'rival_source_closure': closure_identity,
+        'schedule_sha256': identity['schedule_sha256'],
+        'systems': identity['systems'],
+        'slots': identity['slots'],
+        'repetitions': identity['repetitions'],
+        'm6a7_process_rss_contract': process_rss_contract,
+        'm6a10_phase_contract_v2': identity['m6a10_phase_contract_v2'],
+    })
     return {'schema_version': 1, 'kind': 'm6a_gt_blind_plan',
             'status': 'preflight_ready' if inspect_images else 'planned',
             'identity': identity,
@@ -613,6 +750,43 @@ def parse_time_report(path: Path) -> dict[str, float | int | None]:
             'user_seconds': float(user.group(1)) if user else None,
             'sys_seconds': float(system.group(1)) if system else None,
             'docker_client_peak_rss_kb': int(rss.group(1)) if rss else None}
+
+
+def parse_phase_evidence(
+        path: Path, *, expected_contract_version: str | None = None,
+        expected_phase_mode: str | None = None) -> dict[str, Any]:
+    """Validate wrapper phase evidence without opening GT or scorer inputs."""
+    value = _load_json_object(path)
+    if value is None:
+        return {'valid': False, 'reason': 'missing_or_unreadable_phase_evidence'}
+    if (expected_contract_version is not None and
+            value.get('contract_version') != expected_contract_version):
+        return {
+            'valid': False,
+            'reason': 'phase contract version does not match scheduled mode',
+            'expected_contract_version': expected_contract_version,
+            'observed_contract_version': value.get('contract_version'),
+            'document': value,
+        }
+    if (expected_phase_mode is not None and
+            value.get('phase_mode') != expected_phase_mode):
+        return {
+            'valid': False,
+            'reason': 'phase mode does not match scheduled mode',
+            'expected_phase_mode': expected_phase_mode,
+            'observed_phase_mode': value.get('phase_mode'),
+            'document': value,
+        }
+    try:
+        validator = (validate_phase_evidence_v2
+                     if value.get('contract_version') == PHASE_CONTRACT_VERSION_V2
+                     else validate_phase_evidence)
+        checked = validator(value, maximum_online_rtf=1.0, require_pass=True)
+    except (PhaseValidationError, TypeError, ValueError) as error:
+        return {'valid': False, 'reason': str(error), 'document': value}
+    checked['valid'] = True
+    checked['reason'] = ''
+    return checked
 
 
 def _load_json_object(path: Path) -> dict[str, Any] | None:
@@ -916,14 +1090,20 @@ def write_driver_failure(output_root: Path, plan: dict[str, Any],
     return failure_path
 
 
-def expected_outputs(system: str, output: Path) -> list[Path]:
+def expected_outputs(system: str, output: Path,
+                     phase_contract_version: str | None = None) -> list[Path]:
     memory = output / MEMORY_EVIDENCE_NAME
     process_rss = output / PROCESS_RSS_EVIDENCE_NAME
+    phase = output / PHASE_EVIDENCE_NAME
+    consumer = output / 'consumer_evidence.json'
     if system == 'ours':
-        return [output / 'traj_raw.tum', memory, process_rss]
+        expected = [output / 'traj_raw.tum', memory, process_rss, phase]
+        if phase_contract_version == PHASE_CONTRACT_VERSION_V2:
+            expected.append(consumer)
+        return expected
     if system == 'glim_cpu':
-        return [output / 'dump' / 'traj_lidar.txt', memory, process_rss]
-    return [output / 'odometry.csv', memory, process_rss]
+        return [output / 'dump' / 'traj_lidar.txt', memory, process_rss, phase]
+    return [output / 'odometry.csv', memory, process_rss, phase]
 
 
 def run_attempt(plan: dict[str, Any], output_root: Path,
@@ -957,7 +1137,10 @@ def run_attempt(plan: dict[str, Any], output_root: Path,
         (part / 'driver_error.txt').write_text(str(exc) + '\n', encoding='utf-8')
         exit_status = 127
     finished = dt.datetime.now(dt.timezone.utc)
-    expected = expected_outputs(plan['system'], part)
+    expected_phase_contract_version = plan.get('env', {}).get(
+        'M6A10_PHASE_CONTRACT_VERSION')
+    expected = expected_outputs(plan['system'], part,
+                                expected_phase_contract_version)
     proof = dict(plan['gt_blind_guard'])
     proof.update({'ground_truth_content_opened': False, 'scorer_invoked': False,
                   'argv_gt_free': True, 'env_gt_free': True, 'mounts_gt_free': True})
@@ -967,16 +1150,44 @@ def run_attempt(plan: dict[str, Any], output_root: Path,
             part / PROCESS_RSS_EVIDENCE_NAME)
         memory_evidence = parse_container_memory_evidence(
             part / MEMORY_EVIDENCE_NAME)
+        expected_phase_mode = (plan.get('env', {}).get('M6A10_PHASE_MODE')
+                               if expected_phase_contract_version ==
+                               PHASE_CONTRACT_VERSION_V2 else None)
+        phase_evidence = parse_phase_evidence(
+            part / PHASE_EVIDENCE_NAME,
+            expected_contract_version=expected_phase_contract_version,
+            expected_phase_mode=expected_phase_mode)
         complete = not timed_out and exit_status == 0 and \
             all(path.is_file() for path in expected) and \
-            process_rss_evidence['valid'] and memory_evidence['valid']
+            process_rss_evidence['valid'] and memory_evidence['valid'] and \
+            phase_evidence['valid']
         timing = parse_time_report(part / 'host_time.txt')
+        phase_document = phase_evidence.get('document', phase_evidence)
+        input_duration = phase_document.get('input_duration_seconds') \
+            if isinstance(phase_document, dict) else None
+        wall_rtf = None
+        if isinstance(input_duration, (int, float)) and not isinstance(
+                input_duration, bool) and input_duration > 0 and \
+                isinstance(timing.get('wall_seconds'), (int, float)):
+            wall_rtf = timing['wall_seconds'] / float(input_duration)
+        phase_runtime = phase_evidence.get('runtime', {})
+        v2_contract = (phase_document.get('contract_version') ==
+                       PHASE_CONTRACT_VERSION_V2
+                       if isinstance(phase_document, dict) else False)
+        if v2_contract:
+            phase_gate_passed = bool(
+                phase_runtime.get('paced_followability_passed') or
+                phase_runtime.get('unpaced_throughput_gate_passed'))
+        else:
+            phase_gate_passed = bool(
+                phase_runtime.get('online_compute_rtf_gate_passed', False))
         report = {
             'schema_version': 1, 'kind': 'm6a_gt_blind_attempt',
             'schedule': {key: plan[key] for key in
                          ('schedule_index', 'system', 'slot', 'sequence',
                           'repetition')},
             'identity': {
+                'campaign_id': plan.get('campaign_id'),
                 'profile_canonical_sha256': plan.get('profile_canonical_sha256'),
                 'execution_receipt_file_sha256': plan.get(
                     'execution_receipt_file_sha256'),
@@ -994,8 +1205,24 @@ def run_attempt(plan: dict[str, Any], output_root: Path,
                 'expected_outputs': [str(path.relative_to(part))
                                      for path in expected],
                 'memory_evidence_valid': memory_evidence['valid'],
-                'process_rss_evidence_valid': process_rss_evidence['valid']},
+                'process_rss_evidence_valid': process_rss_evidence['valid'],
+                'phase_evidence_valid': phase_evidence['valid'],
+                'online_compute_rtf_gate_passed': phase_gate_passed,
+                'phase_primary_gate_passed': phase_gate_passed},
             'timing': timing,
+            'phase_evidence': phase_evidence,
+            'runtime': {
+                'phase_contract_version': phase_runtime.get(
+                    'phase_contract_version'),
+                'phase_mode': phase_runtime.get('phase_mode'),
+                'online_compute_rtf': phase_runtime.get('online_compute_rtf'),
+                'paced_followability_passed': phase_runtime.get(
+                    'paced_followability_passed'),
+                'unpaced_throughput_gate_passed': phase_runtime.get(
+                    'unpaced_throughput_gate_passed'),
+                'wall_realtime_factor': wall_rtf,
+                'wall_realtime_factor_role': 'diagnostic_only',
+            },
             'docker_client_peak_rss_kb': timing.get('docker_client_peak_rss_kb'),
             PROCESS_RSS_PRIMARY_METRIC: process_rss_evidence.get(
                 PROCESS_RSS_PRIMARY_METRIC),
@@ -1008,9 +1235,9 @@ def run_attempt(plan: dict[str, Any], output_root: Path,
                 'primary_metric': PROCESS_RSS_PRIMARY_METRIC,
                 'primary_metric_definition': PROCESS_RSS_METRIC_DEFINITION,
                 'sampler_script_sha256': sha256_file(
-                    ROOT / 'scripts/sample_container_process_rss.py'),
+                    PROCESS_RSS_HELPER_FILE),
                 'memory_helper_script_sha256': sha256_file(
-                    ROOT / 'scripts/container_memory_evidence.py'),
+                    MEMORY_HELPER_FILE),
             },
             'process_rss_evidence_file_sha256': sha256_file(
                 part / PROCESS_RSS_EVIDENCE_NAME)
@@ -1027,8 +1254,26 @@ def run_attempt(plan: dict[str, Any], output_root: Path,
             'artifact_hashes': artifact_hashes(part),
             'output_tree_sha256': output_tree_hash(part),
             'gt_blind_proof': proof,
+            'campaign_id': plan.get('campaign_id') or canonical_sha({
+                'schedule': plan.get('schedule'),
+                'system': plan.get('system'),
+                'sequence': plan.get('sequence'),
+                'repetition': plan.get('repetition'),
+                'identity': plan.get('execution_identity'),
+                'profile_canonical_sha256': plan.get(
+                    'profile_canonical_sha256'),
+                'selection_receipt_file_sha256': plan.get(
+                    'selection_receipt_file_sha256'),
+            }),
         }
+        report = seal_receipt(report)
         write_json(part / 'attempt.json', report)
+        # This is deliberately outside the self-hashed attempt JSON.  The
+        # canonical receipt identity above is stable across formatting; the
+        # external run index/completion record binds the exact pretty-file
+        # bytes copied into a claim bundle.
+        plan['_execution_receipt_file_sha256'] = sha256_file(
+            part / 'attempt.json')
         os.replace(part, final)
         return report
     except OSError as error:
@@ -1072,6 +1317,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--preflight', action='store_true')
     parser.add_argument('--execute', action='store_true',
                         help='run replays; never combine with --dry-run')
+    parser.add_argument('--phase-contract', choices=PHASE_CONTRACT_CHOICES,
+                        default='v1',
+                        help='phase evidence contract (v1 remains the default)')
     parser.add_argument('--plan-output', type=Path)
     parser.add_argument('--timeout-seconds', type=float, default=7200.0)
     return parser.parse_args()
@@ -1094,7 +1342,8 @@ def main() -> int:
     selection = load_yaml(args.selection)
     plan = build_plan(profile_doc, receipt, selection, args.input_root,
                       args.profile, args.receipt, args.selection,
-                      inspect_images=args.preflight or args.execute)
+                      inspect_images=args.preflight or args.execute,
+                      phase_contract=args.phase_contract)
     plan['paths']['output_root'] = str(args.output_root)
     if args.plan_output:
         args.plan_output.parent.mkdir(parents=True, exist_ok=True)
@@ -1106,16 +1355,29 @@ def main() -> int:
     args.output_root.mkdir(parents=True, exist_ok=False)
     check_or_create_marker(args.output_root, plan['identity'], create=True)
     reports = []
+    execution_receipt_files = []
     for item in plan['attempts']:
         item.update({key: value for key, value in plan['identity'].items()
                      if key.endswith('sha256')})
+        item['campaign_id'] = plan['identity']['campaign_id']
         print(f"M6a attempt {item['schedule_index']}/27: "
               f"{item['system']} {item['slot']} r{item['repetition']}", flush=True)
-        reports.append(run_attempt(item, args.output_root, args.timeout_seconds))
+        report = run_attempt(item, args.output_root, args.timeout_seconds)
+        reports.append(report)
+        execution_receipt_files.append({
+            'schedule_index': item['schedule_index'],
+            'system': item['system'], 'sequence': item['sequence'],
+            'repetition': item['repetition'],
+            'campaign_id': plan['identity']['campaign_id'],
+            'execution_receipt_sha256': report['execution_receipt_sha256'],
+            'execution_receipt_file_sha256': item.get(
+                '_execution_receipt_file_sha256'),
+        })
     completion = {
         'schema_version': 1, 'kind': 'm6a_gt_blind_completion',
         'status': 'PASS' if all(report['completion']['complete'] for report in reports)
         else 'INCOMPLETE', 'identity': plan['identity'], 'attempts': reports,
+        'execution_receipt_files': execution_receipt_files,
         'ground_truth_content_opened': False, 'scorer_invoked': False,
     }
     write_json(args.output_root / 'completion_manifest.json', completion)

@@ -15,7 +15,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-import generate_readme_mid360_figures as mid360_fig
+import lidarslam_benchmark_tools.generate_readme_mid360_figures as mid360_fig
 
 
 ROOT = Path(__file__).resolve().parents[1]

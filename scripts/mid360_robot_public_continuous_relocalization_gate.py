@@ -14,8 +14,8 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import payload_to_json
-from verify_autoware_map import MapVerifier
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.verify_autoware_map import MapVerifier
 
 
 CONTINUOUS_RELOCALIZATION_GATE_JSON = (

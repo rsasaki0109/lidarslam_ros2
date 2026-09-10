@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_production_readiness import (
+from lidarslam_benchmark_tools.mid360_robot_production_readiness import (
     PRODUCTION_READINESS_JSON,
     PRODUCTION_READINESS_MARKDOWN,
     Mid360ProductionReadinessGate,
@@ -16,7 +16,7 @@ from mid360_robot_production_readiness import (
     render_production_readiness_markdown,
     write_production_readiness_report,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

@@ -7,15 +7,15 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_public_dataset_map_runner import (
+from lidarslam_benchmark_tools.mid360_robot_public_dataset_map_runner import (
     PublicDatasetMapRunOptions,
     PublicDatasetMapRunner,
     PublicDatasetMapSafetyOptions,
     PublicDatasetMapSelectionOptions,
     render_map_candidates_markdown,
 )
-from mid360_robot_public_dataset_report import PUBLIC_DATASET_REPORT_JSON
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_public_dataset_report import PUBLIC_DATASET_REPORT_JSON
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

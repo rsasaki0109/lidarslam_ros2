@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_loop_alignment_analyzer import (
+from lidarslam_benchmark_tools.mid360_robot_loop_alignment_analyzer import (
     LOOP_ALIGNMENT_JSON,
     LOOP_ALIGNMENT_MARKDOWN,
     LoopAlignmentOptions,
@@ -16,7 +16,7 @@ from mid360_robot_loop_alignment_analyzer import (
     render_loop_alignment_markdown,
     write_loop_alignment_report,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 def parse_args() -> argparse.Namespace:

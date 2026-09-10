@@ -7,14 +7,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_public_bag_segments import (
+from lidarslam_benchmark_tools.mid360_robot_public_bag_segments import (
     PUBLIC_BAG_SEGMENTS_JSON,
     PublicBagSegmentOptions,
     PublicBagSegmentReportBuilder,
     render_public_bag_segments_markdown,
 )
-from mid360_robot_public_dataset_map_runner import PUBLIC_DATASET_MAP_CANDIDATES_JSON
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_public_dataset_map_runner import PUBLIC_DATASET_MAP_CANDIDATES_JSON
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

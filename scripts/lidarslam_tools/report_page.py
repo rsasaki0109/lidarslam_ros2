@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
-from lidarslam_tools.report_charts import GLIM_COLOR, LIDAR_COLOR
+from lidarslam_benchmark_tools.lidarslam_tools.report_charts import GLIM_COLOR, LIDAR_COLOR
 
 
 def render_page(

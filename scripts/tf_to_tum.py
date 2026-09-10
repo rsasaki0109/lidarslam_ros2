@@ -4,11 +4,20 @@ import argparse
 import os
 import time
 
-import rclpy
-from rclpy.duration import Duration
-from rclpy.node import Node
-from rclpy.parameter import Parameter
-import tf2_ros
+
+def _require_ros2():
+    """Return TF/ROS2 symbols or a precise execution-time error."""
+    try:
+        import rclpy
+        from rclpy.duration import Duration
+        from rclpy.node import Node
+        from rclpy.parameter import Parameter
+        import tf2_ros
+    except ImportError as error:
+        raise RuntimeError(
+            'tf_to_tum requires ROS2 rclpy and tf2_ros at execution time'
+        ) from error
+    return rclpy, Duration, Node, Parameter, tf2_ros
 
 
 def _parse_bool(s: str) -> bool:
@@ -56,6 +65,7 @@ def main() -> int:
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
+    rclpy, Duration, Node, Parameter, tf2_ros = _require_ros2()
     rclpy.init()
     node = Node("tf_to_tum")
     node.set_parameters(
@@ -114,4 +124,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

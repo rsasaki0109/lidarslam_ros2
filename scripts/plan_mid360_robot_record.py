@@ -8,13 +8,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-from mid360_robot_record_tools import (
+from lidarslam_benchmark_tools.mid360_robot_record_tools import (
     Mid360RecordManifestWriter,
     Mid360RobotRecordPlanner,
     RecordOptions,
     record_plan_to_json,
 )
-from mid360_robot_tools import RobotProfileLoader
+from lidarslam_benchmark_tools.mid360_robot_tools import RobotProfileLoader
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

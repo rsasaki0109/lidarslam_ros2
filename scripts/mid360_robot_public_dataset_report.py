@@ -10,13 +10,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_public_datasets import (
+from lidarslam_benchmark_tools.mid360_robot_public_datasets import (
     PUBLIC_DATASET_INTAKE_JSON,
     PublicDataset,
     get_public_dataset,
     public_dataset_registry,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_DATASET_REPORT_JSON = 'mid360_robot_public_dataset_report.json'

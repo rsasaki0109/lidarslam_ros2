@@ -22,9 +22,9 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-from actor_compositing import crop_gaussians, reorient_up_to_z
-from render_path import load_gaussian_ply
-from train_gsplat import export_ply
+from lidarslam_benchmark_tools.gaussian_splatting.actor_compositing import crop_gaussians, reorient_up_to_z
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import load_gaussian_ply
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import export_ply
 
 
 def build_parser() -> argparse.ArgumentParser:

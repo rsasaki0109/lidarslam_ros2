@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from mid360_robot_dashboard import DASHBOARD_HTML, write_dashboard
+from lidarslam_benchmark_tools.mid360_robot_dashboard import DASHBOARD_HTML, write_dashboard
 
 
 def parse_args() -> argparse.Namespace:

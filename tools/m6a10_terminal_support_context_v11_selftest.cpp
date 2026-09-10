@@ -1,0 +1,223 @@
+/*
+ * Benchmark-only synthetic gate for the v11 bounded-end-gap helper.
+ *
+ * This executable deliberately exercises the production header-only emitter
+ * and writes the exact consumer documents that the host compositor consumes.
+ * It has no bag, ROS topic, feeder, ground-truth, or scorer dependency.
+ */
+#include "m6a10_terminal_support_context.h"
+
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <string>
+#include <thread>
+#include <vector>
+
+namespace {
+
+using Context = M6A10TerminalSupportContext;
+using Topic = Context::Topic;
+constexpr const char *kV11Contract =
+  "m6a10-online-compute-v4-terminal-bounded-end-gap";
+
+const char *output_dir()
+{
+  const char *value = std::getenv("M6A10_SELFTEST_OUTPUT_DIR");
+  return value == nullptr || *value == '\0' ? "/dev/shm" : value;
+}
+
+void accept(Context &context, Topic topic, double timestamp)
+{
+  Context::CallbackScope scope = context.begin(topic);
+  scope.accept(timestamp);
+}
+
+void complete(Context &context, const std::vector<Topic> &topics,
+              double timestamp)
+{
+  context.begin_synchronization_unit();
+  for (Topic topic : topics)
+    context.observe_queue_pop(topic, true);
+  context.begin_estimator();
+  context.observe_completed_estimator(timestamp);
+}
+
+void poll_twice(Context &context, bool delayed)
+{
+  context.snapshot_pending_buffers();
+  if (delayed)
+    std::this_thread::sleep_for(std::chrono::milliseconds(80));
+  context.snapshot_pending_buffers();
+}
+
+bool finalize(Context &context, bool prove_support_context,
+              bool delayed_poll)
+{
+  context.observe_terminal_eof();
+  const bool predicate =
+    context.observe_terminal_sync_predicate(false);
+  if (prove_support_context && predicate)
+  {
+    for (const std::string &record_id : context.pending_record_ids())
+      context.prove_terminal_record(record_id, true, false,
+                                    "strictly_after_completed_boundary");
+  }
+  poll_twice(context, delayed_poll);
+  std_srvs::Trigger::Request request;
+  std_srvs::Trigger::Response response;
+  context.finalize_service(request, response);
+  return response.message == "terminal support-context evidence PASS";
+}
+
+bool run_case(const std::string &name)
+{
+  const std::string path = std::string(output_dir()) +
+    "/m6a10_terminal_v11_" + name + ".json";
+  std::remove(path.c_str());
+  if (std::string(Context::contract_version()) != kV11Contract)
+  {
+    std::cerr << "unexpected production contract: "
+              << Context::contract_version() << '\n';
+    return false;
+  }
+  setenv("M6A10_PHASE_CONTRACT_VERSION", kV11Contract, 1);
+  setenv("M6A10_PHASE_MODE", "unpaced_ack", 1);
+  setenv("M6A10_TERMINAL_SUPPORT_CONTEXT_EVIDENCE", path.c_str(), 1);
+  // These are synthetic identities, independent of the preregistered bag.
+  setenv("M6A10_FAST_REQUIRED_END_TIMESTAMP_SECONDS", "10.0", 1);
+  setenv("M6A10_FAST_MAX_END_GAP_SECONDS", "0.25", 1);
+  setenv("M6A10_FAST_MIN_TERMINAL_POLL_WALL_SECONDS", "0.05", 1);
+
+  Context context;
+  bool actual_pass = false;
+  bool expected_pass = false;
+
+  if (name == "zero_backlog")
+  {
+    accept(context, Topic::Lidar, 10.0);
+    complete(context, {Topic::Lidar}, 10.0);
+    expected_pass = true;
+    actual_pass = finalize(context, false, true);
+  }
+  else if (name == "post_boundary_imu_image_tail")
+  {
+    accept(context, Topic::Lidar, 10.0);
+    accept(context, Topic::Imu, 10.01);
+    accept(context, Topic::Image, 10.02);
+    complete(context, {Topic::Lidar}, 10.0);
+    expected_pass = true;
+    actual_pass = finalize(context, true, true);
+  }
+  else if (name == "residual_lidar")
+  {
+    accept(context, Topic::Lidar, 10.0);
+    accept(context, Topic::Lidar, 10.01);
+    complete(context, {Topic::Lidar}, 10.0);
+    actual_pass = finalize(context, true, true);
+  }
+  else if (name == "pre_boundary_tail")
+  {
+    accept(context, Topic::Lidar, 10.0);
+    accept(context, Topic::Imu, 9.99);
+    complete(context, {Topic::Lidar}, 10.0);
+    actual_pass = finalize(context, true, true);
+  }
+  else if (name == "discard_clear")
+  {
+    accept(context, Topic::Lidar, 10.0);
+    context.observe_queue_clear(Topic::Lidar);
+    actual_pass = finalize(context, false, true);
+  }
+  else if (name == "active_inflight")
+  {
+    accept(context, Topic::Lidar, 10.0);
+    context.begin_synchronization_unit();
+    context.observe_queue_pop(Topic::Lidar, true);
+    context.begin_estimator();
+    actual_pass = finalize(context, false, true);
+  }
+  else if (name == "same_rpc_stability")
+  {
+    accept(context, Topic::Lidar, 10.0);
+    complete(context, {Topic::Lidar}, 10.0);
+    context.observe_terminal_eof();
+    context.observe_terminal_sync_predicate(false);
+    // Two snapshots in one RPC/immediate succession must not stabilize.
+    context.snapshot_pending_buffers();
+    context.snapshot_pending_buffers();
+    std_srvs::Trigger::Request request;
+    std_srvs::Trigger::Response response;
+    context.finalize_service(request, response);
+    actual_pass = response.message == "terminal support-context evidence PASS";
+  }
+  else if (name == "missing_eof")
+  {
+    accept(context, Topic::Lidar, 10.0);
+    complete(context, {Topic::Lidar}, 10.0);
+    context.observe_terminal_sync_predicate(false);
+    context.snapshot_pending_buffers();
+    std::this_thread::sleep_for(std::chrono::milliseconds(80));
+    context.snapshot_pending_buffers();
+    std_srvs::Trigger::Request request;
+    std_srvs::Trigger::Response response;
+    context.finalize_service(request, response);
+    actual_pass = response.message == "terminal support-context evidence PASS";
+  }
+  else if (name == "bounded_end_gap")
+  {
+    // v11 accepts a completed estimator boundary at 9.90 because the exact
+    // trajectory gap to required end 10.00 is finite, nonnegative, and 0.10.
+    accept(context, Topic::Lidar, 9.90);
+    complete(context, {Topic::Lidar}, 9.90);
+    expected_pass = true;
+    actual_pass = finalize(context, false, true);
+  }
+  else if (name == "excessive_end_gap")
+  {
+    // 10.00 - 9.70 = 0.30, above the 0.25 maximum.
+    accept(context, Topic::Lidar, 9.70);
+    complete(context, {Topic::Lidar}, 9.70);
+    actual_pass = finalize(context, false, true);
+  }
+  else if (name == "future_boundary")
+  {
+    // A 10.10 boundary yields a negative end gap and must fail closed.
+    accept(context, Topic::Lidar, 10.10);
+    complete(context, {Topic::Lidar}, 10.10);
+    actual_pass = finalize(context, false, true);
+  }
+  else
+  {
+    std::cerr << "unknown synthetic case: " << name << '\n';
+    return false;
+  }
+
+  const bool expected = actual_pass == expected_pass;
+  std::cout << "M6A10_SYNTHETIC_CASE " << name
+            << " contract=" << Context::contract_version()
+            << " actual=" << (actual_pass ? "pass" : "invalid")
+            << " expected=" << (expected_pass ? "pass" : "invalid")
+            << " gate=" << (expected ? "PASS" : "FAIL") << '\n';
+  return expected;
+}
+
+}  // namespace
+
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, "m6a10_terminal_support_context_v11_selftest",
+            ros::init_options::AnonymousName |
+              ros::init_options::NoSigintHandler);
+  const std::vector<std::string> cases = {
+    "zero_backlog", "post_boundary_imu_image_tail", "residual_lidar",
+    "pre_boundary_tail", "discard_clear", "active_inflight",
+    "same_rpc_stability", "missing_eof", "bounded_end_gap",
+    "excessive_end_gap", "future_boundary"};
+  bool all_pass = true;
+  for (const std::string &name : cases)
+    all_pass = run_case(name) && all_pass;
+  std::cout << "M6A10_SYNTHETIC_ALL " << (all_pass ? "PASS" : "FAIL") << '\n';
+  return all_pass ? 0 : 1;
+}

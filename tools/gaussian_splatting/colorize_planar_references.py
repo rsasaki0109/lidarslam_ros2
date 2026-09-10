@@ -36,9 +36,9 @@ from pathlib import Path
 
 import numpy as np
 
-import plane_patch_warp as ppw
-import pointcloud_io as pcio
-import train_gsplat as tg
+import lidarslam_benchmark_tools.gaussian_splatting.plane_patch_warp as ppw
+import lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io as pcio
+import lidarslam_benchmark_tools.gaussian_splatting.train_gsplat as tg
 
 
 def luminance(image: np.ndarray) -> np.ndarray:

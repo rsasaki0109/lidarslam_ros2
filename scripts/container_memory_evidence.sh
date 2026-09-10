@@ -154,8 +154,17 @@ m6a5_install_container_signal_traps() {
 m6a5_container_exit_trap() {
   local exit_status="${1:-$?}"
   set +e
+  local phase_status=0
+  if declare -F m6a10_phase_finalize >/dev/null 2>&1; then
+    m6a10_phase_finalize "${exit_status}" "${M6A10_RESOURCE_REPORT:-}" || \
+      phase_status=$?
+  fi
   m6a5_write_container_memory_evidence "${exit_status}"
   local evidence_status=$?
+  if [[ "${exit_status}" -eq 0 && "${phase_status}" -ne 0 && \
+        "${M6A3_SYNTHETIC_SMOKE:-0}" != 1 ]]; then
+    return "${phase_status}"
+  fi
   if [[ "${exit_status}" -eq 0 && "${evidence_status}" -ne 0 ]]; then
     return "${evidence_status}"
   fi

@@ -40,14 +40,9 @@ import sys
 
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-TOOL_DIR = REPO_ROOT / 'tools' / 'gaussian_splatting'
-if str(TOOL_DIR) not in sys.path:
-    sys.path.insert(0, str(TOOL_DIR))
-
-import pointcloud_io as pcio  # noqa: E402
-import posed_images as pi  # noqa: E402
-import train_gsplat as tg  # noqa: E402
+from lidarslam_benchmark_tools.gaussian_splatting import pointcloud_io as pcio
+from lidarslam_benchmark_tools.gaussian_splatting import posed_images as pi
+from lidarslam_benchmark_tools.gaussian_splatting import train_gsplat as tg
 
 
 def image_edges(image: np.ndarray, percentile: float = 95.0) -> np.ndarray:

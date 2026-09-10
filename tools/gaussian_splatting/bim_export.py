@@ -1972,7 +1972,7 @@ def extract_and_export(xyz: np.ndarray, path: str | Path, *,
         xyz = xyz[keep]
         rgb = None if rgb is None else rgb[keep]
     if thin_voxel > 0.0:
-        from pointcloud_io import voxel_downsample
+        from lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io import voxel_downsample
         xyz, rgb = voxel_downsample(xyz, thin_voxel, rgb)
     if building:
         planes = extract_building(xyz, colors=rgb, threshold=threshold,
@@ -2082,9 +2082,7 @@ def _apply_cli_defaults(args):
 
 
 def main(argv=None) -> int:
-    import sys
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from pointcloud_io import read_point_cloud_xyz
+    from lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io import read_point_cloud_xyz
     args = _apply_cli_defaults(_build_arg_parser().parse_args(argv))
     print(f'[1/3] Reading point cloud: {args.input}', flush=True)
     xyz, rgb = read_point_cloud_xyz(args.input)

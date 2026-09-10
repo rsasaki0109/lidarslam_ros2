@@ -35,8 +35,8 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-from render_path import load_gaussian_ply, render_frames, scale_intrinsics
-from train_gsplat import load_transforms
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import load_gaussian_ply, render_frames, scale_intrinsics
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import load_transforms
 
 _AXES = {'x': 0, 'y': 1, 'z': 2}
 

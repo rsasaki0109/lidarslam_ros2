@@ -8,12 +8,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_sample_session import (
+from lidarslam_benchmark_tools.mid360_robot_sample_session import (
     Mid360SampleSessionRunner,
     SampleSessionOptions,
 )
-from mid360_robot_sample_session_matrix_dashboard import MATRIX_HTML, write_matrix_dashboard
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_sample_session_matrix_dashboard import MATRIX_HTML, write_matrix_dashboard
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 MATRIX_JSON = 'mid360_robot_sample_session_matrix.json'

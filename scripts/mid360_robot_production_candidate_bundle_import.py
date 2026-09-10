@@ -11,16 +11,16 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from mid360_robot_production_candidate_bundle import (
+from lidarslam_benchmark_tools.mid360_robot_production_candidate_bundle import (
     BUNDLE_MANIFEST_JSON,
     BUNDLE_MANIFEST_MARKDOWN,
     render_bundle_markdown,
 )
-from mid360_robot_production_candidate_session import (
+from lidarslam_benchmark_tools.mid360_robot_production_candidate_session import (
     Mid360ProductionCandidateSessionRunner,
     ProductionCandidateSessionOptions,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

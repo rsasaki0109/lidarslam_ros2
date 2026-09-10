@@ -115,11 +115,7 @@ def ply_to_splat_bytes(ply_path: str | Path, *, max_points: Optional[int] = None
                        min_opacity: float = 0.0,
                        max_scale: Optional[float] = None) -> bytes:
     """Read an INRIA-layout ``.ply`` and return its ``.splat`` bytes."""
-    import sys
-    tool_dir = str(Path(__file__).resolve().parent)
-    if tool_dir not in sys.path:
-        sys.path.insert(0, tool_dir)
-    from render_path import load_gaussian_ply
+    from lidarslam_benchmark_tools.gaussian_splatting.render_path import load_gaussian_ply
 
     g = load_gaussian_ply(ply_path)
     return gaussians_to_splat_bytes(

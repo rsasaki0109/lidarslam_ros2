@@ -21,7 +21,7 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-import posed_images as pi
+import lidarslam_benchmark_tools.gaussian_splatting.posed_images as pi
 
 # SH band-0 constant: f_dc = (rgb - 0.5) / C0 for the INRIA .ply layout.
 SH_C0 = 0.28209479177387814
@@ -508,7 +508,7 @@ def train_densify(dataset: dict, *, init_points=None, init_colors=None,
     # iter. Empty views (no points project) simply contribute no depth term.
     depth_gt = None
     if lidar_depth_lambda > 0.0:
-        import pointcloud_io as _pcio
+        import lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io as _pcio
         maps = _pcio.project_depth_maps(
             np.asarray(init_points, dtype=np.float64),
             dataset['viewmats'], dataset['K'], W, H)
@@ -792,7 +792,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     init_points = None
     init_colors = None
     if args.init_ply:
-        import pointcloud_io as pcio
+        import lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io as pcio
         init_points, rgb = pcio.read_ply_xyz(args.init_ply)
         init_colors = None if rgb is None else rgb.astype(np.float32) / 255.0
         print(f'LiDAR-primed init: {len(init_points)} points from {args.init_ply}')
@@ -824,7 +824,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
           + f' -> {out}')
     if 'extrinsic_delta' in params:
         import yaml
-        from extract_posed_images import parse_extrinsic_dict
+        from lidarslam_benchmark_tools.gaussian_splatting.extract_posed_images import parse_extrinsic_dict
         base = np.eye(4)
         if args.extrinsic:
             # Reuse the extractor's parser so both 'matrix' and

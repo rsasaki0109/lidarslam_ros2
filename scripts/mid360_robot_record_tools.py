@@ -13,7 +13,7 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import RobotProfile, payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import RobotProfile, payload_to_json
 
 
 @dataclass(frozen=True)

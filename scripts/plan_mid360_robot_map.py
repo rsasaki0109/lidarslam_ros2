@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from mid360_robot_tools import (
+from lidarslam_benchmark_tools.mid360_robot_tools import (
     AutowarePreflightAdapter,
     MapRunOptions,
     Mid360RunManifestWriter,

@@ -35,6 +35,7 @@ Expected successful outputs:
   map_projector_info.yaml
   verify_autoware_map.log
   autoware_map_diagnosis.md
+  map_run_manifest.json
 
 Examples:
   bash scripts/run_autoware_map_beginner.sh /path/to/rosbag2

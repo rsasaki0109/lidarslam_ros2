@@ -46,15 +46,50 @@ from typing import Any
 
 import yaml
 
+# Direct source-checkout execution puts ``scripts/`` (not the checkout root)
+# on ``sys.path``.  Bootstrap only the exact canonical checkout that owns this
+# file; installed package execution keeps normal package resolution.
+_SCRIPT_SOURCE_ROOT = Path(__file__).resolve().parent.parent
+if (
+        (_SCRIPT_SOURCE_ROOT / 'lidarslam_benchmark_tools' / '__init__.py').is_file()
+        and (_SCRIPT_SOURCE_ROOT / 'scripts' / 'benchmark_phase_contract.py').is_file()
+        and str(_SCRIPT_SOURCE_ROOT) not in sys.path):
+    sys.path.insert(0, str(_SCRIPT_SOURCE_ROOT))
+
 try:
-    from scripts.competitive_identity_hash import (
+    from lidarslam_benchmark_tools.competitive_identity_hash import (
         PROFILE_CANONICAL_HASH_KIND, canonical_profile_sha256)
 except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
-    from competitive_identity_hash import (  # type: ignore[no-redef]
+    from lidarslam_benchmark_tools.competitive_identity_hash import (  # type: ignore[no-redef]
         PROFILE_CANONICAL_HASH_KIND, canonical_profile_sha256)
 
+try:
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (
+        current_rival_source_closure_identity,
+        validate_rival_source_closure_receipt_identity,
+        verify_rival_source_closure)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (
+        current_rival_source_closure_identity,
+        validate_rival_source_closure_receipt_identity,
+        verify_rival_source_closure)
 
-ROOT = Path(__file__).resolve().parents[1]
+try:
+    from lidarslam_benchmark_tools.check_competitive_dataset_source_closure import (
+        verify_dataset_source_closure)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.check_competitive_dataset_source_closure import (
+        verify_dataset_source_closure)
+
+
+try:
+    from lidarslam_benchmark_tools import package_root
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    def package_root() -> Path:
+        return Path(__file__).resolve().parents[1]
+
+
+ROOT = package_root()
 DEFAULT_PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
 DEFAULT_RECEIPT = ROOT / (
     'configs/slam_benchmark_profiles/'
@@ -628,6 +663,29 @@ def evaluate(receipt: dict[str, Any], profile: dict[str, Any],
     if not isinstance(common, dict):
         errors.append('receipt.common_identity must be a mapping')
         common = {}
+    closure_identity: dict[str, Any] | None = None
+    closure_contract = (policy.get('rival_source_closure')
+                        if isinstance(policy, dict) else None)
+    closure_identity_ok = True
+    if isinstance(closure_contract, dict) and closure_contract.get('required') is True:
+        try:
+            closure_identity = current_rival_source_closure_identity(
+                profile, root=root)
+            closure_errors = validate_rival_source_closure_receipt_identity(
+                receipt, closure_identity)
+        except (OSError, ValueError, TypeError, UnicodeError, yaml.YAMLError) as exc:
+            closure_errors = [f'current rival source closure identity is invalid: {exc}']
+            closure_identity = None
+        if closure_errors:
+            errors.extend(closure_errors)
+            errors.append(
+                'execution receipt is not eligible: missing or mismatched '
+                'rival source closure identity')
+            closure_identity_ok = False
+    check('rival_source_closure_identity', closure_identity_ok, {
+        'expected': closure_identity,
+        'receipt': common.get('rival_source_closure'),
+    })
     try:
         computed_profile_sha = canonical_profile_sha256(profile)
     except ValueError as exc:
@@ -863,6 +921,46 @@ def evaluate(receipt: dict[str, Any], profile: dict[str, Any],
     process_rss_ok, process_rss_evidence = _check_m6a7_process_rss_contract(
         receipt, profile, root, errors, incomplete)
     check('m6a7_process_rss_contract', process_rss_ok, process_rss_evidence)
+    rival_source_closure = verify_rival_source_closure(
+        profile, root=root, receipt=receipt)
+    rival_source_closure_ok = rival_source_closure.get('pass') is True
+    check('rival_source_closure', rival_source_closure_ok,
+          rival_source_closure)
+    if not rival_source_closure_ok:
+        if rival_source_closure.get('status') == 'NOT_READY':
+            incomplete.extend(
+                'rival source closure: ' + str(item)
+                for item in rival_source_closure.get('not_ready', [])
+            )
+            incomplete.extend(
+                'rival source closure incomplete: ' + str(item)
+                for item in rival_source_closure.get('incomplete', [])
+            )
+        else:
+            errors.extend(
+                'rival source closure: ' + str(item)
+                for item in rival_source_closure.get('errors', [])
+            )
+            incomplete.extend(
+                'rival source closure incomplete: ' + str(item)
+                for item in rival_source_closure.get('incomplete', [])
+            )
+
+    dataset_source_closure = verify_dataset_source_closure(profile, root=root)
+    dataset_source_closure_ok = dataset_source_closure.get('pass') is True
+    check('dataset_source_closure', dataset_source_closure_ok,
+          dataset_source_closure)
+    if not dataset_source_closure_ok:
+        if dataset_source_closure.get('status') == 'NOT_READY':
+            incomplete.extend(
+                'dataset source closure: ' + str(item)
+                for item in dataset_source_closure.get('not_ready', [])
+            )
+        else:
+            errors.extend(
+                'dataset source closure: ' + str(item)
+                for item in dataset_source_closure.get('errors', [])
+            )
 
     status = 'INVALID' if errors else ('INCOMPLETE' if incomplete else 'PASS')
     return {
@@ -877,6 +975,8 @@ def evaluate(receipt: dict[str, Any], profile: dict[str, Any],
         'thread_policy_canonical_sha256': thread_policy_canonical_hash,
         'm6a5_memory_contract': memory_evidence,
         'm6a7_process_rss_contract': process_rss_evidence,
+        'rival_source_closure': rival_source_closure,
+        'dataset_source_closure': dataset_source_closure,
         'profile_execution_selection_receipt': {
             'path': receipt_path_value,
             'expected_sha256': receipt_expected_sha,
@@ -906,6 +1006,12 @@ def main() -> int:
             'canonical_scorer_fingerprint'),
         'thread_policy_canonical_sha256': result.get(
             'thread_policy_canonical_sha256'),
+        'rival_source_closure': result['checks'].get(
+            'rival_source_closure_identity', {}).get('evidence', {}).get(
+                'expected'),
+        'dataset_source_closure_sha256': result.get(
+            'dataset_source_closure', {}).get(
+                'dataset_source_closure_sha256'),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + '\n',

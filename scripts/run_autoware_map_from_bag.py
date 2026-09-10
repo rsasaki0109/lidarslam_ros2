@@ -97,6 +97,10 @@ def build_execution_plan(
             '--bag', str(bag_path),
             '--lidar-topic', pointcloud,
             '--imu-topic', imu,
+            '--lidarslam-param',
+            str(REPO_ROOT / 'lidarslam' / 'param' / 'lidarslam.yaml'),
+            '--rko-param',
+            str(REPO_ROOT / 'lidarslam' / 'param' / 'rko_lio_ntu_viral.yaml'),
             '--output-dir', str(output_dir),
             '--wait-for-offline-completion',
             '--skip-viewer',
@@ -190,6 +194,12 @@ def validate_bag_path(bag_path: Path) -> None:
 def validate_output_dir(output_dir: Path) -> None:
     if output_dir.exists() and not output_dir.is_dir():
         raise ValueError(f'output directory path is a file, not a directory: {output_dir}')
+    if output_dir.is_dir() and any(output_dir.iterdir()):
+        raise ValueError(
+            f'output directory is non-empty: {output_dir}. '
+            'Choose a new output directory; operational resume is not supported yet, '
+            'and existing artifacts are never mixed with a new run.'
+        )
 
     for parent in output_dir.parents:
         if parent.exists():
@@ -261,6 +271,10 @@ def print_next_steps(args: argparse.Namespace, output_dir: Path) -> None:
         '  Diagnosis: '
         f'python3 scripts/diagnose_autoware_map_run.py {shlex.quote(str(output_dir))} --write'
     )
+    print(
+        '  Support bundle: '
+        f'python3 scripts/create_map_support_bundle.py {shlex.quote(str(output_dir))}'
+    )
     verify_log = output_dir / 'verify_autoware_map.log'
     if verify_log.is_file():
         print(f'  Verify log: {verify_log}')
@@ -282,7 +296,7 @@ def print_next_steps(args: argparse.Namespace, output_dir: Path) -> None:
         )
 
 
-def write_diagnostics(output_dir: Path, bag_path: Path) -> None:
+def write_diagnostics(output_dir: Path, bag_path: Path) -> dict[str, object]:
     diagnose = _load_script_module('diagnose_autoware_map_run.py', 'diagnose_autoware_map_run')
     summary = diagnose.summarize_run(output_dir, bag_path)
     markdown = diagnose.render_markdown(summary)
@@ -290,6 +304,24 @@ def write_diagnostics(output_dir: Path, bag_path: Path) -> None:
     (output_dir / 'autoware_map_diagnosis.json').write_text(
         __import__('json').dumps(summary, indent=2, sort_keys=True),
         encoding='utf-8',
+    )
+    return summary
+
+
+def write_run_manifest(
+    output_dir: Path,
+    bag_path: Path,
+    plan: dict[str, object],
+    status: str,
+) -> Path:
+    manifest = _load_script_module('map_run_manifest.py', 'map_run_manifest')
+    return manifest.write_manifest(
+        repo_root=REPO_ROOT,
+        output_dir=output_dir,
+        bag_path=bag_path,
+        profile_id=plan['profile_id'],
+        command=plan['command'],
+        status=status,
     )
 
 
@@ -312,6 +344,7 @@ def _help_epilog() -> str:
         '  map_projector_info.yaml',
         '  verify_autoware_map.log',
         '  autoware_map_diagnosis.md',
+        '  map_run_manifest.json',
         '',
         'Examples:',
         '  python3 scripts/run_autoware_map_from_bag.py /path/to/rosbag2 --dry-run',
@@ -432,9 +465,15 @@ def main() -> int:
         if output_dir.exists():
             try:
                 maybe_verify_map(output_dir, enabled=not args.no_verify_map)
-                write_diagnostics(output_dir, bag_path)
+                diagnosis = write_diagnostics(output_dir, bag_path)
+                write_run_manifest(
+                    output_dir,
+                    bag_path,
+                    plan,
+                    status=diagnosis['status'],
+                )
             except (OSError, RuntimeError, ValueError) as exc:
-                print(f'warning: failed to write run diagnostics: {exc}', file=sys.stderr)
+                print(f'warning: failed to write run diagnostics/manifest: {exc}', file=sys.stderr)
 
     if command_error is not None:
         print(
@@ -453,6 +492,7 @@ def main() -> int:
         print(f'error: viewer failed with exit code {exc.returncode}.', file=sys.stderr)
         return exc.returncode or 1
     print(f'Diagnosis written to: {output_dir / "autoware_map_diagnosis.md"}')
+    print(f'Run manifest written to: {output_dir / "map_run_manifest.json"}')
     return 0
 
 

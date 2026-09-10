@@ -7,20 +7,20 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_public_rko_adoption_gate import (
+from lidarslam_benchmark_tools.mid360_robot_public_rko_adoption_gate import (
     RKO_ADOPTION_GATE_JSON,
     RKO_ADOPTION_GATE_MARKDOWN,
     RkoAdoptionGateOptions,
     RkoAdoptionGateRunner,
     render_rko_adoption_gate_markdown,
 )
-from mid360_robot_public_rko_quality_report import RkoQualityGateThresholds
-from mid360_robot_public_rko_sweep import (
+from lidarslam_benchmark_tools.mid360_robot_public_rko_quality_report import RkoQualityGateThresholds
+from lidarslam_benchmark_tools.mid360_robot_public_rko_sweep import (
     RKO_SWEEP_JSON,
     default_rko_sweep_cases,
     parse_rko_sweep_case,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

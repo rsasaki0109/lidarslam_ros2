@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_public_datasets import (
+from lidarslam_benchmark_tools.mid360_robot_public_datasets import (
     PublicDatasetIntake,
     PublicDatasetIntakeOptions,
     public_dataset_payload,
@@ -18,7 +18,7 @@ from mid360_robot_public_datasets import (
     render_public_dataset_intake_markdown,
     render_public_dataset_list,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

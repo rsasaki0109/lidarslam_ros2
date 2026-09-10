@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_3d_map_preview import (
+from lidarslam_benchmark_tools.mid360_robot_3d_map_preview import (
     MAP_PREVIEW_HTML,
     MAP_PREVIEW_JSON,
     MAP_PREVIEW_OVERLAY_JSON,
@@ -15,7 +15,7 @@ from mid360_robot_3d_map_preview import (
     MapPreviewOptions,
     Mid360MapPreviewExporter,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 def parse_args() -> argparse.Namespace:

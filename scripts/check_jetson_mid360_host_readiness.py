@@ -7,11 +7,22 @@ import argparse
 import sys
 from pathlib import Path
 
-from jetson_mid360_host_tools import (
-    HostReadinessOptions,
-    JetsonHostReadiness,
-    payload_to_json,
-)
+try:
+    from lidarslam_benchmark_tools.jetson_mid360_host_tools import (
+        HostReadinessOptions,
+        JetsonHostReadiness,
+        payload_to_json,
+    )
+except ModuleNotFoundError:
+    # Direct source-checkout invocation puts this script's directory on
+    # sys.path, while the installed package exposes the same canonical module
+    # under lidarslam_benchmark_tools.  Keep the two execution surfaces
+    # identical without maintaining a second implementation.
+    from jetson_mid360_host_tools import (  # type: ignore[no-redef]
+        HostReadinessOptions,
+        JetsonHostReadiness,
+        payload_to_json,
+    )
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

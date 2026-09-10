@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from lidarslam_tools.report_model import RunRecord, badge
+from lidarslam_benchmark_tools.lidarslam_tools.report_model import RunRecord, badge
 
 
 def collect_log_alerts(run_dir: Path, limit: int = 6) -> list[dict[str, Any]]:

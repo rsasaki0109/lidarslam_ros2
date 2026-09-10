@@ -7,8 +7,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_loop_alignment_analyzer import LoopAlignmentThresholds
-from mid360_robot_public_loop_candidates import (
+from lidarslam_benchmark_tools.mid360_robot_loop_alignment_analyzer import LoopAlignmentThresholds
+from lidarslam_benchmark_tools.mid360_robot_public_loop_candidates import (
     PUBLIC_LOOP_CANDIDATES_JSON,
     PUBLIC_LOOP_CANDIDATES_MARKDOWN,
     PublicLoopCandidateAnalyzer,
@@ -16,7 +16,7 @@ from mid360_robot_public_loop_candidates import (
     render_public_loop_candidate_markdown,
     write_public_loop_candidate_report,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

@@ -16,7 +16,7 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_DATASET_INTAKE_JSON = 'mid360_robot_public_dataset_intake.json'

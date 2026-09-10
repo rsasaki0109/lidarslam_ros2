@@ -11,13 +11,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_loop_alignment_analyzer import (
+from lidarslam_benchmark_tools.mid360_robot_loop_alignment_analyzer import (
     LoopAlignmentThresholds,
     find_loop_candidates,
     find_nearest_revisit,
     parse_tum_trajectory_lines,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_LOOP_CANDIDATES_JSON = 'mid360_robot_public_loop_candidates.json'

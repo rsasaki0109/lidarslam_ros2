@@ -25,7 +25,7 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-import posed_images as pi
+import lidarslam_benchmark_tools.gaussian_splatting.posed_images as pi
 
 
 # --------------------------------------------------------------------------- #

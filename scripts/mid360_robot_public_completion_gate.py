@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_tools import payload_to_json
-from verify_autoware_map import MapVerifier
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.verify_autoware_map import MapVerifier
 
 
 PUBLIC_COMPLETION_GATE_JSON = 'mid360_robot_public_completion_gate.json'

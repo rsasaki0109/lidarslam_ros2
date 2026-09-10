@@ -14,7 +14,7 @@ from zipfile import ZipFile
 
 import numpy as np
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_LOOP_CLOUD_ANALYSIS_JSON = 'mid360_robot_public_loop_cloud_analysis.json'

@@ -8,9 +8,6 @@ from xml.sax.saxutils import escape
 
 import matplotlib.pyplot as plt
 import numpy as np
-import rosbag2_py
-from rclpy.serialization import deserialize_message
-from rosidl_runtime_py.utilities import get_message
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -224,6 +221,15 @@ def sample_map_points(
     scan_stride: int = 12,
     point_stride: int = 32,
 ) -> tuple[np.ndarray, np.ndarray]:
+    try:
+        import rosbag2_py
+        from rclpy.serialization import deserialize_message
+        from rosidl_runtime_py.utilities import get_message
+    except ImportError as error:
+        raise RuntimeError(
+            'generate_readme_mid360_figures map sampling requires ROS2 '
+            'rosbag2_py, rclpy, and rosidl_runtime_py at execution time'
+        ) from error
     reader = rosbag2_py.SequentialReader()
     storage = rosbag2_py.StorageOptions(uri=str(bag_path), storage_id="sqlite3")
     converter = rosbag2_py.ConverterOptions(

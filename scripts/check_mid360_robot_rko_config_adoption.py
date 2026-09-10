@@ -7,14 +7,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_rko_config_adoption import (
+from lidarslam_benchmark_tools.mid360_robot_rko_config_adoption import (
     RKO_CONFIG_ADOPTION_JSON,
     RKO_CONFIG_ADOPTION_MARKDOWN,
     RkoConfigAdoptionChecker,
     render_rko_config_adoption_markdown,
     write_rko_config_adoption_report,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

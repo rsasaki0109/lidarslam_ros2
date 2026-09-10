@@ -130,9 +130,7 @@ def _build_arg_parser():
 
 
 def main(argv=None) -> int:
-    import sys
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from pointcloud_io import read_ply_xyz
+    from lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io import read_ply_xyz
     args = _build_arg_parser().parse_args(argv)
     xyz, rgb = read_ply_xyz(args.input)
     mesh = reconstruct_mesh(xyz, rgb, method=args.method, depth=args.depth,

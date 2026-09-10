@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_production_candidate_bundle import (
+from lidarslam_benchmark_tools.mid360_robot_production_candidate_bundle import (
     BUNDLE_MANIFEST_JSON,
     BUNDLE_MANIFEST_MARKDOWN,
     BundleOptions,
@@ -15,7 +15,7 @@ from mid360_robot_production_candidate_bundle import (
     render_bundle_markdown,
     verify_bundle_manifest,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 def parse_args() -> argparse.Namespace:

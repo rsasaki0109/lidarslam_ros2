@@ -18,13 +18,10 @@ itself needs rclpy.
 from __future__ import annotations
 
 from pathlib import Path
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import numpy as np  # noqa: E402
-from render_path import matrix_to_quat_xyzw  # noqa: E402
-from train_gsplat import load_transforms  # noqa: E402
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import matrix_to_quat_xyzw  # noqa: E402
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import load_transforms
 
 
 # --------------------------------------------------------------------------- #

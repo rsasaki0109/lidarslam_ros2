@@ -20,9 +20,9 @@ from typing import Optional
 
 import numpy as np
 
-import posed_images as pi
-from render_path import infer_sh_degree, load_gaussian_ply
-from train_gsplat import SH_C0
+import lidarslam_benchmark_tools.gaussian_splatting.posed_images as pi
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import infer_sh_degree, load_gaussian_ply
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import SH_C0
 
 
 # --------------------------------------------------------------------------- #

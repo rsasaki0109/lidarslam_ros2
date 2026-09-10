@@ -11,9 +11,9 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 
-import generate_readme_mid360_figures as mid360_fig
-from generate_readme_large_loop_map_figure import DEFAULT_MID360_METRICS
-from generate_readme_large_loop_map_figure import DEFAULT_MID360_TRAJ
+import lidarslam_benchmark_tools.generate_readme_mid360_figures as mid360_fig
+from lidarslam_benchmark_tools.generate_readme_large_loop_map_figure import DEFAULT_MID360_METRICS
+from lidarslam_benchmark_tools.generate_readme_large_loop_map_figure import DEFAULT_MID360_TRAJ
 
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_public_rko_quality_report import (
+from lidarslam_benchmark_tools.mid360_robot_public_rko_quality_report import (
     RKO_QUALITY_HTML,
     RKO_QUALITY_JSON,
     RKO_QUALITY_MARKDOWN,
@@ -16,7 +16,7 @@ from mid360_robot_public_rko_quality_report import (
     render_rko_quality_markdown,
     write_rko_quality_report,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

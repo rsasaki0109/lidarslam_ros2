@@ -102,7 +102,7 @@ def write_gis_csv(path: str | Path, xyz: np.ndarray,
             raise ValueError('rgb must match xyz shape')
 
     if thin_voxel > 0.0:
-        from pointcloud_io import voxel_downsample
+        from lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io import voxel_downsample
         xyz, rgb = voxel_downsample(xyz, thin_voxel, rgb)
 
     geo = origin_lat is not None and origin_lon is not None
@@ -153,9 +153,7 @@ def _build_arg_parser():
 
 
 def main(argv=None) -> int:
-    import sys
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from pointcloud_io import read_ply_xyz
+    from lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io import read_ply_xyz
     args = _build_arg_parser().parse_args(argv)
     xyz, rgb = read_ply_xyz(args.input)
     out = write_gis_csv(args.output, xyz, rgb,

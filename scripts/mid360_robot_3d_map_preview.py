@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_loop_alignment_analyzer import (
+from lidarslam_benchmark_tools.mid360_robot_loop_alignment_analyzer import (
     LOOP_ALIGNMENT_JSON,
     LoopAlignmentThresholds,
     find_loop_candidates,
@@ -18,7 +18,7 @@ from mid360_robot_loop_alignment_analyzer import (
     resolve_pointcloud_map_dir,
     resolve_trajectory_path,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 MAP_PREVIEW_JSON = 'mid360_robot_3d_map_preview.json'

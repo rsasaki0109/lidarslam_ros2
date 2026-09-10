@@ -20,8 +20,8 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-import pointcloud_io as pcio
-import posed_images as pi
+import lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io as pcio
+import lidarslam_benchmark_tools.gaussian_splatting.posed_images as pi
 
 
 def transform_points(points: np.ndarray, world_T_body: np.ndarray) -> np.ndarray:
@@ -107,13 +107,13 @@ def build(args: argparse.Namespace) -> dict:
     samples = pi.read_tum_trajectory(args.traj)
     body_T_lidar = np.eye(4)
     if args.lidar_calibration:
-        from extract_posed_images import load_parented_sensor_extrinsic
+        from lidarslam_benchmark_tools.gaussian_splatting.extract_posed_images import load_parented_sensor_extrinsic
         body_T_lidar = load_parented_sensor_extrinsic(
             args.lidar_calibration, args.lidar_key)
 
     import rosbag2_py
     # Reuse the extractor's reader factory so FILE-compressed (zstd) bags work.
-    from extract_posed_images import _open_reader
+    from lidarslam_benchmark_tools.gaussian_splatting.extract_posed_images import _open_reader
     reader = _open_reader(args.bag)
     reader.set_filter(rosbag2_py.StorageFilter(topics=[args.points_topic]))
 
@@ -206,7 +206,7 @@ def _colorize(world: np.ndarray, transforms_path: str, *, robust: bool = False,
               max_samples: int = 12):
     """Project ``world`` points into the posed images of a transforms.json."""
     import imageio.v3 as iio
-    import train_gsplat as tg
+    import lidarslam_benchmark_tools.gaussian_splatting.train_gsplat as tg
 
     ds = tg.load_transforms(transforms_path)
     images = [np.asarray(iio.imread(p)) for p in ds['image_paths']]

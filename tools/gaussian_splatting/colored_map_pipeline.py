@@ -249,7 +249,7 @@ def run_pipeline(args) -> dict:
     if not args.dry_run:
         out_dir.mkdir(parents=True, exist_ok=True)
         if args.kalibr_camchain is not None:
-            from extract_posed_images import load_kalibr_body_camera_extrinsic
+            from lidarslam_benchmark_tools.gaussian_splatting.extract_posed_images import load_kalibr_body_camera_extrinsic
             matrix = load_kalibr_body_camera_extrinsic(
                 args.kalibr_camchain, args.lidar_calibration,
                 camera_key=args.camera_key, lidar_key=args.lidar_key)

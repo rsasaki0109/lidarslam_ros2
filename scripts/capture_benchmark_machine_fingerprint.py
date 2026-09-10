@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 import sys
 
-from run_fast_livo2_benchmark import benchmark_machine_fingerprint
+from lidarslam_benchmark_tools.run_fast_livo2_benchmark import benchmark_machine_fingerprint
 
 
 def main() -> int:

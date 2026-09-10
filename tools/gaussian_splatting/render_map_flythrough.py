@@ -30,9 +30,9 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-import pointcloud_io as pcio
-from render_path import render_frames, scale_intrinsics, write_videos
-from render_slam_3dgs_sidebyside import (
+import lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io as pcio
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import render_frames, scale_intrinsics, write_videos
+from lidarslam_benchmark_tools.gaussian_splatting.render_slam_3dgs_sidebyside import (
     annotate_frames,
     fade_weights,
     height_colormap,
@@ -43,7 +43,7 @@ from render_slam_3dgs_sidebyside import (
     points_to_gaussians,
     resample_polyline,
 )
-from train_gsplat import load_transforms
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import load_transforms
 
 WORLD_UP = np.array([0.0, 0.0, 1.0])
 

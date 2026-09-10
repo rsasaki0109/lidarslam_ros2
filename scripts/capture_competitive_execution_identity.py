@@ -54,15 +54,42 @@ from typing import Any
 
 import yaml
 
+# Direct source-checkout execution puts ``scripts/`` (not the checkout root)
+# on ``sys.path``.  Bootstrap only the exact canonical checkout that owns this
+# file; installed package execution does not satisfy these source markers and
+# therefore keeps its normal package resolution.
+_SCRIPT_SOURCE_ROOT = Path(__file__).resolve().parent.parent
+if (
+        (_SCRIPT_SOURCE_ROOT / 'lidarslam_benchmark_tools' / '__init__.py').is_file()
+        and (_SCRIPT_SOURCE_ROOT / 'scripts' / 'benchmark_phase_contract.py').is_file()
+        and str(_SCRIPT_SOURCE_ROOT) not in sys.path):
+    sys.path.insert(0, str(_SCRIPT_SOURCE_ROOT))
+
 try:
-    from scripts.competitive_identity_hash import (
+    from lidarslam_benchmark_tools.competitive_identity_hash import (
         PROFILE_CANONICAL_HASH_KIND, canonical_profile_sha256)
 except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
-    from competitive_identity_hash import (  # type: ignore[no-redef]
+    from lidarslam_benchmark_tools.competitive_identity_hash import (  # type: ignore[no-redef]
         PROFILE_CANONICAL_HASH_KIND, canonical_profile_sha256)
 
+try:
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (
+        current_rival_source_closure_identity,
+        validate_rival_source_closure_receipt_identity)
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    from lidarslam_benchmark_tools.check_competitive_rival_source_closure import (  # type: ignore[no-redef]
+        current_rival_source_closure_identity,
+        validate_rival_source_closure_receipt_identity)
 
-ROOT = Path(__file__).resolve().parents[1]
+
+try:
+    from lidarslam_benchmark_tools import package_root
+except ModuleNotFoundError:  # direct ``python scripts/<tool>.py`` execution
+    def package_root() -> Path:
+        return Path(__file__).resolve().parents[1]
+
+
+ROOT = package_root()
 DEFAULT_PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
 DEFAULT_RECEIPT = ROOT / (
     'configs/slam_benchmark_profiles/'
@@ -534,6 +561,36 @@ def compare_capture_to_receipt(
     if not isinstance(common, dict):
         errors.append('receipt.common_identity must be a mapping')
         common = {}
+    closure_policy = policy.get('rival_source_closure', {})
+    closure_identity = None
+    closure_ok = True
+    if isinstance(closure_policy, dict) and closure_policy.get('required') is True:
+        try:
+            closure_identity = current_rival_source_closure_identity(
+                {'competitive_slam_profile': contract}, root=root)
+            closure_errors = validate_rival_source_closure_receipt_identity(
+                receipt, closure_identity)
+        except (OSError, ValueError, TypeError, UnicodeError, yaml.YAMLError) as exc:
+            closure_errors = [f'current rival source closure identity is invalid: {exc}']
+        if closure_errors:
+            errors.extend(closure_errors)
+            errors.append(
+                'execution-selection receipt is not eligible: missing or '
+                'mismatched rival source closure identity')
+            closure_ok = False
+        observed_capture_closure = capture.get('rival_source_closure')
+        if observed_capture_closure != closure_identity:
+            errors.append(
+                'capture rival source closure identity is missing or differs '
+                'from the current closure')
+            closure_ok = False
+    check('rival_source_closure_identity', closure_ok, {
+        'required': isinstance(closure_policy, dict) and
+        closure_policy.get('required') is True,
+        'expected': closure_identity,
+        'receipt': common.get('rival_source_closure'),
+        'capture': capture.get('rival_source_closure'),
+    })
     expected_profile_sha = common.get('profile_sha256')
     expected_profile_kind = common.get('profile_sha256_kind')
     profile_hash_ok = True
@@ -802,6 +859,15 @@ def capture_identity(receipt: dict[str, Any], profile: dict[str, Any],
     if 'ours' not in system_sources:
         system_sources['ours'] = root
     image_overrides = dict(image_overrides or {})
+    closure_identity = None
+    closure_policy = policy.get('rival_source_closure', {})
+    if isinstance(closure_policy, dict) and closure_policy.get('required') is True:
+        try:
+            closure_identity = current_rival_source_closure_identity(
+                {'competitive_slam_profile': profile.get(
+                    'competitive_slam_profile', profile)}, root=root)
+        except (OSError, ValueError, TypeError, UnicodeError, yaml.YAMLError):
+            closure_identity = None
     machine = capture_machine()
     machine_path = _resolve_path(
         root, receipt.get('common_identity', {}).get('machine_fingerprint', {}).get('path'))
@@ -899,6 +965,7 @@ def capture_identity(receipt: dict[str, Any], profile: dict[str, Any],
     capture = {
         'schema_version': 1,
         'receipt_kind': 'competitive_execution_identity_capture',
+        'rival_source_closure': closure_identity,
         'status': 'pending_observation',
         'pass': False,
         'captured_at': dt.datetime.now(dt.timezone.utc).isoformat(),
@@ -1000,6 +1067,7 @@ def finalize_identity(
         'capture_receipt_sha256': captured_receipt_sha,
         'source_profile_sha256': current_profile_sha,
         'capture_profile_sha256': captured_profile_sha,
+        'rival_source_closure': capture.get('rival_source_closure'),
         'thread_policy_canonical_sha256': comparison.get(
             'thread_policy_canonical_sha256'),
         'receipt_mutation': {'performed': False, 'automatic_promotion': False},

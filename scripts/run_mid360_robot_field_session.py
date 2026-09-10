@@ -13,9 +13,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_dashboard import DASHBOARD_HTML, write_dashboard
-from mid360_robot_record_tools import Mid360RobotRecordPlanner, RecordOptions
-from mid360_robot_tools import RobotProfileLoader, payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_dashboard import DASHBOARD_HTML, write_dashboard
+from lidarslam_benchmark_tools.mid360_robot_record_tools import Mid360RobotRecordPlanner, RecordOptions
+from lidarslam_benchmark_tools.mid360_robot_tools import RobotProfileLoader, payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

@@ -8,7 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from lidarslam_tools.report_charts import (
+from lidarslam_benchmark_tools.lidarslam_tools.report_charts import (
     GLIM_COLOR,
     LIDAR_COLOR,
     diff_chart_svg,
@@ -16,8 +16,8 @@ from lidarslam_tools.report_charts import (
     plotly_3d_chart,
     xy_chart_svg,
 )
-from lidarslam_tools.report_diagnostics import collect_log_alerts, render_log_alerts
-from lidarslam_tools.report_model import (
+from lidarslam_benchmark_tools.lidarslam_tools.report_diagnostics import collect_log_alerts, render_log_alerts
+from lidarslam_benchmark_tools.lidarslam_tools.report_model import (
     RunRecord,
     ape_spike_ratio,
     as_bool,
@@ -37,9 +37,9 @@ from lidarslam_tools.report_model import (
     stability_markup,
     summarize_group,
 )
-from lidarslam_tools.report_page import render_page
-from lidarslam_tools.report_sections import build_page, plot_bundle, run_row, section
-from lidarslam_tools.trajectory_analysis import Pose, build_aligned_series
+from lidarslam_benchmark_tools.lidarslam_tools.report_page import render_page
+from lidarslam_benchmark_tools.lidarslam_tools.report_sections import build_page, plot_bundle, run_row, section
+from lidarslam_benchmark_tools.lidarslam_tools.trajectory_analysis import Pose, build_aligned_series
 
 
 __all__ = [
