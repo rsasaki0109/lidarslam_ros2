@@ -1,0 +1,12 @@
+diff --git a/src/LIVMapper.cpp b/src/LIVMapper.cpp
+--- a/src/LIVMapper.cpp
++++ b/src/LIVMapper.cpp
+@@ -562,4 +562,9 @@ void LIVMapper::run() 
+ {
+-  ros::Rate rate(5000);
++  // M6a10 v9 keeps the 5000 Hz loop cadence but makes the idle wait
++  // independent of /clock.  The wrapper intentionally enables simulated
++  // time before replay; waiting on ros::Rate before the first /clock would
++  // otherwise stop this thread from reaching the next ros::spinOnce().
++  ros::WallRate rate(5000);
+   while (ros::ok()) 

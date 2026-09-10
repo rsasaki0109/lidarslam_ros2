@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-apt-closure-collector-inner-v1",
+  "title": "GLIM r3 filesystem-only inner collector receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "capture_mode", "benchmark_eligible",
+    "payload_sha256", "capture_id", "ledger_path", "ledger_sha256", "allowlist_sha256",
+    "base_status_sha256", "staged_deb_manifest_sha256", "archive_set_identity_sha256",
+    "source_identity_sha256", "files", "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_apt_closure_collector_inner_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "REVIEW_REQUIRED"},
+    "capture_mode": {"const": "IMPLEMENTATION_CANDIDATE_NOT_RUNTIME_VALIDATED"},
+    "benchmark_eligible": {"const": false},
+    "payload_sha256": {"$ref": "#/$defs/sha256"},
+    "capture_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"},
+    "ledger_path": {"const": "apt-acquisition-ledger.json"},
+    "ledger_sha256": {"$ref": "#/$defs/sha256"},
+    "allowlist_sha256": {"$ref": "#/$defs/sha256"},
+    "base_status_sha256": {"$ref": "#/$defs/sha256"},
+    "staged_deb_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "archive_set_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "source_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "files": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/file"}},
+    "receipt_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "role", "source_path", "bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^artifacts/"},
+        "role": {"enum": ["apt_source", "apt_release", "rosdep_source", "rosdep_cache", "deb", "license"]},
+        "source_path": {"type": "string", "pattern": "^raw/"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "source_url": {"type": "string", "pattern": "^https://"}
+      }
+    }
+  }
+}

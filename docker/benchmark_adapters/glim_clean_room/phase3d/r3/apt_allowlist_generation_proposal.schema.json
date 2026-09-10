@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-apt-allowlist-generation-proposal-v1",
+  "title": "Non-promoting proposed apt allowlist and acquisition ledger",
+  "type": "object", "additionalProperties": true,
+  "required": ["schema", "schema_version", "status", "benchmark_eligible",
+    "production_manifest_modified", "active_r2_modified", "custodian_review",
+    "pinned_base_image", "requirements", "base_status", "resolver_outputs", "resolver_logs",
+    "source_snapshot", "package_allowlist", "apt_acquisition_ledger", "role_bindings",
+    "signature_verification",
+    "closure_identity_sha256", "materialization", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_apt_allowlist_generation_proposal_v1"},
+    "schema_version": {"const": 1}, "status": {"const": "PROPOSED_REVIEW_REQUIRED"},
+    "benchmark_eligible": {"const": false}, "production_manifest_modified": {"const": false},
+    "active_r2_modified": {"const": false}, "pinned_base_image": {"type": "string"},
+    "closure_identity_sha256": {"$ref": "#/$defs/sha256"}, "canonical_sha256": {"$ref": "#/$defs/sha256"},
+    "custodian_review": {"type": "object", "additionalProperties": false,
+      "required": ["status", "required", "signature"],
+      "properties": {"status": {"const": "UNSIGNED_PLACEHOLDER"}, "required": {"const": true}, "signature": {"const": ""}}},
+    "requirements": {"type": "object", "required": ["path", "file_sha256", "canonical_sha256"]},
+    "base_status": {"type": "object", "required": ["path", "file_sha256", "package_set_sha256"]},
+    "resolver_outputs": {"type": "object", "required": ["build", "runtime"],
+      "properties": {"build": {"$ref": "#/$defs/sha256"}, "runtime": {"$ref": "#/$defs/sha256"}}},
+    "resolver_logs": {"type": "object", "required": ["build", "runtime"],
+      "properties": {"build": {"$ref": "#/$defs/sha256"}, "runtime": {"$ref": "#/$defs/sha256"}}},
+    "source_snapshot": {"type": "object", "required": ["manifest_path", "manifest_file_sha256", "canonical_sha256"]},
+    "package_allowlist": {"type": "object"}, "apt_acquisition_ledger": {"type": "object"},
+    "role_bindings": {"type": "array", "minItems": 1},
+    "signature_verification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "receipt_index_schema", "receipt_index_required",
+        "repository_keys", "runtime", "promotion"],
+      "properties": {
+        "status": {"const": "REQUIRED_NOT_PROVEN"},
+        "receipt_index_schema": {"const": "glim_clean_room_r3_apt_signature_receipt_index_v1"},
+        "receipt_index_required": {"const": true},
+        "repository_keys": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/repositoryKey"}},
+        "runtime": {"const": "NOT_RUN"},
+        "promotion": {"const": "FORBIDDEN_UNTIL_HOST_AUTHORIZED_RECEIPTS"}
+      }
+    },
+    "materialization": {"type": "object", "required": ["collector_input", "requires_review_status", "network_used", "capture_mode"],
+      "properties": {"collector_input": {"const": false}, "requires_review_status": {"const": "REVIEWED_FOR_COLLECTOR"},
+        "network_used": {"const": "NOT_RUN"}, "capture_mode": {"const": "FIXTURE_ONLY_NOT_RUNTIME_VALIDATED"}}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "repositoryKey": {
+      "type": "object", "additionalProperties": false,
+      "required": ["url", "release_url", "release_path", "release_sha256",
+        "packages_url", "packages_path", "packages_sha256"],
+      "properties": {
+        "url": {"type": "string", "pattern": "^https://"},
+        "release_url": {"type": "string", "pattern": "^https://"},
+        "release_path": {"type": "string", "minLength": 1},
+        "release_sha256": {"$ref": "#/$defs/sha256"},
+        "packages_url": {"type": "string", "pattern": "^https://"},
+        "packages_path": {"type": "string", "minLength": 1},
+        "packages_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

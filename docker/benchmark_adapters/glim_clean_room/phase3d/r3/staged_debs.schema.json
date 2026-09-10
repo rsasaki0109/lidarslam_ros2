@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-staged-debs-v1",
+  "title": "GLIM r3 immutable staged deb manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "entries", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_staged_debs_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "SEALED_REVIEW_REQUIRED"},
+    "entries": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["filename", "bytes", "sha256"],
+        "properties": {
+          "filename": {"type": "string", "pattern": "^[^/\\\\]+\\.deb$"},
+          "bytes": {"type": "integer", "minimum": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

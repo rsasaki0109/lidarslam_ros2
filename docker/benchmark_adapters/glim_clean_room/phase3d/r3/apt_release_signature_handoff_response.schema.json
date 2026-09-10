@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-custodian-handoff-response-v1",
+  "title": "Offline review of one custodian READY authorization response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "benchmark_eligible",
+    "request", "candidate", "policy", "authorization", "verifier",
+    "request_binding", "authorization_binding", "machine_validation",
+    "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_custodian_handoff_response_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "READY_AUTHORIZATION_RESPONSE"},
+    "benchmark_eligible": {"const": false},
+    "request": {"$ref": "#/$defs/descriptor"},
+    "candidate": {"$ref": "#/$defs/descriptor"},
+    "policy": {"$ref": "#/$defs/descriptor"},
+    "authorization": {"$ref": "#/$defs/descriptor"},
+    "verifier": {"$ref": "#/$defs/verifier"},
+    "request_binding": {"$ref": "#/$defs/requestBinding"},
+    "authorization_binding": {"$ref": "#/$defs/authorizationBinding"},
+    "machine_validation": {"const": "OFFLINE_ARTIFACT_ONLY"},
+    "canonical_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "absolutePath": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+    "descriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_bytes", "file_sha256", "canonical_sha256", "schema"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolutePath"},
+        "file_bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "file_sha256": {"$ref": "#/$defs/sha256"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "objectValue": {"type": "object"},
+    "requestBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["campaign_id", "candidate", "policy_template", "plan", "executor",
+        "trust_root", "repository", "binding", "deb_bindings", "deb_bindings_sha256",
+        "scope", "machine_identity", "machine_fingerprint", "safety",
+        "requested_validity", "nonce", "authorization_template"],
+      "properties": {
+        "campaign_id": {"type": "string", "minLength": 1},
+        "candidate": {"$ref": "#/$defs/objectValue"},
+        "policy_template": {"$ref": "#/$defs/objectValue"},
+        "plan": {"$ref": "#/$defs/objectValue"},
+        "executor": {"$ref": "#/$defs/objectValue"},
+        "trust_root": {"$ref": "#/$defs/objectValue"},
+        "repository": {"$ref": "#/$defs/objectValue"},
+        "binding": {"$ref": "#/$defs/objectValue"},
+        "deb_bindings": {"type": "array", "minItems": 1},
+        "deb_bindings_sha256": {"$ref": "#/$defs/sha256"},
+        "scope": {"$ref": "#/$defs/objectValue"},
+        "machine_identity": {"$ref": "#/$defs/objectValue"},
+        "machine_fingerprint": {"$ref": "#/$defs/sha256"},
+        "safety": {"$ref": "#/$defs/objectValue"},
+        "requested_validity": {"$ref": "#/$defs/objectValue"},
+        "nonce": {"type": "string", "minLength": 32, "maxLength": 128},
+        "authorization_template": {"$ref": "#/$defs/objectValue"}
+      }
+    },
+    "authorizationBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy_canonical_sha256", "candidate_canonical_sha256",
+        "machine_method", "authorization_issued_at", "live_host_match",
+        "authorization_payload_sha256"],
+      "properties": {
+        "policy_canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "candidate_canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "machine_method": {"type": "string", "enum": ["LEGACY_V1", "PROVISIONED_ED25519"]},
+        "authorization_issued_at": {"type": "integer", "minimum": 0},
+        "live_host_match": {"const": false},
+        "authorization_payload_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "verifier": {
+      "type": "object", "additionalProperties": false,
+      "required": ["module", "source_sha256", "authorization_schema",
+        "authorization_schema_path", "authorization_schema_sha256", "handoff_schema",
+        "handoff_schema_path", "handoff_schema_sha256", "backend"],
+      "properties": {
+        "module": {"type": "string", "minLength": 1},
+        "source_sha256": {"$ref": "#/$defs/sha256"},
+        "authorization_schema": {"const": "glim_clean_room_r3_apt_signature_authorization_v1"},
+        "authorization_schema_path": {"type": "string", "minLength": 1},
+        "authorization_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "handoff_schema": {"const": "glim_clean_room_r3_custodian_handoff_v1"},
+        "handoff_schema_path": {"type": "string", "minLength": 1},
+        "handoff_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "backend": {
+          "type": "object", "additionalProperties": false,
+          "required": ["name", "implementation", "implementation_file", "version", "implementation_sha256"],
+          "properties": {
+            "name": {"const": "python-cryptography"},
+            "implementation": {"type": "string", "minLength": 1},
+            "implementation_file": {"type": "string", "minLength": 1},
+            "version": {"type": "string", "minLength": 1},
+            "implementation_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        }
+      }
+    }
+  }
+}

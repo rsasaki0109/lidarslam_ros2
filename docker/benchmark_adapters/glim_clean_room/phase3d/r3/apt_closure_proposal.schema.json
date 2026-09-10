@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-apt-closure-proposal-v1",
+  "title": "GLIM clean-room r3 proposed apt/deb closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "benchmark_eligible",
+    "production_manifest_modified", "active_r2_modified",
+    "capture_receipt_sha256", "capture_closure_identity_sha256",
+    "proposed_offline_manifest", "custodian_review", "canonical_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_apt_closure_proposal_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "PROPOSED_REVIEW_REQUIRED"},
+    "benchmark_eligible": {"const": false},
+    "production_manifest_modified": {"const": false},
+    "active_r2_modified": {"const": false},
+    "capture_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "capture_closure_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "proposed_offline_manifest": {
+      "type": "object",
+      "required": ["status", "apt_deb_closure"],
+      "properties": {
+        "status": {"const": "READY"},
+        "apt_deb_closure": {
+          "type": "object",
+          "required": ["schema_version", "status", "dpkg_packages_sorted", "repositories", "closure_identity_sha256"],
+          "properties": {
+            "schema_version": {"const": 1},
+            "status": {"const": "READY"},
+            "dpkg_packages_sorted": {"type": "array", "minItems": 1},
+            "repositories": {"type": "array", "minItems": 1},
+            "closure_identity_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        }
+      }
+    },
+    "custodian_review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "signature", "required"],
+      "properties": {
+        "status": {"const": "UNSIGNED_PLACEHOLDER"},
+        "signature": {"const": ""},
+        "required": {"const": true}
+      }
+    },
+    "canonical_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

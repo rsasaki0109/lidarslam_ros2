@@ -46,11 +46,31 @@ nav:
   - Comparison: comparison.md
   - Architecture:
       - Registration Plugin API: architecture/registration-plugin-api.md
+      - Registration Plugin Matrix Audit: architecture/registration-plugin-matrix-audit-2026-08.md
+      - Registration Plugin Release Campaign: architecture/registration-plugin-release-campaign-2026-08.md
+      - M6a10 Benchmark Phase Contract: architecture/benchmark-phase-contract-m6a10.md
       - Registration Plugin Authoring: registration-plugin-authoring.md
+      - GLIM Clean-Room Phase 2 API Audit: architecture/glim-clean-room-adapter-phase2-api-audit-2026-08.md
+      - GLIM Clean-Room Phase 3a Conversion: architecture/glim-clean-room-adapter-phase3a-conversion-2026-08.md
+      - GLIM Clean-Room Phase 3b Runtime: architecture/glim-clean-room-adapter-phase3b-runtime-2026-08.md
+      - GLIM Clean-Room Phase 3c Map Output: architecture/glim-clean-room-adapter-phase3c-map-2026-08.md
+      - GLIM Clean-Room Phase 3d r3 Apt Allowlist: architecture/glim-clean-room-adapter-phase3d-r3-apt-allowlist-2026-08.md
+      - GLIM Clean-Room Phase 3d r3 Machine Handoff and Response Review: architecture/glim-clean-room-adapter-phase3d-r3-machine-handoff-2026-08.md
+      - GLIM Clean-Room Phase 3d Jazzy Live ROS 2: architecture/glim-clean-room-adapter-phase3d-ros2-live-2026-08.md
+      - GLIM Clean-Room Phase 3d r3 Candidate: architecture/glim-clean-room-adapter-phase3d-r3-candidate-2026-08.md
+      - Competitive Claim Publication: architecture/competitive-claim-publication-2026-08.md
+      - Competitive Pre-Execution Audit: architecture/competitive-pre-execution-audit-2026-08.md
+      - Competitive Execution Selection r3 Candidate: architecture/competitive-execution-selection-r3-2026-08.md
+      - Competitive Execution Selection r3 External Capture: architecture/competitive-execution-selection-r3-external-capture-2026-08.md
+      - Competitive Execution Machine Identity PoP: architecture/competitive-execution-machine-identity-pop-2026-08.md
+      - Competitive Rival Legal Provenance Capture: architecture/competitive-rival-legal-provenance-capture-2026-08.md
+      - Competitive Rival Source Closure r3 Candidate: architecture/competitive-rival-source-closure-r3-candidate-2026-08.md
+      - Competitive Rival Source Closure r3 Custodian Response: architecture/competitive-rival-source-closure-r3-custodian-response-2026-08.md
       - SMALL GICP HILTI exp04 Gate: architecture/small-gicp-hilti-exp04-gate-2026-08.md
       - SMALL GICP MID-360 Gate: architecture/small-gicp-mid360-gate-2026-08.md
       - SMALL GICP external DSO ODR Gate: architecture/small-gicp-external-dso-odr-gate-2026-08.md
   - Roadmaps:
+      - SOTA Product Development: roadmap/sota-product-development-2026-08.md
       - Extensible OSS Architecture: roadmap/extensible-architecture-2026-08.md
   - Social:
       - v0.2.2 Post Kit: social/autoware_map_authoring_post_v0.2.2.md

@@ -1,0 +1,805 @@
+{
+  "schema": "glim_clean_room_r3_apt_allowlist_candidate_v1",
+  "schema_version": 1,
+  "candidate_id": "glim-clean-room-r3-apt-allowlist-generation-v1",
+  "revision": 3,
+  "status": "OPT_IN_NOT_READY",
+  "benchmark_eligible": false,
+  "production_manifest_modified": false,
+  "active_r2_modified": false,
+  "tool_hashes": {
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_composer.py": "aac437ccead2f4e718b87449b45d580249e106fa2d7053759f9a2550d95935dc",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_signature_promotion.py": "eacbb77cd5f8672bdf4905ef929fc60d31185f661c547667d28d400df85223af",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_authorization.py": "8f2e95bf16ddabcd8acbc904fd1797f38035d3cfdf4c7b2e6e76500672c23f66",
+    "scripts/plan_glim_clean_room_r3_apt_allowlist.py": "ebe5ea8bf205fcd32c1976096c9a9708e2e49bfab22fd0614a15dc9485a1ba0a",
+    "scripts/validate_glim_clean_room_r3_apt_allowlist.py": "830263b95677199568a7ffc808af465635f073845eb34416fe1ac93963a1b5ae",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature.py": "8eed3c81145d2e0b4b986b5216793df640f81bbf2719255af7fa1e8fc42cde82",
+    "scripts/plan_glim_clean_room_r3_apt_signature.py": "747e2450e3b5d572e3ccfab8697afa06157fa6fa28e2b376022240612e2b0934",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_executor.py": "afdfc93a29729122eb61eb1493dc78528b2e974dd4880c93be2f1d7ea59319ef",
+    "scripts/validate_glim_clean_room_r3_apt_signature.py": "7274976d415d49fa60f9f04e8e66af0e224332107081fa42c9f8d1eda99a6ffd",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_identity.py": "35719f0d2cc94ad3f888689721ce0c570f2b2c23d30edfe8ce1262cdb01499b6",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_handoff.py": "5f9692415a4d8eb3bd0204a0af0c471fb73fb09aed57ca1b5bcbe5304673c535",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_handoff_response.py": "5587e774b6c700f202f3bb80982134da21dc2d1a5999f3d12f980a172fa2b3e1"
+  },
+  "schemas": {
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_package_requirements.schema.json": "50b8591716b4f3db2ed05274d1e433f8389df658d9d820c9fd321cd41f4137f8",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_resolver_output.schema.json": "ae61643e0d3a7cfe59fae60dd0f4927615789250d5be5e40208e365e7eb421e4",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_generation_proposal.schema.json": "e1f74bf699b111572c42bae0d2aabfd3a8e15f371fbb0f6434456f0240f3eeb0",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_generation_plan.schema.json": "9332143834fa7890905af2754205d0c90e38e9714f2a25658259b1c5ee6baa6c",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_generation_outer_receipt.schema.json": "1362ebbafa68f2d0dd7d7af1714a1463560e536094b4fc57b59e839c4a873fbd",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_review.schema.json": "7f8b0dd2ac6e6eb0145b857894340d667fa8e595929b5b8ebebfd87c276f24c6",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_signature_receipt_index.schema.json": "1b45efd8c71c1ec1bb786622c995c29084cbcd895c0bc5f27e19c992097cbb4b",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_authorization.schema.json": "9f20d7bafb9814b5ddf03dd6e3a567cd18cd768475ddc91f5bb66c15bf5f79f3",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_authorization_policy.schema.json": "69f580dacbc0dfab01d8d40b5e4c2b9f0b89a0d685d363e026118c4ccc7484db",
+      "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_candidate.schema.json": "5b01e5b2c198e5a6adb47dafef0577120f51a40f5137f83bb2b1e66d4336e434",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature.schema.json": "0a2304eeabec38f0864320a56d720c7a804897e3f34a30c04c01f4af9022fc54",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_plan.schema.json": "11f0140ef17ecb22de8480222d9282de30ee3d7f464a73255f0f99f7451c4fec",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_trust_root.schema.json": "d7ecfb117e7777c1179102a9f0741522b0b004351e0ca1a35ca5c704cd9b1e57",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_executor.schema.json": "8cea4902927893160be7c5a97797c9af6d7989952a120724d2a13f099e709bf4",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_identity.schema.json": "056392a554e5b057e793cdcea4b03bf242d998003ff323ecd7619c7fee73ede2",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_identity_sidecar.schema.json": "69ab298cfacd0e00439da9678a4ae7159503df49de724f238392258052e16795",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_handoff.schema.json": "149db9877905bc9b0bfc82d23c3954e346a44b20fac9bef5ddcc431c06e5fb12",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_identity_keyed.schema.json": "e1c05c07b0526c992e5b4bb19208f2ee9924e2a4f40353cb71da3478344f4d76",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_identity_keyed_sidecar.schema.json": "ccbef8fefae32665c625e828ae3979417b37adbc27a379adab23aed7b82f899f",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_host_public_key.schema.json": "fc4f59f4a02147767411318d6d7b9485642119bcd1e1ef6c63b2f271eb785e61",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_key_input_sidecar.schema.json": "138d35d764f6751c2335ba5a8c22bc3614152482d0c085b85d0663ca557a017d",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_key_challenge.schema.json": "b9ada677b082adaa287fce6ed85adffdb3fe8c29deee0bdaa32a936d98947352",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_key_proof.schema.json": "8b01a7cd6a5398cc09766dab3f10c89cbd82062e370dbceb1e193c3d276c964b",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_handoff_response.schema.json": "b584f9eac99936c94ecefe230b83d44a0e8d53659c05d114bc9c802179fa91fc",
+    "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_handoff_response_sidecar.schema.json": "822ae6af15cdf4b41fc01e007aeeb356a1b24baecccad3ad0aafde5b1c870b99"
+  },
+  "review_gate": {
+    "proposal_status": "PROPOSED_REVIEW_REQUIRED",
+    "custodian_signature_required": true,
+    "collector_input_allowed": false,
+    "network_execution": "NOT_RUN"
+  },
+  "signature_verification": {
+    "status": "IMPLEMENTED_NOT_RUNTIME_VALIDATED",
+    "executor": "IMPLEMENTED_NOT_RUNTIME_VALIDATED",
+    "runtime": "NOT_RUN",
+    "benchmark_eligible": false,
+    "custodian_review_required": true,
+    "trust_root_precommitted": false,
+    "receipt_index_schema": "glim_clean_room_r3_apt_signature_receipt_index_v1",
+    "receipt_index_required": true,
+    "promotion_gate": "HOST_AUTHORIZED_STRONG_RECEIPTS_ONLY"
+  },
+  "authorization_policy": {
+    "schema": "glim_clean_room_r3_apt_signature_authorization_policy_v1",
+    "path": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_authorization_policy.json",
+    "file_sha256": "90988b2cdab6850b544dca2bfe188030f71b820187d8771d7accdcd3435188df",
+    "canonical_sha256": "f1e39e6518289bb5a85d4494e1666dbc2e57a2721e95a5df159325bb2bd38ecf",
+    "status": "NOT_READY",
+    "authorized_runtime": false
+  },
+  "capture_contract": {
+    "schema": "registration-plugin-dependency-capture-integration-v1",
+    "schema_version": 1,
+    "status": "REVIEW_REQUIRED",
+    "benchmark_eligible": false,
+    "contract_bindings": {
+      "capture_tool": {
+        "path": "scripts/capture_registration_plugin_dependency_closure.py",
+        "sha256": "c2422461c60d9282c661d214f1bc7fdf2930c8627048769a8963bf554d6d89a6"
+      },
+      "capture_schema": {
+        "path": "configs/slam_benchmark_profiles/registration_plugin_dependency_capture_executor_v1.schema.json",
+        "sha256": "b19fc9f91b56f9eb15c8d7d679c7fe04e8cf93f88d8d8828bda6df864436c40b"
+      },
+      "closure_tool": {
+        "path": "scripts/registration_plugin_dependency_closure.py",
+        "sha256": "9aa7186ef2ab5ceb2fbfe239d01eaa2f168a3d437092176a5afa413bfaedeafa"
+      },
+      "closure_schema": {
+        "path": "configs/slam_benchmark_profiles/registration_plugin_dependency_closure_v1.schema.json",
+        "sha256": "a5311dfbdd3a6917fe633d023e570f74ae537253c4f7ed3cc14ea07510c6e3a5"
+      },
+      "directory_tool": {
+        "path": "scripts/registration_plugin_evidence_directory.py",
+        "sha256": "801fba3137592e326e34863b53886083bda33cacf0355751c535cef8542f3338"
+      },
+      "directory_schema": {
+        "path": "configs/slam_benchmark_profiles/registration_plugin_capture_directory_contract_v1.schema.json",
+        "sha256": "4c3d1a1be8c92995090d0f6054916e805c7406294ab7e8a8def1d3981f20a1f1"
+      },
+      "source_validator": {
+        "path": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_composer.py",
+        "sha256": "aac437ccead2f4e718b87449b45d580249e106fa2d7053759f9a2550d95935dc"
+      },
+      "source_schema": {
+        "path": "configs/slam_benchmark_profiles/registration_plugin_apt_source_snapshot_v2.schema.json",
+        "sha256": "62898ba589ce6f2c38d7f1995e509f1f89a7666980926332e58dfbd74675b731"
+      },
+      "rosdep_prepare_tool": {
+        "path": "scripts/prepare_registration_plugin_rosdep.py",
+        "sha256": "c862379180a47025a545bbe6a8791065d672dd5832bdd425f73ff0a297175aa0"
+      },
+      "rosdep_prepare_schema": {
+        "path": "configs/slam_benchmark_profiles/registration_plugin_rosdep_prepare_v1.schema.json",
+        "sha256": "1b25ab1f0786f138bae967e39cf886870770ab4468d2e9725292340e333deda4"
+      }
+    },
+    "required_artifacts": [
+      "capture_input",
+      "base_status",
+      "apt_source_capture",
+      "dependency_capture",
+      "rosdep_prepare"
+    ],
+    "artifact_policy": "exact_existing_sidecar_sealed_allowlist_v1",
+    "directory_policy": "host_precreated_0700_owner_bound_nofollow_v1",
+    "managed_directory_paths": [
+      "logs",
+      "gpg-inventory-work",
+      "restore-owner-references",
+      "restore-owner-references/build-partial",
+      "restore-owner-references/runtime-partial",
+      "apt-source",
+      "apt-source/etc",
+      "apt-source/etc/apt",
+      "apt-source/etc/apt/sources.list.d",
+      "apt-source/indices",
+      "apt-keyrings",
+      "apt-index",
+      "raw-indexes",
+      "signatures",
+      "captured-debs",
+      "captured-debs/build",
+      "captured-debs/runtime",
+      "rosdep",
+      "rosdep/cache",
+      "licenses",
+      "licenses/build",
+      "licenses/runtime",
+      "debs-build",
+      "debs-build/partial",
+      "debs-runtime",
+      "debs-runtime/partial",
+      "rosdep-prepare",
+      "rosdep-prepare/input",
+      "rosdep-prepare/commands",
+      "rosdep-prepare/artifacts",
+      "rosdep-prepare/artifacts/rosdep",
+      "rosdep-prepare/artifacts/rosdep/sources.list.d",
+      "rosdep-prepare/artifacts/rosdep/cache",
+      "rosdep-prepare/work",
+      "rosdep-prepare/work/rosdistro",
+      "rosdep-prepare/work/rosdistro/files",
+      "rosdep-prepare/work/rosdistro/sources.list.d",
+      "rosdep-prepare/work/rosdep-cache",
+      "rosdep-prepare/work/ros-home",
+      "rosdep-prepare/work/ros-home/rosdep",
+      "rosdep-prepare/work/ros-home/rosdep/meta.cache",
+      "rosdep-prepare/work/ros-home/rosdep/sources.cache"
+    ],
+    "release_declaration_policy": {
+      "schema": "registration-plugin-release-declaration-size-policy-v1",
+      "schema_version": 1,
+      "max_declared_bytes": 17179869184,
+      "decimal_grammar": "0|[1-9][0-9]*",
+      "zero_allowed": true
+    },
+    "packages_format_policy": {
+      "schema": "registration-plugin-packages-format-policy-v1",
+      "schema_version": 1,
+      "selection_order": [
+        "xz",
+        "gz",
+        "plain"
+      ],
+      "allowed_formats": [
+        "xz",
+        "gz",
+        "plain"
+      ],
+      "compressed_max_bytes": 67108864,
+      "decoded_max_bytes": 268435456,
+      "max_expansion_ratio": 256,
+      "trailing_data": "reject",
+      "concatenated_streams": "reject",
+      "terminal_empty_stream_policy": {
+        "schema": "registration-plugin-xz-terminal-empty-stream-policy-v1",
+        "schema_version": 1,
+        "enabled": true,
+        "max_streams": 2,
+        "compressed_bytes": 32,
+        "decoded_bytes": 0,
+        "padding": "forbidden",
+        "binding": "index-offset-bytes-sha256-decoded-bytes"
+      },
+      "signed_empty_packages_policy": {
+        "schema": "registration-plugin-signed-empty-packages-policy-v1",
+        "schema_version": 1,
+        "enabled": true,
+        "signed_empty": true,
+        "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "decoded_bytes": 0,
+        "allowed_formats": [
+          "xz"
+        ],
+        "xz_stream_count": 1,
+        "xz_compressed_bytes": 32,
+        "padding": "forbidden",
+        "trailing_data": "reject",
+        "binding": "signed-release-pair-compressed-bytes-and-exact-empty-decode"
+      }
+    },
+    "gpgv_status_policy": {
+      "schema": "registration-plugin-gpgv-status-policy-v1",
+      "schema_version": 1,
+      "gnupg_version": "2.2.27",
+      "required_proof_tags": [
+        "NEWSIG",
+        "GOODSIG",
+        "VALIDSIG"
+      ],
+      "optional_informational_tags": [
+        "KEY_CONSIDERED",
+        "VERIFICATION_COMPLIANCE_MODE"
+      ],
+      "informational_pair": "independently-optional",
+      "status_order": [
+        "NEWSIG",
+        "KEY_CONSIDERED",
+        "SIG_ID",
+        "GOODSIG",
+        "VALIDSIG",
+        "VERIFICATION_COMPLIANCE_MODE"
+      ],
+      "key_considered_fields": 4,
+      "key_considered_fingerprint": "validsig-primary-or-signer",
+      "key_considered_flags": "canonical-decimal-0..2147483647",
+      "verification_compliance_mode_fields": 3,
+      "verification_compliance_mode": "canonical-decimal-0..2147483647",
+      "informational_only": true,
+      "proof": "GOODSIG_VALIDSIG_only",
+      "keyring_input": "dearmored_path_only"
+    },
+    "gpg_inventory_policy": {
+      "schema": "registration-plugin-gpg-key-inventory-policy-v1",
+      "schema_version": 1,
+      "executable": "/usr/bin/gpg",
+      "versions": [
+        "gpg (GnuPG) 2.2.27",
+        "gpg (GnuPG) 2.4.4"
+      ],
+      "version_argv": [
+        "/usr/bin/gpg",
+        "--version"
+      ],
+      "argv_template": [
+        "/usr/bin/gpg",
+        "--batch",
+        "--no-options",
+        "--no-default-keyring",
+        "--no-auto-key-retrieve",
+        "--no-auto-key-import",
+        "--no-auto-key-locate",
+        "--no-autostart",
+        "--homedir",
+        "<fresh-homedir>",
+        "--with-colons",
+        "--with-fingerprint",
+        "--with-subkey-fingerprint",
+        "--import-options",
+        "show-only",
+        "--import",
+        "<dearmored-keyring>"
+      ],
+      "homedir": {
+        "parent": "/workspace/evidence-parent/gpg-inventory-work",
+        "parent_relative": "gpg-inventory-work",
+        "prefix": "glim-clean-room-r3-gpg-inventory-",
+        "token_hex_length": 24,
+        "mode": 448,
+        "post_absent": true,
+        "parent_empty_before_after": true,
+        "cleanup": "owned-tree-only-and-absence-required"
+      },
+      "environment": "fixed-locale-no-home-or-agent",
+      "shell": false,
+      "network": "none",
+      "version_timeout_seconds": 30,
+      "inventory_timeout_seconds": 120,
+      "metadata_residue_schema": "registration-plugin-gpg-inventory-metadata-v1",
+      "metadata_residue_policy": "exact-pubring.kbx-trustdb.gpg-supported-show-only",
+      "metadata_residue_names": [
+        "pubring.kbx",
+        "trustdb.gpg"
+      ],
+      "metadata_residue_mode": 384,
+      "metadata_residue_max_bytes": 16777216,
+      "metadata_residue_retention": "descriptor-only-cleaned",
+      "failure_status": "REVIEW_REQUIRED"
+    },
+    "reference_policy": {
+      "schema": "registration-plugin-capture-reference-policy-v1",
+      "schema_version": 1,
+      "identity_domains": {
+        "release": "registration-plugin-release-artifact-identity-v1",
+        "keyring": "registration-plugin-gpg-keyring-identity-v1",
+        "signature": "registration-plugin-release-signature-identity-v1",
+        "package": "registration-plugin-packages-artifact-identity-v1"
+      },
+      "identity_token_hex_length": 24,
+      "artifact_naming": "basename-plus-full-identity-sha256-prefix",
+      "prefix_collision": "reject-before-write",
+      "cache_semantics": "first-attempt-retained-deep-copy",
+      "release_deduplication": "immutable-release-identity",
+      "keyring_deduplication": "source-scoped-keyring-identity",
+      "signature_deduplication": "release-keyring-signer-policy-identity",
+      "reference_projection": "exact-map-and-counts",
+      "partial_projection": "raw-release-before-later-validation",
+      "promotion": "non-promoting-until-signed-receipt"
+    },
+    "restore_owner_policy": {
+      "schema": "registration-plugin-apt-partial-owner-restore-v1",
+      "schema_version": 1,
+      "phase_order": [
+        "restore_build_partial_owner",
+        "restore_runtime_partial_owner"
+      ],
+      "reference_mode": 448,
+      "reference_mount": "ordered-host-source-container-target-bindings-v1",
+      "mount_access": "read-only-bind",
+      "command": "docker-exec-chown-reference",
+      "mode_policy": "reference-mode-verified",
+      "target_children": "empty-before-and-after",
+      "identity": "host-dev-inode-owner-mode-nlink-pre-post",
+      "cleanup": "no-post-hoc-chown-or-chmod",
+      "before_policy": "presealed-lstat-only-on-exact-transient-owner",
+      "transient_owner": {
+        "schema": "registration-plugin-apt-transient-owner-policy-v2",
+        "schema_version": 2,
+        "identities": [
+          {"distro": "humble", "name": "_apt", "uid": 100, "gid": 0},
+          {"distro": "jazzy", "name": "_apt", "uid": 42, "gid": 0}
+        ],
+        "identity_evidence": "profile-distro-image-digest-and-base-status/passwd",
+        "binding": "distro-profile-image-digest"
+      }
+    },
+    "source_snapshot": {
+      "schema": "glim_clean_room_r3_apt_source_snapshot_v2",
+      "schema_path": "configs/slam_benchmark_profiles/registration_plugin_apt_source_snapshot_v2.schema.json",
+      "schema_sha256": "62898ba589ce6f2c38d7f1995e509f1f89a7666980926332e58dfbd74675b731",
+      "validator_path": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_composer.py",
+      "validator_sha256": "aac437ccead2f4e718b87449b45d580249e106fa2d7053759f9a2550d95935dc"
+    },
+    "rosdep_prepare": {
+      "schema": "registration-plugin-rosdep-prepare-contract-v1",
+      "schema_version": 1,
+      "phase_order": [
+        "dependency_install",
+        "network_disconnect",
+        "rosdep_prepare",
+        "rosdep_resolution"
+      ],
+      "tool": {
+        "path": "scripts/prepare_registration_plugin_rosdep.py",
+        "sha256": "c862379180a47025a545bbe6a8791065d672dd5832bdd425f73ff0a297175aa0"
+      },
+      "schema_binding": {
+        "path": "configs/slam_benchmark_profiles/registration_plugin_rosdep_prepare_v1.schema.json",
+        "sha256": "1b25ab1f0786f138bae967e39cf886870770ab4468d2e9725292340e333deda4"
+      },
+      "input_bundle": {
+        "schema": "registration-plugin-rosdep-prepare-input-v1",
+        "schema_version": 1,
+        "source_relative_root": "rosdep-prepare/input",
+        "container_root": "/opt/registration-plugin/prepare",
+        "mount": {
+          "source_relative": "rosdep-prepare/input",
+          "target": "/opt/registration-plugin/prepare",
+          "read_only": true,
+          "noexec": false,
+          "repository_bind": "forbidden"
+        },
+        "copy_policy": "atomic-regular-0444-single-link-host-owned",
+        "identity_policy": "source-and-pre-post-copy-descriptor-exact",
+        "files": [
+          {
+            "role": "tool",
+            "source_path": "scripts/prepare_registration_plugin_rosdep.py",
+            "container_path": "/opt/registration-plugin/prepare/prepare_registration_plugin_rosdep.py",
+            "sha256": "c862379180a47025a545bbe6a8791065d672dd5832bdd425f73ff0a297175aa0"
+          },
+          {
+            "role": "schema",
+            "source_path": "configs/slam_benchmark_profiles/registration_plugin_rosdep_prepare_v1.schema.json",
+            "container_path": "/opt/registration-plugin/prepare/registration_plugin_rosdep_prepare_v1.schema.json",
+            "sha256": "1b25ab1f0786f138bae967e39cf886870770ab4468d2e9725292340e333deda4"
+          },
+          {
+            "role": "discovery_validator",
+            "source_path": "scripts/capture_registration_plugin_rosdep_discovery.py",
+            "container_path": "/opt/registration-plugin/prepare/capture_registration_plugin_rosdep_discovery.py",
+            "sha256": "e6da5d18985ce8ee58a4fa2eec9bbfdfc0f3788b1097e29b3d1d5a5ed52889b3"
+          },
+          {
+            "role": "consumer_profile",
+            "source_path": "<active-profile>",
+            "container_path": "/opt/registration-plugin/prepare/consumer-profile.json",
+            "sha256_source": "plan_profile_sha256"
+          }
+        ]
+      },
+      "mount_policy": {
+        "schema": "registration-plugin-rosdep-prepare-mount-policy-v1",
+        "schema_version": 1,
+        "identity": "ordered-host-source-container-target-bindings-v1",
+        "entries": [
+          {
+            "role": "input_bundle",
+            "source": "plan-output-relative:rosdep-prepare/input",
+            "target": "/opt/registration-plugin/prepare",
+            "read_only": true,
+            "type": "bind",
+            "noexec": false
+          },
+          {
+            "role": "discovery_root",
+            "source": "discovery.root",
+            "target": "/opt/registration-plugin/discovery",
+            "read_only": true,
+            "type": "bind",
+            "noexec": false
+          },
+          {
+            "role": "discovery_files",
+            "source": "discovery.root-relative:artifacts/rosdistro/files",
+            "target": "discovery.expected_local_source_root",
+            "read_only": true,
+            "type": "bind",
+            "noexec": false
+          },
+          {
+            "role": "rosdistro_work",
+            "source": "plan-output-relative:rosdep-prepare/work/rosdistro",
+            "target": "/opt/registration-plugin/rosdistro",
+            "read_only": false,
+            "type": "bind",
+            "noexec": false
+          },
+          {
+            "role": "rosdep_cache_work",
+            "source": "plan-output-relative:rosdep-prepare/work/rosdep-cache",
+            "target": "discovery.expected_rosdep_cache",
+            "read_only": false,
+            "type": "bind",
+            "noexec": false
+          },
+          {
+            "role": "ros_home_work",
+            "source": "plan-output-relative:rosdep-prepare/work/ros-home",
+            "target": "discovery.expected_ros_home",
+            "read_only": false,
+            "type": "bind",
+            "noexec": false
+          },
+          {
+            "role": "source_output",
+            "source": "plan-output-relative:rosdep-prepare/artifacts/rosdep/sources.list.d",
+            "target": "discovery.expected_source_list_dir",
+            "read_only": false,
+            "type": "bind",
+            "noexec": false
+          },
+          {
+            "role": "cache_output",
+            "source": "plan-output-relative:rosdep-prepare/artifacts/rosdep/cache",
+            "target": "/opt/registration-plugin/rosdep-output-cache",
+            "read_only": false,
+            "type": "bind",
+            "noexec": false
+          }
+        ]
+      },
+      "discovery": {
+        "discovery_id": "registration-plugin-rosdep-discovery-20260827-11",
+        "root": "/media/sasaki/aiueo1/benchmarks/registration-plugin-rosdep-discovery-20260827-11",
+        "receipt": {
+          "path": "/media/sasaki/aiueo1/benchmarks/registration-plugin-rosdep-discovery-20260827-11/registration_plugin_rosdep_discovery.receipt.json",
+          "sha256": "c9bfbd31a61a95a9263e8b46f7ffdb99f4353daa672ed8bd85d647065b7ac780",
+          "canonical_sha256": "80724060f8b94b724416c84f0cd25bdc8dbad95b2c79a0faa5005dea26a700a7"
+        },
+        "profile": {
+          "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2/configs/slam_benchmark_profiles/registration_plugin_matrix_current_2026-08.json",
+          "sha256": "6f4faf87ff7a81dabe75141d0335367a7f0cd3ae39ee74d878aaf68da4888c86"
+        },
+        "image": {
+          "digest": "sha256:ebae805c9d985e443b26e13a47339098dc0a42eee4626055bfd4ebc6dcdb4988",
+          "platform": "linux/amd64",
+          "repo_digests": [
+            "ros@sha256:ebae805c9d985e443b26e13a47339098dc0a42eee4626055bfd4ebc6dcdb4988"
+          ]
+        },
+        "rosdistro": {
+          "repository": "https://github.com/ros/rosdistro.git",
+          "commit": "2667056d0320bb77edf1e28fec13d56aa8d325e2",
+          "archive_url": "https://codeload.github.com/ros/rosdistro/tar.gz/2667056d0320bb77edf1e28fec13d56aa8d325e2",
+          "archive_bytes": 690616,
+          "archive_sha256": "0524ace3a4bd5db78320ac92a69ac6dde09c60fa07f537c0622f866136e47f17"
+        },
+        "packages": [
+          {
+            "name": "python3-rosdep",
+            "version": "0.26.0-1",
+            "architecture": "all",
+            "filename": "pool/main/p/python3-rosdep/python3-rosdep_0.26.0-1_all.deb",
+            "uri": "http://packages.ros.org/ros2/ubuntu/pool/main/p/python3-rosdep/python3-rosdep_0.26.0-1_all.deb",
+            "size_bytes": 3320,
+            "sha256": "456a9980b625b46f842c370b76ff63da2647b0df19890eb9132c6d06cc7949e4",
+            "artifact_path": "artifacts/apt/debs/python3-rosdep_0.26.0-1_all.deb"
+          },
+          {
+            "name": "python3-rosdep-modules",
+            "version": "0.26.0-1",
+            "architecture": "all",
+            "filename": "pool/main/p/python3-rosdep-modules/python3-rosdep-modules_0.26.0-1_all.deb",
+            "uri": "http://packages.ros.org/ros2/ubuntu/pool/main/p/python3-rosdep-modules/python3-rosdep-modules_0.26.0-1_all.deb",
+            "size_bytes": 54676,
+            "sha256": "a152df5e76adbf08b69df6d414d38847221b4db7929a4329b940e74bdd1a0ad4",
+            "artifact_path": "artifacts/apt/debs/python3-rosdep-modules_0.26.0-1_all.deb"
+          },
+          {
+            "name": "python3-rosdistro",
+            "version": "1.0.1-100",
+            "architecture": "all",
+            "filename": "pool/main/p/python3-rosdistro/python3-rosdistro_1.0.1-100_all.deb",
+            "uri": "http://packages.ros.org/ros2/ubuntu/pool/main/p/python3-rosdistro/python3-rosdistro_1.0.1-100_all.deb",
+            "size_bytes": 3724,
+            "sha256": "fbf524890faed0fff7fa4fcf08c80f656d65dd6db627f4887ff130fdb23541b2",
+            "artifact_path": "artifacts/apt/debs/python3-rosdistro_1.0.1-100_all.deb"
+          },
+          {
+            "name": "python3-rosdistro-modules",
+            "version": "1.0.1-1",
+            "architecture": "all",
+            "filename": "pool/main/p/python3-rosdistro-modules/python3-rosdistro-modules_1.0.1-1_all.deb",
+            "uri": "http://packages.ros.org/ros2/ubuntu/pool/main/p/python3-rosdistro-modules/python3-rosdistro-modules_1.0.1-1_all.deb",
+            "size_bytes": 36220,
+            "sha256": "869aea37baac9bd129b6deda48284ab8eec7401f28558c596358e01df659c365",
+            "artifact_path": "artifacts/apt/debs/python3-rosdistro-modules_1.0.1-1_all.deb"
+          }
+        ],
+        "selected_files": [
+          {
+            "relative_path": "index-v4.yaml",
+            "bytes": 4857,
+            "sha256": "d515c14da215282a0b6ed456e6f6267633bbc8f6cf6abe379c0f2a25aeb6453f",
+            "artifact_path": "artifacts/rosdistro/files/index-v4.yaml"
+          },
+          {
+            "relative_path": "index.yaml",
+            "bytes": 3054,
+            "sha256": "db265add7fe4784d4f4005ef67515f9d39d828092c84d70ab4e95c6e23c1a779",
+            "artifact_path": "artifacts/rosdistro/files/index.yaml"
+          },
+          {
+            "relative_path": "releases/fuerte.yaml",
+            "bytes": 5604,
+            "sha256": "f7df4e02a4d20d712757b14c6faa299e4cf17d958a740a7c3e4aa76c72d4f80f",
+            "artifact_path": "artifacts/rosdistro/files/releases/fuerte.yaml"
+          },
+          {
+            "relative_path": "rosdep/base.yaml",
+            "bytes": 274441,
+            "sha256": "9e93b1b9a5c3ee4b0f39e947c72717979a5dc3b7b316de0bb82987015f333882",
+            "artifact_path": "artifacts/rosdistro/files/rosdep/base.yaml"
+          },
+          {
+            "relative_path": "rosdep/osx-homebrew.yaml",
+            "bytes": 12185,
+            "sha256": "21a4ef81e25d3ae0956b1cfa609d53d59e25a1c6a1cbbb8d3149a1fdc36f47ac",
+            "artifact_path": "artifacts/rosdistro/files/rosdep/osx-homebrew.yaml"
+          },
+          {
+            "relative_path": "rosdep/python.yaml",
+            "bytes": 216331,
+            "sha256": "dbca7ac0ebc8ae827f530f030f5e87e1f3b3ab9144bc8739b44a1a4454adfc5e",
+            "artifact_path": "artifacts/rosdistro/files/rosdep/python.yaml"
+          },
+          {
+            "relative_path": "rosdep/ruby.yaml",
+            "bytes": 2233,
+            "sha256": "0beda9b7528c4d88d2a4acead61dd019075f76f052dd7b4d978f94561341c65a",
+            "artifact_path": "artifacts/rosdistro/files/rosdep/ruby.yaml"
+          },
+          {
+            "relative_path": "rosdep/sources.list.d/20-default.list",
+            "bytes": 588,
+            "sha256": "47fee93015482cb2f61193315f23ee1e3fb83c410ffeee506437002f08b3b34f",
+            "artifact_path": "artifacts/rosdistro/files/rosdep/sources.list.d/20-default.list"
+          }
+        ],
+        "source_records": [
+          {
+            "commit_url": "https://raw.githubusercontent.com/ros/rosdistro/2667056d0320bb77edf1e28fec13d56aa8d325e2/rosdep/osx-homebrew.yaml",
+            "distribution": "osx",
+            "line": 2,
+            "relative_path": "rosdep/osx-homebrew.yaml",
+            "requested_url": "https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/osx-homebrew.yaml",
+            "type": "yaml"
+          },
+          {
+            "commit_url": "https://raw.githubusercontent.com/ros/rosdistro/2667056d0320bb77edf1e28fec13d56aa8d325e2/rosdep/base.yaml",
+            "line": 5,
+            "relative_path": "rosdep/base.yaml",
+            "requested_url": "https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/base.yaml",
+            "type": "yaml"
+          },
+          {
+            "commit_url": "https://raw.githubusercontent.com/ros/rosdistro/2667056d0320bb77edf1e28fec13d56aa8d325e2/rosdep/python.yaml",
+            "line": 6,
+            "relative_path": "rosdep/python.yaml",
+            "requested_url": "https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/python.yaml",
+            "type": "yaml"
+          },
+          {
+            "commit_url": "https://raw.githubusercontent.com/ros/rosdistro/2667056d0320bb77edf1e28fec13d56aa8d325e2/rosdep/ruby.yaml",
+            "line": 7,
+            "relative_path": "rosdep/ruby.yaml",
+            "requested_url": "https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/ruby.yaml",
+            "type": "yaml"
+          },
+          {
+            "commit_url": "https://raw.githubusercontent.com/ros/rosdistro/2667056d0320bb77edf1e28fec13d56aa8d325e2/releases/fuerte.yaml",
+            "distribution": "fuerte",
+            "line": 8,
+            "relative_path": "releases/fuerte.yaml",
+            "requested_url": "https://raw.githubusercontent.com/ros/rosdistro/master/releases/fuerte.yaml",
+            "type": "gbpdistro"
+          }
+        ],
+        "receipt_bytes_sha256": "c9bfbd31a61a95a9263e8b46f7ffdb99f4353daa672ed8bd85d647065b7ac780"
+      },
+      "execution": {
+        "image_digest": "sha256:ebae805c9d985e443b26e13a47339098dc0a42eee4626055bfd4ebc6dcdb4988",
+        "platform": "linux/amd64",
+        "pull": false,
+        "build": false,
+        "network": "none",
+        "network_disconnect_required": true,
+        "fallback": "forbidden",
+        "runner": "existing_prepare_tool"
+      },
+      "output": {
+        "receipt_relative": "rosdep-prepare/registration_plugin_rosdep_prepare.receipt.json",
+        "source_and_cache": "receipt-bound-sealed-descriptors",
+        "deb_inputs": "discovery-11-exact-four"
+      },
+      "promotion": {
+        "status": "REVIEW_REQUIRED",
+        "benchmark_eligible": false,
+        "claim_eligible": false,
+        "active_profile_switch": false,
+        "promotion": "FORBIDDEN_UNTIL_SIGNED_REVIEW"
+      }
+    },
+    "promotion": "FORBIDDEN_UNTIL_SIGNED_RECEIPT"
+  },
+  "campaign_aggregation": {
+    "schema": "registration-plugin-release-campaign-aggregation-v1",
+    "schema_version": 1,
+    "tool": {
+      "path": "scripts/run_registration_plugin_release_campaign.py",
+      "sha256": "968cb8dc6456d901335f7f01d429ae1ac7ac4a94d98706bc9e4a3e586269a344"
+    },
+    "campaign_schema": {
+      "path": "configs/slam_benchmark_profiles/registration_plugin_release_campaign_v1.schema.json",
+      "sha256": "76a15679bb4bfc7d935d3eb90a2a6f17661e668777ced3b2fce1e4ca5b07504f"
+    },
+    "partial_receipt_schema": {
+      "path": "configs/slam_benchmark_profiles/registration_plugin_release_child_partial_v1.schema.json",
+      "sha256": "439d2649b46779643d94030b82eeeca82c9b75d307059901e8470709f0ee7f74"
+    },
+    "row_state_policy": "fixed-four-state-vector",
+    "partial_rows_policy": "sealed-started-child-only",
+    "normal_rows_exclude_partial": true,
+    "status": "REVIEW_REQUIRED",
+    "benchmark_eligible": false,
+    "promotion": "FORBIDDEN_UNTIL_SIGNED_RECEIPT"
+  },
+  "dependency_capture_campaign_aggregation": {
+    "schema": "registration-plugin-dependency-capture-campaign-aggregation-v1",
+    "schema_version": 1,
+    "tool": {
+      "path": "scripts/capture_registration_plugin_dependency_closure.py",
+      "sha256": "c2422461c60d9282c661d214f1bc7fdf2930c8627048769a8963bf554d6d89a6"
+    },
+    "campaign_schema": {
+      "path": "configs/slam_benchmark_profiles/registration_plugin_dependency_capture_campaign_v1.schema.json",
+      "sha256": "bc84f44bc7be598ed0ea295d785ad1412012f181fb5764d4860c11c27cf70c54"
+    },
+    "capture_executor_schema": {
+      "path": "configs/slam_benchmark_profiles/registration_plugin_dependency_capture_executor_v1.schema.json",
+      "sha256": "b19fc9f91b56f9eb15c8d7d679c7fe04e8cf93f88d8d8828bda6df864436c40b"
+    },
+    "partial_receipt_schema": {
+      "path": "configs/slam_benchmark_profiles/registration_plugin_dependency_capture_child_partial_v1.schema.json",
+      "sha256": "23534cee19accaa0befddbbe347d8170f1364276a548355b8d706c0450c43314"
+    },
+    "prepare_mount_policy": {
+      "schema": "registration-plugin-rosdep-prepare-mount-policy-v1",
+      "schema_version": 1,
+      "identity": "ordered-host-source-container-target-bindings-v1",
+      "entries": [
+        {
+          "role": "input_bundle",
+          "source": "plan-output-relative:rosdep-prepare/input",
+          "target": "/opt/registration-plugin/prepare",
+          "read_only": true,
+          "type": "bind",
+          "noexec": false
+        },
+        {
+          "role": "discovery_root",
+          "source": "discovery.root",
+          "target": "/opt/registration-plugin/discovery",
+          "read_only": true,
+          "type": "bind",
+          "noexec": false
+        },
+        {
+          "role": "discovery_files",
+          "source": "discovery.root-relative:artifacts/rosdistro/files",
+          "target": "discovery.expected_local_source_root",
+          "read_only": true,
+          "type": "bind",
+          "noexec": false
+        },
+        {
+          "role": "rosdistro_work",
+          "source": "plan-output-relative:rosdep-prepare/work/rosdistro",
+          "target": "/opt/registration-plugin/rosdistro",
+          "read_only": false,
+          "type": "bind",
+          "noexec": false
+        },
+        {
+          "role": "rosdep_cache_work",
+          "source": "plan-output-relative:rosdep-prepare/work/rosdep-cache",
+          "target": "discovery.expected_rosdep_cache",
+          "read_only": false,
+          "type": "bind",
+          "noexec": false
+        },
+        {
+          "role": "ros_home_work",
+          "source": "plan-output-relative:rosdep-prepare/work/ros-home",
+          "target": "discovery.expected_ros_home",
+          "read_only": false,
+          "type": "bind",
+          "noexec": false
+        },
+        {
+          "role": "source_output",
+          "source": "plan-output-relative:rosdep-prepare/artifacts/rosdep/sources.list.d",
+          "target": "discovery.expected_source_list_dir",
+          "read_only": false,
+          "type": "bind",
+          "noexec": false
+        },
+        {
+          "role": "cache_output",
+          "source": "plan-output-relative:rosdep-prepare/artifacts/rosdep/cache",
+          "target": "/opt/registration-plugin/rosdep-output-cache",
+          "read_only": false,
+          "type": "bind",
+          "noexec": false
+        }
+      ]
+    },
+    "row_state_policy": "fixed-four-state-vector",
+    "rows_policy": "completed-pass-only",
+    "partial_rows_policy": "sealed-started-child-only",
+    "normal_rows_exclude_partial": true,
+    "partial_row_identity": "campaign-row-campaign-set-profile-child-receipt",
+    "status": "REVIEW_REQUIRED",
+    "benchmark_eligible": false,
+    "promotion": "FORBIDDEN_UNTIL_SIGNED_RECEIPT"
+  },
+  "canonical_sha256": "fc33d18e3b4c7f9a6c68a946c3aba2b00ee3b9331a47a17e0122c59bda2174b1"
+}

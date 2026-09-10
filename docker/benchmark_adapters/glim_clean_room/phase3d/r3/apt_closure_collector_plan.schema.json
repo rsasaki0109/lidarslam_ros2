@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-apt-collector-plan-v2",
+  "title": "GLIM r3 outer-only apt collector plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "execute", "capture_mode",
+    "benchmark_eligible", "network_used", "build_test_network", "image_reference",
+    "platform", "output_root", "outer_root", "container_name", "host_owner",
+    "workflow", "workflow_sha256", "package_allowlist", "allowlist_path",
+    "ledger_input_path", "ledger_input_sha256", "mounts", "mounts_sha256",
+    "collector_path", "collector_sha256", "collector_schema_path",
+    "collector_schema_sha256", "capture_tool_sha256", "capture_schema_sha256",
+    "production_manifest_modified", "plan_identity_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_apt_collector_plan_v2"},
+    "schema_version": {"const": 1},
+    "status": {"const": "REVIEW_REQUIRED"},
+    "execute": {"const": false},
+    "capture_mode": {"const": "IMPLEMENTATION_CANDIDATE_NOT_RUNTIME_VALIDATED"},
+    "benchmark_eligible": {"const": false},
+    "network_used": {"const": true},
+    "build_test_network": {"const": "NOT_STARTED"},
+    "image_reference": {"pattern": "^ros@sha256:[0-9a-f]{64}$"},
+    "platform": {"const": "linux/amd64"},
+    "output_root": {"type": "string", "pattern": "^/"},
+    "outer_root": {"type": "string", "pattern": "^/"},
+    "container_name": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$"},
+    "host_owner": {
+      "type": "object", "additionalProperties": false,
+      "required": ["uid", "gid"],
+      "properties": {"uid": {"type": "integer", "minimum": 0},
+                     "gid": {"type": "integer", "minimum": 0}}
+    },
+    "workflow": {
+      "type": "array", "minItems": 18, "maxItems": 18,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["ordinal", "phase", "argv", "expected_exit_status"],
+        "properties": {
+          "ordinal": {"type": "integer", "minimum": 0, "maximum": 17},
+          "phase": {"type": "string", "minLength": 1},
+          "argv": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "expected_exit_status": {"type": "integer", "minimum": 0, "maximum": 255}
+        }
+      }
+    },
+    "workflow_sha256": {"$ref": "#/$defs/sha256"},
+    "package_allowlist": {"type": "object"},
+    "allowlist_path": {"type": "string", "pattern": "^/"},
+    "ledger_input_path": {"type": "string", "pattern": "^/"},
+    "ledger_input_sha256": {"$ref": "#/$defs/sha256"},
+    "mounts": {
+      "type": "array", "minItems": 6, "maxItems": 6,
+      "prefixItems": [
+        {"$ref": "#/$defs/rwMount"}, {"$ref": "#/$defs/roMount"},
+        {"$ref": "#/$defs/roMount"}, {"$ref": "#/$defs/roMount"},
+        {"$ref": "#/$defs/roMount"}, {"$ref": "#/$defs/roMount"}
+      ],
+      "items": false
+    },
+    "mounts_sha256": {"$ref": "#/$defs/sha256"},
+    "collector_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_closure_collector.py"},
+    "collector_sha256": {"$ref": "#/$defs/sha256"},
+    "collector_schema_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_closure_collector.schema.json"},
+    "collector_schema_sha256": {"$ref": "#/$defs/sha256"},
+    "capture_tool_sha256": {"$ref": "#/$defs/sha256"},
+    "capture_schema_sha256": {"$ref": "#/$defs/sha256"},
+    "production_manifest_modified": {"const": false},
+    "plan_identity_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "mount": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "destination", "read_only", "sha256"],
+      "properties": {
+        "source": {"type": "string", "pattern": "^/"},
+        "destination": {"type": "string", "pattern": "^/"},
+        "read_only": {"type": "boolean"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "rwMount": {
+      "allOf": [{"$ref": "#/$defs/mount"}, {"type": "object", "properties": {"destination": {"const": "/workspace/capture"}, "read_only": {"const": false}, "sha256": {"pattern": "^0{64}$"}}}]
+    },
+    "roMount": {
+      "allOf": [{"$ref": "#/$defs/mount"}, {"type": "object", "properties": {"read_only": {"const": true}}}]
+    }
+  }
+}

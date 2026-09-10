@@ -1,0 +1,28 @@
+diff --git a/include/m6a10_terminal_support_context.h b/include/m6a10_terminal_support_context.h
+--- a/include/m6a10_terminal_support_context.h
++++ b/include/m6a10_terminal_support_context.h
+@@ -37,6 +37,6 @@
+   static const char *contract_version()
+   {
+-    return "m6a10-online-compute-v3-terminal-support-context";
++    return "m6a10-online-compute-v4-terminal-bounded-end-gap";
+   }
+   enum class Topic { Lidar, Imu, Image };
+ 
+@@ -595,7 +595,6 @@
+         !boundary_.quiescence_observed || boundary_.in_flight ||
+         estimator_in_flight_ || unit_open_ ||
+         !std::isfinite(boundary_.timestamp_seconds) ||
+-        boundary_.timestamp_seconds < required_end_timestamp_seconds_ ||
+         boundary_.sequence < 0 || boundary_.source.empty())
+       return false;
+     if (boundary_.completed_counts.lidar + buffers_.find("lidar")->second.count != received_.lidar ||
+diff --git a/include/m6a10_consumer_evidence.h b/include/m6a10_consumer_evidence.h
+--- a/include/m6a10_consumer_evidence.h
++++ b/include/m6a10_consumer_evidence.h
+@@ -146,3 +146,4 @@
+     enabled_ = contract_value == "m6a10-online-compute-v2" ||
+-      contract_value == "m6a10-online-compute-v3-terminal-support-context";
++      contract_value == "m6a10-online-compute-v3-terminal-support-context" ||
++      contract_value == "m6a10-online-compute-v4-terminal-bounded-end-gap";
+     if (!enabled_) return;

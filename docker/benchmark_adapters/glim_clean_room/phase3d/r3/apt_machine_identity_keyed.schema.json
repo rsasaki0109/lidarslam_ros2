@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-machine-identity-keyed-v1",
+  "title": "DMI-less r3 machine identity with external Ed25519 proof",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "method", "campaign_domain",
+    "campaign_id", "candidate", "machine_id_sha256", "host_public_key", "challenge", "proof",
+    "public", "identity_sha256", "captured_at", "producer", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_machine_identity_keyed_v1"},
+    "schema_version": {"const": 1},
+    "status": {"enum": ["LIVE_CAPTURED", "SYNTHETIC_TEST"]},
+    "method": {"const": "PROVISIONED_ED25519"},
+    "campaign_domain": {"const": "lidarslam/glim-clean-room-r3/machine-identity-keyed/sha256/v1"},
+    "campaign_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "candidate": {"$ref": "#/$defs/candidateRef"},
+    "machine_id_sha256": {"$ref": "#/$defs/sha256"},
+    "host_public_key": {"$ref": "#/$defs/keyRef"},
+    "challenge": {"$ref": "#/$defs/challengeRef"},
+    "proof": {"$ref": "#/$defs/proofRef"},
+    "public": {"$ref": "#/$defs/public"},
+    "identity_sha256": {"$ref": "#/$defs/sha256"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "producer": {"$ref": "#/$defs/producer"},
+    "canonical_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidateRef": {"type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "file_bytes", "canonical_sha256", "candidate_id", "revision"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^[^/][^\\u0000]*$"},
+        "file_sha256": {"$ref": "#/$defs/sha256"}, "file_bytes": {"type": "integer", "minimum": 1},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "candidate_id": {"type": "string", "minLength": 1}, "revision": {"type": "integer", "minimum": 1}
+      }},
+    "keyRef": {"type": "object", "additionalProperties": false,
+      "required": ["schema", "path", "file_sha256", "file_bytes", "canonical_sha256",
+        "campaign_id", "key_id", "algorithm", "public_key_sha256",
+        "provisioning_receipt_sha256"],
+      "properties": {
+        "schema": {"const": "glim_clean_room_r3_machine_host_public_key_v1"},
+        "path": {"type": "string", "pattern": "^[^/][^\\u0000]*$"},
+        "file_sha256": {"$ref": "#/$defs/sha256"}, "file_bytes": {"type": "integer", "minimum": 1},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "campaign_id": {"type": "string"}, "key_id": {"type": "string"},
+        "algorithm": {"const": "Ed25519"}, "public_key_sha256": {"$ref": "#/$defs/sha256"},
+        "provisioning_receipt_sha256": {"$ref": "#/$defs/sha256"}
+      }},
+    "challengeRef": {"type": "object", "additionalProperties": false,
+      "required": ["schema", "path", "file_sha256", "file_bytes", "canonical_sha256",
+        "challenge_payload_sha256"],
+      "properties": {
+        "schema": {"const": "glim_clean_room_r3_machine_key_challenge_v1"},
+        "path": {"type": "string", "pattern": "^[^/][^\\u0000]*$"},
+        "file_sha256": {"$ref": "#/$defs/sha256"}, "file_bytes": {"type": "integer", "minimum": 1},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "challenge_payload_sha256": {"$ref": "#/$defs/sha256"}
+      }},
+    "proofRef": {"type": "object", "additionalProperties": false,
+      "required": ["schema", "path", "file_sha256", "file_bytes", "canonical_sha256",
+        "challenge_payload_sha256", "signature_sha256"],
+      "properties": {
+        "schema": {"const": "glim_clean_room_r3_machine_key_proof_v1"},
+        "path": {"type": "string", "pattern": "^[^/][^\\u0000]*$"},
+        "file_sha256": {"$ref": "#/$defs/sha256"}, "file_bytes": {"type": "integer", "minimum": 1},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "challenge_payload_sha256": {"$ref": "#/$defs/sha256"},
+        "signature_sha256": {"$ref": "#/$defs/sha256"}
+      }},
+    "public": {"type": "object", "additionalProperties": false,
+      "required": ["architecture", "cpu_model", "logical_cpu_count", "memory_total_kb",
+        "kernel_release", "toolchain"],
+      "properties": {
+        "architecture": {"type": "string", "minLength": 1, "maxLength": 512},
+        "cpu_model": {"type": "string", "minLength": 1, "maxLength": 512},
+        "logical_cpu_count": {"type": "integer", "minimum": 1},
+        "memory_total_kb": {"type": "integer", "minimum": 1},
+        "kernel_release": {"type": "string", "minLength": 1, "maxLength": 512},
+        "toolchain": {"type": "object", "additionalProperties": false,
+          "required": ["python_version", "python_implementation", "python_compiler"],
+          "properties": {
+            "python_version": {"type": "string", "minLength": 1, "maxLength": 256},
+            "python_implementation": {"type": "string", "minLength": 1, "maxLength": 256},
+            "python_compiler": {"type": "string", "minLength": 1, "maxLength": 256}
+          }}
+      }},
+    "producer": {"type": "object", "additionalProperties": false,
+      "required": ["module", "source_sha256", "version"],
+      "properties": {
+        "module": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_identity.py"},
+        "source_sha256": {"$ref": "#/$defs/sha256"}, "version": {"const": "1.0.0"}
+      }}
+  }
+}

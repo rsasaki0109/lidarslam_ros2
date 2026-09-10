@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-machine-key-proof-v1",
+  "title": "Externally signed r3 host proof-of-possession",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "challenge_path",
+    "challenge_file_sha256", "challenge_canonical_sha256", "challenge_payload_sha256",
+    "key_id", "algorithm", "signature_base64", "signature_sha256", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_machine_key_proof_v1"},
+    "schema_version": {"const": 1}, "status": {"const": "EXTERNAL_SIGNATURE"},
+    "challenge_path": {"type": "string", "pattern": "^[^/][^\\u0000]*$"},
+    "challenge_file_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "challenge_canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "challenge_payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "algorithm": {"const": "Ed25519"}, "signature_base64": {"type": "string", "minLength": 88},
+    "signature_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

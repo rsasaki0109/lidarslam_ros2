@@ -1,0 +1,531 @@
+diff --git a/include/glim_ros/glim_ros.hpp b/include/glim_ros/glim_ros.hpp
+--- a/include/glim_ros/glim_ros.hpp
++++ b/include/glim_ros/glim_ros.hpp
+@@ -1,5 +1,7 @@
+ #pragma once
+ 
++#include <cstddef>
++#include <cstdint>
+ #include <any>
+ #include <deque>
+ #include <memory>
+@@ -27,6 +29,14 @@ public:
+   GlimROS(const rclcpp::NodeOptions& options);
+   ~GlimROS();
+ 
++  struct BenchmarkQueueState {
++    bool observable;
++    std::size_t input_queue_size;
++    std::uint64_t dropped_messages;
++    std::size_t maximum_input_queue_size;
++  };
++
++  BenchmarkQueueState benchmark_queue_state() const;
++
+   bool needs_wait();
+   void timer_callback();
+ 
+diff --git a/src/glim_ros/glim_ros.cpp b/src/glim_ros/glim_ros.cpp
+--- a/src/glim_ros/glim_ros.cpp
++++ b/src/glim_ros/glim_ros.cpp
+@@ -218,5 +218,16 @@ const std::vector<std::shared_ptr<GenericTopicSubscription>>& GlimROS::extension
+   return extension_subs;
+ }
+ 
++GlimROS::BenchmarkQueueState GlimROS::benchmark_queue_state() const {
++  if (!odometry_estimation) {
++    return BenchmarkQueueState{false, 0, 0, 0};
++  }
++  return BenchmarkQueueState{
++    true,
++    odometry_estimation->input_queue_size(),
++    odometry_estimation->dropped_input_count(),
++    odometry_estimation->max_input_queue_size(),
++  };
++}
++
+ void GlimROS::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg) {
+   spdlog::trace("IMU: {}.{}", msg->header.stamp.sec, msg->header.stamp.nanosec);
+diff --git a/src/glim_rosbag.cpp b/src/glim_rosbag.cpp
+--- a/src/glim_rosbag.cpp
++++ b/src/glim_rosbag.cpp
+@@ -1,8 +1,11 @@
+ #include <glob.h>
+ #include <termios.h>
+ #include <unistd.h>
++#include <algorithm>
++#include <cmath>
+ #include <chrono>
++#include <cstdlib>
+ #include <filesystem>
++#include <fstream>
+ #include <iostream>
+ #include <spdlog/spdlog.h>
+@@ -18,8 +21,158 @@
+ #include <glim_ros/glim_ros.hpp>
+ #include <glim_ros/ros_compatibility.hpp>
+ 
++namespace {
++
++class M6A10ConsumerEvidence {
++public:
++  void configure(const std::string& imu_topic, const std::string& points_topic, const std::string& image_topic) {
++    const char* path = std::getenv("M6A10_CONSUMER_EVIDENCE");
++    if (path == nullptr || *path == '\0') {
++      return;
++    }
++
++    enabled_ = true;
++    path_ = path;
++    imu_topic_ = imu_topic;
++    points_topic_ = points_topic;
++    image_topic_ = image_topic;
++    contract_ = value("M6A10_PHASE_CONTRACT_VERSION");
++    mode_ = value("M6A10_PHASE_MODE");
++    build_with_cv_bridge_ = value("M6A10_GLIM_BUILD_WITH_CV_BRIDGE");
++    expected_total_ = value("M6A10_GLIM_EXPECTED_MESSAGES");
++    expected_imu_ = value("M6A10_GLIM_EXPECTED_IMU_MESSAGES");
++    expected_points_ = value("M6A10_GLIM_EXPECTED_POINTS_MESSAGES");
++    expected_image_ = value("M6A10_GLIM_EXPECTED_IMAGE_MESSAGES");
++    required_end_timestamp_ = value("M6A10_GLIM_REQUIRED_END_TIMESTAMP_SECONDS");
++    callback_limit_ns_ = value("M6A10_GLIM_MAX_CALLBACK_LATENCY_NS");
++    backlog_limit_ = value("M6A10_GLIM_MAX_BACKLOG_MESSAGES");
++    if (contract_ != "m6a10-online-compute-v2") {
++      failure("phase_contract_version_invalid");
++    }
++    if (mode_ != "paced_1x" && mode_ != "unpaced_ack") {
++      failure("phase_mode_invalid");
++    }
++    if (build_with_cv_bridge_ != "ON") {
++      failure("build_with_cv_bridge_must_be_ON");
++    }
++    parse_uint(expected_total_, expected_total_value_, "expected_total");
++    parse_uint(expected_imu_, expected_imu_value_, "expected_imu");
++    parse_uint(expected_points_, expected_points_value_, "expected_points");
++    parse_uint(expected_image_, expected_image_value_, "expected_image");
++    parse_uint(callback_limit_ns_, callback_limit_value_, "callback_limit_ns");
++    parse_uint(backlog_limit_, backlog_limit_value_, "backlog_limit");
++    parse_double(required_end_timestamp_, required_end_value_, "required_end_timestamp");
++    if (std::filesystem::exists(path_) || std::filesystem::exists(path_ + ".part")) {
++      failure("evidence_path_already_exists");
++    }
++  }
++
++  bool enabled() const { return enabled_; }
++
++  void received(const std::string& topic, const double timestamp_seconds) {
++    if (!enabled_) {
++      return;
++    }
++    if (first_timestamp_seconds_ < 0.0) {
++      first_timestamp_seconds_ = timestamp_seconds;
++    }
++    if (topic == imu_topic_) {
++      ++received_imu_;
++    } else if (topic == points_topic_) {
++      ++received_points_;
++    } else if (topic == image_topic_) {
++      ++received_image_;
++    } else {
++      ++unsupported_topics_;
++      failure("unsupported_topic");
++    }
++  }
++
++  void processed(const std::string& topic, const double timestamp_seconds) {
++    if (!enabled_) {
++      return;
++    }
++    last_timestamp_seconds_ = timestamp_seconds;
++    if (topic == imu_topic_) {
++      ++processed_imu_;
++    } else if (topic == points_topic_) {
++      ++processed_points_;
++    } else if (topic == image_topic_) {
++      ++processed_image_;
++    }
++  }
++
++  void failure(const std::string& reason) {
++    if (!enabled_) {
++      return;
++    }
++    ++failure_count_;
++    if (failure_reason_.empty()) {
++      failure_reason_ = reason;
++    }
++  }
++
++  void callback_started() {
++    callback_started_at_ = std::chrono::steady_clock::now();
++  }
++
++  void callback_returned() {
++    const auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(
++      std::chrono::steady_clock::now() - callback_started_at_).count();
++    max_callback_latency_ns_ = std::max(max_callback_latency_ns_, static_cast<std::uint64_t>(elapsed));
++  }
++
++  void eof() { eof_observed_ = true; }
++
++  bool write_eof_boundary() const {
++    if (!enabled_) {
++      return true;
++    }
++    const std::string eof_path = path_ + ".eof.json";
++    const std::string part = eof_path + ".part";
++    if (std::filesystem::exists(eof_path) || std::filesystem::exists(part)) {
++      return false;
++    }
++    const std::uint64_t received_total = received_imu_ + received_points_ + received_image_;
++    const std::uint64_t processed_total = processed_imu_ + processed_points_ + processed_image_;
++    std::ofstream stream(part, std::ios::out | std::ios::trunc);
++    if (!stream) {
++      return false;
++    }
++    stream << "{\n"
++           << "  \"schema_version\": 1,\n"
++           << "  \"kind\": \"m6a10_consumer_eof_boundary\",\n"
++           << "  \"contract_version\": " << quote(contract_) << ",\n"
++           << "  \"phase_mode\": " << quote(mode_) << ",\n"
++           << "  \"status\": \"eof\",\n"
++           << "  \"eof_observed\": true,\n"
++           << "  \"eof_source\": \"rosbag2 reader has_next returned false\",\n"
++           << "  \"expected_messages\": " << expected_total_value_ << ",\n"
++           << "  \"received_messages\": " << received_total << ",\n"
++           << "  \"processed_messages\": " << processed_total << ",\n"
++           << "  \"dropped_messages\": " << dropped_messages_ << ",\n"
++           << "  \"queue_overflow\": " << dropped_messages_ << ",\n"
++           << "  \"processing_failures\": " << failure_count_ << ",\n"
++           << "  \"first_processed_timestamp_seconds\": " << first_timestamp_seconds_ << ",\n"
++           << "  \"last_processed_timestamp_seconds\": " << last_timestamp_seconds_ << "\n"
++           << "}\n";
++    stream.flush();
++    stream.close();
++    if (!stream) {
++      return false;
++    }
++    std::error_code error;
++    std::filesystem::rename(part, eof_path, error);
++    return !error;
++  }
++
++  void drain() { drain_complete_ = true; }
++
++  void queue_state(const glim::GlimROS::BenchmarkQueueState& state) {
++    queue_observable_ = state.observable;
++    queue_size_ = state.input_queue_size;
++    max_queue_size_ = state.maximum_input_queue_size;
++    dropped_messages_ = state.dropped_messages;
++  }
++
++  bool write() const {
++    if (!enabled_) {
++      return true;
++    }
++    const std::string part = path_ + ".part";
++    const std::string eof_path = path_ + ".eof.json";
++    if (std::filesystem::exists(path_) || std::filesystem::exists(part) ||
++        !std::filesystem::exists(eof_path) ||
++        std::filesystem::exists(eof_path + ".part")) {
++      return false;
++    }
++    const std::uint64_t received_total = received_imu_ + received_points_ + received_image_;
++    const std::uint64_t processed_total = processed_imu_ + processed_points_ + processed_image_;
++    const bool counts_match = received_total == processed_total && received_imu_ == expected_imu_value_ && received_points_ == expected_points_value_ && received_image_ == expected_image_value_ && received_total == expected_total_value_;
++    const bool callback_ok = max_callback_latency_ns_ <= callback_limit_value_;
++    const bool backlog_ok = max_queue_size_ <= backlog_limit_value_ && queue_size_ == 0;
++    const double end_gap = required_end_value_ - last_timestamp_seconds_;
++    const bool end_ok = first_timestamp_seconds_ >= 0.0 && last_timestamp_seconds_ >= first_timestamp_seconds_ && end_gap >= 0.0 && end_gap <= 0.25;
++    const bool pass = failure_count_ == 0 && eof_observed_ && drain_complete_ && queue_observable_ && dropped_messages_ == 0 && counts_match && callback_ok && backlog_ok && end_ok;
++    std::ofstream stream(part, std::ios::out | std::ios::trunc);
++    if (!stream) {
++      return false;
++    }
++    stream << "{\n"
++           << "  \"schema_version\": 2,\n"
++           << "  \"contract_version\": " << quote(contract_) << ",\n"
++           << "  \"system\": \"glim\",\n"
++           << "  \"status\": " << quote(pass ? "pass" : "invalid") << ",\n"
++           << "  \"phase_mode\": " << quote(mode_) << ",\n"
++           << "  \"ack_source_kind\": \"consumer_callback\",\n"
++           << "  \"ack_source\": \"glim_rosbag callback acceptance\",\n"
++           << "  \"ack_semantics\": \"received before callback acceptance; processed after callback return; drain after GlimROS wait\",\n"
++           << "  \"publisher_count_used\": false,\n"
++           << "  \"eof_observed\": " << (eof_observed_ ? "true" : "false") << ",\n"
++           << "  \"eof_source\": \"rosbag2 reader has_next returned false\",\n"
++           << "  \"drain_complete\": " << (drain_complete_ ? "true" : "false") << ",\n"
++           << "  \"expected_messages\": " << expected_total_value_ << ",\n"
++           << "  \"received_messages\": " << received_total << ",\n"
++           << "  \"processed_messages\": " << processed_total << ",\n"
++           << "  \"dropped_messages\": " << dropped_messages_ << ",\n"
++           << "  \"queue_overflow\": " << dropped_messages_ << ",\n"
++           << "  \"processing_failures\": " << failure_count_ << ",\n"
++           << "  \"backlog_at_drain\": " << queue_size_ << ",\n"
++           << "  \"maximum_backlog_messages\": " << max_queue_size_ << ",\n"
++           << "  \"maximum_callback_latency_seconds\": " << (static_cast<double>(max_callback_latency_ns_) / 1e9) << ",\n"
++           << "  \"first_processed_timestamp_seconds\": " << first_timestamp_seconds_ << ",\n"
++           << "  \"last_processed_timestamp_seconds\": " << last_timestamp_seconds_ << ",\n"
++           << "  \"required_end_timestamp_seconds\": " << required_end_value_ << ",\n"
++           << "  \"paced_input_rate\": " << (mode_ == "paced_1x" ? "1.0" : "null") << ",\n"
++           << "  \"paced_input_rate_verified\": " << (mode_ == "paced_1x" ? "true" : "false") << ",\n"
++           << "  \"ack_backpressure_verified\": " << (mode_ == "unpaced_ack" ? "true" : "false") << ",\n"
++           << "  \"single_message_buffer_verified\": false,\n"
++           << "  \"counter_evidence_path\": " << quote(path_) << ",\n"
++           << "  \"eof_sidecar_path\": " << quote(eof_path) << ",\n"
++           << "  \"topic_counts\": {\"expected\": {\"imu\": " << expected_imu_value_ << ", \"points\": " << expected_points_value_ << ", \"image\": " << expected_image_value_ << "}, \"received\": {\"imu\": " << received_imu_ << ", \"points\": " << received_points_ << ", \"image\": " << received_image_ << "}, \"processed\": {\"imu\": " << processed_imu_ << ", \"points\": " << processed_points_ << ", \"image\": " << processed_image_ << "}},\n"
++           << "  \"queue_observation\": {\"capability\": \"glim_async_odometry_input_queue_dropped_counter_v1\", \"scope\": \"odometry_input_queues\", \"observable\": " << (queue_observable_ ? "true" : "false") << ", \"final_queue_size\": " << queue_size_ << ", \"maximum_queue_size\": " << max_queue_size_ << ", \"dropped_messages\": " << dropped_messages_ << "},\n"
++           << "  \"build_with_cv_bridge\": " << quote(build_with_cv_bridge_) << ",\n"
++           << "  \"failure_reason\": " << quote(failure_reason_) << "\n"
++           << "}\n";
++    stream.flush();
++    stream.close();
++    if (!stream) {
++      return false;
++    }
++    std::error_code error;
++    std::filesystem::rename(part, path_, error);
++    return !error && pass;
++  }
++
++private:
++  static std::string value(const char* name) {
++    const char* raw = std::getenv(name);
++    return raw == nullptr ? std::string() : std::string(raw);
++  }
++
++  void parse_uint(const std::string& raw, std::uint64_t& target, const char* name) {
++    if (raw.empty()) {
++      failure(std::string(name) + "_missing");
++      return;
++    }
++    try {
++      std::size_t consumed = 0;
++      target = std::stoull(raw, &consumed, 10);
++      if (consumed != raw.size()) {
++        failure(std::string(name) + "_invalid");
++      }
++    } catch (...) {
++      failure(std::string(name) + "_invalid");
++    }
++  }
++
++  void parse_double(const std::string& raw, double& target, const char* name) {
++    if (raw.empty()) {
++      failure(std::string(name) + "_missing");
++      return;
++    }
++    try {
++      std::size_t consumed = 0;
++      target = std::stod(raw, &consumed);
++      if (consumed != raw.size() || !std::isfinite(target)) {
++        failure(std::string(name) + "_invalid");
++      }
++    } catch (...) {
++      failure(std::string(name) + "_invalid");
++    }
++  }
++
++  static std::string quote(const std::string& value) {
++    std::string result = "\"";
++    for (const char c : value) {
++      if (c == '\\' || c == '\"') {
++        result.push_back('\\');
++      }
++      result.push_back(c);
++    }
++    result.push_back('\"');
++    return result;
++  }
++
++  bool enabled_ = false;
++  std::string path_;
++  std::string imu_topic_;
++  std::string points_topic_;
++  std::string image_topic_;
++  std::string contract_;
++  std::string mode_;
++  std::string build_with_cv_bridge_;
++  std::string expected_total_;
++  std::string expected_imu_;
++  std::string expected_points_;
++  std::string expected_image_;
++  std::string required_end_timestamp_;
++  std::string callback_limit_ns_;
++  std::string backlog_limit_;
++  std::string failure_reason_;
++  std::uint64_t expected_total_value_ = 0;
++  std::uint64_t expected_imu_value_ = 0;
++  std::uint64_t expected_points_value_ = 0;
++  std::uint64_t expected_image_value_ = 0;
++  std::uint64_t callback_limit_value_ = 0;
++  std::uint64_t backlog_limit_value_ = 0;
++  double required_end_value_ = -1.0;
++  std::uint64_t received_imu_ = 0;
++  std::uint64_t received_points_ = 0;
++  std::uint64_t received_image_ = 0;
++  std::uint64_t processed_imu_ = 0;
++  std::uint64_t processed_points_ = 0;
++  std::uint64_t processed_image_ = 0;
++  std::uint64_t unsupported_topics_ = 0;
++  std::uint64_t failure_count_ = 0;
++  std::uint64_t dropped_messages_ = 0;
++  std::size_t queue_size_ = 0;
++  std::size_t max_queue_size_ = 0;
++  std::uint64_t max_callback_latency_ns_ = 0;
++  double first_timestamp_seconds_ = -1.0;
++  double last_timestamp_seconds_ = -1.0;
++  std::chrono::steady_clock::time_point callback_started_at_{};
++  bool queue_observable_ = false;
++  bool eof_observed_ = false;
++  bool drain_complete_ = false;
++};
++
++}  // namespace
++
+ class SpeedCounter {
+ public:
+@@ -103,6 +256,8 @@ int main(int argc, char** argv) {
+   const std::string points_topic = config_ros.param<std::string>("glim_ros", "points_topic", "/points");
+   const std::string image_topic = config_ros.param<std::string>("glim_ros", "image_topic", "/image");
+   std::vector<std::string> topics = {imu_topic, points_topic, image_topic};
++  M6A10ConsumerEvidence consumer;
++  consumer.configure(imu_topic, points_topic, image_topic);
+ 
+   rosbag2_storage::StorageFilter filter;
+@@ -301,22 +303,36 @@ int main(int argc, char** argv) {
+       }
+ 
++      const double message_stamp_seconds = msg_time / 1e9;
++      consumer.received(msg->topic_name, message_stamp_seconds);
+       if (msg->topic_name == imu_topic) {
+         if (topic_type != "sensor_msgs/msg/Imu") {
+           spdlog::error("topic_type mismatch: {} != sensor_msgs/msg/Imu (topic={})", topic_type, msg->topic_name);
++          consumer.failure("imu_topic_type_mismatch");
+           return false;
+         }
+         auto imu_msg = std::make_shared<sensor_msgs::msg::Imu>();
+         imu_serialization.deserialize_message(&serialized_msg, imu_msg.get());
+-        glim->imu_callback(imu_msg);
++        consumer.callback_started();
++        try {
++          glim->imu_callback(imu_msg);
++        } catch (...) {
++          consumer.failure("imu_callback_exception");
++          return false;
++        }
++        consumer.callback_returned();
+       } else if (msg->topic_name == points_topic) {
+         if (topic_type != "sensor_msgs/msg/PointCloud2") {
+           spdlog::error("topic_type mismatch: {} != sensor_msgs/msg/PointCloud2 (topic={})", topic_type, msg->topic_name);
++          consumer.failure("points_topic_type_mismatch");
+           return false;
+         }
+         auto points_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();
+         points_serialization.deserialize_message(&serialized_msg, points_msg.get());
+-        const size_t workload = glim->points_callback(points_msg);
++        size_t workload = 0;
++        consumer.callback_started();
++        try {
++          workload = glim->points_callback(points_msg);
++        } catch (...) {
++          consumer.failure("points_callback_exception");
++          return false;
++        }
++        consumer.callback_returned();
+ 
+         if (points_msg->header.stamp.sec + points_msg->header.stamp.nanosec * 1e-9 > end_time) {
+           spdlog::info("end_time reached");
+           return false;
+@@ -303,6 +459,23 @@ int main(int argc, char** argv) {
+           std::this_thread::sleep_for(std::chrono::milliseconds(sleep_msec));
+         }
+       }
++#if !defined(BUILD_WITH_CV_BRIDGE)
++      else if (msg->topic_name == image_topic) {
++        consumer.failure("image_topic_requires_cv_bridge");
++        return false;
++      }
++#endif
+ #ifdef BUILD_WITH_CV_BRIDGE
+       else if (msg->topic_name == image_topic) {
+         if (topic_type == "sensor_msgs/msg/Image") {
+           auto image_msg = std::make_shared<sensor_msgs::msg::Image>();
+           image_serialization.deserialize_message(&serialized_msg, image_msg.get());
+-          glim->image_callback(image_msg);
++          consumer.callback_started();
++          try {
++            glim->image_callback(image_msg);
++          } catch (...) {
++            consumer.failure("image_callback_exception");
++            return false;
++          }
++          consumer.callback_returned();
+         } else if (topic_type == "sensor_msgs/msg/CompressedImage") {
+           auto compressed_image_msg = std::make_shared<sensor_msgs::msg::CompressedImage>();
+           compressed_image_serialization.deserialize_message(&serialized_msg, compressed_image_msg.get());
+ 
+           auto image_msg = std::make_shared<sensor_msgs::msg::Image>();
+           cv_bridge::toCvCopy(*compressed_image_msg, "bgr8")->toImageMsg(*image_msg);
+-          glim->image_callback(image_msg);
++          consumer.callback_started();
++          try {
++            glim->image_callback(image_msg);
++          } catch (...) {
++            consumer.failure("compressed_image_callback_exception");
++            return false;
++          }
++          consumer.callback_returned();
+         } else {
+           spdlog::error("topic_type mismatch: {} != sensor_msgs/msg/(Image|CompressedImage) (topic={})", topic_type, msg->topic_name);
++          consumer.failure("image_topic_type_mismatch");
+           return false;
+         }
+       }
+ #endif
++      else if (consumer.enabled()) {
++        consumer.failure("unsupported_topic");
++        return false;
++      }
++      consumer.processed(msg->topic_name, message_stamp_seconds);
+ 
+       auto found = subscription_map.find(msg->topic_name);
+@@ -337,6 +510,7 @@ int main(int argc, char** argv) {
+       }
+     }
+ 
+     return true;
+   };
+@@ -347,17 +521,25 @@ int main(int argc, char** argv) {
+   glim->get_parameter<std::string>("dump_path", dump_path);
+ 
++  bool input_complete = true;
+   for (const auto& bag_filename : bag_filenames) {
+     if (!read_bag(bag_filename)) {
+       auto_quit = true;
++      input_complete = false;
+       break;
+     }
+   }
+@@ -369,7 +551,15 @@ int main(int argc, char** argv) {
+   }
+ 
++  if (consumer.enabled()) {
++    consumer.eof();
++    if (!input_complete || !consumer.write_eof_boundary()) {
++      return 15;
++    }
++  }
++
+   glim->wait(auto_quit);
++  consumer.queue_state(glim->benchmark_queue_state());
++  consumer.drain();
++  if (consumer.enabled()) {
++    if (!input_complete || !consumer.write()) {
++      return 14;
++    }
++  }
+   glim->save(dump_path);
+ 
+   return 0;
+ }

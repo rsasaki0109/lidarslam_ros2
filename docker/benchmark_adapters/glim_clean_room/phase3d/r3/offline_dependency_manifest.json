@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "glim_clean_room_phase3d_r3_offline_dependency_manifest_v1",
+  "candidate_id": "glim-clean-room-phase3d-r3-candidate-v1",
+  "status": "NOT_READY_APT_CLOSURE_UNSEALED",
+  "base_image": {
+    "reference": "ros@sha256:31daab66eef9139933379fb67159449944f4e2dcf2e22c2d12cc715f29873e0f",
+    "distribution": "jazzy",
+    "architecture": "linux/amd64",
+    "pull_policy": "never",
+    "build_network": "none"
+  },
+  "source_archive_policy": {
+    "fetch_phase": "host_prefetch_only",
+    "build_phase": "copy_only_from_verified_prefetch_root",
+    "network_during_build": "none",
+    "url_policy": "official_immutable_urls_are_metadata_only; build never fetches URLs",
+    "archive_root_hash_kind": "relative_path_content_sha256_v1_excluding_git_metadata"
+  },
+  "archives": [
+    {
+      "name": "boost",
+      "role": "build_dependency",
+      "filename": "boost_1_83_0.tar.bz2",
+      "url": "https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.bz2",
+      "bytes": 122892751,
+      "sha256": "6478edfe2f3305127cffe8caf73ea0176c53769f4bf1585be237eb30798c3b8e",
+      "source_root": "boost_1_83_0",
+      "source_tree_sha256": "feb033ff2277bff1befa57ca65ede54a2c7a1fd4f6498d238daae8470dd2fbb0",
+      "license_files": [
+        {
+          "path": "LICENSE_1_0.txt",
+          "identity": "Boost Software License 1.0",
+          "bytes": 1338,
+          "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+        }
+      ]
+    },
+    {
+      "name": "glim",
+      "role": "core",
+      "filename": "glim-faa264a1bce1bda406f73457e35511f56cdc2eaa.tar.gz",
+      "url": "https://github.com/koide3/glim/archive/faa264a1bce1bda406f73457e35511f56cdc2eaa.tar.gz",
+      "repository_url": "https://github.com/koide3/glim.git",
+      "commit": "faa264a1bce1bda406f73457e35511f56cdc2eaa",
+      "bytes": 515767,
+      "sha256": "d8176e85199a2297269d34fcfb57e4cb2c2d53e593439f665f614cae57972c25",
+      "source_root": "glim-faa264a1bce1bda406f73457e35511f56cdc2eaa",
+      "source_tree_sha256": "2394e58c0c7fe218770b6db20cdab71395c885608783966ae94491e85899260e",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "identity": "MIT",
+          "sha256": "e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4"
+        }
+      ]
+    },
+    {
+      "name": "gtsam",
+      "role": "dependency",
+      "filename": "gtsam-2f3e56c0ddbd3a1aa54ed043643b553d26a069f6.tar.gz",
+      "url": "https://github.com/borglab/gtsam/archive/2f3e56c0ddbd3a1aa54ed043643b553d26a069f6.tar.gz",
+      "repository_url": "https://github.com/borglab/gtsam.git",
+      "commit": "2f3e56c0ddbd3a1aa54ed043643b553d26a069f6",
+      "bytes": 34895297,
+      "sha256": "50bd99ddbb363f03f145d814995df234c83ad38f867080fba5b60f6c151b348a",
+      "source_root": "gtsam-2f3e56c0ddbd3a1aa54ed043643b553d26a069f6",
+      "source_tree_sha256": "f43f0991fcb580b421afd30eb191a12dbea9c92d2dfa355a182932dd0048da38",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "identity": "BSD-3-Clause",
+          "sha256": "38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775"
+        },
+        {
+          "path": "LICENSE.BSD",
+          "identity": "BSD-3-Clause",
+          "sha256": "ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0"
+        },
+        {
+          "path": "gtsam/3rdparty/CCOLAMD/Doc/License.txt",
+          "identity": "BSD-3-Clause",
+          "sha256": "27e1fb1934109aec52982bea8cda801e3791c683690c2eb0c089c496ba394ac6"
+        },
+        {
+          "path": "gtsam/3rdparty/ceres/jet.h",
+          "identity": "BSD-3-Clause",
+          "sha256": "9c98af085ddc729768ca22879825cc95c875ac05e2b6dc268211bdff254011b7"
+        },
+        {
+          "path": "gtsam/3rdparty/Eigen/COPYING.README",
+          "identity": "MPL-2.0",
+          "sha256": "c83230b770f17ef1386ea1fd3681271dd98aa93646bdbfb5bff3a1b7050fff9d"
+        },
+        {
+          "path": "gtsam/3rdparty/metis/LICENSE.txt",
+          "identity": "Apache-2.0",
+          "sha256": "64ab947d7b289ad76e935adff51b31e4ac160df7dfad24480dbaa452e39bbe79"
+        },
+        {
+          "path": "gtsam/3rdparty/Spectra/GenEigsSolver.h",
+          "identity": "MPL-2.0",
+          "sha256": "328d5075d23d78d8d70a32bb8fa6d04a5d871236614c226f510a121a14398382"
+        }
+      ]
+    },
+    {
+      "name": "gtsam_points",
+      "role": "dependency",
+      "filename": "gtsam_points-9d32e7dbecf6015560d84b4901d6b0a6f483ec46.tar.gz",
+      "url": "https://github.com/koide3/gtsam_points/archive/9d32e7dbecf6015560d84b4901d6b0a6f483ec46.tar.gz",
+      "repository_url": "https://github.com/koide3/gtsam_points.git",
+      "commit": "9d32e7dbecf6015560d84b4901d6b0a6f483ec46",
+      "bytes": 7780089,
+      "sha256": "dc977a8b2a6aeda5d48107920e2cdd7e0e45e1478c3590e45f053335eb975479",
+      "source_root": "gtsam_points-9d32e7dbecf6015560d84b4901d6b0a6f483ec46",
+      "source_tree_sha256": "f3b3ac9b29a49a28e3f9e79fd36cc764caf2e46e961f229283507ff1cc8ffc00",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "identity": "MIT",
+          "sha256": "e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4"
+        }
+      ]
+    }
+  ],
+  "apt_deb_closure": {
+    "schema_version": 1,
+    "status": "NOT_READY_APT_CAPTURE_REQUIRED",
+    "base_image_reference": "ros@sha256:31daab66eef9139933379fb67159449944f4e2dcf2e22c2d12cc715f29873e0f",
+    "provenance_policy": "capture inside the exact base image before disconnect; no moving repository or package-manager identity is accepted",
+    "required_fields": [
+      "base_image_digest", "platform", "ros_distribution", "dpkg_packages_sorted",
+      "repositories", "apt_source_files_sha256", "apt_release_or_inrelease",
+      "deb_filename_url_sha256_bytes_license", "rosdep_sources_sha256",
+      "rosdep_cache_sha256", "install_command_sha256", "install_exit_status",
+      "archive_set_identity_sha256", "dpkg_set_identity_sha256",
+      "repository_set_identity_sha256", "closure_identity_sha256"
+    ],
+    "dpkg_packages_sorted": [],
+    "repositories": []
+  },
+  "prefetch_contract": {
+    "source_root_must_be": ["fresh_or_readonly_verified", "regular_files_only", "no_symlink", "no_hardlink"],
+    "output_root_must_be": ["new_nonexistent_directory", "no_overwrite", "no_retry_reuse"],
+    "expected_input_names": [
+      "boost_1_83_0.tar.bz2",
+      "glim-faa264a1bce1bda406f73457e35511f56cdc2eaa.tar.gz",
+      "gtsam-2f3e56c0ddbd3a1aa54ed043643b553d26a069f6.tar.gz",
+      "gtsam_points-9d32e7dbecf6015560d84b4901d6b0a6f483ec46.tar.gz",
+      "apt-deb-closure.json"
+    ],
+    "receipt_kind": "glim_clean_room_r3_prefetch_receipt_v1",
+    "network_used": false
+  }
+}

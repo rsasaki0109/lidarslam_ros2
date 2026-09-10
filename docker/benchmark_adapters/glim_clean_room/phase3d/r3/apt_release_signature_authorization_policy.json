@@ -1,0 +1,29 @@
+{
+  "schema": "glim_clean_room_r3_apt_signature_authorization_policy_v1",
+  "schema_version": 1,
+  "status": "NOT_READY",
+  "candidate_manifest": {
+    "path": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_candidate.json",
+    "candidate_id": "glim-clean-room-r3-apt-allowlist-generation-v1",
+    "revision": 3
+  },
+  "backend": {
+    "name": "python-cryptography",
+    "version": "46.0.5",
+    "implementation": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify",
+    "implementation_file": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_release_signature_authorization.py",
+    "implementation_sha256": "8f2e95bf16ddabcd8acbc904fd1797f38035d3cfdf4c7b2e6e76500672c23f66"
+  },
+  "machine_identity": {
+    "status": "NOT_READY",
+    "schema": "",
+    "path": "",
+    "file_sha256": "",
+    "canonical_sha256": "",
+    "campaign_domain": "",
+    "campaign_id": "",
+    "identity_sha256": ""
+  },
+  "authorized_keys": [],
+  "canonical_sha256": "f1e39e6518289bb5a85d4494e1666dbc2e57a2721e95a5df159325bb2bd38ecf"
+}

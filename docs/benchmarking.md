@@ -3,6 +3,155 @@
 This page describes the recommended benchmark path and the release/readiness
 gate used for the default permissive workflow.
 
+## Claim-eligible evidence bundles
+
+The final competitive suite gate accepts a claim only when the evidence
+declares one canonical bundle root and a deterministic
+`competitive_slam_evidence_bundle` manifest.  The verifier is
+[`scripts/verify_competitive_evidence_bundle.py`](../scripts/verify_competitive_evidence_bundle.py),
+and its manifest shape is registered in
+[`competitive_evidence_bundle_v1.schema.json`](../configs/slam_benchmark_profiles/competitive_evidence_bundle_v1.schema.json).
+It reopens the required `input`, `result`, `config`, `calibration`,
+`revision`, `scorer`, `trajectory`, `resource`, `map_metric`, and `failure`
+artifacts, checking normalized paths, root containment, regular-file and
+single-link identity, size/SHA-256, and deterministic sidecars.  Missing,
+extra, aliased, symlinked, hard-linked, or drifted files fail closed.
+The checked-in v1 manifest contract is intentionally strict: legacy v1
+manifests written before the per-run index existed are not claim-compatible
+and are rejected; there is no fallback that treats one role artifact as
+campaign-wide coverage.
+
+Claim manifests must also contain a non-empty `run_artifact_bindings` index.
+Each `(system, dataset, run_index)` identity appears exactly once and names
+separate trajectory, map, resource, and non-GT score-record files with their
+own size/SHA-256 and sidecar.  The v2 suite constructs the expected index from
+every complete scored run and passes those opaque hashes into the verifier;
+missing, extra, duplicate, or byte-drifted run entries therefore fail before
+claim promotion.  The score record is the canonical JSON
+`competitive_run_score_v1` projection of the completion, APE, runtime, and
+map values used by the gate (canonical JSON plus one newline); its expected
+SHA is computed before bundle verification, so editing a metric without
+regenerating the sealed score bytes is rejected.
+The index is part of the canonical manifest and all referenced files are
+included in the root inventory, so one shared trajectory or resource cannot
+silently cover a whole campaign.  The verifier does not parse those bytes or
+ground truth; it only checks hashes and sidecars.  Numeric metric semantics
+remain the separate evaluator/scorer contract, while the sealed score-record
+hash binds the exact non-GT values consumed by this gate.
+
+The verifier hashes bytes and checks identity metadata only; it does not parse
+ground truth, trajectories, maps, or scorer output.  Ground-truth roles and
+path components are rejected before any listed artifact is opened.  Scoring is
+therefore still a separate authorized stage.  Existing benchmark receipts
+remain `NOT_READY`/fail-closed until a real bundle passes both this verifier
+and the metric suite gate; adding a verifier does not promote historical
+evidence.
+
+### Deterministic bundle composition
+
+Already-scored, non-GT evidence can be materialized with
+[`scripts/compose_competitive_evidence_bundle.py`](../scripts/compose_competitive_evidence_bundle.py).
+The composition spec must provide the evidence receipt, all ten global artifact
+roles, and an explicit `run_artifact_bindings` entry for every
+`(system, dataset, run_index)`.  Each source descriptor names an absolute,
+non-symlink source root, a normalized relative path, byte count, and SHA-256;
+the composer reopens every source with no-follow descriptors, rejects
+hard-links/path traversal/GT components/hash drift, and refuses an existing
+output root.  The revision JSON is checked against the declared system pins,
+and each run's canonical non-GT score projection must match its pre-existing
+`score_artifact_sha256`, so edited metrics cannot be silently resealed.
+
+The composer never reads GT or invokes a scorer.  It copies verified bytes into
+a fresh staging root, writes deterministic per-file sidecars, score JSON, the
+canonical manifest, and an immutable composition receipt before atomically
+sealing the new root.  Without an independently authorized holdout chain the
+result is intentionally `NOT_READY` and `claim_eligible: false`:
+
+The machine-readable input contract is
+[`competitive_evidence_bundle_composer_v1.schema.json`](../configs/slam_benchmark_profiles/competitive_evidence_bundle_composer_v1.schema.json);
+the output manifest remains governed by
+[`competitive_evidence_bundle_v1.schema.json`](../configs/slam_benchmark_profiles/competitive_evidence_bundle_v1.schema.json).
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 env -u PYTHONPATH \
+  python3 scripts/compose_competitive_evidence_bundle.py \
+  --spec /path/to/composition-spec.json \
+  --output /path/to/new-bundle-root \
+  --receipt /path/to/composition-receipt.json
+```
+
+`--allow-claim` only requests the existing authorization verifier; it does not
+fabricate an attestation and still fails closed when the external authorization
+is absent.  Candidate roots and receipts are not benchmark evidence until the
+separate claim-time verifier, metric gate, and authorization chain pass.
+Failed compositions retain a sealed sibling staging root with
+`composition.failure.json` for diagnosis; no partial root is promoted or
+overwritten.
+
+### Post-score handoff from real campaign results
+
+The older
+[`scripts/compose_competitive_result.py`](../scripts/compose_competitive_result.py)
+is an aggregate/report writer.  Its legacy result does not identify every
+`(system, dataset, run_index)` trajectory, map, resource receipt, or canonical
+`competitive_run_score_v1` byte record, so it is not a claim-bundle input.
+After an independently authorized scorer has finished, the additive
+[`scripts/prepare_competitive_evidence_bundle_handoff.py`](../scripts/prepare_competitive_evidence_bundle_handoff.py)
+converts the already-scored v2 evidence into the missing handoff without
+running the scorer.  Its request schema is
+[`competitive_evidence_bundle_handoff_v1.schema.json`](../configs/slam_benchmark_profiles/competitive_evidence_bundle_handoff_v1.schema.json).
+
+The request must contain an explicit source descriptor (absolute root,
+normalized relative path, expected byte count, and SHA-256) for all ten global
+roles and for trajectory/map/resource artifacts of every complete run.  The
+`expected_runs` list is also precommitted; its exact set of
+`(system, dataset, run_index)` keys must equal the scored evidence and source
+index, with no duplicate, missing, or extra run.
+generator reopens those files, rejects aliases, symlinks, hard links,
+traversal, drift, incomplete or duplicate coverage, and computes each score
+digest from the same canonical projection used by the suite gate.  It emits a
+sanitized evidence file, composition spec, and sealed handoff receipt; source
+bytes are not copied and no dataset or GT path/content is opened.  A separate
+GT-safe post-score attestation receipt is required.  Its declared input
+evidence SHA must match the bytes read by the handoff; the generated spec also
+binds the derived sanitized-evidence SHA that the composer consumes.  Only
+the receipt's opaque SHA, scorer fingerprint, and these byte identities enter
+the handoff; this local tool does not verify an external signature.  The output remains
+`claim_eligible: false`/`NOT_READY`; fresh-holdout authorization, bundle
+composition, and the final metric verifier are still independent gates.
+
+For a synthetic or authorized post-score root, invoke:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 env -u PYTHONPATH \
+  python3 scripts/prepare_competitive_evidence_bundle_handoff.py \
+  --request /path/to/handoff-request.json \
+  --output /path/to/new-handoff-root
+```
+
+The checked-in campaign has no such complete, authorized handoff and remains
+`NOT_READY`; synthetic tests cover the positive digest/coverage path and
+GT/path/source-drift rejection.
+
+To require the bundle at the final v2 gate, use `--claim-eligible` with
+`evaluate_competitive_suite_gate.py`; report-only invocations remain compatible
+and explicitly record `claim_eligible: false`.
+
+### Claim-time execution freeze revalidation
+
+The v2 suite gate performs a second, claim-only reopen of the registered
+execution-selection receipt through
+[`scripts/check_competitive_execution_selection.py`](../scripts/check_competitive_execution_selection.py).
+The receipt path and SHA-256 registration check alone is not an execution
+freeze proof.  This preflight must also validate the bytes and identities for
+every pinned input/calibration/config/runner/scorer/resource file, system
+revision, Release/toolchain/container digest, machine/thread policy, rival and
+dataset source closures, and the GT-blind/resource lineage.  Any missing,
+stale, or mismatched identity is fail-closed for a claim.  Report-only v2
+receipts deliberately record this check as `NOT_REQUESTED`; they cannot become
+claim-eligible without the claim-time preflight, fresh-holdout authorization,
+and canonical bundle verifier all passing.
+
 ## Recommended Benchmark
 
 The standard benchmark path for this repository is:
@@ -49,6 +198,526 @@ peak memory, plane thickness, planar coverage, held-out RGB error, and held-out
 RGB inlier rate. A metric only counts when both systems provide it; values
 within 1% are ties. This prevents an attractive map image or a single trajectory
 number from being presented as an overall win.
+
+## Runtime phase contract (M6a10-v1 compatibility)
+
+Competitive replay uses the preregistered `runtime.online_compute_rtf` as its
+primary realtime metric. It covers input consumption through required drain,
+divided by sensor duration; container startup, map save/postprocess, and fixed
+shutdown grace are excluded. `runtime.wall_realtime_factor` is retained as a
+diagnostic. Every wrapper must emit an atomic `phase_evidence.json` with
+monotonic boundaries, CPU/IO counters, and a fail-closed trajectory timestamp
+or exact message-count coverage proof. See
+[`M6a10 phase contract`](architecture/benchmark-phase-contract-m6a10.md).
+
+The additive v2 contract is not satisfied by publisher or process-exit counts.
+The current ours-only implementation records its application-owned
+`consumer_evidence.json` from `rko_lio::ros::OfflineNode::run`; a replay is
+still required before it can be considered measured. GLIM and FAST-LIVO2 have
+not been changed in this slice, so a three-system v2 gate remains incomplete.
+
+The previous campaign4 wall-time result remains an immutable failure lineage
+(FAST exceeded the old `<=1.0` wall gate); it is not retroactively converted
+to the new metric. A GT-blind NTU Viral `tnp_01` public/training replay is
+recorded at
+`/media/sasaki/aiueo/benchmarks/m6a10_training_20260822/ntu_tnp01_training_validation_summary.json`
+(SHA-256
+`4217a4b07f5ff85148e7433be1b9fef51e35d843a98bbb287d6f9c010c254177`).
+It remains `INCOMPLETE`/`FAIL_CLOSED`: ours lacks authoritative drop/queue
+counters, GLIM lacks an explicit EOF marker, and FAST's successful attempts
+are just over the preregistered online RTF limit. No ground-truth content or
+scorer was accessed, so this is not an accuracy or SOTA result. A future
+validation must supply authoritative consumer counters/EOF proof before the
+online metric can authorize a competitive gate.
+
+This section describes the immutable v1 compatibility receipt. New
+preregistered runs use the additive v2 followability/acknowledgement contract
+below; v2 does not rewrite the v1 receipt or retroactively reinterpret its
+wall-time result.
+
+### M6a10-v2 preregistration
+
+The additive v2 contract separates 1x paced followability from unpaced
+acknowledgement throughput. Paced runs require exact consumer
+expected/received/processed counts, observed EOF, zero drops/overflow, empty
+drain backlog, 250 ms timestamp/latency bounds, and independently verified
+1.0x pacing; wall/online RTF is diagnostic. Unpaced runs additionally require
+an implementation-owned synchronous ack/backpressure hook and use the
+acknowledgement interval RTF (`<=1.0`) as the throughput gate. A publisher
+count or a higher rosbag playback rate is never an acknowledgement proof.
+The preregistration is in `competitive_slam_v1.yaml` under
+`runtime_policy.phase_contract_v2`; the next training replay must populate
+the application-owned `M6A10_CONSUMER_EVIDENCE` file for each wrapper or
+remain fail-closed.
+
+### M6a10-v2b GLIM consumer hook (fixed10-v2 replay fail-closed)
+
+GLIM's opt-in v2b image build and read-only installed-image verification are
+`PASS`. One functional replay was executed once, but its overall closure is
+`INVALID_SAFETY`; it is retained and not promoted. The pinned source revisions are GLIM
+`faa264a1bce1bda406f73457e35511f56cdc2eaa` and `glim_ros2`
+`4a9e7a4cb084967c8525a1be529ad3ba2a118ae7`; the benchmark-only patches are
+`docker/patches/glim.m6a10-v2b.patch` and
+`docker/patches/glim_ros2.m6a10-v2b.patch`. The recipe verifies both patch
+SHA-256 values and builds with `BUILD_WITH_CV_BRIDGE=ON`. The NTU `tnp_01`
+contract is fixed at 5793 LiDAR, 225102 IMU, 5792 image, and 236687 total
+messages. The dedicated host entry point is
+`scripts/run_glim_benchmark.py --phase-contract v2`; it rejects any bag path
+or canonical tree hash other than the preregistered input and supplies every
+GLIM expected-count, callback-latency, and backlog-bound environment value.
+The preregistered host runner SHA-256 is
+`6924b111b88f5354a17f1d7ede693e8547e1ea5196fcdfd5503fa7dd65aba6dd`; its v2
+binding also requires the NTU config tree SHA
+`842be775f7ee4b555f60957cf9f4cc8c35eb790e3ffc3bca767170c6415bb942` and
+matching image labels for both patch SHAs and `BUILD_WITH_CV_BRIDGE=ON`.
+The verified image is
+`m6a10-v2b-20260823-glim-cpu-benchmark:competitive-v1` with immutable ID
+`sha256:010c0019a077116edf4d1e7462dfa28561c4fb17db3b5db52e3652c8a875eb41`.
+The read-only build/identity receipt is
+`/media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-glim-closure-20260823/build_receipt.json`
+with SHA-256
+`fe4d7e3b3b3fec28185f5faa016b19dfb30bd9a52928b099a68d6679e0a09df2`.
+The system-level execution identity was then rechecked without opening a bag
+or starting a benchmark. Its PASS receipt is
+`/media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-preflight-20260823-v2/execution_identity_preflight.json`
+with SHA-256
+`0ae210d6df457fb6bebf7c23ee33cb4e9299bcfe5f0ddde2ad009f79b1dd5179`.
+It binds the current runner/wrapper, recipe, image ID, all OCI labels, the
+system-container toolchain fingerprint, and the read-only/network-none
+probe. The first generator receipt is retained as superseded because its
+config tree hash used the wrong algorithm; the v2 receipt uses the pinned
+`relative_path_size_content_sha256_v1` definition. This remains identity
+preflight only: replay, GT access, scorer invocation, and performance claims
+are absent from the preflight itself.
+The fixed10-v2 evidence root is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v2`.
+The immutable closure receipt is
+`/media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-closure-20260823/closure_receipt.json`
+(SHA-256
+`72d8ef9cd2c8e26d4c2120463fdbff3057a75e3f81203863049c11028baa41d5`),
+and its output tree SHA-256 is
+`f0db95c9c700b8c9650e9ce2751eb716c2cc271c664ee971f337ec6c01da2552`.
+The wrapper evidence itself passed with exact expected/received/processed
+`236687`, zero drops/overflow/failures, EOF, empty drain, maximum callback
+latency `0.0149106` seconds, process-tree RSS `1334648832` bytes,
+`memory.max=max`, and OOM delta zero; online acknowledgement RTF
+`0.29150756632664043` remains diagnostic. However, the direct first launch
+mounted the release parent directory, making the sibling name `ntuviral_gt`
+reachable even though no GT file was opened. Strict GT-unreachable closure is
+therefore false, retry is zero, and a future attempt must mount only the
+canonical input directory. The synchronized profile canonical SHA is
+`800f07184b728623710375c778624a4f623bc706a1f8c05b19b544847d6e3830`, and the
+execution-selection file SHA bound by that profile is
+`9038c02be377a9ac9cc6fc15a34e9f23fc0181b57f31a5053d8f7c1a4aa00db2`; both are
+recorded in the machine-readable receipts;
+this attempt does not authorize scoring, accuracy, performance comparison, or
+M6b.
+
+The application writes an atomic EOF sidecar immediately after reader
+`has_next()` ends and before `GlimROS::wait()`, then writes final generic
+consumer-state evidence before save. The wrapper treats those files as
+authoritative, verifies sidecar immutability, passes the preregistered
+high-water bound to the common validator, and never infers EOF from logs.
+`ack_source_kind` is `consumer_callback`; `single_message_buffer_verified`
+is explicitly false because the asynchronous queue is observable but not a
+single-message buffer. Queue drops, overflow, unsupported topics, callback
+latency, nonempty final queue, malformed/missing sidecars, and any image build
+flag other than `ON` fail closed. The result and runtime evidence paths are now
+immutable fail-closed evidence; GT and scorer remain untouched. The host
+runner's legacy tree-hash path was not invoked because it conflicts with the
+preregistered materialization hash kind; the direct wrapper invocation is
+recorded explicitly rather than relabeled as a host-runner execution.
+
+### M6a10-v2b GLIM fixed10-v3 narrow-mount replay (2026-08-23)
+
+Fixed10-v3 is retained as immutable `INVALID_SAFETY` with retry `0`. The
+runner now uses the materializer's
+`relative_path_size_content_sha256_v1` tree hash and `--pull=never`; its
+SHA-256 is `c1f347f5af3751d19ba89ca087e37e32cd9b135108e742f7f3e9e044a205cb24`.
+The v3 identity preflight is
+`/media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-preflight-20260823-v3/execution_identity_preflight.json`
+(SHA-256
+`9b8cc1d089a73113930557c6558a32a5ded3725d386b20a78c61fc14e740e190`). It
+binds only the canonical ROS2 input directory to `/data:ro`; the release
+parent and its `ntuviral_gt` sibling are absent from the Docker mount graph.
+The image was not rebuilt or pulled.
+
+The single v3 run is under
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v3`.
+Its consumer evidence passed exact expected/received/processed `236687`,
+zero drops/overflow/failures, EOF, final drain backlog `0`, and maximum
+callback latency `0.025782` seconds. Process-tree RSS evidence passed at
+`1313624064` bytes; cgroup memory peak was `1393958912` bytes with
+`memory.max=max` and OOM delta zero. The output tree SHA-256 is
+`3ab59eed2f20c3bf179bbfa05d0b5a4ffed723137ea81ebc2427619fd26306c5`, with
+no `.part` or unauthorized map artifacts. However, the generic phase
+finalizer revalidated the observed high-water backlog `249` using its default
+bound `0` instead of the preregistered `100000`, so `phase_evidence.json` is
+invalid (`consumer_backlog_bound_exceeded`) despite the authoritative consumer
+evidence passing. The immutable closure receipt is
+`/media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-closure-20260823-v3/closure_receipt.json`
+(SHA-256
+`492d39b1f7c4a1a2e86893dd979b0ed57b3f37267cb7f21849b990d95bcc32ff`). This
+attempt authorizes no scoring, accuracy, performance comparison, SOTA claim,
+or M6b progression. The synchronized profile canonical SHA is
+`d83a3b96ea224f3f4673dd48a6252af488834dc272f735c5d5e147ce6a7a0ec4`, and
+the bound execution-selection file SHA is
+`6ddcc24b5d221ef96ac746a7f0b4c6c3e261f5c002d115d51d19eb5fa8e072f4`.
+
+### M6a10-v2b GLIM fixed10-v4 closure (2026-08-23)
+
+Fixed10-v4 is the single authorized GLIM retry after the immutable v3
+`INVALID_SAFETY` lineage. The v3 closure remains unchanged at SHA
+`492d39b1f7c4a1a2e86893dd979b0ed57b3f37267cb7f21849b990d95bcc32ff`; its
+failure was the generic finalizer using backlog bound `0` while the consumer
+contract allowed `100000`. The common finalizer now receives that bound
+explicitly and rejects consumer/phase bound mismatches.
+
+The v4 identity preflight is
+`/media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-preflight-20260823-v4/execution_identity_preflight.json`
+(SHA-256
+`fda87bce9af6c60a60fcc3523e3f64f4b0fba288f2eea53988432085ab95af8a`), and
+the single quiescence receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v4/quiescence.json`
+(SHA-256
+`de015c5b7530c66ba222d1c9fcfdc20d486fbde8ee8cfec36a01c0a677814894`). Both
+passed before the runner started. The runner mounted only the canonical input
+directory as `/data:ro` and used `--network none --read-only --pull=never`.
+
+The v4 run root is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v4`;
+its output tree SHA-256 is
+`85de6ad890b3009cedac7720b5e795f764eafa2cde3cfb13bae3ebee7c04bc1c`. The
+independent closure receipt is
+`/media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-closure-20260823-v4/closure_receipt.json`
+(SHA-256
+`f33953c4126939dfce841b030cdb2e5560615d42963ae4aaaf4ab0aad7a7f6c1`) and
+records `PASS` with retry `0`. Consumer and phase evidence agree on exact
+`236687` expected/received/processed messages (LiDAR `5793`, IMU `225102`,
+image `5792`), zero drops/overflow/failures, observed EOF, empty final drain,
+maximum backlog `275 <= 100000`, and callback maximum `0.014094 <= 0.25 s`.
+The unpaced acknowledgement gate passed; online acknowledgement RTF was
+`0.28196761482694743` and remains a functional diagnostic, not a cross-system
+performance claim. Aggregate process-tree RSS was `1323241472` bytes, cgroup
+total peak was `1443680256` bytes, `memory.max=max`, and all OOM deltas were
+zero. Runtime outputs are hash-recorded, no `.part` or forbidden map paths
+were present, and GT content/scoring were not accessed. This closure does not
+authorize accuracy, SOTA, or M6b claims. The synchronized profile canonical
+SHA is `f58858e033424c72f2d010fb03bd30846f648ae83a07c3af850af588358f0a82`
+and the bound execution-selection file SHA is
+`bd4a25a7b47e601ea6260397b84287c7be85d474d729e97ed19b99071bdaef9f`.
+
+### M6a10 fixed10-v2 failure lineage and quiescence preregistration lineage
+
+The one fixed10-v2 ours replay is immutable `FAIL_CLOSED`; it is not a
+performance comparison and was not retried. Its root is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v2`
+(root tree SHA-256
+`868dc7369494eb7f6f7e09ab9363c408024c8bdeb31d7055113f1d9c6d5d7418`, output
+tree SHA-256
+`28772ce7cec189fbaa3a151f966cc6e8714d57cdaea86c26652b01ddbf987af3`). The
+consumer hook itself reported exact `230895` received/processed messages,
+zero drops/overflow/failures, EOF, empty backlog, and status `PASS`; that
+sub-result is retained but cannot promote the attempt. The phase receipt was
+invalid because `input_end` was missing and the process exit was `125`. The
+maximum callback latency was `0.371609411` s against the preregistered `0.25`
+s bound, and the process-RSS sampler was invalid with `139.5325092%` jitter
+against its `100%` bound. Ground-truth content and scoring remained false;
+retry count is zero. These independent failures are recorded in the profile
+and selection receipt rather than relaxed after the run.
+
+The replacement contract is `m6a10-v2a-ours-rko-unpaced-ack-fixed10-v3` and is
+`preregistered_not_executed`, not a result. It keeps the same pinned image,
+input tree, message counts, no-map-artifact requirement, and `online RTF <=
+1.0` contract. Before a runner can start, the new read-only
+`scripts/check_m6a10_quiescence.py` receipt must be atomically produced at
+the v3 output root, have status `PASS`, and match its recorded SHA-256. The
+preflight samples `/proc` for five seconds, limits CPU busy ratio to 5% and
+load1-per-CPU to 0.5, and rejects active compiler/build/docker-build/colcon/
+cmake/cargo processes while excluding its own ancestry. No preflight or v3
+bag replay has been run; `performance_comparison`, ground-truth access, and
+scoring remain false.
+
+The single v3 quiescence preflight is retained as `FAIL_CLOSED`; it did not
+start a runner and was not retried. Its receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v3/quiescence.json`
+(SHA-256
+`74732fbdeb9bb8da094bacde3518cc2475eaeb29a3f4fec5c39d7972dc97a5a6`). The
+five-second observation recorded CPU busy `98.72340425531915%` against `5%`,
+load1-per-CPU `0.805` against `0.5`, and eight active compiler processes;
+`runner_start_allowed` was false. GT/scorer remained false and retry count was
+zero. Fixed10-v4 is now preregistered with the same image, input, consumer,
+no-map, and quiescence thresholds, with a null receipt result and the v3
+preflight failure as its explicit predecessor. Its one preflight is retained
+as an immutable `FAIL_CLOSED`: CPU busy was `98.12312312312312%` against
+`5%`, load1-per-CPU was `0.86` against `0.5`, and seven compiler processes
+were present. The v4 receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v4/quiescence.json`
+(SHA-256
+`b8c7b38debd07586f3af060e51b83a5fa94108ba2c80bf27f481ac16f291fb51`). It
+did not start a runner and was not retried.
+
+Fixed10-v5 records the next one-time preflight under the same unchanged
+functional contract. Its receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v5/quiescence.json`
+(SHA-256
+`dbf54a1a5a1fd9d527fef280f633e3710b9a79d04ac482bb13ac1278516b4dee`). This
+five-second observation is also immutable `FAIL_CLOSED`: CPU busy was
+`25.717884130982366%` against `5%`; load1-per-CPU was `0.2575` (within its
+`0.5` bound), but one active compiler process remained. `runner_start_allowed`
+was false, retry count was zero, and ground-truth/scorer access remained
+false. Fixed10-v6 preserved the same preregistered image, input, consumer,
+no-map, and quiescence contract. Its one quiescence receipt did pass (CPU
+busy `3.0264817150063053%`, load1-per-CPU `0.03875`, no forbidden processes),
+but the preflight-to-run continuity window was lost before a runner was
+started. It is therefore closed `FAIL_CLOSED` as
+`runner_not_started_after_preflight`; the runner was not retried, and no bag
+replay, ground-truth access, or scoring occurred. The PASS preflight receipt
+is `/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v6/quiescence.json`
+(SHA-256
+`d9cf50b07157a7da8655d672d7955a768676361735967e35e64367b6272cf3fa`). The
+immutable closure receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v6/runner_not_started_after_preflight.json`
+(SHA-256
+`ef04937fd7c17b2ed017902985502aa02b9349ccb63961dcd206c0370aea79ad`).
+
+Fixed10-v7 attempted the single-process launcher intended to close the v6
+preflight-to-run continuity gap. It is
+`m6a10-v2a-ours-rko-unpaced-ack-fixed10-v7`, now closed
+`FAIL_CLOSED` before quiescence/runner start because the launcher-observed
+input tree SHA
+`bcbb4c86f568125104565fca3882695fab0b501a7ca9d9aa9aaa643f1b8ee6eb`
+did not match the preregistered
+`0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb926`.
+The independent profile-defined `relative_path_size_content_sha256_v1`
+calculation still matches `0a45497a…e38cb926`; the failure is therefore a
+launcher hash-contract mismatch (its observed diagnostic omitted the file
+size field), not evidence that the managed input bytes changed.
+The immutable closure is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/closure_receipt.json`
+(SHA-256
+`fffba96d21721c5b811fb7710d3d77889e81e0c8bfb4ffcb8957f6c94bce57da`),
+with retry count zero; the root contains no quiescence receipt, launch
+receipt, Docker output, time report, or `.part` file. The immutable v6
+`runner_not_started_after_preflight` receipt remains its predecessor. The
+launcher
+is `scripts/run_m6a10_fixed10_v7.py` (SHA-256
+`47ab6b059bc9736da5fa69933d7a1d1024db186b78b1c5d30b987544fb0d20d4`), with
+contract tests in
+`graph_based_slam/test/test_m6a10_fixed10_v7_launcher.py` (SHA-256
+`ddfd8d23917b049b870aa8e98598f4c63cfc58c3f5ccc59bd8fb73aa5b825698`). It
+reserves and validates a new empty
+attempt root, binds the input/source/image identities, invokes the
+quiescence checker exactly once, strictly validates its PASS receipt, and
+starts the digest-pinned Docker argv from the same process without shell
+interpolation or taskset/cpuset. A two-second monotonic preflight-to-run gap
+is checked immediately before `Popen` and after child start. The fixed argv
+records `/usr/bin/time -v -o time-v.txt`, and immutable marker,
+start-attempt, started, and closure receipts distinguish preflight failure,
+runner-start failure, signal/exception, nonzero exit, and completion-contract
+failure. A zero exit is not completion: host GNU-time fields, phase and
+consumer evidence, process RSS/memory evidence, trajectory files, no-map
+artifacts, and GT/scorer-blind proof must all validate before a `COMPLETED`
+closure is written. Because this attempt failed before those gates, v7 has
+not launched Docker or replayed the input; it authorizes no performance,
+accuracy, or SOTA claim. The observed hash-kind mismatch is retained for a
+future contract correction rather than repaired by retrying this attempt.
+
+Fixed10-v8 was attempted once as the next versioned contract; it does not reuse
+the v7 attempt root or alter v7's failed record. Its launcher
+`scripts/run_m6a10_fixed10_v8.py` (SHA-256
+`65ad02d63be843db100198610fba3602f18b3f034d637635cce6b6a3e719e6d8`) binds
+the pinned v7 implementation SHA
+`47ab6b059bc9736da5fa69933d7a1d1024db186b78b1c5d30b987544fb0d20d4` and
+reuses its identity, immediate-start, two-second gap, host-time, completion,
+no-map, and GT-blind gates without changing the v7 source. Its tree identity
+uses the materializer's exact
+`relative_path_size_content_sha256_v1` helper (path, byte size, NUL, content)
+and the corrected full input SHA
+`0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263`.
+The v8 contract tests are
+`graph_based_slam/test/test_m6a10_fixed10_v8_launcher.py` (SHA-256
+`35685930524bed8390fcad42fe48b4d342d046331e361380c7f105559a2105e3`). The
+single v8 attempt failed closed during identity preflight before quiescence or
+Docker: the adapter imported the malformed v7 image digest
+`sha256:385b6eeda3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69`,
+while read-only Docker inspection returned the pinned full image ID
+`sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69`.
+This is an adapter/global-binding identity defect, not a tag race. The v8
+marker SHA is
+`e062814e61d373e5bef77608b0c5a578cb7e7375d25b88b44d161a155493e889` and its
+closure SHA is
+`c302a50665e24ad1a7f2bd18b1e77a0cb2d2f0382ad18971d3040ce59ebd3d9e`.
+`runner_start_attempted=false`, quiescence was not started, and no Docker,
+replay, GT access, or scoring occurred. The v8 record is now
+`FAIL_CLOSED` with retry count zero; no follow-up preregistration is made.
+
+Fixed10-v9 is the independent successor preregistration. It leaves v7/v8
+launchers and attempt roots immutable, keeps the same canonical input identity,
+and binds the complete local image ID
+`sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69`
+in the public `LaunchConfig`, adapter globals, and fixed Docker argv. Its
+launcher is `scripts/run_m6a10_fixed10_v9.py` (SHA-256
+`879fa1c44aa093b158e405806276935bc41bf3bf4d9134a4534cd4922312254f`) and its
+tests are `graph_based_slam/test/test_m6a10_fixed10_v9_launcher.py` (SHA-256
+`b26a0580db1eac88e6be4ba9620731533cd98b25ddeea7033bedf5bd1a0ea1b8`). Before
+preregistration, the exact v9 `validate_preflight_identity` path passed a
+read-only real-input/source/local-image check. The external identity receipt
+is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9_identity_preflight_v2/identity_receipt.json`
+(SHA-256
+`042af3a3f791400b7c642e0d5aec06357527cc09e4590999bcc75c7d96a7973c`);
+it records the canonical input tree, all pinned source hashes, Docker labels,
+and `runner_start_attempted=false`, `quiescence_started=false`, and
+`docker_run_started=false`. The one v9 launcher attempt then reached its
+owned quiescence check and failed closed because load1/CPU was `0.72375 >
+0.5` (CPU busy was `2.4439405391786346%`, with no forbidden process). Its
+marker, quiescence, and closure receipts are recorded in the profile; no
+runner or Docker process started, and retry remains zero. The earlier receipt at the v1
+identity-preflight path remains immutable as `superseded_not_promoted` because
+it was bound to the pre-final launcher SHA `f6e10e...`; only the v2 receipt is
+the active v9 identity binding. No replay, GT access, or scoring has occurred.
+
+Fixed10-v10 is an independent successor to the v9 `PREFLIGHT_FAIL_CLOSED`
+record. It does not alter any v1-v9 source, root, or evidence. Its single
+authorized GT-blind functional run completed at
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10`;
+there was no retry, GT mount/access, scorer invocation, or performance
+comparison. The launcher is
+`scripts/run_m6a10_fixed10_v10.py` (SHA-256
+`f1d7844eaf8f2d5c22431fed5abcc84ae07f9f34cbd92de3b515c61d20ce78ed`) and its
+updated contract test is
+`graph_based_slam/test/test_m6a10_fixed10_v10_launcher.py` (SHA-256
+`b89afc720fec4cc0af2d0736367407cbb6dc4b8789a26e3a0a3adf56530b2283`).
+The launcher bound the complete local image ID
+`sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69`,
+the canonical input tree
+`0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb926`, and the
+immutable v9 source SHA
+`879fa1c44aa093b158e405806276935bc41bf3bf4d9134a4534cd4922312254f`.
+The read-only identity receipt remains
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10_identity_preflight/identity_receipt.json`
+(SHA-256
+`2211744e3691df3fc71f7b0a81248a2e75daa4c5b15a23c8a0f8acab4b360ab2`).
+The run returned zero and passed the unpaced consumer/phase contract:
+`230895` expected/received/processed, zero drops/overflow/failures, EOF and
+empty drain, maximum callback latency `0.109221778` s, and online compute RTF
+`0.126860008821509` (the unpaced throughput gate is the primary gate; wall RTF
+remains diagnostic). Aggregate process-tree RSS was `868278272` bytes, cgroup
+total peak was `2750537728` bytes with `memory.max=max` and OOM delta zero, and
+raw/corrected trajectory hashes were both
+`9e20cb96a4326eb41e26d20171a664133b4038e473c3ca0f89f1748892c323f7`.
+The closure receipt SHA is
+`e7224eb29dc547a5119cb7ecc1d51d009ced43cfca8e23c6c6d2fc1977e2e82b`; host
+`time -v` SHA is
+`2a35f07125c14cb9f11a514c0ff57ad5b97ab6c4061b19e45f17f5e50e3470a9`.
+The regular-file output tree diagnostic is
+`ef2d9b9c0d59b9884ea45ca5443f47c71fc93c3653257d458c375f284855cf7b` under
+`output_regular_file_content_sha256_v1`; canonical materializer hashing was
+not claimed because the output contains the runtime symlink `out/ros_log/latest`.
+This is functional validation only: no accuracy, map-quality, performance
+superiority, SOTA claim, or M6b authorization follows.
+
+### M6a10-v2a synchronized-tail input preflight
+
+RKO-LIO's offline processing requires a strict synchronized tail. Before any
+conversion or replay, run the read-only analyzer against the canonical NTU
+training input:
+
+```bash
+python3 scripts/analyze_m6a10_synchronized_tail.py \
+  --bag /media/sasaki/aiueo/datasets/ntu_viral_release/tnp_01_canonical_header_order_ros2 \
+  --output /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_dryrun.iD9dIn/receipt.json \
+  --lidar-topic /os1_cloud_node1/points \
+  --imu-topic /imu/imu \
+  --dry-run
+```
+
+The fixed PointCloud2 contract is one little-endian `UINT32` (`datatype: 6`)
+field `t`, interpreted as nanoseconds relative to `header.stamp`. A LiDAR
+message is eligible only when its point-level maximum timestamp is strictly
+less than the final IMU header timestamp; equality is ineligible. The
+decision is independent of arrival order and system name, and any
+nonterminal ineligible pattern or unsupported timestamp schema fails closed.
+The analyzer writes only an atomic receipt outside the bag, does not create a
+trimmed bag, and never opens GT or invokes a scorer.
+
+The pinned dry-run receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_dryrun.iD9dIn/receipt.json`
+(SHA-256
+`31072befe0ee816cfe09ee600f0ed604fd361a26e863e9bc51e5edab6f5f66d3`). It
+reported 225102 IMU messages, 5794 LiDAR messages, 5793 eligible scans and
+one terminal scan requiring exclusion, with a proposed end duration of
+579.277931825 s. This is an input preflight receipt, not a replay or accuracy
+result.
+
+### M6a10-v2a synchronized-tail materialization
+
+The deterministic materializer is verified against the NTU `tnp_01` canonical
+ROS2 input. The competitive profile status is
+`ros2_materialized_verified_ros1_verified`. The fixed10 external receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_materialization_v1_fixed10/receipt.json`
+(SHA-256
+`62defcf7a1b5cdadee666de44b09f71f8e011551ea93e37eec51b64a333cae9f`), and the
+published ROS2 tree SHA-256 is
+`0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263`.
+The receipt records 236688 input records, 236687 output records, 5793
+eligible LiDAR scans, 225102 IMU records, 5792 image records, and one dropped
+terminal LiDAR payload (SHA-256
+`a11e441e679c424d31a43755d96328f94e73a1d2a52e48a1c808ac51f7443830`). Its
+independent raw-stream verification passed; this is an input-integrity
+materialization result, not an accuracy, replay, or performance result.
+
+The generator SHA-256 is
+`caddcf0ae85d74444ae65ea85ed33d5e561a2569dc8ef180b2496a9d87c132c9` and the
+contract-test SHA-256 is
+`f0c58ddbdfeaae2399125bfffc0ebef5ef5c57aba4dca72e7e8238ec0c3175d4`. The
+analyzer receipt remains the sole source of terminal LiDAR selection. The
+output is written to a new sibling `.staging` container using the final bag
+basename, independently verified before atomic rename, and checked after
+publication by output tree hash only. Legacy `.part` staging, internal
+`.part.db3` names, overlaps/symlinks, stale outputs, duplicate connections,
+and tampering fail closed. The receipt is external to the bag tree to avoid a
+hash cycle. The previous fixed10 predecessor remains immutable as
+`superseded_not_promoted` because of its contract-ID mismatch and internal
+`.part.db3` filename.
+
+The one-time ROS1 equivalence conversion completed with status `PASS`. Its
+external receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1/receipt.json`
+(SHA-256
+`b71e7f5aa8f82a5711e6b25e42532caa8248a3fcf062d9b3b15a5c86460438ec`), the
+semantic report is `semantic.json` (SHA-256
+`0a64efb618c9bdbba4e762c350f21e36fb1244b4e2c2ffa17b3d7604cdd318ec`), and
+the `/usr/bin/time -v` report is `time-v.txt` (SHA-256
+`080dfbc2d50e016359702f58554f428b9aea1f18e974bc8275c2f2104b07459a`). The
+published ROS1 bag SHA-256 is
+`5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310` with
+11290464091 bytes and 236687 messages. Independent inspection found exactly
+the three expected topic types and counts: PointCloud2 5793, Imu 225102, and
+Image 5792. The semantic report has `all_topics_equal: true`; the sibling
+`.staging` container and legacy `.part` artifacts are absent.
+The timed wrapper wall time was 207.57 s and maximum resident set size was
+153252 KiB; these are conversion/equivalence diagnostics, not SLAM runtime or
+accuracy measurements.
+
+The fixed converter command was:
+
+```text
+rosbags-convert --src <canonical_ros2> \
+  --dst <ros1_staging_container>/<ros1_final_basename>.bag \
+  --compress none --src-typestore ros2_humble --dst-typestore ros1_noetic
+```
+
+The observed converter is `rosbags-convert` 0.11.0 (executable SHA-256
+`83f210e4fd135eb81c12191b20fe06443eab0344398a5e0712283a538749bfc2`, help
+SHA-256 `5fc5a415d32b0ccc953cc2b2f4f5213c1c201a9338b4b53eb7bdc1cebc23e4aa`).
+The semantic comparator (SHA-256
+`7464d0e64ba1cafbdbb7a2e162bd2735b7288d9ea6e3a2dc1e7757bdab5fcf41`) must
+report `all_topics_equal` for exactly `/os1_cloud_node1/points`, `/imu/imu`,
+and `/left/image_raw`. Ground-truth content and scoring remain false by
+contract; this is a transport/semantic-equivalence result, not an accuracy,
+performance, or SOTA claim.
 
 ## Competitive victory evidence (schema v2)
 
@@ -197,6 +866,196 @@ from another receipt and cannot promote `pending` to `ready`/`frozen`. The
 current worktree therefore produces `INCOMPLETE`, as required; only a later
 reviewed clean revision with system-container toolchain identities and a
 complete equal thread policy can be explicitly frozen.
+
+### NTU VIRAL second-family preregistration
+
+The dataset-source closure now carries a second distinct GT family as a
+metadata-only preregistration:
+[`ntu_viral_selection_2026-08.yaml`](../configs/slam_benchmark_profiles/ntu_viral_selection_2026-08.yaml)
+and its strict schema
+[`ntu_viral_selection_v1.schema.json`](../configs/slam_benchmark_profiles/ntu_viral_selection_v1.schema.json).
+The selection is deliberately `NOT_READY`; adding a family declaration does
+not count it as a PASS family. Claim eligibility still requires at least two
+families whose every evaluation-eligible sequence has recorded and
+mount-identity-bound, byte-revalidated input, calibration, and GT identities.
+
+The official NTU VIRAL project page documents two 3-D lidars, two
+time-synchronized cameras, multiple IMUs, and UWB nodes, and names the chosen
+sequences and their environments/durations: `eee_01` (EEE central carpark,
+398.7 s), `nya_01` (inside Nanyang Auditorium, 396.3 s), and `spms_01` (SPMS
+facade, 446 s). The project page is the primary citation for those facts:
+<https://ntu-aris.github.io/ntu_viral_dataset/>. Its official dataset source
+repository is <https://github.com/ntu-aris/ntu_viral_dataset>, and the official
+CSV GT repository is <https://github.com/ntu-aris/ntuviral_gt>. The evaluation
+tutorial documents the Leica prism/body offset and nanosecond timestamp
+handling: <https://ntu-aris.github.io/ntu_viral_dataset/evaluation_tutorial.html>.
+The published dataset terms are CC BY-NC-SA 4.0 for non-commercial academic
+use; the terms page is <https://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+The official page points to NTU Data Repository and an OneDrive fallback. Those
+are moving references, so no immutable source revision, archive digest, exact
+byte size, or SHA-256 is invented here. Before any execution, the selection
+requires the materialized input, GT, and calibration SHA-256/byte-size values,
+the exact source/archive identity, calibration and sensor-topic/frame/time
+revalidation, and support receipts for `ours`, `glim`, and `fast_livo2`.
+Expected roles are the official sequence archive/bag, GT in the bag or the
+official CSV export, `calib_stereo.zip`, `calib_stereo_imu.bag`, and the
+canonical calibration/metadata tree.
+
+`tnp_01` is explicitly represented only in the development profile group as
+`development_training_exposed`, because existing m6a10 work has exposed it.
+The selection receipt marks it `evaluation_eligible: false` and
+`fresh_eligible: false`; it cannot supply the second family or be relabelled as
+fresh. The closure auditor also rejects guessed byte identities, reordered
+selection bindings, and any attempt to re-enable `tnp_01`.
+
+#### NTU VIRAL acquisition and pin review sequence
+
+The NTU materialization has two deliberately separate stages. Stage A reads
+the preregistered selection and profile, verifies the exact evidence mount
+(`/media/sasaki/aiueo1`, UUID `3b5dc9b7-c4de-4cf2-a892-00b2c063f34e`, ext4,
+label `aiueo`, read-write), and reserves one previously absent candidate root.
+It accepts only the exact allowlisted official HTTPS role URLs and expected
+filenames in the selection. Redirect chains and final URLs are recorded and
+must remain on the allowlist; archives are inspected without extraction and
+reject traversal, symlink, hardlink, duplicate, and special members. A
+failure after reservation seals `FAIL_CLOSED` evidence, including any partial
+download, and that root is never reused or overwritten.
+
+Once exact official URLs, filenames, and source identities have been reviewed,
+the production entry point is:
+
+```bash
+python3 scripts/acquire_ntu_viral_candidate.py \
+  --selection configs/slam_benchmark_profiles/ntu_viral_selection_2026-08.yaml \
+  --profile configs/slam_benchmark_profiles/competitive_slam_v1.yaml \
+  --evidence-root /media/sasaki/aiueo1
+```
+
+The current selection intentionally contains moving-reference metadata only
+(`url: null` and no byte identities), so this command must fail before any
+reservation until a separately reviewed selection revision supplies the exact
+official role URLs and expected member paths. Synthetic tests inject a local
+fixture transport and mount observation; they never use `/media`, network, or
+benchmark data.
+
+Stage B is offline. It reopens the sealed candidate receipt and every
+candidate byte, verifies receipt/sidecar/source/role/selection/profile hashes,
+and writes only a deterministic proposal:
+
+```bash
+python3 scripts/authorize_ntu_viral_pin.py \
+  --selection configs/slam_benchmark_profiles/ntu_viral_selection_2026-08.yaml \
+  --profile configs/slam_benchmark_profiles/competitive_slam_v1.yaml \
+  --candidate-root /media/sasaki/aiueo1/datasets/ntu_viral_candidates/ntu-viral-historical-selection-2026-08-v1 \
+  --output /tmp/ntu_viral_pin_proposal.json
+```
+
+The proposal is always `PROPOSED_REVIEW_REQUIRED` and
+`claim_eligible: false`; the authorizer never edits the profile. Ground-truth
+artifacts remain role-separated and the runner input manifest contains no GT
+path. A separate reviewer must install an immutable `REVIEWED` profile pin,
+its sidecar, and `REVALIDATED` input/GT/calibration identities. Dataset
+preflight accepts that reviewed profile pin only; it never accepts a Stage A
+candidate receipt or Stage B proposal. Until that review and byte
+revalidation exist, the NTU family remains `NOT_READY` and cannot make the
+two-family or competitive claim gate pass.
+
+### Competitive RSS claim gate
+
+The v2 suite and sequence evaluators retain the legacy aggregate RSS value as
+report-only diagnostics until a producer declares claim eligibility or a
+resource receipt.  A claim path then reopens every expected system/sequence/
+repetition row and requires a distinct, positive, finite
+`aggregate_process_tree_peak_rss_bytes` receipt.  The receipt must be
+authoritative (`benchmark_process_rss_authoritative_v1`); functional-only
+registration-plugin records, contaminated timing authority, and incomplete
+resource rows are ineligible.
+
+Each receipt binds the m6a7 resource-tool revision and sampler/helper SHA-256s,
+configuration, thread-policy hash, machine, hardware, and exact `Release`
+identity.  The gate requires at least three matched complete runs for every
+system and sequence, checks every pinned rival (including the
+profile-selected best rival), and deterministically aggregates the maximum
+valid peak over repetitions and sequences.  The single canonical
+`max_peak_rss_ratio_vs_best_rival: 1.20` profile value is used for the
+aggregate, every-rival, and per-sequence ratio checks; the per-sequence
+ceiling is bound to that source and cannot be relaxed independently.  The
+95% bootstrap/CI requirement is scoped to APE only; RSS makes no CI claim and
+uses the preregistered deterministic maximum.  The policy shape is registered
+in
+[`competitive_memory_gate_v1.schema.json`](../configs/slam_benchmark_profiles/competitive_memory_gate_v1.schema.json).
+These checks do not open ground truth or invoke a scorer, and existing
+benchmark evidence is not upgraded by this code.
+
+### Fresh-holdout authorization and GT-blind claim gate
+
+The fresh partition has a second, claim-only authorization contract in
+addition to the input and execution identities above. Before any ground-truth
+availability or access, a sealed authorization mapping must precommit every
+fresh slot's immutable dataset/input/calibration/GT identity (GT is exposed
+only as SHA-256 plus byte size), every required system's pinned revision,
+config, hardware, thread policy, and exact `Release`, the run count, scorer
+revision/config/fingerprint, profile hash, and metric-gate hash. A GT path,
+URL, URI, decoded content, or content-derived value is forbidden in that
+pre-GT manifest.
+
+The authorization receipt chain uses canonical JSON SHA-256 receipts with
+strictly increasing UTC timestamps and predecessor links. Its required order
+is `precommit`, `holdout_seal`, `replay_authorization`, `leakage_audit`, and
+`failure_record`; reordered timestamps, missing/duplicated chain entries, or
+revision/config drift fail closed. The replay process is `replay_only` with no
+GT mount, GT open, or scorer invocation. Scoring is a distinct
+`scoring_only` process and may record exactly one authorized event for a
+sealed bundle, or an explicit invalidation; overwrite/retry and duplicate
+scoring events are forbidden. The leakage audit must document no prior GT
+access, development tuning, result-dependent selection, reused holdout, or
+GT path exposure, and the failure ledger must be complete.
+
+The local verifier is
+`scripts/competitive_holdout_authorization.py`, integrated into
+`scripts/verify_competitive_evidence_bundle.py` and the v2 suite claim gate.
+Its schema is
+[`competitive_fresh_holdout_authorization_v1.schema.json`](../configs/slam_benchmark_profiles/competitive_fresh_holdout_authorization_v1.schema.json).
+The profile-side trust-store shape is specified by
+[`competitive_external_attestation_trust_store_v1.schema.json`](../configs/slam_benchmark_profiles/competitive_external_attestation_trust_store_v1.schema.json).
+Fresh immutable dataset IDs/hashes are also checked disjoint from historical,
+bring-up, development, and regression partitions; shared calibration hashes
+are intentionally not treated as dataset overlap.
+
+When the policy requires an attestation, `external_attestation.status: PASS`
+alone is insufficient. The profile must carry a versioned `trust_store` with
+a canonical store SHA, unique key IDs, Ed25519 public-key bytes and SHA-256,
+ACTIVE/REVOKED state, and UTC validity intervals. The verifier trusts only
+that precommitted store; it never trusts a public key or key ID self-declared
+by the attestation. A detached canonical-base64 Ed25519 signature covers a
+domain-separated canonical payload containing the complete authorization
+mapping except `external_attestation`, so chain, scoring, leakage, failure,
+GT identity, and precommit edits invalidate it. Payload SHA, algorithm, key
+identity, validity, revocation, and signature are all checked; a separate
+`external_attestation_binding_sha256` in the signed authorization binds the
+attestation metadata without circularly signing its own signature/payload
+fields. Missing
+trust-store material or the Ed25519 dependency is `NOT_READY`; malformed,
+unknown, revoked, expired, or cryptographically invalid material is
+`FAIL_CLOSED`. Key rotation is represented by multiple versioned anchors and
+explicitly revoked/expired entries. The profile also pins the verification
+backend name, exact `python-cryptography` version, and Ed25519 implementation
+symbol; the verifier records that backend identity and verification timestamp
+in its result. No private key is stored in the repository. Attestation expiry
+is intentionally wall-clock based: a later re-check can become `FAIL_CLOSED`
+after expiry, so the sealed receipt must retain the original verification
+time and the profile must define the allowed validity window.
+
+The checked-in profile currently records
+`fresh_holdout_authorization.status: NOT_READY`: no independent external
+custodian trust anchor or attestation is present. This is not replaced by a
+runner or scorer signature. Before a claim can become eligible, an independent custodian must
+provide a locally verifiable signature over the sealed authorization chain
+(including its chain head and bundle identity), with signer/public-key
+identity recorded outside the runner/scorer trust domain. Until that external
+attestation is supplied and the profile is reviewed, the actual benchmark
+evidence remains `NOT_READY`; no GT content is opened by these checks.
 
 For a measured local checkout or image, bindings are explicit and repeatable;
 they never clone, build, or download anything:
@@ -669,13 +1528,13 @@ its pinned image and system-container toolchain probe are now observed ready;
 it does not depend on the historical undocumented
 `fast-livo2-benchmark:noetic` or `hdl_localization_noetic:local` images. Its
 legacy Sophus compatibility commit is an explicit full-length build-time pin.
-FAST's upstream HILTI22 configuration is now recorded as an external-container
-artifact at `/opt/fast_livo_ws/src/FAST-LIVO2/config/HILTI22.yaml`, with SHA-256
-`efae9e702c71c770b19002b6e19d4e1b6f46c67df3727e984981d932258f0b4a`. The entry is
-`observed` and is bound to the immutable FAST image
-`sha256:ddc75b574f8cca1e111332153e31a65c74ccdb11f8059da3797ab130814ce17e`;
-the checker never treats that container path as a host file. Fresh execution
-inputs remain pending.
+FAST's upstream HILTI22 configuration is now bound to the exact
+commit-addressed FAST archive member `config/HILTI22.yaml`, with SHA-256
+`efae9e702c71c770b19002b6e19d4e1b6f46c67df3727e984981d932258f0b4a`. The
+previous external-container path is no longer a recipe input. This proves
+reproducibility of the pinned upstream bytes, but does not resolve the
+remaining component-license provenance or permit image redistribution.
+Fresh execution inputs remain pending.
 `--pull=false` is
 intentional: a missing base image or source ref must fail rather than silently
 changing the identity.
@@ -1393,6 +2252,177 @@ python3 scripts/generate_sample_benchmark_metrics.py \
 ```
 
 Use `--profile failing` to create a negative-path fixture.
+
+### M6a10 fixed10 ours no-map replay boundary
+
+The first fixed10-v1 ours replay is an immutable `FAIL_CLOSED` functional
+attempt: consumer and online phase evidence passed, but 18 map artifacts were
+observed under `--skip-map-save`. The independent receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v1/evidence/independent_verification_final.json`
+(SHA-256
+`ce0211f2e55e09ed2e8cb9f0692daf2dc5ebdf0f6707942292734bd542f35a0e`), with
+output tree SHA-256
+`508df8568e9db1d51e8f167a12349cec33d04f61564b6154bf86244ae5f52624`.
+No retry was made, and no GT/scorer data was opened.
+
+The failure was diagnosed from the graph source and launch parameters:
+accepted loop edges call `doPoseAdjustment(..., use_save_map_in_loop_)`, whose
+normal default is true; its save branch writes the grid-divided map, bundle,
+degeneracy report, and pose-graph output. The runner's old skip branch only
+omitted the `/map_save` service request, so it could not promise map-free
+output. Fixed10-v2 is preregistered, not executed: the benchmark-only wrapper
+marker sets `use_save_map_in_loop=false` and an empty pose-graph save path via
+the source launch, and the runner verifies the forbidden map paths after the
+launch exits. `dump_results:=true` remains so the full offline trajectory and
+consumer evidence are preserved. The v2 output root and exact wrapper/runner/
+launch hashes are pinned in both machine-readable receipts. The v2 image is
+`m6a10-v2a-fixed10-v2-lidarslam-ours:jazzy` at immutable digest
+`sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69`.
+Its installed launch path and OCI label carry SHA
+`d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c`; the
+recipe SHA is `99daea2172ae64f048557a9b069f48cd4b462de1581efd0b12457618dd360330`
+and its build entrypoint SHA is
+`2249b168cebaa640c657d095743a11d82b356123ad433806a443745a1f694b96`.
+It copies only this explicitly hashed overlay, never a dirty host tree.
+Its status remains `preregistered_not_executed` until a separately authorized
+replay.
+
+### FAST-LIVO2 M6a10-v2c retry-v2 closure
+
+The FAST-LIVO2 fixed10 retry-v2 was closed `FAIL_CLOSED` after its single
+authorized launch attempt. The read-only quiescence receipt passed (CPU busy
+`3.7616763443574857%`, load1/CPU `0.415`, and no forbidden processes), but the
+host runner rejected the profile before starting Docker because the required
+`safety.ground_truth_mount_exposed` field was absent. The attempt therefore
+started no container and replayed no bag; this is a runner contract-validation
+failure, not a performance result. Its immutable closure receipt is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v2/closure_receipt.json`
+(SHA-256
+`c76ce0a5d782336012f6c9ae897f9683792799ef92eba00a429fc024958ffdf0`). The
+host `time-v.txt` and the passing quiescence receipt remain alongside it, with
+no `run_01`, container, partial artifact, map artifact, GT access, scorer, or
+retry. The earlier compiler/load failure is retained as an immutable
+predecessor; no FAST-LIVO2 accuracy or performance claim follows.
+
+The fixed10-v3 successor made one new quiescence attempt after the explicit
+`ground_truth_mount_exposed: false` schema repair. It failed closed before the
+runner because an unrelated external build was active: CPU busy was
+`98.275%`, load1/CPU was `0.69375`, and seven C++ compiler processes plus one
+`rustc` were observed. Its immutable closure is
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v3/closure_receipt.json`
+(SHA-256
+`eed5aa5072048ea77007a2f38a1440ca60af743d389a561b9aa89b5503bbc399`), with
+quiescence receipt SHA
+`d27cefb4923848eed622829a9c802adb378f4e2d2f1078884593e246a8702cf7`. No
+container, bag replay, GT access, scorer, or retry was started.
+
+### FAST-LIVO2 fixed10-v4 correction and v5 observability
+
+The fixed10-v4 FAST attempt is `FAIL_CLOSED`, not a result. Its immutable
+closure SHA is `1292cbadf0eff2575f2df3014a73e54822d8d57f6703cba5832e3db91065bfd1`.
+The host stopped its own container after bounded no-progress supervision; the
+container was force-removed after the 30-second stop grace period. OOM was not
+observed. Because v4 had no progress checkpoint, it cannot establish that a
+first callback ACK was absent. The correction SHA
+`861585b554cee8240bd4cae811dbec46c7256b83ba40a30c4e28a91ca690c93f` records
+this limitation explicitly. The v4 attempt did not access GT or invoke a
+scorer.
+
+The v5 instrumentation is preregistered but not executed. It adds atomic,
+non-authoritative feeder progress (first ACK and every 100 records),
+line-buffered diagnostics, a stable Docker name/cidfile, low-frequency Docker
+stats, and host-side reconnectable lifecycle/inspect snapshots. It does not
+change the input,
+algorithm, mount graph, or fairness contract. The v5 image must be rebuilt to
+bind the new feeder label before any replay; no v5 quiescence or replay has
+started. Planned output root:
+`/media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v5`.
+The preregistered source hashes are feeder
+`bde0631d29dbb18575fe0fd2ce4bc339e738d14e1b47a1ccc8a77aa348f5622d`, host
+runner `54db99e7f9da588baff33973490efb5474d86ca9888b1dae9578621810c38d48`,
+and recipe
+`a42686414c8400d9dba91cd7103840a703d77514cb33475a3c9a035fb100de1e`.
+The old v4 `*map*` detector remains part of its immutable historical record;
+v5 preregisters an explicit map-artifact denylist instead (`*.pcd`,
+`map.pcd`, `map_bundle.yaml`, `map_projector_info.yaml`,
+`degeneracy_report.yaml`, `pose_graph.g2o`, `trajectory_optimized.tum`,
+`loop_edges.csv`, `pointcloud_map`, `*.bag`, `*.db3`, and `*.part`). The required
+`mapper.log` and `mapper_ready.txt` files are diagnostic-only and explicitly
+excluded from the map-artifact denylist.
+The synchronized canonical profile identity is
+`3904791e1dff0b6841cf40133c7c96327254faf9797dc1827badf6f0d9477d4c`; the
+execution-selection file SHA is
+`ecca86bca67704ccd653da450344de3fd6ba52ad23baeddfaae9ae3569e4e7f2`.
+
+### Dataset source closure and partition provenance
+
+The claim gate also audits every dataset/sequence declared under the profile's
+`bringup`, `development`, `regression_only`, historical, and fresh partitions.
+The metadata contract is
+`evidence_gate_v2.dataset_source_closure` and its schema is
+`configs/slam_benchmark_profiles/competitive_dataset_source_closure_v1.schema.json`;
+the offline auditor is
+`scripts/check_competitive_dataset_source_closure.py`.  Selection preflight
+and the schema-v2 claim gate both invoke it.
+
+Each descriptor must bind an official primary project/version and immutable
+download references, license/terms and citation, sensor topics/formats/time
+basis, calibration identity/convention, ground-truth method/frame/time basis,
+input/calibration/GT hashes and byte counts, sequence duration/message counts,
+and support from every required runner.  Dataset IDs, sequence IDs, input
+identities, and GT identities must be disjoint across partitions; shared
+calibration identities are not treated as dataset overlap.  A sequence is not
+counted as a second dataset family: the claim policy requires at least two
+distinct GT families and a fresh partition.
+
+The auditor is metadata-only and never opens GT or data files.  Recorded
+hashes are explicitly `RECORDED_ONLY` until a verified evidence-volume mount
+identity and revalidation receipt are supplied; recorded bytes are never
+reported as revalidated bytes.  Missing official version/license/terms,
+calibration or GT identity, moving URLs, unsupported runners, and frame/time
+basis mismatches fail closed.  The checked-in profile currently remains
+`NOT_READY`: Hilti is recorded-only, while NTU VIRAL is a second
+precommitted-but-unacquired family with no PASS sequence.  The auditor reports
+declared families separately from `passed_families`, so a preregistered NTU
+family cannot satisfy the two-family claim requirement.
+
+### Immutable OSS rival source closure
+
+Claim eligibility requires the pinned `glim` and `fast_livo2` rivals to carry
+an offline-verifiable source-closure record.  The record is
+`evidence_gate_v2.rival_source_closure` in
+`configs/slam_benchmark_profiles/competitive_slam_v1.yaml`; its schema is
+`configs/slam_benchmark_profiles/competitive_rival_source_closure_v1.schema.json`
+and the production audit is
+`scripts/check_competitive_rival_source_closure.py`.
+
+Every direct and recipe-cloned upstream source must use an official HTTPS
+repository, an exact 40-hex commit, a commit-addressed archive URL with the
+downloaded archive SHA-256, a deterministic source-tree SHA-256, an explicit
+recursive submodule list, license identity/file hashes, and an official commit
+citation.  License evidence is component-scoped: a package metadata
+declaration is recorded separately from an upstream license text artifact and
+cannot substitute for one.  Ordered local patch hashes, Dockerfile/build-
+script/runner/wrapper hashes, configs, the immutable base-image digest, and
+expected build options are checked against the current repository and the
+versioned selection sidecar
+`configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml`.
+Branches, `latest`, tag-only references, missing license or archive proof,
+hardlinks/symlinks, external configs, recipe drift, and rivals omitted from all
+declared tracks fail closed.
+
+The current closure is
+`competitive-rival-source-closure-2026-08-r2` (revision 2) and remains
+`NOT_READY`.  The pinned FAST-LIVO2 root
+`LICENSE` (GPL-2.0-only) and its conflicting `package.xml` BSD declaration are
+now represented as separate component evidence, while each `rpg_vikit`,
+Sophus, and the GLIM ROS 2 bridge component is explicitly
+`NOT_READY_LEGAL_PROVENANCE` when the pinned upstream tree contains no
+reopenable license text artifact.  The historical execution-selection receipt
+is explicitly `SUPERSEDED_RECIPE_REVISION` and ineligible; it is not rewritten.
+The legal policy permits source fetching for reproducibility only and blocks
+source, binary, and image redistribution until provenance is resolved. These
+are provenance blockers, not benchmark results or a claim.
 
 ## Recommended Artifacts To Publish
 

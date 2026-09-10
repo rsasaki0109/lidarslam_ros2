@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-apt-closure-outer-v1",
+  "title": "GLIM clean-room r3 host-owned apt capture receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "benchmark_eligible", "capture_mode",
+    "plan_identity_sha256", "image_reference", "container_name", "records",
+    "output_root_lstat", "outer_root_lstat", "image_inspect", "post_disconnect_inspect", "cleanup", "inner_payload",
+    "outer_identity_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_apt_outer_receipt_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "REVIEW_REQUIRED"},
+    "benchmark_eligible": {"const": false},
+    "capture_mode": {"const": "CONTRACT_ONLY"},
+    "plan_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "image_reference": {"pattern": "^ros@sha256:[0-9a-f]{64}$"},
+    "container_name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]{1,63}$"},
+    "records": {"type": "array", "minItems": 14, "maxItems": 14,
+      "items": {"$ref": "#/$defs/record"}},
+    "output_root_lstat": {"$ref": "#/$defs/lstat"},
+    "outer_root_lstat": {"$ref": "#/$defs/lstat"},
+    "image_inspect": {"$ref": "#/$defs/image"},
+    "post_disconnect_inspect": {"$ref": "#/$defs/postInspect"},
+    "cleanup": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stop_exit_status", "remove_exit_status", "post_remove_absent"],
+      "properties": {
+        "stop_exit_status": {"const": 0},
+        "remove_exit_status": {"const": 0},
+        "post_remove_absent": {"const": true}
+      }
+    },
+    "inner_payload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "capture_root", "receipt_sha256"],
+      "properties": {
+        "status": {"enum": ["PRESENT", "CONTRACT_ONLY_NOT_RUN"]},
+        "capture_root": {"type": ["string", "null"]},
+        "receipt_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "outer_identity_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "lstat": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_type", "mode", "uid", "gid", "nlink"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "file_type": {"const": "directory"},
+        "mode": {"const": "0700"},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"type": "integer", "minimum": 1}
+      }
+    },
+    "record": {
+      "type": "object", "additionalProperties": false,
+      "required": ["phase", "ordinal", "argv", "exit_status", "stdout", "stderr",
+                    "stdout_sha256", "stderr_sha256", "stdout_bytes", "stderr_bytes"],
+      "properties": {
+        "phase": {"type": "string", "minLength": 1},
+        "ordinal": {"type": "integer", "minimum": 0, "maximum": 13},
+        "argv": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "exit_status": {"type": "integer"},
+        "stdout": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$"},
+        "stderr": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$"},
+        "stdout_sha256": {"$ref": "#/$defs/sha256"},
+        "stderr_sha256": {"$ref": "#/$defs/sha256"},
+        "stdout_bytes": {"type": "integer", "minimum": 0, "maximum": 4194304},
+        "stderr_bytes": {"type": "integer", "minimum": 0, "maximum": 4194304}
+      }
+    },
+    "image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["Id", "RepoDigests", "Os", "Architecture"],
+      "properties": {
+        "Id": {"pattern": "^sha256:[0-9a-f]{64}$"},
+        "RepoDigests": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "Os": {"const": "linux"},
+        "Architecture": {"const": "amd64"}
+      }
+    },
+    "postInspect": {
+      "type": "object", "additionalProperties": false,
+      "required": ["Image", "Mounts", "NetworkSettings"],
+      "properties": {
+        "Image": {"pattern": "^sha256:[0-9a-f]{64}$"},
+        "Mounts": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "object"}},
+        "NetworkSettings": {
+          "type": "object", "additionalProperties": false,
+          "required": ["Networks"],
+          "properties": {"Networks": {"type": "object", "maxProperties": 0}}
+        }
+      }
+    }
+  }
+}
