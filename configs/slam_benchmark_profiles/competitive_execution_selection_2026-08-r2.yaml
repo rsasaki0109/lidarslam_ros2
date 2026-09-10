@@ -7,14 +7,14 @@ status: CURRENT
 closure_id: competitive-rival-source-closure-2026-08-r2
 closure_revision: 2
 closure_identity_hash_kind: canonical_rival_source_closure_identity_sha256_v1
-closure_identity_sha256: e876339f843b28c1be5d835e8f6a9a062c52715498c85d93afbdb83c6dbae4e8
+closure_identity_sha256: abe385d54f435431aff8ba48975ee69a1a1fac31f548ae3a9733684316f2a5c2
 profile_path: configs/slam_benchmark_profiles/competitive_slam_v1.yaml
 profile_revision_id: competitive-slam-v1-2026-08-r2
 current_recipe_bindings:
   glim:
     dockerfile: {path: docker/glim_cpu_benchmark.Dockerfile, hash_kind: file_sha256, sha256: dcd01d013eeb5cb50e2582646548c06f2c3b1a93820412b110b7fb25b769d70d}
     build_script: {path: scripts/build_competitive_benchmark_images.sh, hash_kind: file_sha256, sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1}
-    runner: {path: scripts/run_glim_benchmark.py, hash_kind: file_sha256, sha256: 2345b930ce8b679d92d315bae8ed372d99fde1c43fb744f5d8b7c7fc77588794}
+    runner: {path: scripts/run_glim_benchmark.py, hash_kind: file_sha256, sha256: fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5}
     wrapper: {path: scripts/glim_container_run.sh, hash_kind: file_sha256, sha256: 6b9948a1319ba5eaeba1bd53fca9d35ae6b3f93cda41ebea3e8d79a2b467b19e}
     configs:
       - {path: configs/glim/hilti2022_cpu, hash_kind: canonical_tree_sha256, sha256: 844efce77c2c9bde697f2811e0c32441706b3c74a559a152bb04efeaf38c798d}
@@ -26,7 +26,7 @@ current_recipe_bindings:
   fast_livo2:
     dockerfile: {path: docker/fast_livo2_benchmark.Dockerfile, hash_kind: file_sha256, sha256: 1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5}
     build_script: {path: scripts/build_competitive_benchmark_images.sh, hash_kind: file_sha256, sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1}
-    runner: {path: scripts/run_fast_livo2_benchmark.py, hash_kind: file_sha256, sha256: b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30}
+    runner: {path: scripts/run_fast_livo2_benchmark.py, hash_kind: file_sha256, sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f}
     wrapper: {path: scripts/fast_livo2_container_run.sh, hash_kind: file_sha256, sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20}
     configs:
       - {path: configs/fast_livo2/mapping_hesaixt32_hilti22_benchmark_map.launch, hash_kind: file_sha256, sha256: 5d1f213d48488161da438e76d9fb359278fa5993e99247a94f52b9c09e2bf742}

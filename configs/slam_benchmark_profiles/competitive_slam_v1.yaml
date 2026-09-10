@@ -2092,7 +2092,7 @@ competitive_slam_profile:
       active_selection:
         selection_id: competitive-execution-selection-2026-08-r2
         path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml
-        sha256: 941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b
+        sha256: e4059775b68ffe4be2c5904582a623e65e803ba71102a5832ae066d7d732660b
         status: CURRENT
         supersedes:
           - path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml

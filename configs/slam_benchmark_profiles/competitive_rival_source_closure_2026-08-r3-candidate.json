@@ -2,7 +2,7 @@
   "benchmark_eligible": false,
   "candidate_hash_kind": "canonical_competitive_rival_source_closure_r3_candidate_sha256_v1",
   "candidate_id": "competitive-rival-source-closure-2026-08-r3-candidate",
-  "candidate_identity_sha256": "26280f37d7fb0f18574b90042f932409013ff0d9c3f5e8d40d8daaffe1089dfa",
+  "candidate_identity_sha256": "e2fee18f14e1b21c4724c9297248c2361befe11cdd93711c2c66c7111c23a716",
   "candidate_kind": "competitive_rival_source_closure_r3_candidate_v1",
   "claim_eligible": false,
   "current_recipe_bindings": {
@@ -25,7 +25,7 @@
           "status": "CURRENT_BYTES_MATCH"
         },
         {
-          "current_sha256": "eda2373a1f04098851ffc48ccb0b1d8ba282b8b84c2a3f8102e18e3b45284352",
+          "current_sha256": "77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f",
           "hash_kind": "file_sha256",
           "path": "scripts/run_fast_livo2_benchmark.py",
           "r2_sha256": "b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30",
@@ -89,10 +89,10 @@
           "status": "CURRENT_BYTES_MATCH"
         },
         {
-          "current_sha256": "1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1",
+          "current_sha256": "fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5",
           "hash_kind": "file_sha256",
           "path": "scripts/run_glim_benchmark.py",
-          "r2_sha256": "2345b930ce8b679d92d315bae8ed372d99fde1c43fb744f5d8b7c7fc77588794",
+          "r2_sha256": "1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1",
           "role": "runner",
           "status": "CURRENT_BYTES_REBOUND"
         },
@@ -145,22 +145,22 @@
           "status": "CURRENT_BYTES_MATCH"
         }
       ],
-      "r2_recipe_sha256": "5643597c038184a5857d4b01325d1b92a3a3c2c2fc31e1440faf74052908ae04"
+      "r2_recipe_sha256": "0a9bee1b2f78728dd9b09cc546d61c2dbdbd0b22a3c402dbcdf6a6dcd7e9ffea"
     }
   },
   "current_runner_bindings": {
     "fast_livo2": {
-      "current_sha256": "eda2373a1f04098851ffc48ccb0b1d8ba282b8b84c2a3f8102e18e3b45284352",
+      "current_sha256": "77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f",
       "hash_kind": "file_sha256",
       "path": "scripts/run_fast_livo2_benchmark.py",
       "r2_sha256": "b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30",
       "status": "CURRENT_BYTES_REBOUND"
     },
     "glim": {
-      "current_sha256": "1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1",
+      "current_sha256": "fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5",
       "hash_kind": "file_sha256",
       "path": "scripts/run_glim_benchmark.py",
-      "r2_sha256": "2345b930ce8b679d92d315bae8ed372d99fde1c43fb744f5d8b7c7fc77588794",
+      "r2_sha256": "1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1",
       "status": "CURRENT_BYTES_REBOUND"
     }
   },
@@ -192,8 +192,8 @@
   },
   "profile_binding": {
     "canonical_hash_kind": "canonical_profile_sha256_v1",
-    "canonical_sha256": "b9a454ae9fbb3ffc01348b76aa5086f6c3f8965c7d86721dd6cc3c9396431d31",
-    "file_sha256": "ba426b7b7fbe543c56fc813a144c0079633b447591ba8b565a910e1745d137bd",
+    "canonical_sha256": "b35db21d9f1448ddc4e9e875d975432cac497b6ce5aabe6988c7cb9b4618b5ad",
+    "file_sha256": "8a735e67222564cb7dc37351d58cf7b79d0da8bac7bc7bf50f36eac204e18f43",
     "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"
   },
   "promotion_policy": {
@@ -208,7 +208,7 @@
     "active_selection": {
       "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
       "selection_id": "competitive-execution-selection-2026-08-r2",
-      "sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b",
+      "sha256": "e4059775b68ffe4be2c5904582a623e65e803ba71102a5832ae066d7d732660b",
       "status": "CURRENT",
       "supersedes": [
         {
@@ -580,7 +580,7 @@
           "runner": {
             "hash_kind": "file_sha256",
             "path": "scripts/run_glim_benchmark.py",
-            "sha256": "2345b930ce8b679d92d315bae8ed372d99fde1c43fb744f5d8b7c7fc77588794"
+            "sha256": "1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1"
           },
           "wrapper": {
             "hash_kind": "file_sha256",
@@ -856,22 +856,22 @@
   "r2_lineage": {
     "closure_id": "competitive-rival-source-closure-2026-08-r2",
     "closure_identity_hash_kind": "canonical_rival_source_closure_identity_sha256_v1",
-    "closure_identity_sha256": "e876339f843b28c1be5d835e8f6a9a062c52715498c85d93afbdb83c6dbae4e8",
+    "closure_identity_sha256": "abe385d54f435431aff8ba48975ee69a1a1fac31f548ae3a9733684316f2a5c2",
     "closure_revision": 2,
     "historical_selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml",
-    "historical_selection_sha256": "da10e28026b414fac3d52f95377d25aaeda9416d75495e1826c35f5545ac54ac",
+    "historical_selection_sha256": "f2f9aefc368a1ce627574b514f65f9cbadd17042716ba7915aee908c199d6b0e",
     "r2_selection_id": "competitive-execution-selection-2026-08-r2",
     "r2_selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
-    "r2_selection_sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b",
+    "r2_selection_sha256": "e4059775b68ffe4be2c5904582a623e65e803ba71102a5832ae066d7d732660b",
     "supersedes_status": "R2_IMMUTABLE_NOT_REWRITTEN"
   },
   "r2_selection_binding": {
-    "canonical_sha256": "1a4d9db60612e0202c9d77851752da2d4269f38ff3c842fdd132e5a3f949fa62",
+    "canonical_sha256": "eb5e0a3ba0965c1daa8606bbcd6b86696b488bc4115df7cdf66ca7387bcce511",
     "closure_id": "competitive-rival-source-closure-2026-08-r2",
     "closure_identity_hash_kind": "canonical_rival_source_closure_identity_sha256_v1",
-    "closure_identity_sha256": "e876339f843b28c1be5d835e8f6a9a062c52715498c85d93afbdb83c6dbae4e8",
+    "closure_identity_sha256": "abe385d54f435431aff8ba48975ee69a1a1fac31f548ae3a9733684316f2a5c2",
     "closure_revision": 2,
-    "file_sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b",
+    "file_sha256": "e4059775b68ffe4be2c5904582a623e65e803ba71102a5832ae066d7d732660b",
     "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
     "selection_id": "competitive-execution-selection-2026-08-r2",
     "status": "CURRENT"
