@@ -78,7 +78,7 @@ MONITOR_CONTRACT = "m6a10-v12-host-interference-gate-v1"
 AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v12_formal.py"
 # This pin is intentionally one-way: the authorization receipt does not pin
 # this launcher, avoiding a self-referential receipt/source hash cycle.
-AUTHORIZER_SHA256 = "be20a8c5c52dff83c680ad90b3d8f7e73afa915777f4cbc152817653075f1ffa"
+AUTHORIZER_SHA256 = "4059d6df575568de6d913755f801a75568dfe8d08b02d2a5e5135b9eb7b47dc6"
 
 BUILD_RECEIPT_PATH = Path(
     "/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/"
@@ -113,7 +113,7 @@ SOURCE_PINS = {
     "v12_terminal_selftest": ("tools/m6a10_terminal_support_context_v12_selftest.cpp", "1b42ed713dbb2a8614902ae6214d5790ab9c73ac59792f4d68753320cef47a91"),
     "v12_consumer_selftest": ("tools/m6a10_consumer_evidence_v12_selftest.cpp", "02078640496daa28f0be471355c6e2ad2822a76199cda1b54e738eeff5fe48de"),
     "v12_validator": ("scripts/benchmark_phase_contract.py", "d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7"),
-    "v12_wrapper": ("scripts/fast_livo2_m6a10_v12_formal_container_run.sh", "32fce2c054b92f0d695fd4d32c7737ab75dd3a467fdee1c579c82c63398894e6"),
+    "v12_wrapper": ("scripts/fast_livo2_m6a10_v12_formal_container_run.sh", "af6fa54f834ae209758ee5a9903695674f4095c1063ac57b46c2774bfbc5c7a9"),
     "v12_no_input_payload": ("scripts/fast_livo2_m6a10_v12_no_input_container_payload.sh", "2c1c9b86fadc0d1d83e7874542f92ff33b99b23421397374ecd9e880ad1b73aa"),
     "v12_feeder": ("scripts/fast_livo2_m6a10_feeder.py", "869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf"),
     "binder": ("scripts/bind_fast_livo2_v12_consumer_evidence.py", "3a708c87137f81330b479579dbcb184ac25853596546263c406473dbef106aab"),

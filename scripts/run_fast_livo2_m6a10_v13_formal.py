@@ -31,7 +31,7 @@ import lidarslam_benchmark_tools.run_fast_livo2_m6a10_v12_formal as v12  # noqa:
 
 CANDIDATE_VERSION = "v13-mount-corrected"
 PARENT_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v12_formal.py"
-PARENT_LAUNCHER_SHA256 = "27724a34bc98df0c89f93b20bbdae0b9ce22dbb3f95f7b0cb474e5564eb16bc6"
+PARENT_LAUNCHER_SHA256 = "46782ddace14ac44fda16ddaeb35d6d5b581e7267abb5a277d108a73de70d459"
 PARENT_PROFILE_PATH = v12.PROFILE_PATH
 PARENT_PROFILE_SHA256 = v12.PROFILE_SHA256
 IMAGE_ID = v12.IMAGE_ID
