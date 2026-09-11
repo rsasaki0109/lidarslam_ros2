@@ -826,7 +826,7 @@ def _schema_status(manifest: Mapping[str, Any]) -> dict[str, Any]:
         import jsonschema
         schema = json.loads(SCHEMA_PATH.read_text(encoding='utf-8'))
         resolver = jsonschema.RefResolver(SCHEMA_PATH.as_uri(), schema)
-        validator = jsonschema.Draft202012Validator(schema, resolver=resolver)
+        validator = jsonschema.Draft7Validator(schema, resolver=resolver)
         errors = sorted(validator.iter_errors(manifest), key=lambda item: list(item.path))
         return {'status': 'PASS' if not errors else 'FAIL_CLOSED', 'pass': not errors,
                 'errors': [error.message for error in errors]}
@@ -840,7 +840,7 @@ def _validate_composition_spec_schema(spec: Mapping[str, Any]) -> None:
     try:
         import jsonschema
         schema = json.loads(COMPOSER_SCHEMA_PATH.read_text(encoding='utf-8'))
-        validator = jsonschema.Draft202012Validator(schema)
+        validator = jsonschema.Draft7Validator(schema)
         errors = sorted(validator.iter_errors(spec), key=lambda item: list(item.path))
     except (OSError, ImportError, ValueError, TypeError) as exc:
         raise CompositionError(

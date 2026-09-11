@@ -252,7 +252,7 @@ def _validate_schema(spec: Mapping[str, Any]) -> None:
     try:
         import jsonschema
         schema = json.loads(_read_bytes(SCHEMA_PATH, 'publication schema').decode())
-        errors = sorted(jsonschema.Draft202012Validator(schema).iter_errors(spec),
+        errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(spec),
                         key=lambda error: list(error.path))
     except ImportError as exc:
         raise PublicationError('jsonschema is required for publication validation') from exc

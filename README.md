@@ -122,8 +122,7 @@ synchronized camera pixels onto that geometry. This RTK-SLAM Construction Hall
 
 ![Camera-coloured SLAM point-cloud map and its estimated trajectory](lidarslam/images/map_flythrough_rtkslam.webp) ([MP4](lidarslam/images/map_flythrough_rtkslam.mp4) · [GIF](lidarslam/images/map_flythrough_rtkslam.gif))
 
-K4 has 4.91 M points, 76.66% colour coverage, and 11/11 profile checks passing. Pose-aware dynamic cleaning before K3's camera fusion improves held-out RGB median from 41.17 to 40.54 and planar roughness median from 7.23 to 6.40. See the [release-readiness record](docs/research/colored-map-release-readiness-2026-07.md) for paired K3/K4 evidence and limits.
-The sequence is from RTK-SLAM (CC-BY 4.0); its total-station checkpoints also drive the [accuracy gate](#accuracy).
+K4 has 4.91 M points, 76.66% colour coverage, and 11/11 profile checks passing. Pose-aware dynamic cleaning before K3's camera fusion improves held-out RGB median from 41.17 to 40.54 and planar roughness median from 7.23 to 6.40. See the [release-readiness record](docs/research/colored-map-release-readiness-2026-07.md) for paired K3/K4 evidence and limits. The sequence is from RTK-SLAM (CC-BY 4.0); its total-station checkpoints also drive the [accuracy gate](#accuracy).
 
 If graph optimization outputs sparse keyframes, the coloured-map pipeline can
 propagate their corrections onto the dense SLAM pose stream automatically:
@@ -137,14 +136,7 @@ python3 tools/colored_map/colored_map_pipeline.py \
 
 The pipeline caches `dense_corrected_trajectory.tum` and rebuilds stale downstream artifacts; use `--force-trajectory` for an explicit refresh.
 Moving rigs can add `--refine-spatiotemporal-calibration`; see the [held-out-gated design and RTK-SLAM result](docs/research/colored-map-spatiotemporal-calibration-2026-07.md).
-
-### Cross-repository SLAM benchmark
-
-`public_suite_v1.yaml` connects Localization Zoo trajectories to trajectory,
-geometry, real-RGB, runtime, and memory gates, with frozen OFF/ON candidate
-promotion across MID-360, HILTI, and RTK-SLAM surveyed references. Commands,
-replay, and adoption records:
-[Benchmarking and release gate](docs/benchmarking.md#slam-candidate-regression).
+Cross-repository gates (`public_suite_v1.yaml`, frozen OFF/ON promotion): [Benchmarking](docs/benchmarking.md#slam-candidate-regression).
 
 ## Open-source benchmark results
 
@@ -157,7 +149,7 @@ profile recorded **34.7% lower median APE RMSE than GLIM** over three runs:
 | GLIM CPU | 0.0866 m | **0.244** | 690.88 MB |
 
 This is a scoped HILTI `exp04` trajectory-accuracy and peak-memory win; GLIM
-wins runtime. It is not an overall-SOTA claim. Normal development needs only
+wins runtime. It is not an overall best-system claim. Normal development needs only
 one new run:
 
 ```bash
@@ -181,22 +173,22 @@ python3 scripts/run_glim_benchmark.py \
 Exact scoring rules, revisions, checkpoint policy, and map-quality limitations
 are in [Comparison](docs/comparison.md#same-input-hilti-2022-exp04-vs-glim-cpu).
 
+The separate Voxel-SLAM `v17` research candidate also achieved the lowest
+geometric-mean APE across NavINST, Oxford, and UrbanNav: **2.2836 m**, versus
+GLIM `5.0779`, Point-LIO `3.8388`, FAST-LIO2 `6.9576`, and fixed Voxel-SLAM
+`2.7160` — **55.0% lower than GLIM**. It is not the default release path, does
+not win every sequence, and is not fresh-blind evidence. Exact revisions,
+per-sequence results, input hashes, resource results, map limitations, and
+reproduction notes are in [Comparison](docs/comparison.md#voxel-slam-v17-research-candidate-vs-pinned-oss-rivals).
+
 <!-- BEGIN GENERATED COMPETITIVE CLAIM PUBLICATION -->
 <!-- END GENERATED COMPETITIVE CLAIM PUBLICATION -->
-
-## Tunnel and fog mapping without degeneracy collapse
-
-On the ~500 m self-similar Fyllingsdalen tunnel from the [NTNU LiDAR degeneracy datasets](https://github.com/ntnu-arl/lidar_degeneracy_datasets),
-the plain frontend covers 98.7 m before along-axis degeneracy freezes it. The opt-in
-presets (radar ego-velocity fusion + sliding-window gravity alignment) map the whole
-tunnel — reach **504.5 m**, transverse RMS 1.34 m, end-height −4.7 m (−33 m without
-gravity alignment) — and cut fog clutter-lock drift 35.6 → 9.6 m, with defaults
-unchanged (a MID-360 driving holdout stays byte-identical). Symptom table:
-[Degeneracy Resilience Guide](docs/degeneracy-guide.md); evidence: [research note](docs/research/gravity-window-alignment-2026-07.md).
 
 ## Accuracy
 
 Release-gate thresholds ([Benchmarking](docs/benchmarking.md#release-gate-accuracy-snapshot)) block every release in CI.
+
+Tunnel and fog mapping: [Degeneracy Resilience Guide](docs/degeneracy-guide.md).
 
 ## Docs
 

@@ -65,7 +65,7 @@ def validate() -> dict[str, Any]:
         raise CandidateError("collector candidate schema identity drift")
     try:
         import jsonschema
-        jsonschema.Draft202012Validator(schema).validate(manifest)
+        jsonschema.Draft7Validator(schema).validate(manifest)
     except ImportError as error:
         raise CandidateError(f"jsonschema backend unavailable: {error}") from error
     if manifest["base_image"]["reference"] != BASE_IMAGE or \

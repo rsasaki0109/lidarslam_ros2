@@ -184,7 +184,7 @@ def _load_config(config_path: Path, repo_root: Path) -> dict[str, Any]:
     try:
         import jsonschema
         errors = sorted(
-            jsonschema.Draft202012Validator(schema).iter_errors(config),
+            jsonschema.Draft7Validator(schema).iter_errors(config),
             key=lambda error: list(error.path))
     except (ImportError, TypeError, ValueError) as exc:
         raise ReadmeClaimGuardError(f'README guard schema unavailable: {exc}') from exc

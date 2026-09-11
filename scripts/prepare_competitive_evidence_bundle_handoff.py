@@ -155,7 +155,7 @@ def _validate_schema(request: Mapping[str, Any]) -> None:
         import jsonschema
         schema = json.loads(HANDOFF_SCHEMA_PATH.read_text(encoding='utf-8'))
         errors = sorted(
-            jsonschema.Draft202012Validator(schema).iter_errors(request),
+            jsonschema.Draft7Validator(schema).iter_errors(request),
             key=lambda item: list(item.path))
     except (OSError, ImportError, ValueError, TypeError) as exc:
         raise HandoffError(f'handoff schema is unavailable: {exc}') from exc
