@@ -2092,11 +2092,11 @@ competitive_slam_profile:
       active_selection:
         selection_id: competitive-execution-selection-2026-08-r2
         path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml
-        sha256: f730caf69b1ae46a49c9d27922782e5e9e042bc6588e5dbdda2d2564b20f97ce
+        sha256: 1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed
         status: CURRENT
         supersedes:
           - path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml
-            sha256: f2f9aefc368a1ce627574b514f65f9cbadd17042716ba7915aee908c199d6b0e
+            sha256: dd0ed7c5d80f22a279d18126c5df64dc0685c007e8343a89983c1a01df0089e5
             status: SUPERSEDED_RECIPE_REVISION
             claim_eligible: false
             reason: historical receipt binds the pre-r2 Dockerfile/build-script recipe revision
@@ -2133,14 +2133,14 @@ competitive_slam_profile:
                 files:
                   - path: LICENSE
                     identity: MIT
-                    sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
+                    sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
                 components:
                   - name: glim
                     status: READY
                     files:
                       - path: LICENSE
                         identity: MIT
-                        sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
+                        sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
                     declarations: []
               citation:
                 primary_upstream: true
@@ -2193,7 +2193,7 @@ competitive_slam_profile:
                 files:
                   - path: LICENSE
                     identity: BSD-3-Clause
-                    sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
+                    sha256: 38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775
                   - path: LICENSE.BSD
                     identity: BSD-3-Clause
                     sha256: ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0
@@ -2203,7 +2203,7 @@ competitive_slam_profile:
                     files:
                       - path: LICENSE
                         identity: BSD-3-Clause
-                        sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
+                        sha256: 38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775
                       - path: LICENSE.BSD
                         identity: BSD-3-Clause
                         sha256: ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0
@@ -2267,14 +2267,14 @@ competitive_slam_profile:
                 files:
                   - path: LICENSE
                     identity: MIT
-                    sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
+                    sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
                 components:
                   - name: gtsam_points
                     status: READY
                     files:
                       - path: LICENSE
                         identity: MIT
-                        sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
+                        sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
                     declarations: []
               citation:
                 primary_upstream: true
@@ -2298,11 +2298,11 @@ competitive_slam_profile:
             build_script:
               path: scripts/build_competitive_benchmark_images.sh
               hash_kind: file_sha256
-              sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
+              sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
             runner:
               path: scripts/run_glim_benchmark.py
               hash_kind: file_sha256
-              sha256: fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5
+              sha256: 1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1
             wrapper:
               path: scripts/glim_container_run.sh
               hash_kind: file_sha256
@@ -2360,14 +2360,14 @@ competitive_slam_profile:
                 files:
                   - path: LICENSE
                     identity: GPL-2.0-only
-                    sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
+                    sha256: 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643
                 components:
                   - name: fast_livo2
                     status: NOT_READY_LEGAL_PROVENANCE
                     files:
                       - path: LICENSE
                         identity: GPL-2.0-only
-                        sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
+                        sha256: 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643
                     declarations:
                       - path: package.xml
                         identity: BSD
@@ -2464,11 +2464,11 @@ competitive_slam_profile:
             build_script:
               path: scripts/build_competitive_benchmark_images.sh
               hash_kind: file_sha256
-              sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
+              sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
             runner:
               path: scripts/run_fast_livo2_benchmark.py
               hash_kind: file_sha256
-              sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f
+              sha256: b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30
             wrapper:
               path: scripts/fast_livo2_container_run.sh
               hash_kind: file_sha256

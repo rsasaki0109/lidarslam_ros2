@@ -7,15 +7,15 @@
   "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
   "candidate_binding": {
     "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
-    "file_sha256": "522d35b17a040d28bbef41e927362d0f40490e1c02785ba383ee15759ee30c19",
-    "candidate_identity_sha256": "075bdbc2f6211c46beecca6b4f8eaf24fd390eda9095c7362efd0ddc2e2610c9",
+    "file_sha256": "36e3feb4b470453e6427192fb8bf2b01f306df54a9cbe103b26612ab86f81fe0",
+    "candidate_identity_sha256": "0145855f1cb05ef4fbca64595b6931eedb37f076526a79eca0e80c38a4fe1065",
     "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
     "status": "NOT_READY"
   },
   "profile_binding": {
     "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
-    "file_sha256": "febb00c02be59610361508b9930c96a79ddb88272bf58c8b9bef4be88c02c7cd",
-    "canonical_sha256": "922dd8340f0b5551bb040ef28700c322811ba6556f4e0e47ee207c8bf3d9ac31",
+    "file_sha256": "b2c0c0ea48d120c2f5b5322987205f80da362050428f9322fc49944145c62573",
+    "canonical_sha256": "c6374aabfb218f14810b1544e3b8c9ebbee9992184ac1e9f344245f0e526ca05",
     "canonical_hash_kind": "canonical_profile_sha256_v1"
   },
   "response_schema_binding": {
@@ -37,5 +37,5 @@
   },
   "authorized_keys": [],
   "nonce_policy": {"minimum_length": 32, "maximum_length": 128, "one_shot_ledger_required": true},
-  "policy_identity_sha256": "f52bbcf7d7f74a8e6ce3e472cb614a863c680a66e53b16528b69f5012b1596a6"
+  "policy_identity_sha256": "53ae2bd3b13850e5a872ba58b77da6b8da81f4296db01364663f4b22f4658836"
 }

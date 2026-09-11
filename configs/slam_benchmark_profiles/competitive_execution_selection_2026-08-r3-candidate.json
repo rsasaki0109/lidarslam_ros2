@@ -6,11 +6,11 @@
   "benchmark_eligible": false,
   "claim_eligible": false,
   "candidate_hash_kind": "canonical_competitive_execution_selection_r3_candidate_sha256_v1",
-  "candidate_identity_sha256": "eb4fecc0f1a84119389a7f849cf576389ba7f2db15fae9f6f7574e8fd289586a",
+  "candidate_identity_sha256": "0145855f1cb05ef4fbca64595b6931eedb37f076526a79eca0e80c38a4fe1065",
   "profile_binding": {
     "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
-    "file_sha256": "febb00c02be59610361508b9930c96a79ddb88272bf58c8b9bef4be88c02c7cd",
-    "canonical_sha256": "922dd8340f0b5551bb040ef28700c322811ba6556f4e0e47ee207c8bf3d9ac31",
+    "file_sha256": "b2c0c0ea48d120c2f5b5322987205f80da362050428f9322fc49944145c62573",
+    "canonical_sha256": "c6374aabfb218f14810b1544e3b8c9ebbee9992184ac1e9f344245f0e526ca05",
     "canonical_hash_kind": "canonical_profile_sha256_v1"
   },
   "r2_selection_binding": {
