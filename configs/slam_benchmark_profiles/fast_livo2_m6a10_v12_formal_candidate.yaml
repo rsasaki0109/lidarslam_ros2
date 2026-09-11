@@ -17,7 +17,7 @@ preregistration:
   predecessor_profile: configs/slam_benchmark_profiles/fast_livo2_m6a10_v12_formal_ready.yaml
   predecessor_profile_sha256: 675996a7a5fd81d59d752de4bbea1d4373487a17d03ee085aa08ae9493a0b28d
   predecessor_launcher: scripts/run_fast_livo2_m6a10_v11_formal.py
-  predecessor_launcher_sha256: 2edf73c9d9f8217d751495818240759ca5a26dd3e04bdbe448b15ff124f42e23
+  predecessor_launcher_sha256: efa51dee4d668b7c44305e0d43089ffebcd2a9eb817e0b863d50ee0703a5db66
 
 formal_candidate:
   contract_version: m6a10-v12-formal-candidate-v1

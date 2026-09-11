@@ -35,7 +35,7 @@ import lidarslam_benchmark_tools.check_m6a10_quiescence as quiescence  # noqa: E
 
 
 PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v12_formal_candidate.yaml"
-PROFILE_SHA256 = "93bba16eb88d13a8f02de2178ae5c9a8e8466a4c5ad4fc2e730875e2ebd8c1ed"
+PROFILE_SHA256 = "923178c25de157eb97045db7297592bc66f99de07bd0d2eb7fc74a1e78ba627d"
 READY_PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v12_formal_ready.yaml"
 READY_PROFILE_SHA256 = "675996a7a5fd81d59d752de4bbea1d4373487a17d03ee085aa08ae9493a0b28d"
 IMAGE_TAG = (
