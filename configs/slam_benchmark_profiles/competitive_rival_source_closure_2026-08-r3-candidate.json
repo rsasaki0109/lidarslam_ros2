@@ -2,7 +2,7 @@
   "benchmark_eligible": false,
   "candidate_hash_kind": "canonical_competitive_rival_source_closure_r3_candidate_sha256_v1",
   "candidate_id": "competitive-rival-source-closure-2026-08-r3-candidate",
-  "candidate_identity_sha256": "2abadbc9ae006ff6685492c0e218dfa3c925762f17c4efcf8ad34c134566a713",
+  "candidate_identity_sha256": "d26571399fda92ba859c8f16d4dabd60fccfaf196c6d254004271efb81b4f720",
   "candidate_kind": "competitive_rival_source_closure_r3_candidate_v1",
   "claim_eligible": false,
   "current_recipe_bindings": {
@@ -193,7 +193,7 @@
   "profile_binding": {
     "canonical_hash_kind": "canonical_profile_sha256_v1",
     "canonical_sha256": "b35db21d9f1448ddc4e9e875d975432cac497b6ce5aabe6988c7cb9b4618b5ad",
-    "file_sha256": "8a735e67222564cb7dc37351d58cf7b79d0da8bac7bc7bf50f36eac204e18f43",
+    "file_sha256": "9b1594def9c34aa0f1f66838a47a5f2b61731cefd05166eb36a1bf2278745ada",
     "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"
   },
   "promotion_policy": {

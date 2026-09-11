@@ -16,11 +16,11 @@
     "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
     "status": "NOT_READY"
   },
-  "canonical_sha256": "b9328589f14cc5c45644b3066f48081108be0c0fae64611f661609270d1c4a81",
+  "canonical_sha256": "c08e2b1b6c7bf002181ae2235c5d61943483aa3f31b5aa6c4b9a166923c19a39",
   "profile_binding": {
     "canonical_hash_kind": "canonical_profile_sha256_v1",
     "canonical_sha256": "b35db21d9f1448ddc4e9e875d975432cac497b6ce5aabe6988c7cb9b4618b5ad",
-    "file_sha256": "8a735e67222564cb7dc37351d58cf7b79d0da8bac7bc7bf50f36eac204e18f43",
+    "file_sha256": "9b1594def9c34aa0f1f66838a47a5f2b61731cefd05166eb36a1bf2278745ada",
     "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"
   },
   "schema": "competitive_execution_machine_identity_pop_trust_policy_v1",

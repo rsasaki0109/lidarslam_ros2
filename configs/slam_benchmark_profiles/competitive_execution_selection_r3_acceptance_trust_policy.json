@@ -14,7 +14,7 @@
   },
   "profile_binding": {
     "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
-    "file_sha256": "8a735e67222564cb7dc37351d58cf7b79d0da8bac7bc7bf50f36eac204e18f43",
+    "file_sha256": "9b1594def9c34aa0f1f66838a47a5f2b61731cefd05166eb36a1bf2278745ada",
     "canonical_sha256": "b35db21d9f1448ddc4e9e875d975432cac497b6ce5aabe6988c7cb9b4618b5ad",
     "canonical_hash_kind": "canonical_profile_sha256_v1"
   },
@@ -37,5 +37,5 @@
   },
   "authorized_keys": [],
   "nonce_policy": {"minimum_length": 32, "maximum_length": 128, "one_shot_ledger_required": true},
-  "policy_identity_sha256": "00eac1f06aedb5b4c4093e5850d99b21a0e99e242e86c92e4b17b7a69e71da4a"
+  "policy_identity_sha256": "0129a4145c878cc12e95fec92901b8f9dad310bab48b5a246bac1284c546fc50"
 }

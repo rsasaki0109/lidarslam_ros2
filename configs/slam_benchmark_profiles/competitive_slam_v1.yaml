@@ -2953,7 +2953,7 @@ competitive_slam_profile:
       - toolchain_fingerprint
       - config_sha256
     execution_selection_receipt_path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml
-    execution_selection_receipt_sha256: da10e28026b414fac3d52f95377d25aaeda9416d75495e1826c35f5545ac54ac
+    execution_selection_receipt_sha256: f2f9aefc368a1ce627574b514f65f9cbadd17042716ba7915aee908c199d6b0e
     require_execution_selection_receipt: true
     # M6a7 fixes the comparable memory metric before campaign4.  This is a
     # process-tree RSS contract; cgroup total and Docker-client RSS remain
