@@ -147,10 +147,7 @@ profile recorded **34.7% lower median APE RMSE than GLIM** over three runs:
 | **lidarslam_ros2** | **0.0565 m** | 0.993 | **586.83 MB** |
 | GLIM CPU | 0.0866 m | **0.244** | 690.88 MB |
 
-This is a scoped win on HILTI `exp04`: `lidarslam_ros2` wins trajectory APE
-and peak memory, while GLIM wins runtime. It is not an overall-SOTA claim.
-The table preserves the completed three-run historical comparison; normal
-development needs only one new run. Reproduce one `lidarslam_ros2` sample with:
+Reproduce one `lidarslam_ros2` sample with:
 
 ```bash
 python3 scripts/run_ours_competitive_benchmark.py \
@@ -174,13 +171,6 @@ Exact scoring rules, revisions, checkpoint policy, map-quality limitations, and
 the historical evidence are documented in
 [Comparison](docs/comparison.md#same-input-hilti-2022-exp04-vs-glim-cpu).
 
-In a separate `n=1` development measurement, task-local correspondence
-reduction kept the 1,258-pose frontend trajectory byte-identical while mean ICP
-time moved from 21.60 ms to 20.92 ms and frontend wall time from 47.51 s to
-46.55 s. These timing deltas are directional optimization evidence, not a
-statistical or cross-system claim; see the
-[SOTA product development plan](docs/roadmap/sota-product-development-2026-08.md#2026-08-28-development-checkpoint-n1).
-
 The separate Voxel-SLAM `v17` research candidate also achieved the lowest
 geometric-mean APE across NavINST, Oxford, and UrbanNav: **2.2836 m**, versus
 GLIM `5.0779`, Point-LIO `3.8388`, FAST-LIO2 `6.9576`, and fixed Voxel-SLAM
@@ -194,38 +184,14 @@ reproduction notes are in [Comparison](docs/comparison.md#voxel-slam-v17-researc
 
 ## Accuracy
 
-Current numbers from the release-gate profiles (`scripts/release_profiles.yaml`).
-Every release is blocked in CI by these per-dataset thresholds.
-
-| Dataset | Sensor | Reference | APE RMSE | Gate (pass) |
-| --- | --- | --- | --- | --- |
-| NTU VIRAL `tnp_01` (outdoor, ~580 s) | Ouster OS1-16 + VN-100 | Leica prism ground truth | **0.95 m** (best 0.87) | ≤ 1.00 m |
-| RTK-SLAM Construction Hall 2 (indoor, ~600 s) | Livox MID-360 | total-station checkpoints¹ | **0.154 m** (median 0.061) | ≤ 0.30 m |
-| RTK-SLAM Construction Hall 1 (indoor, ~741 s) | Livox MID-360 | total-station checkpoints¹ | **0.403 m** (median 0.263) | ≤ 0.55 m |
-| RTK-SLAM Stadtgarten 2 (outdoor park, ~876 s) | Livox MID-360 | total-station checkpoints¹ | **0.835 m** (median 0.327) | report-only² |
-| RTK-SLAM Stadtgarten 1 (outdoor park, ~1 km loop) | Livox MID-360 | total-station checkpoints¹ | **1.666 m** (median 1.511) | report-only² |
-| Newer College `math-hard` (~320 m loop) | Ouster OS0-128 | prism ground truth | reported separately | ≤ 0.10 m |
-
-¹ Surveyed checkpoints from the public RTK-SLAM dataset (CC-BY 4.0), scored like
-its published baselines (dense odometry trajectory).
-² Outdoor profiles soak as report-only before graduating; the former GLIM
-cross-validation gate is also report-only since v0.5. Methodology and
-caveats: [docs/comparison.md](docs/comparison.md).
-
-Reproduce locally:
-```bash
-bash scripts/run_rko_lio_graph_benchmark.sh
-bash scripts/run_release_readiness_checks.sh --fail-on-profiles
-```
-
-Details and optional MID-360 / production-bundle gates: [docs/benchmarking.md](docs/benchmarking.md).
+Release-gate thresholds ([Benchmarking](docs/benchmarking.md#release-gate-accuracy-snapshot)) block every release in CI.
 
 ## Docs
 
 - **Getting started**: [Getting Started](docs/getting-started.md) · [Autoware quickstart](docs/autoware-quickstart.md) · [Operator workflows](docs/workflows.md) · [Autoware Foxglove](docs/autoware-foxglove.md)
 - **Pipelines**: [Autoware-compatible map authoring](docs/autoware-map-authoring.md)
 - **Benchmarking**: [Benchmarking and release gate](docs/benchmarking.md) · [Comparison](docs/comparison.md)
-- **Project**: [SOTA product development plan](docs/roadmap/sota-product-development-2026-08.md) · [v0.2.2 release notes](docs/releases/v0.2.2.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Releasing](RELEASING.md)
+- **Project**: [v0.2.2 release notes](docs/releases/v0.2.2.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Releasing](RELEASING.md)
 
 Preview the doc site locally: `python3 -m mkdocs serve`.
 

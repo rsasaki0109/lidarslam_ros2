@@ -2462,3 +2462,29 @@ If you want benchmark results to be easy to consume, publish:
 - public Autoware entrypoint: `bash scripts/run_autoware_quickstart.sh`
 - public comparison page: `docs/comparison.md`
 - end-to-end dogfood: `bash scripts/run_rko_lio_graph_autoware_dogfood.sh --auto-exit-secs 20`
+
+## Release-gate accuracy snapshot
+
+Current numbers from the release-gate profiles (`scripts/release_profiles.yaml`).
+Every release is blocked in CI by these per-dataset thresholds.
+
+| Dataset | Sensor | Reference | APE RMSE | Gate (pass) |
+| --- | --- | --- | --- | --- |
+| NTU VIRAL `tnp_01` (outdoor, ~580 s) | Ouster OS1-16 + VN-100 | Leica prism ground truth | **0.95 m** (best 0.87) | ≤ 1.00 m |
+| RTK-SLAM Construction Hall 2 (indoor, ~600 s) | Livox MID-360 | total-station checkpoints¹ | **0.154 m** (median 0.061) | ≤ 0.30 m |
+| RTK-SLAM Construction Hall 1 (indoor, ~741 s) | Livox MID-360 | total-station checkpoints¹ | **0.403 m** (median 0.263) | ≤ 0.55 m |
+| RTK-SLAM Stadtgarten 2 (outdoor park, ~876 s) | Livox MID-360 | total-station checkpoints¹ | **0.835 m** (median 0.327) | report-only² |
+| RTK-SLAM Stadtgarten 1 (outdoor park, ~1 km loop) | Livox MID-360 | total-station checkpoints¹ | **1.666 m** (median 1.511) | report-only² |
+| Newer College `math-hard` (~320 m loop) | Ouster OS0-128 | prism ground truth | reported separately | ≤ 0.10 m |
+
+¹ Surveyed checkpoints from the public RTK-SLAM dataset (CC-BY 4.0), scored like
+its published baselines (dense odometry trajectory).
+² Outdoor profiles soak as report-only before graduating; the former GLIM
+cross-validation gate is also report-only since v0.5. Methodology and
+caveats: [Comparison](comparison.md).
+
+Reproduce locally:
+```bash
+bash scripts/run_rko_lio_graph_benchmark.sh
+bash scripts/run_release_readiness_checks.sh --fail-on-profiles
+```
