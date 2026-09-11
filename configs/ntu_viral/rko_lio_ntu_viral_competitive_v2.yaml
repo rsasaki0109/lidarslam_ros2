@@ -1,0 +1,9 @@
+# NTU-VIRAL sensor calibration with the reviewable competitive-v2 frontend
+# throughput controls. Keep dataset calibration unchanged; only the two
+# implementation knobs introduced by the frontend Kaizen are overridden.
+extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+extrinsic_lidar2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.05, 0.0, -0.055]
+initialization_phase: true
+odom_topic: /rko_lio/odometry
+icp_keypoint_voxel_multiplier: 2.25
+publisher_queue_depth: 128

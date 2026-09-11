@@ -51,7 +51,11 @@ def sha256(path: Path) -> str:
 
 def _runtime_value(run: dict[str, Any], key: str) -> Any:
     runtime = run.get('runtime') or {}
-    return runtime.get(key)
+    value = runtime.get(key)
+    if value is None and key == 'peak_rss_mb':
+        mapper = runtime.get('mapper') or {}
+        value = mapper.get(key)
+    return value
 
 
 def _completion(run: dict[str, Any]) -> tuple[bool, int | None]:
@@ -59,6 +63,20 @@ def _completion(run: dict[str, Any]) -> tuple[bool, int | None]:
     complete = bool(completion.get('trajectory_complete'))
     status = completion.get('process_exit_status')
     return complete, None if status is None else int(status)
+
+
+def calibration_hash(manifest: dict[str, Any]) -> str:
+    hashes = manifest.get('hashes') or {}
+    value = hashes.get('calibration_sha256')
+    if value is None:
+        value = hashes.get('calibration_archive_sha256')
+    if not isinstance(value, str) or len(value) != 64:
+        raise ValueError('input manifest has no valid calibration SHA-256')
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError('input manifest calibration SHA-256 is not hexadecimal') from exc
+    return value
 
 
 def compose(*, system: str, track: str, manifest_path: Path,
@@ -87,6 +105,10 @@ def compose(*, system: str, track: str, manifest_path: Path,
     trajectory = json.loads(trajectory_path.read_text())
     mapping_source = json.loads(map_path.read_text())
     aggregate = trajectory['aggregate']
+    common_reference_sha256 = trajectory['reference']['common_sha256']
+    if not isinstance(common_reference_sha256, str) or len(
+            common_reference_sha256) != 64:
+        raise ValueError('trajectory summary has no valid common-reference SHA-256')
     runs = trajectory['runs']
     valid_repetitions = int(trajectory['valid_repetitions'])
     failures = sum(
@@ -260,7 +282,8 @@ def compose(*, system: str, track: str, manifest_path: Path,
         'track': track,
         'input_manifest_sha256': sha256(manifest_path),
         'reference_sha256': sha256(reference_path),
-        'calibration_sha256': manifest['hashes']['calibration_archive_sha256'],
+        'evaluation_reference_sha256': common_reference_sha256,
+        'calibration_sha256': calibration_hash(manifest),
         'machine_id': machine_id,
         'excluded_capabilities': contract['excluded_capabilities'],
         'repetitions': {'valid': valid_repetitions, 'failures': failures},

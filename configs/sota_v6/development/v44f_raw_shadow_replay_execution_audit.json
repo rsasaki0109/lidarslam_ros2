@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "contract_id": "v44f-raw-shadow-replay-execution-audit-20260810",
+  "stage": "fail_fast_raw_shadow_replay_execution_result_audit",
+  "rationale": "Audit the first authorized v44e raw-shadow attempt without reopening a bag. The first ordered run terminated at the frozen processing-RTF gate before any valid state existed. Because v44e defines a single failure as route rejection, the remaining five runs must stay unattempted. A PASS from this auditor validates the rejection evidence; it does not mean the estimator passed.",
+  "prerequisites": {
+    "v44e_contract": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v6/development/v44e_raw_shadow_replay_execution_contract.json",
+      "sha256": "08d7f8850f5081fd18d58a860cae3d9566846605460dadb37660b3c3111d1692",
+      "bytes": 19349,
+      "required_contract_id": "v44e-raw-shadow-replay-execution-20260810"
+    },
+    "v44e_static_aggregate": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44e_raw_shadow_replay_contract_20260810/aggregate.json",
+      "sha256": "5d3516edcadea924c5481688666edddec2db7b2be61eaa5cf42f7c52cc278181",
+      "bytes": 1878,
+      "required_payload_sha256": "7550b7303021d8440b749dc2b19279f3cdb66c8c6dfade6f3d2a27a64c91c10e",
+      "required_decision": "AUTHORIZE_V44_STAGE4_RAW_SHADOW_REPLAY_EXECUTION"
+    },
+    "adapter": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/scripts/v44_raw_shadow_replay_adapter.py",
+      "sha256": "6fbf16d811a5bcf26c2cac9190f0557844cd3596cf7704cfdc016c7080ddf0ee",
+      "bytes": 38242
+    },
+    "estimator_core": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/scripts/v44_fixed_lag_shadow_estimator.py",
+      "sha256": "c353cce1cde17e45ea1244871da8a7077f10b28055f8c8cdfae49a5bddaf8ee9",
+      "bytes": 108847
+    },
+    "auditor": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/scripts/audit_v44f_raw_shadow_replay_execution.py",
+      "sha256": "9e0292e0055b06663314c5f7fe04cd82af17e2ca203e56265fda913c21882675"
+    }
+  },
+  "execution_evidence": {
+    "raw_replay_root": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44e_raw_shadow_replay_contract_20260810/raw_replay",
+    "attempt_order": [
+      {"sequence_id": "navinst_indoor02", "repetition": 1},
+      {"sequence_id": "navinst_indoor02", "repetition": 2},
+      {"sequence_id": "oxford_spires_keble_05", "repetition": 1},
+      {"sequence_id": "oxford_spires_keble_05", "repetition": 2},
+      {"sequence_id": "urbannav_hk_tunnel_1", "repetition": 1},
+      {"sequence_id": "urbannav_hk_tunnel_1", "repetition": 2}
+    ],
+    "failure_report": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44e_raw_shadow_replay_contract_20260810/raw_replay/navinst_indoor02/run_01/run.json",
+      "sha256": "1913305fe4b3a8ded99c62aef3026428443643ecaa281a41c7fe0de6a1bd0b4a",
+      "bytes": 3002
+    },
+    "failure_diagnostics": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44e_raw_shadow_replay_contract_20260810/raw_replay/navinst_indoor02/run_01/diagnostics.jsonl",
+      "sha256": "32a5764f1db2abdd4b46d2eefb48ce4e69a6481ec93433b035f7cf6ced247639",
+      "bytes": 866
+    }
+  },
+  "expected_failure": {
+    "sequence_id": "navinst_indoor02",
+    "repetition": 1,
+    "core_reason": "processing RTF capacity exceeded after scan",
+    "runtime_error": "EstimatorTerminalFailure: processing RTF capacity exceeded after scan",
+    "maximum_processing_rtf": 0.85,
+    "failed_after_scan_index": 0,
+    "valid_shadow_result": false,
+    "state_payload_sha256": null,
+    "protected_v17_sha256": {
+      "v17_map": "be95206f6e1c86c2e09e81467f5056a625bb62dd486b267de0d58fd0dae4f00f",
+      "v17_state": "81054c8c81af58b6c0e47d85e5f942676addfea2f9a1084e5d9023772a49d64e"
+    },
+    "offending_rtf_numeric_value_persisted": false,
+    "offending_rtf_persistence_note": "FixedLagShadowEstimator.record_runtime_observation rejects an over-limit RTF before replacing the scan diagnostic; the terminal reason is authoritative but the attempted numeric RTF is not retained in v44e evidence. A later profile contract must add observability without changing the 0.85 gate."
+  },
+  "fail_fast": {
+    "stop_after_first_failure": true,
+    "expected_attempted_run_count": 1,
+    "expected_unattempted_run_count": 5,
+    "remaining_output_files_allowed": false,
+    "threshold_relaxation_or_rerun_allowed": false
+  },
+  "required_checks": [
+    "v44e_contract_hash_and_id",
+    "v44e_static_aggregate_hash_payload_and_decision",
+    "adapter_and_core_hashes",
+    "execution_report_hash_size_and_path",
+    "diagnostic_hash_size_and_path",
+    "authorization_chain_exact",
+    "first_attempt_order_exact",
+    "raw_replay_was_attempted",
+    "resource_failure_is_terminal",
+    "no_valid_state_or_state_payload",
+    "protected_v17_hashes_unchanged",
+    "forbidden_routes_remained_closed",
+    "diagnostic_records_are_canonical_and_complete",
+    "prefix_drop_precedes_terminal_failure",
+    "offending_rtf_value_not_persisted",
+    "remaining_five_runs_not_attempted",
+    "fail_fast_policy_was_observed",
+    "raw_bags_are_not_opened_by_auditor"
+  ],
+  "audit_resources": {
+    "maximum_rss_mib": 128.0,
+    "maximum_incremental_rss_mib": 32.0,
+    "maximum_report_bytes": 1048576
+  },
+  "decision": {
+    "required_validation_repetitions": 2,
+    "required_check_count": 18,
+    "on_valid_audit": "REJECT_V44_STAGE4_RAW_SHADOW_REPLAY_RESOURCE_GATE",
+    "raw_replay_continuation_authorized": false,
+    "accuracy_screen_authorized": false,
+    "primary_mutation_authorized": false,
+    "bounded_failure_profile_contract_definition_authorized": true
+  }
+}

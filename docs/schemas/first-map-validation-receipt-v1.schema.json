@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-validation-receipt-v1.schema.json",
+  "title": "lidarslam_ros2 first-map validation receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "run",
+    "verification",
+    "evidence",
+    "checks",
+    "shareability"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-validation-receipt-v1.schema.json"
+    },
+    "status": {"enum": ["PASS", "FAIL"]},
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run_id", "product_version", "git_commit", "profile_id"],
+      "properties": {
+        "run_id": {"type": "string", "minLength": 1},
+        "product_version": {"type": "string", "minLength": 1},
+        "git_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "profile_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_status",
+        "diagnosis_status",
+        "autoware_status",
+        "manifest_sha256"
+      ],
+      "properties": {
+        "manifest_status": {"type": "string", "minLength": 1},
+        "diagnosis_status": {"type": "string", "minLength": 1},
+        "autoware_status": {"type": "string", "minLength": 1},
+        "manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest", "diagnosis", "verify_log"],
+      "properties": {
+        "manifest": {"$ref": "#/definitions/required_file_identity"},
+        "diagnosis": {"$ref": "#/definitions/optional_file_identity"},
+        "verify_log": {"$ref": "#/definitions/optional_file_identity"}
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "passed", "observed"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{2,63}$"
+          },
+          "passed": {"type": "boolean"},
+          "observed": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "shareability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contains_map_geometry",
+        "contains_private_paths",
+        "contains_exact_command",
+        "review_before_sharing"
+      ],
+      "properties": {
+        "contains_map_geometry": {"const": false},
+        "contains_private_paths": {"const": false},
+        "contains_exact_command": {"const": false},
+        "review_before_sharing": {"const": true}
+      }
+    }
+  },
+  "definitions": {
+    "required_file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "sha256"],
+      "properties": {
+        "filename": {
+          "enum": [
+            "run_manifest.json",
+            "autoware_map_diagnosis.json",
+            "verify_autoware_map.log"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "optional_file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "available", "sha256"],
+      "properties": {
+        "filename": {
+          "enum": [
+            "autoware_map_diagnosis.json",
+            "verify_autoware_map.log"
+          ]
+        },
+        "available": {"type": "boolean"},
+        "sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

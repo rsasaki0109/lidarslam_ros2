@@ -154,7 +154,7 @@ def test_indoor_preset_uses_tighter_edge3d():
 
     Newer College math_hard ablation (2026-05-19) showed that tighter voxel /
     smaller neighbor radius / higher edgeness produces the first inliers=4 emit
-    and APE -0.039m (past max). See plan.md §1.2 and
+    and APE -0.039m (past max). See docs/research/project-plan-archive.md §1.2 and
     project_triangle_descriptor_stack memory.
     """
     indoor = _load_graph_params(INDOOR_PARAM_FILE)

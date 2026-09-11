@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-recovery-v1.schema.json",
+  "title": "lidarslam_ros2 map session recovery v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "created_at",
+    "status",
+    "bag_path",
+    "setup_bundle",
+    "profile",
+    "run_dir",
+    "runner_exit_code",
+    "reason",
+    "findings",
+    "evidence",
+    "resume",
+    "retry",
+    "next_command",
+    "inspect_command",
+    "files_preserved"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-recovery-v1.schema.json"
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {"const": "action_required"},
+    "bag_path": {"type": "string", "minLength": 1},
+    "setup_bundle": {"type": "string", "minLength": 1},
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1}
+      }
+    },
+    "run_dir": {"type": ["string", "null"]},
+    "runner_exit_code": {"type": "integer"},
+    "reason": {"$ref": "#/definitions/reason"},
+    "findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/finding"}
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_manifest",
+        "diagnosis_json",
+        "diagnosis_markdown",
+        "launch_log",
+        "map_save_log",
+        "verify_log",
+        "first_map_receipt"
+      ],
+      "properties": {
+        "run_manifest": {"$ref": "#/definitions/optional_path"},
+        "diagnosis_json": {"$ref": "#/definitions/optional_path"},
+        "diagnosis_markdown": {"$ref": "#/definitions/optional_path"},
+        "launch_log": {"$ref": "#/definitions/optional_path"},
+        "map_save_log": {"$ref": "#/definitions/optional_path"},
+        "verify_log": {"$ref": "#/definitions/optional_path"},
+        "first_map_receipt": {"$ref": "#/definitions/optional_path"}
+      }
+    },
+    "resume": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "command"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "command": {"type": ["string", "null"]}
+      }
+    },
+    "retry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available",
+        "command",
+        "output_dir",
+        "preserves_pinned_setup"
+      ],
+      "properties": {
+        "available": {"type": "boolean"},
+        "command": {"type": ["string", "null"]},
+        "output_dir": {"type": ["string", "null"]},
+        "preserves_pinned_setup": {"const": true}
+      }
+    },
+    "next_command": {"type": "string", "minLength": 1},
+    "inspect_command": {"type": ["string", "null"]},
+    "files_preserved": {"const": true}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "resume": {
+            "properties": {"available": {"const": true}},
+            "required": ["available"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "resume": {
+            "properties": {"command": {"type": "string", "minLength": 1}}
+          },
+          "retry": {
+            "properties": {
+              "available": {"const": false},
+              "command": {"type": "null"},
+              "output_dir": {"type": "null"}
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "resume": {"properties": {"command": {"type": "null"}}}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "retry": {
+            "properties": {"available": {"const": true}},
+            "required": ["available"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "retry": {
+            "properties": {
+              "command": {"type": "string", "minLength": 1},
+              "output_dir": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "retry": {
+            "properties": {
+              "command": {"type": "null"},
+              "output_dir": {"type": "null"}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "code": {
+      "enum": [
+        "ambiguous-output-state",
+        "run-manifest-unreadable",
+        "workflow-state-uncertain",
+        "postprocessing-incomplete",
+        "storage-exhausted",
+        "workflow-interrupted",
+        "ros-parameters-invalid",
+        "tf-messages-invalid",
+        "tf-tree-disconnected",
+        "map-save-failed",
+        "ros-node-died",
+        "gnss-constraints-missing",
+        "map-verification-failed",
+        "runner-start-failed",
+        "map-output-incomplete",
+        "workflow-failed"
+      ]
+    },
+    "reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"$ref": "#/definitions/code"},
+        "message": {"type": "string", "minLength": 1}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "next_action"],
+      "properties": {
+        "code": {"$ref": "#/definitions/code"},
+        "message": {"type": "string", "minLength": 1},
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "optional_path": {
+      "type": ["string", "null"]
+    }
+  }
+}

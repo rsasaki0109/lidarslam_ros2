@@ -208,6 +208,16 @@ def test_trajectory_info_reads_tum(tmp_path):
         'samples': 2, 'first_stamp': 1.0, 'last_stamp': 2.5}
 
 
+def test_glim_lidar_pose_is_shifted_to_prism_in_local_frame(tmp_path):
+    source = tmp_path / 'traj_lidar.txt'
+    destination = tmp_path / 'trajectory_prism.tum'
+    source.write_text('1 10 20 30 0 0 0 1\n')
+    RUNNER.apply_tum_translation_offset(
+        source, destination, (-0.243656, -0.012288, -0.328095))
+    values = [float(value) for value in destination.read_text().split()]
+    assert values[1:4] == [9.756344, 19.987712, 29.671905]
+
+
 def test_common_reference_uses_intersection_of_trajectory_ranges(tmp_path):
     reference = tmp_path / 'gt.tum'
     reference.write_text('\n'.join(
@@ -221,6 +231,13 @@ def test_common_reference_uses_intersection_of_trajectory_ranges(tmp_path):
     assert excluded == [0.0, 4.0]
 
 
+def test_common_scorer_normalizes_nested_fast_mapper_rss():
+    assert SCORER.peak_rss_mb({'runtime': {
+        'mapper': {'peak_rss_mb': 321.5}}}) == 321.5
+    assert SCORER.peak_rss_mb({'runtime': {
+        'peak_rss_mb': 123.0}}) == 123.0
+
+
 def test_glim_compact_points_are_transformed_to_world(tmp_path):
     submap = tmp_path / '000000'
     submap.mkdir()
@@ -231,3 +248,13 @@ def test_glim_compact_points_are_transformed_to_world(tmp_path):
         'T_world_origin: \n1 0 0 10\n0 1 0 20\n0 0 1 30\n0 0 0 1\n')
     points = EXPORTER.load_world_points(submap)
     assert np.allclose(points, [[11.0, 22.0, 33.0]])
+
+
+def test_glim_runner_exposes_required_map_gate_option(monkeypatch):
+    argv = [
+        'runner', '--bag', '/tmp/bag',
+        '--output', '/tmp/out',
+        '--reference-meta', '/tmp/ref',
+        '--save-maps']
+    monkeypatch.setattr(sys, 'argv', argv)
+    assert RUNNER.parse_args().save_maps is True

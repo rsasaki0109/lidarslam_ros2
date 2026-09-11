@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-handoff-v1.schema.json",
+  "title": "lidarslam_ros2 first-map validation handoff v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "receipt_status",
+    "receipt_path",
+    "markdown_path",
+    "issue_url",
+    "run",
+    "environment_hints",
+    "form_fields",
+    "verification_summary",
+    "privacy",
+    "operator_supplied_fields"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-handoff-v1.schema.json"
+    },
+    "status": {"const": "READY_FOR_REVIEW"},
+    "receipt_status": {"const": "PASS"},
+    "receipt_path": {"type": "string", "minLength": 1},
+    "markdown_path": {"type": ["string", "null"], "minLength": 1},
+    "issue_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/issues/new\\?template=first-map-validation\\.yml$"
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product_version", "git_commit", "profile_id"],
+      "properties": {
+        "product_version": {"type": "string", "minLength": 1},
+        "git_commit": {"type": "string", "minLength": 1},
+        "profile_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "environment_hints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os_family", "architecture", "ros_distro"],
+      "properties": {
+        "os_family": {"type": "string", "minLength": 1},
+        "architecture": {"type": "string", "minLength": 1},
+        "ros_distro": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "form_fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result", "release_ref"],
+      "properties": {
+        "result": {"const": "PASS — verified first map completed"},
+        "release_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "verification_summary": {"type": "string", "minLength": 1},
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contains_map_geometry",
+        "contains_private_paths",
+        "contains_exact_command",
+        "review_before_sharing"
+      ],
+      "properties": {
+        "contains_map_geometry": {"const": false},
+        "contains_private_paths": {"const": true},
+        "contains_exact_command": {"const": false},
+        "review_before_sharing": {"const": true}
+      }
+    },
+    "operator_supplied_fields": {
+      "const": [
+        "documentation_path",
+        "environment_details",
+        "exact_command",
+        "findings"
+      ]
+    }
+  }
+}

@@ -412,8 +412,86 @@ def test_release_readiness_can_skip_expensive_stages(tmp_path):
     assert 'Release readiness checks completed' in result.stdout
 
 
+def test_release_readiness_fails_closed_without_threshold_evidence(tmp_path):
+    """A requested APE gate must not pass with an empty benchmark root."""
+    benchmark_root = tmp_path / 'empty'
+    benchmark_root.mkdir()
+    out_dir = tmp_path / 'release_readiness'
+
+    result = _run_release_readiness(
+        '--skip-default-ci',
+        '--benchmark-root',
+        str(benchmark_root),
+        '--out-dir',
+        str(out_dir),
+        '--ape-threshold',
+        '0.10',
+    )
+
+    assert result.returncode == 2
+    assert 'requested benchmark gate has no evidence' in result.stderr
+    assert not (out_dir / 'benchmark_report.html').exists()
+
+
+def test_release_readiness_allows_empty_report_only_benchmark_root(tmp_path):
+    """No metrics may be skipped only when no benchmark hard gate is active."""
+    benchmark_root = tmp_path / 'empty'
+    benchmark_root.mkdir()
+    out_dir = tmp_path / 'release_readiness'
+
+    result = _run_release_readiness(
+        '--skip-default-ci',
+        '--benchmark-root',
+        str(benchmark_root),
+        '--out-dir',
+        str(out_dir),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert 'benchmark reporting is skipped' in result.stdout
+
+
+def test_release_readiness_rejects_skipping_a_requested_gate(tmp_path):
+    """An option conflict must not silently disable the APE gate."""
+    result = _run_release_readiness(
+        '--skip-default-ci',
+        '--skip-benchmark-summary',
+        '--ape-threshold',
+        '0.10',
+        '--out-dir',
+        str(tmp_path / 'out'),
+    )
+
+    assert result.returncode == 2
+    assert 'cannot disable a requested benchmark gate' in result.stderr
+
+
+def test_release_readiness_requires_profile_for_hard_profile_gate(tmp_path):
+    """A hard profile gate must identify an existing profile."""
+    no_profile = _run_release_readiness(
+        '--skip-default-ci',
+        '--no-release-profile',
+        '--fail-on-profiles',
+        '--out-dir',
+        str(tmp_path / 'no_profile'),
+    )
+    missing_profile = _run_release_readiness(
+        '--skip-default-ci',
+        '--release-profile',
+        str(tmp_path / 'missing.yaml'),
+        '--fail-on-profiles',
+        '--out-dir',
+        str(tmp_path / 'missing_profile'),
+    )
+
+    assert no_profile.returncode == 2
+    assert 'requires an active --release-profile' in no_profile.stderr
+    assert missing_profile.returncode == 2
+    assert 'release profile not found' in missing_profile.stderr
+
+
 def test_synthetic_fixture_generator_drives_release_gate(tmp_path):
-    """The synthetic fixture generator should produce gate-ready artifacts."""
+    """The synthetic fixture should exercise the uniform-threshold plumbing."""
     benchmark_root = tmp_path / 'fixture'
     out_dir = tmp_path / 'release_ready'
 
@@ -460,6 +538,102 @@ def test_synthetic_fixture_generator_drives_release_gate(tmp_path):
     assert 'run_best' in (out_dir / 'benchmark_summary.md').read_text(
         encoding='utf-8',
     )
+
+
+def test_synthetic_fixture_cannot_satisfy_release_profiles(tmp_path):
+    """Unrelated passing metrics must not satisfy blocking dataset profiles."""
+    benchmark_root = tmp_path / 'fixture'
+    out_dir = tmp_path / 'release_profiles'
+
+    fixture = subprocess.run(
+        [
+            'python3',
+            str(FIXTURE_SCRIPT),
+            '--root',
+            str(benchmark_root),
+            '--profile',
+            'passing',
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=REPO_ROOT,
+    )
+    assert fixture.returncode == 0, fixture.stderr
+
+    result = _run_release_readiness(
+        '--skip-default-ci',
+        '--benchmark-root',
+        str(benchmark_root),
+        '--out-dir',
+        str(out_dir),
+        '--fail-on-profiles',
+    )
+
+    assert result.returncode == 2
+    assert 'newer_college_math_hard (NO_DATA)' in result.stdout
+    assert 'ntu_viral_tnp_01 (NO_DATA)' in result.stdout
+    assert 'hint: newer_college_math_hard:' in result.stdout
+    assert 'docs/benchmarking.md#newer-college-maths-hard' in result.stdout
+    assert not (out_dir / 'benchmark_report.html').exists()
+
+
+def test_report_only_profile_may_remain_without_data(tmp_path):
+    """Missing data stays non-blocking only for an explicit report-only row."""
+    benchmark_root = tmp_path / 'fixture'
+    profile_path = tmp_path / 'report_only.yaml'
+    out_dir = tmp_path / 'report_only'
+    profile_path.write_text(
+        '\n'.join([
+            'release_profiles:',
+            '  - name: optional_dataset',
+            '    metric: ape_rmse_gt_m',
+            '    pass: 0.10',
+            '    report_only_until: future-cycle',
+            '    match:',
+            '      bag_name_contains: absent_dataset',
+            '',
+        ]),
+        encoding='utf-8',
+    )
+    fixture = subprocess.run(
+        [
+            'python3',
+            str(FIXTURE_SCRIPT),
+            '--root',
+            str(benchmark_root),
+            '--profile',
+            'passing',
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=REPO_ROOT,
+    )
+    assert fixture.returncode == 0, fixture.stderr
+
+    result = _run_release_readiness(
+        '--skip-default-ci',
+        '--benchmark-root',
+        str(benchmark_root),
+        '--out-dir',
+        str(out_dir),
+        '--release-profile',
+        str(profile_path),
+        '--fail-on-profiles',
+    )
+
+    assert result.returncode == 0, result.stderr
+    expected_commit = subprocess.run(
+        ['git', 'rev-parse', 'HEAD'],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=REPO_ROOT,
+    ).stdout.strip()
+    assert f'Release candidate commit: {expected_commit}' in result.stdout
+    assert '| optional_dataset | NO_DATA |' in result.stdout
+    assert (out_dir / 'benchmark_report.html').is_file()
 
 
 def test_synthetic_fixture_generator_failing_profile_trips_release_gate(tmp_path):

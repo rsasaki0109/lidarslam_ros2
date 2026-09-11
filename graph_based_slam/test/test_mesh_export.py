@@ -37,7 +37,14 @@ import sys
 import numpy as np
 import pytest
 
-o3d = pytest.importorskip('open3d')
+try:
+    import open3d as o3d
+    HAS_OPEN3D = True
+except ImportError:  # pragma: no cover - environment dependent
+    o3d = None
+    HAS_OPEN3D = False
+
+pytestmark = pytest.mark.skipif(not HAS_OPEN3D, reason='open3d is not installed')
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOL_DIR = REPO_ROOT / 'tools' / 'gaussian_splatting'
@@ -52,6 +59,12 @@ def _load():
 
 
 mesh_export = _load()
+
+
+def test_cli_parser_accepts_thin_voxel():
+    args = mesh_export._build_arg_parser().parse_args(
+        ['input.ply', 'output.ply', '--thin-voxel', '0.1'])
+    assert args.thin_voxel == pytest.approx(0.1)
 
 
 def _red_sphere(n=3000):

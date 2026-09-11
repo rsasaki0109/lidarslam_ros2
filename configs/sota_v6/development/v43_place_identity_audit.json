@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "contract_id": "v43-independent-place-identity-availability-20260810",
+  "rationale": "Report-only availability gate. A place-identity challenge may be implemented only when every applicable sequence retains an independent, nonconstant signal. Geometry, ground truth, accuracy references, and reference maps are prohibited.",
+  "frames": {
+    "world": "map",
+    "body": "base_link"
+  },
+  "intensity": {
+    "required_fields": ["x", "y", "z", "intensity"],
+    "minimum_finite_fraction": 1.0,
+    "nonzero_epsilon": 1e-12,
+    "minimum_nonzero_fraction": 0.01,
+    "minimum_dynamic_range": 0.001,
+    "minimum_distinct_values": 16,
+    "minimum_varying_chunk_fraction": 0.9,
+    "distinct_value_cap": 17,
+    "distinct_samples_per_chunk": 256
+  },
+  "camera_manifest": {
+    "schema_version": 1,
+    "minimum_frame_count": 100,
+    "required_hash_fields": [
+      "timestamps_sha256",
+      "image_manifest_sha256"
+    ]
+  },
+  "memory": {
+    "maximum_rss_mib": 128.0,
+    "maximum_chunk_bytes": 8388608
+  },
+  "decision": {
+    "required_repetitions": 2,
+    "require_independent_signal_on_every_sequence": true
+  }
+}

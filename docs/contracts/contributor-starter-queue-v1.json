@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/contributor-starter-queue-v1.schema.json",
+  "queue_id": "g0-community-starters-2026-08-16-r4",
+  "generated_at": "2026-08-16T08:54:26+09:00",
+  "repository": "rsasaki0109/lidar_slam_ros2",
+  "status": "PREPARED_NOT_PUBLISHED",
+  "prepared_environment": {
+    "estimate_excludes": [
+      "first-time ROS or development dependency installation",
+      "repository clone time",
+      "review and maintainer response latency"
+    ],
+    "maximum_task_minutes": 30,
+    "maximum_focused_check_minutes": 5
+  },
+  "remote_duplicate_audit": {
+    "method": "gh-api-get-read-only",
+    "checked_at": "2026-08-16T07:21:20+09:00",
+    "open_pull_request_count": 1,
+    "open_pull_request_numbers": [427],
+    "task_matches": [
+      {
+        "task_id": "starter-C5",
+        "query": "Japanese validation report follow-up handoff",
+        "matching_open_pull_requests": []
+      },
+      {
+        "task_id": "starter-C6",
+        "query": "current_pose modified_path output contract",
+        "matching_open_pull_requests": []
+      },
+      {
+        "task_id": "starter-C7",
+        "query": "mapping loop closure relocalization boundary",
+        "matching_open_pull_requests": []
+      },
+      {
+        "task_id": "starter-C8",
+        "query": "classic IMU scan period extrinsic",
+        "matching_open_pull_requests": []
+      },
+      {
+        "task_id": "starter-C9",
+        "query": "long route mapping performance limit",
+        "matching_open_pull_requests": []
+      }
+    ],
+    "recheck_before_publication": true
+  },
+  "published_issue_dependencies": [
+    {
+      "id": "first-map-validator-cohort-v1",
+      "issue_number": 422,
+      "issue_title": "Help validate the public first-map path for v1.0",
+      "check_command": [
+        "python3",
+        "scripts/first_map_validator_cohort.py",
+        "--json"
+      ],
+      "eligible_statuses": [
+        "READY_FOR_NEXT_ATTEMPT"
+      ]
+    }
+  ],
+  "local_task_publication_dependency": {
+    "id": "product-draft-public-queue-v1",
+    "pull_request_number": 427,
+    "base_ref": "develop",
+    "public_queue_path": "docs/contracts/contributor-starter-queue-v1.json"
+  },
+  "tasks": [
+    {
+      "id": "starter-C5",
+      "publication_status": "PREPARED_NOT_PUBLISHED",
+      "title": "Docs: make Japanese validation-report follow-up handoff reproducible",
+      "outcome": "A support or maintainer receiver can continue a Japanese follow-up from a path-free handoff without rewriting evidence, duplicating artifacts, or accepting a note.",
+      "estimate_minutes": 30,
+      "labels": [
+        "documentation",
+        "good first issue",
+        "help wanted"
+      ],
+      "source_issue_numbers": [93, 103, 106],
+      "allowed_paths": [
+        "docs/getting-started-ja.md"
+      ],
+      "non_goals": [
+        "change the issue template, review ledger, support or verification implementation, or acceptance rules",
+        "change the Docker image, source helper, package-manager support, release identity, route chooser, or recovery implementation",
+        "translate the entire getting-started guide",
+        "ask for a private bag, map, or raw log upload"
+      ],
+      "acceptance": [
+        "The Japanese guide maps NOTE ONLY, SUPPORT REQUESTED, RETRY STARTED, NEW PAIR PREPARED, and STOPPED to a support, maintainer-review, or stop handoff with an explicit public status.",
+        "The handoff block records the disposition, action result, target, status, owner role, next review, and sanitized Details and Next without private paths; it does not grant acceptance or receipt-edit authority.",
+        "The guide keeps the original report, receipt, and hash immutable, permits one report/receipt pair per run, and forbids duplicate issue or session artifacts.",
+        "The card preserves one handoff per action audit, one evidence pair per run, and routes missing or mismatched identity/session/output back to STOP and safe support/retry.",
+        "The card preserves the v0.9.0 Docker versus v0.9.1 source-candidate identity boundary and tells the reader to stop when identity or session data is missing.",
+        "The existing support, session, privacy, independent-validation, and review-status guidance remains intact.",
+        "The documentation change needs no rosbag, hardware, network, or private log."
+      ],
+      "focused_checks": [
+        {
+          "id": "docs-strict",
+          "argv": ["python3", "-m", "mkdocs", "build", "--strict"]
+        }
+      ],
+      "check_profile": "docs-strict",
+      "gap_probes": [
+        {
+          "path": "docs/getting-started-ja.md",
+          "mode": "not_contains",
+          "value": "### 日本語のvalidation reportのfollow-up引き継ぎを再現可能にする",
+          "failure_detail": "the planned Japanese follow-up-handoff marker already exists"
+        }
+      ],
+      "private_data_required": false,
+      "hardware_required": false
+    },
+    {
+      "id": "starter-C6",
+      "publication_status": "PREPARED_NOT_PUBLISHED",
+      "title": "Docs: distinguish live and loop-optimized pose outputs",
+      "outcome": "A user can select the intended live or loop-optimized pose topic, verify its frame, and avoid treating backend corrections as rewritten frontend odometry.",
+      "estimate_minutes": 25,
+      "labels": [
+        "documentation",
+        "good first issue",
+        "help wanted"
+      ],
+      "source_issue_numbers": [101, 116, 124],
+      "allowed_paths": [
+        "docs/workflows.md"
+      ],
+      "non_goals": [
+        "change publishers, topic names, message types, or the feedback path",
+        "diagnose an individual bag or tune loop-closure parameters",
+        "claim that backend optimization repairs live frontend odometry"
+      ],
+      "acceptance": [
+        "The card identifies current_pose and path as live classic-frontend outputs and modified_path as the backend's optimized trajectory output.",
+        "The message types and header frames are checked with copy-ready ros2 topic commands before any viewer change.",
+        "The text explains that loop optimization may revise earlier trajectory estimates without rewriting already published live poses.",
+        "A reader can choose the matching RViz topic and fixed frame without guessing a transform.",
+        "The card separates a topic-selection problem from mapping drift or failed loop validation.",
+        "No accuracy, correction-feedback, or bag-specific success claim is added."
+      ],
+      "focused_checks": [
+        {
+          "id": "docs-strict",
+          "argv": ["python3", "-m", "mkdocs", "build", "--strict"]
+        }
+      ],
+      "check_profile": "docs-strict",
+      "gap_probes": [
+        {
+          "path": "docs/workflows.md",
+          "mode": "not_contains",
+          "value": "### Live and loop-optimized pose outputs",
+          "failure_detail": "the planned pose-output contract marker already exists"
+        }
+      ],
+      "private_data_required": false,
+      "hardware_required": false
+    },
+    {
+      "id": "starter-C7",
+      "publication_status": "PREPARED_NOT_PUBLISHED",
+      "title": "Docs: separate mapping, loop closure, and relocalization support",
+      "outcome": "A user can distinguish continued map building, pose-graph loop optimization, localization against a prior map, and recovery after lost tracking before selecting a workflow.",
+      "estimate_minutes": 30,
+      "labels": [
+        "documentation",
+        "good first issue",
+        "help wanted"
+      ],
+      "source_issue_numbers": [101, 116, 118],
+      "allowed_paths": [
+        "docs/workflows.md"
+      ],
+      "non_goals": [
+        "implement localization, relocalization, map continuation, or loop-closure feedback",
+        "turn experimental MID-360 evidence into a general support claim",
+        "prescribe bag-specific thresholds or algorithm changes"
+      ],
+      "acceptance": [
+        "The card defines mapping, backend loop closure, prior-map localization, and kidnap recovery as separate capabilities.",
+        "It states that loading or saving a PCD does not by itself create a supported prior-map localization workflow.",
+        "It explains that public mapping defaults keep automatic kidnap relocalization off and route a lost track or long scan gap to stop, split, review, and explicit map handling.",
+        "Experimental continuous MID-360 relocalization evidence is linked as bounded research evidence rather than advertised as general support.",
+        "Each user intent ends at the corresponding documented workflow or an explicit unsupported boundary.",
+        "No implementation, accuracy, or silent recovery promise is added."
+      ],
+      "focused_checks": [
+        {
+          "id": "docs-strict",
+          "argv": ["python3", "-m", "mkdocs", "build", "--strict"]
+        }
+      ],
+      "check_profile": "docs-strict",
+      "gap_probes": [
+        {
+          "path": "docs/workflows.md",
+          "mode": "not_contains",
+          "value": "### Mapping, loop closure, and relocalization are different",
+          "failure_detail": "the planned mapping-versus-relocalization marker already exists"
+        }
+      ],
+      "private_data_required": false,
+      "hardware_required": false
+    },
+    {
+      "id": "starter-C8",
+      "publication_status": "PREPARED_NOT_PUBLISHED",
+      "title": "Docs: add the classic-path IMU readiness card",
+      "outcome": "A classic scanmatcher user can verify the IMU topic, frame, timing, measured extrinsic, and LiDAR scan period before enabling IMU prediction.",
+      "estimate_minutes": 30,
+      "labels": [
+        "documentation",
+        "good first issue",
+        "help wanted"
+      ],
+      "source_issue_numbers": [89, 96, 100],
+      "allowed_paths": [
+        "docs/workflows.md"
+      ],
+      "non_goals": [
+        "add an IMU driver, calibration routine, or synchronization layer",
+        "change RKO-LIO or graph-backend IMU behavior",
+        "copy another robot's transform, scan period, or tuning values"
+      ],
+      "acceptance": [
+        "The card is explicitly scoped to classic scanmatcher use_imu and keeps the RKO-LIO input contract separate.",
+        "Copy-ready checks verify sensor_msgs/msg/Imu, a non-empty header.frame_id, advancing timestamps, and a positive observed rate.",
+        "The directed base-to-IMU TF is checked and an unknown or guessed extrinsic stops the procedure.",
+        "The card explains that scan_period is the LiDAR scan duration, not the IMU publication period, and requires a measured or specified value.",
+        "A bounded launch/YAML example shows imu_topic, use_imu, scan_period, and the measured frame relationship without adding a vendor preset.",
+        "Readiness for one controlled run is kept separate from accuracy or hardware support."
+      ],
+      "focused_checks": [
+        {
+          "id": "docs-strict",
+          "argv": ["python3", "-m", "mkdocs", "build", "--strict"]
+        }
+      ],
+      "check_profile": "docs-strict",
+      "gap_probes": [
+        {
+          "path": "docs/workflows.md",
+          "mode": "not_contains",
+          "value": "### Classic-path IMU readiness",
+          "failure_detail": "the planned classic IMU readiness marker already exists"
+        }
+      ],
+      "private_data_required": false,
+      "hardware_required": false
+    },
+    {
+      "id": "starter-C9",
+      "publication_status": "PREPARED_NOT_PUBLISHED",
+      "title": "Docs: triage a long-route mapping stop without inventing a distance limit",
+      "outcome": "A user can separate stopped input, a dead node, registration refusal, compute backlog, storage exhaustion, and viewer-only symptoms before assuming a maximum mapping distance.",
+      "estimate_minutes": 30,
+      "labels": [
+        "documentation",
+        "good first issue",
+        "help wanted"
+      ],
+      "source_issue_numbers": [53, 69, 89, 104],
+      "allowed_paths": [
+        "docs/getting-started.md"
+      ],
+      "non_goals": [
+        "claim a universal maximum distance, runtime, memory footprint, or accuracy",
+        "tune an individual bag, sensor, route, or compute platform",
+        "change runtime limits, voxel sizes, queue depths, or failure handling",
+        "request a private bag, map, or location-bearing raw log"
+      ],
+      "acceptance": [
+        "The card states that route length alone is not a supported universal limit and points to bounded public benchmark evidence instead of inventing one.",
+        "Copy-ready checks distinguish whether the input topic advances, the mapping nodes are alive, warnings or refusals occurred, storage remains available, and the viewer is following the intended output.",
+        "Each symptom ends in one safe next action: preserve the retained session, stop the run, repair the named input/resource/failure condition, and rerun a bounded control.",
+        "VoxelGrid refusal remains a fail-closed diagnostic and is not answered by blindly lowering or increasing a leaf size.",
+        "The card separates process survival and map publication from validated map quality or accuracy.",
+        "The support handoff remains sanitized and does not ask for private geometry or location-bearing artifacts."
+      ],
+      "focused_checks": [
+        {
+          "id": "docs-strict",
+          "argv": ["python3", "-m", "mkdocs", "build", "--strict"]
+        }
+      ],
+      "check_profile": "docs-strict",
+      "gap_probes": [
+        {
+          "path": "docs/getting-started.md",
+          "mode": "not_contains",
+          "value": "### Long route stopped: find the limiting stage",
+          "failure_detail": "the planned long-route triage marker already exists"
+        }
+      ],
+      "private_data_required": false,
+      "hardware_required": false
+    }
+  ],
+  "authority": {
+    "github_writes_authorized": false,
+    "issues_published": false,
+    "remote_mutations_performed": false,
+    "publication_requires_maintainer_confirmation": true
+  }
+}

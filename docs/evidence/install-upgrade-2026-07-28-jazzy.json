@@ -1,0 +1,120 @@
+{
+  "baseline": {
+    "commit": "ea3e6fe8464fc7a5a48bfc628b0894176ef2a117",
+    "has_product_cli": false,
+    "owned_file_count": 45,
+    "package_version": "0.6.0",
+    "reference": "v0.6.0"
+  },
+  "builds": {
+    "baseline": {
+      "duration_sec": 16.791533120998793,
+      "exit_code": 0,
+      "log": "baseline-build.log",
+      "log_sha256": "de570ea061c3a06cd548289827a54a85116932a302399b27fa8e1b28cc1d936f"
+    },
+    "fresh": {
+      "duration_sec": 17.728883734000192,
+      "exit_code": 0,
+      "log": "fresh-build.log",
+      "log_sha256": "ac69d3243c30e31cb0abbc2623e7f132b914428af6c7bcf03034918f7cc54d88"
+    },
+    "upgrade": {
+      "duration_sec": 17.716989820999515,
+      "exit_code": 0,
+      "log": "upgrade-build.log",
+      "log_sha256": "5ef3f532e2abb0cd54e270aa8c4f405891a9f1ab27c32364148ae2e9c5cfaac6"
+    }
+  },
+  "candidate": {
+    "commit": "debbf78beda219c61b06a66d082d568eb979c246",
+    "dirty": false,
+    "package_version": "0.6.0"
+  },
+  "checks": [
+    {
+      "id": "candidate_revision_clean",
+      "observed": "commit=debbf78beda219c61b06a66d082d568eb979c246, dirty=False",
+      "passed": true
+    },
+    {
+      "id": "baseline_build_passed",
+      "observed": "exit_code=0",
+      "passed": true
+    },
+    {
+      "id": "candidate_upgrade_build_passed",
+      "observed": "exit_code=0",
+      "passed": true
+    },
+    {
+      "id": "candidate_fresh_build_passed",
+      "observed": "exit_code=0",
+      "passed": true
+    },
+    {
+      "id": "upgrade_has_no_stale_paths",
+      "observed": "stale_paths=[]",
+      "passed": true
+    },
+    {
+      "id": "upgrade_has_no_missing_paths",
+      "observed": "missing_paths=[]",
+      "passed": true
+    },
+    {
+      "id": "upgrade_metadata_matches_fresh",
+      "observed": "mismatched_paths=[]",
+      "passed": true
+    },
+    {
+      "id": "upgraded_product_cli_valid",
+      "observed": "exit_code=0",
+      "passed": true
+    },
+    {
+      "id": "fresh_product_cli_valid",
+      "observed": "exit_code=0",
+      "passed": true
+    },
+    {
+      "id": "historical_node_preserved",
+      "observed": "lib/lidarslam/lidarslam",
+      "passed": true
+    },
+    {
+      "id": "product_cli_added_or_preserved",
+      "observed": "bin/lidarslam-map",
+      "passed": true
+    }
+  ],
+  "duration_sec": 54.88473851600065,
+  "finished_at": "2026-07-28T14:13:52.410799Z",
+  "hardware_label": "local-amd64-jazzy-container",
+  "ros_distro": "jazzy",
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/install-upgrade-v1.schema.json",
+  "schema_version": 1,
+  "snapshots": {
+    "fresh_file_count": 104,
+    "mismatched_paths": [],
+    "missing_paths": [],
+    "stale_paths": [],
+    "upgraded_file_count": 104
+  },
+  "started_at": "2026-07-28T14:12:57.526066Z",
+  "status": "passed",
+  "validation": {
+    "fresh": {
+      "duration_sec": 1.204508093000186,
+      "exit_code": 0,
+      "log": "fresh-validation.log",
+      "log_sha256": "b3046512141180e6161f0bc2adf8e54d5fb4ad2e194afa50344f94a0a601c32e"
+    },
+    "upgrade": {
+      "duration_sec": 1.326571535999392,
+      "exit_code": 0,
+      "log": "upgrade-validation.log",
+      "log_sha256": "1e260fab06ab5ff875cda7f4eb990d61e3119241cb0c4fc56c3f52038eb4697b"
+    }
+  }
+}

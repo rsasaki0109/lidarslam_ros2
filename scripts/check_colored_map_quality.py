@@ -59,6 +59,18 @@ METRICS = {
         'colour', ('rgb_l2_inlier_20',), 'min'),
     'heldout_scored_fraction_min': (
         'colour', ('heldout_scored_fraction',), 'min'),
+    'appearance_coverage_min': (
+        'appearance', ('coverage',), 'min'),
+    'appearance_roughness_median_max': (
+        'appearance', ('roughness', 'roughness_median'), 'max'),
+    'appearance_roughness_p90_max': (
+        'appearance', ('roughness', 'roughness_p90'), 'max'),
+    'appearance_chroma_retention_min': (
+        'appearance', ('chroma_retention',), 'min'),
+    'appearance_planar_roughness_median_max': (
+        'appearance', ('planar_roughness', 'roughness_median'), 'max'),
+    'appearance_planar_roughness_p90_max': (
+        'appearance', ('planar_roughness', 'roughness_p90'), 'max'),
 }
 
 
@@ -117,6 +129,9 @@ def evaluate(reports: dict[str, dict[str, Any]],
         if isinstance(limit_value, bool) or not isinstance(limit_value, (int, float)):
             raise QualityGateError(f'threshold {key} must be numeric')
         report_name, metric_path, comparison = METRICS[key]
+        if report_name not in reports:
+            raise QualityGateError(
+                f'threshold {key} needs --{report_name}-report')
         value = nested_number(reports[report_name], metric_path)
         limit = float(limit_value)
         passed = value <= limit if comparison == 'max' else value >= limit
@@ -135,20 +150,28 @@ def evaluate(reports: dict[str, dict[str, Any]],
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--trajectory-report', type=Path, required=True)
-    parser.add_argument('--geometry-report', type=Path, required=True)
-    parser.add_argument('--alignment-report', type=Path, required=True)
-    parser.add_argument('--colour-report', type=Path, required=True)
+    parser.add_argument('--trajectory-report', type=Path)
+    parser.add_argument('--geometry-report', type=Path)
+    parser.add_argument('--alignment-report', type=Path)
+    parser.add_argument('--colour-report', type=Path)
+    parser.add_argument('--appearance-report', type=Path, default=None,
+                        help='evaluate_colored_map_appearance.py output; '
+                             'required when the profile sets appearance_* '
+                             'thresholds')
     parser.add_argument('--profile', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
     args = parser.parse_args()
     try:
-        reports = {
-            'trajectory': load_mapping(args.trajectory_report),
-            'geometry': load_mapping(args.geometry_report),
-            'alignment': load_mapping(args.alignment_report),
-            'colour': load_mapping(args.colour_report),
+        report_paths = {
+            'trajectory': args.trajectory_report,
+            'geometry': args.geometry_report,
+            'alignment': args.alignment_report,
+            'colour': args.colour_report,
+            'appearance': args.appearance_report,
         }
+        reports = {name: load_mapping(path)
+                   for name, path in report_paths.items()
+                   if path is not None}
         result = evaluate(reports, load_mapping(args.profile))
     except QualityGateError as exc:
         parser.error(str(exc))

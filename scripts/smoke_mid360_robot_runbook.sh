@@ -9,15 +9,16 @@ Usage:
 Smoke-test the Jetson MID-360 robot runbook without starting SLAM.
 
 Options:
-  --work-dir <dir>       Temporary working directory for the fake bag
+  --work-dir <dir>       Temporary working directory for the synthetic bag
   --output-dir <dir>     Output directory for readiness and run-plan files
   --profile <file>       Robot profile YAML (default: configs/mid360_robot/livox_mid360_default.yaml)
   --keep-work-dir        Do not delete the temporary working directory
   --help                 Show this help
 
-The smoke creates a metadata-only rosbag2 directory with /livox/lidar,
-/livox/imu, and /tf_static, then runs profile validation, recording dry-run,
-post-recording check, readiness, and map dry-run. It does not launch ROS or SLAM.
+The smoke creates a synthetic rosbag2 with /livox/lidar, /livox/imu, and
+/tf_static records, then runs profile validation, recording dry-run,
+post-recording check, readiness, and map dry-run. It does not launch ROS or
+SLAM. The Python rosbags package is required.
 EOF
   exit 1
 }
@@ -85,42 +86,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
-mkdir -p "$BAG_DIR" "$OUTPUT_DIR"
-
-python3 - "$BAG_DIR/metadata.yaml" <<'PY'
-from pathlib import Path
-import sys
-
-import yaml
-
-metadata_path = Path(sys.argv[1])
-topics = [
-    ('/livox/lidar', 'sensor_msgs/msg/PointCloud2', 50),
-    ('/livox/imu', 'sensor_msgs/msg/Imu', 500),
-    ('/tf_static', 'tf2_msgs/msg/TFMessage', 1),
-]
-metadata = {
-    'rosbag2_bagfile_information': {
-        'duration': {'nanoseconds': 5_000_000_000},
-        'message_count': sum(count for _, _, count in topics),
-        'topics_with_message_count': [
-            {
-                'topic_metadata': {
-                    'name': name,
-                    'type': msg_type,
-                    'serialization_format': 'cdr',
-                    'offered_qos_profiles': '',
-                },
-                'message_count': count,
-            }
-            for name, msg_type, count in topics
-        ],
-    },
-}
-metadata_path.write_text(yaml.safe_dump(metadata), encoding='utf-8')
-PY
+mkdir -p "$RECORD_ROOT" "$OUTPUT_DIR"
 
 cd "$REPO_ROOT"
+
+python3 scripts/generate_mid360_robot_sample_bag.py "$BAG_DIR" \
+  --duration-sec 5 \
+  --pointcloud-rate-hz 10 \
+  --imu-rate-hz 100 \
+  --point-count 16 \
+  --force >/dev/null
 
 python3 scripts/validate_mid360_robot_profile.py "$PROFILE" >/dev/null
 
@@ -178,15 +153,24 @@ done
 python3 - "$OUTPUT_DIR/mid360_robot_readiness.json" <<'PY'
 from pathlib import Path
 import json
+import math
 import sys
 
 payload = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
 if payload.get('status') != 'PASS':
     raise SystemExit(f"readiness status is not PASS: {payload.get('status')}")
 diagnostics = payload.get('bag_diagnostics', {}).get('topics', {})
-if diagnostics.get('pointcloud', {}).get('metadata_rate_hz') != 10.0:
+if not math.isclose(
+    diagnostics.get('pointcloud', {}).get('metadata_rate_hz', 0.0),
+    10.0,
+    rel_tol=0.02,
+):
     raise SystemExit('pointcloud metadata rate check missing or incorrect')
-if diagnostics.get('imu', {}).get('metadata_rate_hz') != 100.0:
+if not math.isclose(
+    diagnostics.get('imu', {}).get('metadata_rate_hz', 0.0),
+    100.0,
+    rel_tol=0.02,
+):
     raise SystemExit('imu metadata rate check missing or incorrect')
 PY
 
@@ -201,5 +185,5 @@ if payload.get('status') != 'PASS':
 PY
 
 echo "MID-360 robot runbook smoke: PASS"
-echo "  fake_bag:   $BAG_DIR"
+echo "  sample_bag: $BAG_DIR"
 echo "  output_dir: $OUTPUT_DIR"

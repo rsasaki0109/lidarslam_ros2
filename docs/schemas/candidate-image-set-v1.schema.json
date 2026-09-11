@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-image-set-v1.schema.json",
+  "title": "lidarslam_ros2 immutable candidate-image set v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "publication_mode",
+    "repository",
+    "source_pr",
+    "source_commit",
+    "product_version",
+    "platform",
+    "workflow_run_url",
+    "workflow_branch_ref",
+    "workflow_gate_commit",
+    "requested_by",
+    "images",
+    "tags_created",
+    "moving_tags_mutated",
+    "release_mutated",
+    "registry_retention_status",
+    "evidence_retention_days"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-image-set-v1.schema.json"
+    },
+    "status": {"const": "PASS"},
+    "publication_mode": {"const": "digest_only"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "source_pr": {"type": "integer", "minimum": 1},
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "product_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "platform": {"const": "linux/amd64"},
+    "workflow_run_url": {
+      "type": "string",
+      "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/actions/runs/[1-9][0-9]*$"
+    },
+    "workflow_branch_ref": {"const": "refs/heads/develop"},
+    "workflow_gate_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "requested_by": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$"
+    },
+    "images": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ros_distro", "digest", "immutable_ref"],
+        "properties": {
+          "ros_distro": {"enum": ["humble", "jazzy"]},
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "immutable_ref": {
+            "type": "string",
+            "pattern": "^ghcr\\.io/rsasaki0109/lidar_slam_ros2@sha256:[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "tags_created": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "moving_tags_mutated": {"const": false},
+    "release_mutated": {"const": false},
+    "registry_retention_status": {"const": "REQUIRES_REMOTE_AUDIT"},
+    "evidence_retention_days": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 90
+    }
+  }
+}

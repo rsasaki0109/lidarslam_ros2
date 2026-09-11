@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -68,10 +69,10 @@ def main() -> int:
         return 1
 
     if args.json:
-        print(payload_to_json(manifest))
+        print(json.dumps(manifest, indent=2, sort_keys=True))
     else:
         artifacts = manifest['artifacts']
-        print('MID-360 3D map preview exported')
+        print('lidar_slam 3D map preview exported')
         print(f'- status: {manifest["status"]}')
         print(f'- {MAP_PREVIEW_HTML}: {artifacts["html"]}')
         print(f'- {MAP_PREVIEW_PLY}: {artifacts["ply"]}')

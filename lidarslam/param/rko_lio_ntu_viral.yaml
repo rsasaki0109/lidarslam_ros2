@@ -1,3 +1,24 @@
 extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-extrinsic_lidar2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.05, 0.0, -0.055]
+extrinsic_lidar2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, -0.05, 0.0, 0.055]
+# RKO-LIO consumes the Ouster point-level `t` field, which is already aligned
+# to the canonical bag's IMU clock. FAST-LIVO2's header-only correction does
+# not apply to this timestamp path.
+lidar_timestamps.offset_seconds: 0.0
 initialization_phase: true
+deskew: true
+# Clean tnp_01 sweep: 1.4 m regressed and 1.7 m became unstable; 1.5 m is the
+# bounded optimum while preserving the official body_T_lidar calibration.
+voxel_size: 1.5
+# The initial static IMU alignment is required, but continuous window
+# alignment mistakes this sequence's sustained motion acceleration for gravity
+# tilt (5,691/5,691 attempted corrections), regressing APE 0.983 -> 1.070 m.
+gravity_window_alignment: false
+icp_keypoint_voxel_multiplier: 1.5
+max_points_per_voxel: 20
+min_range: 1.0
+max_range: 100.0
+max_correspondence_distance: 0.5
+double_downsample: true
+# Keep the offline producer below the synchronous graph backend's sustained
+# consumption rate. This changes wall time only; pose computation is unchanged.
+async.output_publish_delay_ms: 20

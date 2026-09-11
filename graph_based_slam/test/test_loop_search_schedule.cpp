@@ -31,7 +31,7 @@
 
 #include "graph_based_slam/loop_search_schedule.hpp"
 
-TEST(LoopSearchSchedule, StrideOneSearchesEveryNonnegativeQuery)
+TEST(LoopSearchSchedule, StrideOneSearchesEveryNonNegativeQuery)
 {
   EXPECT_FALSE(graphslam::loop_search_schedule::shouldSearch(-1, 1));
   EXPECT_TRUE(graphslam::loop_search_schedule::shouldSearch(0, 1));

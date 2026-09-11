@@ -1,7 +1,9 @@
 # Autoware Quickstart
 
-This is the shortest supported path from `lidarslam_ros2` to an Autoware
-pointcloud map shown in `rviz2`.
+This is the advanced viewer/dogfood compatibility path from `lidarslam_ros2` to
+an Autoware pointcloud map shown in `rviz2`. For the beginner first-map result,
+use the fixed, headless [Getting Started](getting-started.md#2-run-the-fixed-first-map-demo)
+command; Docker and source use the same MID-360 dataset and output contract.
 
 If you want the product-level overview first, see
 [Autoware-Compatible Map Authoring](autoware-map-authoring.md).
@@ -10,16 +12,22 @@ If you are choosing between Docker, source build, or your own bag, start with
 For the optional browser-based viewer path, see
 [Autoware Foxglove](autoware-foxglove.md).
 
-Before choosing a workflow for an arbitrary bag, run:
+For a normal own-bag map, use the product entrypoint:
+
+```bash
+lidarslam-map start /path/to/rosbag2
+```
+
+It inspects the bag, confirms and saves the selected inputs, verifies the map,
+and opens the offline browser result. RKO-LIO additionally requires explicit
+calibration confirmation. PointCloud2+GNSS and packet+Applanix bags use the
+same entrypoint. The commands below are retained for advanced compatibility
+and debugging.
+
+To run only the bag preflight:
 
 ```bash
 python3 scripts/preflight_autoware_map_bag.py /path/to/rosbag2
-```
-
-If you want the shortest beginner-facing entrypoint, run:
-
-```bash
-bash scripts/run_autoware_map_beginner.sh /path/to/rosbag2
 ```
 
 If you want the repository to pick and run the shortest supported path from the
@@ -33,7 +41,7 @@ For Livox/MID360-style bags, this runner automatically switches to the tracked
 MID360 preset and writes `verify_autoware_map.log` plus a diagnosis report into
 the output directory.
 
-The fixed public entrypoint for this flow is:
+The advanced public entrypoint for this viewer/dogfood flow is:
 
 ```bash
 bash scripts/run_autoware_quickstart.sh
@@ -66,17 +74,21 @@ bash scripts/run_default_ci_checks.sh
 
 ## Fastest Paths
 
-### 1. Run the fixed public quickstart
+### 1. Run the advanced fixed public quickstart
 
-If you want the shortest end-to-end supported path:
+If you need the legacy Autoware viewer/dogfood route:
 
 ```bash
+bash scripts/download_ntu_viral_tnp01.sh --dry-run
 bash scripts/download_ntu_viral_tnp01.sh
 bash scripts/run_autoware_quickstart.sh
 ```
 
 This runs the bundled NTU VIRAL dogfood path with a bounded viewer lifetime.
 Under the hood it forwards to `run_rko_lio_graph_autoware_dogfood.sh`.
+The first command writes nothing and stops a fresh multi-gigabyte preparation
+from starting on an undersized filesystem; use its suggested external
+`--dest` when needed.
 
 ### 2. Open an existing graph_based_slam output in Autoware
 
@@ -186,6 +198,6 @@ failure hints such as TF issues or missing GNSS edges.
 - one-shot runner: `python3 scripts/run_autoware_map_from_bag.py /path/to/rosbag2`
 - public Autoware entrypoint: `bash scripts/run_autoware_quickstart.sh`
 - benchmark path: `bash scripts/run_rko_lio_graph_benchmark.sh`
-- release gate: `bash scripts/run_release_readiness_checks.sh --ape-threshold 0.10`
+- release gate: `bash scripts/run_release_readiness_checks.sh --fail-on-profiles`
 - map-only verify: `python3 scripts/verify_autoware_map.py <pointcloud_map_dir>`
 - run diagnosis: `python3 scripts/diagnose_autoware_map_run.py <output_dir>`

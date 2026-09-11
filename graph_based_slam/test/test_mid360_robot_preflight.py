@@ -34,11 +34,9 @@ from __future__ import annotations
 import importlib
 import json
 from pathlib import Path
+import struct
 import subprocess
 import sys
-
-import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS_DIR = REPO_ROOT / 'scripts'
@@ -52,27 +50,64 @@ def _load_module():
 
 
 def _write_metadata(tmp_path: Path, topics: list[tuple[str, str, int]]) -> Path:
+    import rosbag2_py
+    from rclpy.serialization import serialize_message
+    from sensor_msgs.msg import Imu, PointCloud2, PointField
+    from tf2_msgs.msg import TFMessage
+
+    def topic_metadata(topic_id: int, name: str, msg_type: str):
+        kwargs = {
+            'name': name,
+            'type': msg_type,
+            'serialization_format': 'cdr',
+        }
+        try:
+            return rosbag2_py.TopicMetadata(id=topic_id, **kwargs)
+        except TypeError:  # Humble TopicMetadata predates the numeric id
+            return rosbag2_py.TopicMetadata(**kwargs)
+
     bag_dir = tmp_path / 'mid360_robot_bag'
-    bag_dir.mkdir()
-    metadata = {
-        'rosbag2_bagfile_information': {
-            'duration': {'nanoseconds': 5_000_000_000},
-            'message_count': sum(count for _, _, count in topics),
-            'topics_with_message_count': [
-                {
-                    'topic_metadata': {
-                        'name': name,
-                        'type': msg_type,
-                        'serialization_format': 'cdr',
-                        'offered_qos_profiles': '',
-                    },
-                    'message_count': count,
-                }
-                for name, msg_type, count in topics
-            ],
-        },
+    writer = rosbag2_py.SequentialWriter()
+    writer.open(
+        rosbag2_py.StorageOptions(uri=str(bag_dir), storage_id='sqlite3'),
+        rosbag2_py.ConverterOptions('', ''),
+    )
+    for topic_id, (name, msg_type, _) in enumerate(topics):
+        writer.create_topic(topic_metadata(topic_id, name, msg_type))
+
+    points = PointCloud2()
+    points.header.frame_id = 'livox_frame'
+    points.height = 1
+    points.width = 1
+    points.fields = [
+        PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
+        PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
+        PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
+        PointField(name='time', offset=12, datatype=PointField.FLOAT32, count=1),
+    ]
+    points.point_step = 16
+    points.row_step = 16
+    points.data = list(struct.pack('<ffff', 1.0, 2.0, 3.0, 0.0))
+    points.is_dense = True
+    imu = Imu()
+    imu.header.frame_id = 'livox_frame'
+    tf_message = TFMessage()
+    message_by_type = {
+        'sensor_msgs/msg/PointCloud2': points,
+        'sensor_msgs/msg/Imu': imu,
+        'tf2_msgs/msg/TFMessage': tf_message,
     }
-    (bag_dir / 'metadata.yaml').write_text(yaml.safe_dump(metadata), encoding='utf-8')
+    for name, msg_type, count in topics:
+        message = message_by_type[msg_type]
+        interval_ns = max(1, 5_000_000_000 // max(1, count))
+        for index in range(count):
+            writer.write(
+                name,
+                serialize_message(message),
+                1_000_000_000 + index * interval_ns,
+            )
+    if hasattr(writer, 'close'):
+        writer.close()
     return bag_dir
 
 

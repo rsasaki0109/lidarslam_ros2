@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/external-first-map-validations-v1.schema.json",
+  "title": "lidarslam_ros2 independent first-map validation ledger v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "required_validations",
+    "program_url",
+    "validations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/external-first-map-validations-v1.schema.json"
+    },
+    "required_validations": {
+      "const": 3
+    },
+    "program_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "validations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/validation"
+      }
+    }
+  },
+  "definitions": {
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "reporter",
+        "issue_url",
+        "submitted_at",
+        "independent_attestation",
+        "documentation_path",
+        "release_ref",
+        "environment",
+        "exact_command",
+        "result",
+        "verification",
+        "findings",
+        "acceptance"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"
+        },
+        "reporter": {
+          "type": "string",
+          "pattern": "^@[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
+        },
+        "issue_url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/issues/[1-9][0-9]*$"
+        },
+        "submitted_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "independent_attestation": {
+          "const": true
+        },
+        "documentation_path": {
+          "enum": [
+            "docker-first-map",
+            "source-quickstart",
+            "own-bag"
+          ]
+        },
+        "release_ref": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 200
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "os",
+            "architecture",
+            "ros_distro",
+            "install_method"
+          ],
+          "properties": {
+            "os": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 100
+            },
+            "architecture": {
+              "enum": [
+                "amd64",
+                "arm64"
+              ]
+            },
+            "ros_distro": {
+              "enum": [
+                "humble",
+                "jazzy",
+                "container-managed"
+              ]
+            },
+            "install_method": {
+              "enum": [
+                "ghcr",
+                "source"
+              ]
+            }
+          }
+        },
+        "exact_command": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 4000
+        },
+        "result": {
+          "const": "passed"
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "manifest_status",
+            "diagnosis_status",
+            "autoware_status",
+            "manifest_sha256"
+          ],
+          "properties": {
+            "manifest_status": {
+              "const": "succeeded"
+            },
+            "diagnosis_status": {
+              "const": "success"
+            },
+            "autoware_status": {
+              "const": "PASS"
+            },
+            "manifest_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "acceptance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reviewed_by",
+            "reviewed_at",
+            "review_url",
+            "findings_status",
+            "resolution_urls"
+          ],
+          "properties": {
+            "status": {
+              "const": "accepted"
+            },
+            "reviewed_by": {
+              "type": "string",
+              "pattern": "^@[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
+            },
+            "reviewed_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "review_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "findings_status": {
+              "enum": [
+                "no-findings",
+                "resolved",
+                "documented"
+              ]
+            },
+            "resolution_urls": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    }
+  }
+}

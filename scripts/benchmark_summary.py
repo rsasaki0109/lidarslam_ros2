@@ -3,6 +3,7 @@
 import argparse
 import csv
 import json
+import re
 import statistics
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,68 @@ def _as_float(v: Any) -> float | None:
         return float(v)
     except Exception:
         return None
+
+
+def _valid_file_identity(value: Any) -> bool:
+    return (
+        isinstance(value, dict)
+        and isinstance(value.get("path"), str)
+        and bool(value["path"])
+        and isinstance(value.get("size_bytes"), int)
+        and value["size_bytes"] >= 0
+        and isinstance(value.get("sha256"), str)
+        and re.fullmatch(r"[0-9a-f]{64}", value["sha256"]) is not None
+    )
+
+
+def _provenance_state(
+    run: dict[str, Any],
+) -> tuple[bool, bool | None, str | None]:
+    provenance = run.get("provenance")
+    if not isinstance(provenance, dict):
+        return False, None, None
+    input_identity = provenance.get("input")
+    software = provenance.get("software")
+    if not isinstance(input_identity, dict) or not isinstance(software, dict):
+        return False, None, None
+    bag = input_identity.get("bag")
+    storage_files = bag.get("storage_files") if isinstance(bag, dict) else None
+    parameter_files = software.get("parameter_files")
+    runtime_artifacts = software.get("runtime_artifacts")
+    commit = software.get("git_commit")
+    dirty = software.get("git_dirty")
+    complete = (
+        isinstance(bag, dict)
+        and _valid_file_identity(bag.get("metadata"))
+        and isinstance(storage_files, list)
+        and bool(storage_files)
+        and all(_valid_file_identity(item) for item in storage_files)
+        and _valid_file_identity(input_identity.get("reference_trajectory"))
+        and isinstance(commit, str)
+        and re.fullmatch(r"[0-9a-f]{40}", commit) is not None
+        and isinstance(dirty, bool)
+        and isinstance(parameter_files, list)
+        and bool(parameter_files)
+        and all(_valid_file_identity(item) for item in parameter_files)
+        and isinstance(runtime_artifacts, list)
+        and bool(runtime_artifacts)
+        and all(
+            isinstance(item, dict)
+            and isinstance(item.get("label"), str)
+            and bool(item["label"])
+            and _valid_file_identity(item)
+            for item in runtime_artifacts
+        )
+        and _valid_file_identity(software.get("benchmark_harness"))
+        and _valid_file_identity(software.get("metrics_writer"))
+    )
+    valid_commit = (
+        commit
+        if isinstance(commit, str)
+        and re.fullmatch(r"[0-9a-f]{40}", commit) is not None
+        else None
+    )
+    return complete, dirty if isinstance(dirty, bool) else None, valid_commit
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -140,15 +203,36 @@ def load_release_profiles(path: Path) -> list[dict[str, Any]]:
             )
         if not isinstance(prof.get("pass"), (int, float)):
             raise ValueError(f"{path}: profile '{name}' missing numeric 'pass'")
+        remediation = prof.get("remediation")
+        if remediation is not None and (
+            not isinstance(remediation, str) or not remediation.strip()
+        ):
+            raise ValueError(
+                f"{path}: profile '{name}' remediation must be a non-empty string"
+            )
         match = prof.get("match") or {}
         if not isinstance(match, dict):
             raise ValueError(f"{path}: profile '{name}' 'match' must be a mapping")
+        require_clean = match.get("require_clean_provenance")
+        if require_clean is not None and not isinstance(require_clean, bool):
+            raise ValueError(
+                f"{path}: profile '{name}' require_clean_provenance must be boolean"
+            )
         validated.append(prof)
     return validated
 
 
-def _profile_match(profile: dict[str, Any], rec: dict[str, Any]) -> bool:
+def _profile_match(
+    profile: dict[str, Any],
+    rec: dict[str, Any],
+    *,
+    check_provenance: bool = True,
+    required_git_commit: str | None = None,
+) -> bool:
     match = profile.get("match") or {}
+    commit_bound = bool(
+        required_git_commit and not profile.get("report_only_until")
+    )
     bag_substr = match.get("bag_name_contains")
     if bag_substr and bag_substr not in (rec.get("bag") or ""):
         return False
@@ -166,6 +250,20 @@ def _profile_match(profile: dict[str, Any], rec: dict[str, Any]) -> bool:
         pairs = _as_float(rec.get("ape_pairs"))
         if pairs is None or pairs < float(min_pairs):
             return False
+    if check_provenance and (
+        match.get("require_clean_provenance") or commit_bound
+    ):
+        if (
+            rec.get("provenance_complete") is not True
+            or rec.get("provenance_git_dirty") is not False
+        ):
+            return False
+    if (
+        check_provenance
+        and commit_bound
+        and rec.get("provenance_git_commit") != required_git_commit
+    ):
+        return False
     return True
 
 
@@ -183,6 +281,8 @@ def _profile_metric_value(profile: dict[str, Any], rec: dict[str, Any]) -> float
 def evaluate_release_profiles(
     profiles: list[dict[str, Any]],
     records: list[dict[str, Any]],
+    *,
+    required_git_commit: str | None = None,
 ) -> list[dict[str, Any]]:
     """For each profile, find the best matching run and assign a status.
 
@@ -195,11 +295,50 @@ def evaluate_release_profiles(
     """
     results: list[dict[str, Any]] = []
     for prof in profiles:
-        matched = [
+        candidates = [
             rec for rec in records
-            if _profile_match(prof, rec)
+            if _profile_match(prof, rec, check_provenance=False)
             and _profile_metric_value(prof, rec) is not None
         ]
+        matched = [
+            rec for rec in candidates
+            if _profile_match(
+                prof,
+                rec,
+                required_git_commit=required_git_commit,
+            )
+        ]
+        provenance_rejections: dict[str, list[str]] = {
+            "incomplete": [],
+            "dirty": [],
+            "commit_mismatch": [],
+        }
+        commit_bound = bool(
+            required_git_commit and not prof.get("report_only_until")
+        )
+        if (
+            (prof.get("match") or {}).get("require_clean_provenance")
+            or commit_bound
+        ):
+            for rec in candidates:
+                if rec.get("provenance_complete") is not True:
+                    label = str(rec.get("run") or "<unnamed>")
+                    if label not in provenance_rejections["incomplete"]:
+                        provenance_rejections["incomplete"].append(label)
+                elif rec.get("provenance_git_dirty") is not False:
+                    label = str(rec.get("run") or "<unnamed>")
+                    if label not in provenance_rejections["dirty"]:
+                        provenance_rejections["dirty"].append(label)
+                elif (
+                    commit_bound
+                    and rec.get("provenance_git_commit") != required_git_commit
+                ):
+                    label = (
+                        f"{rec.get('run') or '<unnamed>'}"
+                        f"@{str(rec.get('provenance_git_commit') or 'unknown')[:12]}"
+                    )
+                    if label not in provenance_rejections["commit_mismatch"]:
+                        provenance_rejections["commit_mismatch"].append(label)
         result: dict[str, Any] = {
             "name": prof["name"],
             "description": prof.get("description", ""),
@@ -207,12 +346,41 @@ def evaluate_release_profiles(
             "pass": float(prof["pass"]),
             "target": _as_float(prof.get("target")),
             "report_only_until": prof.get("report_only_until"),
+            "remediation": prof.get("remediation"),
             "matched_runs": len(matched),
+            "candidate_runs": len(candidates),
+            "provenance_rejections": provenance_rejections,
+            "required_git_commit": (
+                required_git_commit
+                if required_git_commit and not prof.get("report_only_until")
+                else None
+            ),
         }
         if not matched:
             result["status"] = "NO_DATA"
             result["best_run"] = None
             result["best_value"] = None
+            if any(provenance_rejections.values()):
+                reasons = []
+                if provenance_rejections["incomplete"]:
+                    reasons.append(
+                        "incomplete provenance: "
+                        + ", ".join(provenance_rejections["incomplete"])
+                    )
+                if provenance_rejections["dirty"]:
+                    reasons.append(
+                        "dirty revision: "
+                        + ", ".join(provenance_rejections["dirty"])
+                    )
+                if provenance_rejections["commit_mismatch"]:
+                    reasons.append(
+                        f"candidate commit mismatch (required "
+                        f"{required_git_commit[:12]}): "
+                        + ", ".join(provenance_rejections["commit_mismatch"])
+                    )
+                result["no_data_reason"] = "; ".join(reasons)
+            else:
+                result["no_data_reason"] = "no matching run"
             results.append(result)
             continue
         scored = [
@@ -239,10 +407,25 @@ def render_release_profile_section(results: list[dict[str, Any]]) -> list[str]:
     if not results:
         return []
     lines = ["", "## Release profile gate", ""]
-    header = ["profile", "status", "metric", "best_run", "best_value", "pass", "target", "report_only_until"]
+    header = [
+        "profile",
+        "status",
+        "metric",
+        "best_run",
+        "best_value",
+        "pass",
+        "target",
+        "evidence",
+        "report_only_until",
+    ]
     lines.append("| " + " | ".join(header) + " |")
     lines.append("| " + " | ".join(["---"] * len(header)) + " |")
     for r in results:
+        evidence = str(r.get("no_data_reason") or "")
+        if not evidence and r.get("best_run"):
+            evidence = "clean provenance"
+            if r.get("required_git_commit"):
+                evidence += " @ " + str(r["required_git_commit"])[:12]
         lines.append(
             "| "
             + " | ".join(
@@ -254,11 +437,22 @@ def render_release_profile_section(results: list[dict[str, Any]]) -> list[str]:
                     _fmt_float(r.get("best_value")),
                     _fmt_float(r.get("pass")),
                     _fmt_float(r.get("target")),
+                    evidence,
                     str(r.get("report_only_until") or ""),
                 ]
             )
             + " |"
         )
+    blocking_remediation = [
+        r for r in results
+        if r.get("status") in {"FAIL", "NO_DATA"}
+        and not r.get("report_only_until")
+        and r.get("remediation")
+    ]
+    if blocking_remediation:
+        lines.extend(["", "### Blocking profile remediation", ""])
+        for r in blocking_remediation:
+            lines.append(f"- `{r['name']}`: {r['remediation']}")
     return lines
 
 
@@ -316,16 +510,40 @@ def main() -> int:
         "--fail-on-profiles",
         action="store_true",
         help=(
-            "Return a non-zero exit code when any release profile is FAIL "
-            "(report_only_until profiles only emit WARN and never block)."
+            "Return a non-zero exit code when any blocking release profile is "
+            "FAIL or has NO_DATA (report_only_until profiles never block)."
+        ),
+    )
+    ap.add_argument(
+        "--required-git-commit",
+        default="",
+        help=(
+            "Require blocking release-profile evidence from this exact 40-character "
+            "lowercase Git commit. Required with --fail-on-profiles; report-only "
+            "profiles remain historical comparisons."
         ),
     )
     args = ap.parse_args()
 
+    if args.required_git_commit and re.fullmatch(
+        r"[0-9a-f]{40}", args.required_git_commit
+    ) is None:
+        print(
+            "error: --required-git-commit must be exactly 40 lowercase "
+            "hexadecimal characters"
+        )
+        return 1
+    if args.required_git_commit and not args.release_profile:
+        print("error: --required-git-commit requires --release-profile")
+        return 1
+    if args.fail_on_profiles and not args.required_git_commit:
+        print("error: --fail-on-profiles requires --required-git-commit")
+        return 1
+
     root = Path(args.root).expanduser().resolve()
     metrics_paths = sorted(root.rglob("metrics.json"))
 
-    if not metrics_paths:
+    if not metrics_paths and not args.release_profile:
         print(f"no metrics.json found under: {root}")
         return 1
 
@@ -336,7 +554,7 @@ def main() -> int:
         except Exception as e:
             print(f"warn: failed to read {p}: {e}")
 
-    if not runs:
+    if not runs and not args.release_profile:
         print("no readable metrics.json found")
         return 1
 
@@ -385,6 +603,20 @@ def main() -> int:
         ape = evo.get("ape") if isinstance(evo, dict) else None
         ape_rmse = (ape.get("rmse") if isinstance(ape, dict) else None) if ape is not None else None
         ape_pairs = (ape.get("pairs") if isinstance(ape, dict) else None) if ape is not None else None
+        (
+            provenance_complete,
+            provenance_git_dirty,
+            provenance_git_commit,
+        ) = _provenance_state(r)
+        provenance_status = (
+            "clean"
+            if provenance_complete and provenance_git_dirty is False
+            else (
+                "dirty"
+                if provenance_complete and provenance_git_dirty is True
+                else "incomplete"
+            )
+        )
 
         if lid_success is True:
             lid_ok += 1
@@ -451,6 +683,10 @@ def main() -> int:
                 "ape_rmse_m": _fmt_float(ape_raw),
                 "ape_ok": ape_ok,
                 "ape_pairs": ape_pairs,
+                "provenance_complete": provenance_complete,
+                "provenance_git_dirty": provenance_git_dirty,
+                "provenance_git_commit": provenance_git_commit,
+                "provenance_status": provenance_status,
                 "primary_raw": primary_raw,
                 "primary_missing": primary_missing,
             }
@@ -511,6 +747,7 @@ def main() -> int:
         "glim_wall_s",
         "ape_rmse_m",
         "ape_ok",
+        "provenance",
     ]
 
     md_lines: list[str] = []
@@ -558,6 +795,7 @@ def main() -> int:
             rec["glim_wall_s"],
             rec["ape_rmse_m"],
             rec["ape_ok"],
+            rec["provenance_status"],
         ]
         md_lines.append("| " + " | ".join(row) + " |")
 
@@ -565,7 +803,11 @@ def main() -> int:
     if args.release_profile:
         profile_path = Path(args.release_profile).expanduser().resolve()
         profiles = load_release_profiles(profile_path)
-        profile_results = evaluate_release_profiles(profiles, records_sorted)
+        profile_results = evaluate_release_profiles(
+            profiles,
+            records_sorted,
+            required_git_commit=args.required_git_commit or None,
+        )
         md_lines.extend(render_release_profile_section(profile_results))
 
     md = "\n".join(md_lines) + "\n"
@@ -600,6 +842,7 @@ def main() -> int:
                         rec["glim_wall_s"],
                         rec["ape_rmse_m"],
                         rec["ape_ok"],
+                        rec["provenance_status"],
                     ]
                 )
 
@@ -607,6 +850,13 @@ def main() -> int:
         if args.ape_threshold is None:
             print("error: --fail-on-ape-threshold requires --ape-threshold")
             return 1
+
+        if not threshold_records:
+            print(
+                "error: APE threshold gate has no eligible metrics.json "
+                "evidence"
+            )
+            return 2
 
         failing_runs = [
             rec["run"]
@@ -628,10 +878,28 @@ def main() -> int:
         if not args.release_profile:
             print("error: --fail-on-profiles requires --release-profile")
             return 1
-        failing = [r for r in profile_results if r["status"] == "FAIL"]
+        failing = [
+            r for r in profile_results
+            if (
+                r["status"] == "FAIL"
+                or (
+                    r["status"] == "NO_DATA"
+                    and not r.get("report_only_until")
+                )
+            )
+        ]
         if failing:
-            names = ", ".join(r["name"] for r in failing)
-            print(f"error: release profile gate FAILED for: {names}")
+            failures = ", ".join(
+                f"{r['name']} ({r['status']})"
+                for r in failing
+            )
+            print(f"error: release profile gate FAILED for: {failures}")
+            for result in failing:
+                if result.get("remediation"):
+                    print(
+                        f"hint: {result['name']}: "
+                        f"{result['remediation']}"
+                    )
             return 2
 
     return 0

@@ -2,10 +2,21 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-WS_ROOT="${REPO_ROOT}"
-if [[ ! -f "${WS_ROOT}/install/setup.bash" && -f "${REPO_ROOT}/../install/setup.bash" ]]; then
-  WS_ROOT="$(cd "${REPO_ROOT}/.." && pwd)"
+SOURCE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+if [[ -f "${SOURCE_ROOT}/lidarslam/package.xml" ]]; then
+  PACKAGE_SHARE="${SOURCE_ROOT}/lidarslam"
+  WORK_ROOT="${SOURCE_ROOT}"
+  WORKSPACE_SETUP=""
+  if [[ -f "${SOURCE_ROOT}/install/setup.bash" ]]; then
+    WORKSPACE_SETUP="${SOURCE_ROOT}/install/setup.bash"
+  elif [[ -f "${SOURCE_ROOT}/../install/setup.bash" ]]; then
+    WORKSPACE_SETUP="$(cd "${SOURCE_ROOT}/.." && pwd)/install/setup.bash"
+  fi
+else
+  PACKAGE_SHARE="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+  INSTALL_PREFIX="$(cd "${PACKAGE_SHARE}/../.." && pwd)"
+  WORK_ROOT="${PWD}"
+  WORKSPACE_SETUP="${INSTALL_PREFIX}/setup.bash"
 fi
 
 usage() {
@@ -58,6 +69,11 @@ die() {
   exit 1
 }
 
+require_rosbags() {
+  python3 -c 'import rosbags' >/dev/null 2>&1 || die \
+    "the packet_applanix_smoke profile requires the Python package 'rosbags'; see https://github.com/rsasaki0109/lidar_slam_ros2/blob/develop/docs/distribution.md#profile-specific-extras"
+}
+
 timestamp() {
   date +%Y%m%d_%H%M%S
 }
@@ -66,38 +82,18 @@ detect_topic_by_type() {
   local bag_path="$1"
   local msg_type="$2"
   local extra_msg_dir="${3:-}"
-  python3 - "${bag_path}" "${msg_type}" "${extra_msg_dir}" <<'PY'
-from pathlib import Path
-import sys
-
-from rosbags.highlevel import AnyReader
-from rosbags.typesys import Stores, get_typestore, get_types_from_msg
-
-bag_path = Path(sys.argv[1])
-msg_type = sys.argv[2]
-extra_msg_dir = Path(sys.argv[3]) if sys.argv[3] else None
-best_topic = ''
-best_count = -1
-typestore = get_typestore(Stores.LATEST)
-
-if extra_msg_dir is not None:
-    package_name = extra_msg_dir.parent.name
-    for path in sorted(extra_msg_dir.glob('*.msg')):
-        text = path.read_text(encoding='utf-8')
-        typestore.register(get_types_from_msg(text, f'{package_name}/msg/{path.stem}'))
-
-with AnyReader([bag_path], default_typestore=typestore) as reader:
-    for connection in reader.connections:
-        if connection.msgtype != msg_type:
-            continue
-        message_count = getattr(connection, 'msgcount', 0)
-        if message_count > best_count:
-            best_count = message_count
-            best_topic = connection.topic
-
-if best_topic:
-    print(best_topic)
-PY
+  local preferred_substring="${4:-}"
+  local args=(
+    --bag "${bag_path}"
+    --msg-type "${msg_type}"
+  )
+  if [[ -n "${extra_msg_dir}" ]]; then
+    args+=(--extra-msg-dir "${extra_msg_dir}")
+  fi
+  if [[ -n "${preferred_substring}" ]]; then
+    args+=(--preferred-substring "${preferred_substring}")
+  fi
+  python3 "${SCRIPT_DIR}/select_rosbag_topic.py" "${args[@]}"
 }
 
 detect_first_header_frame() {
@@ -210,11 +206,44 @@ call_map_save_with_retry() {
   return 1
 }
 
+stage_playback_bag() {
+  local bag_path="$1"
+  local staging_root="$2"
+  local output_variable="$3"
+  local playback_path=""
+  playback_path="$(python3 "${SCRIPT_DIR}/prepare_rosbag2_playback.py" \
+    stage \
+    --bag "${bag_path}" \
+    --staging-root "${staging_root}")"
+  printf -v "${output_variable}" '%s' "${playback_path}"
+  if [[ "${playback_path}" != "${bag_path}" ]]; then
+    STAGED_PLAYBACK_DIRS+=("${playback_path}")
+  fi
+}
+
+cleanup_playback_staging() {
+  local staging_path=""
+  for staging_path in "${STAGED_PLAYBACK_DIRS[@]}"; do
+    if [[ -d "${staging_path}" ]]; then
+      if ! python3 "${SCRIPT_DIR}/prepare_rosbag2_playback.py" \
+        cleanup \
+        --path "${staging_path}" \
+        --staging-root "${SAVE_DIR}"
+      then
+        echo "warning: failed to remove playback staging: ${staging_path}" >&2
+      fi
+    fi
+  done
+}
+
 ensure_velodyne_overlay() {
   local overlay_dir="$1"
   local ros_distro_name="$2"
 
-  if [[ -f "${overlay_dir}/install/setup.bash" ]]; then
+  if bash "${SCRIPT_DIR}/prepare_velodyne_pointcloud_overlay.sh" \
+    --overlay-dir "${overlay_dir}" \
+    --check >/dev/null 2>&1
+  then
     return 0
   fi
   bash "${SCRIPT_DIR}/prepare_velodyne_pointcloud_overlay.sh" \
@@ -271,7 +300,7 @@ APPLANIX_MSG_DIR="/tmp/applanix/applanix_msgs/msg"
 VELODYNE_OVERLAY="/tmp/velodyne_ws"
 VELODYNE_MODEL="VLP16"
 VELODYNE_CALIBRATION=""
-PARAM_FILE="${REPO_ROOT}/lidarslam/param/lidarslam.yaml"
+PARAM_FILE="${PACKAGE_SHARE}/param/lidarslam.yaml"
 SAVE_DIR=""
 RATE="5.0"
 PLAY_WALL_SEC="60"
@@ -344,7 +373,7 @@ done
 [[ -f "${PARAM_FILE}" ]] || die "param file not found: ${PARAM_FILE}"
 
 if [[ -z "${SAVE_DIR}" ]]; then
-  SAVE_DIR="${REPO_ROOT}/output/open_data_gnss_smoke_$(timestamp)"
+  SAVE_DIR="${WORK_ROOT}/output/open_data_gnss_smoke_$(timestamp)"
 fi
 mkdir -p "${SAVE_DIR}"
 
@@ -366,15 +395,16 @@ VELODYNE_MSG_DIR="$(resolve_velodyne_msg_dir "${VELODYNE_OVERLAY}")" || {
 set +u
 # shellcheck source=/dev/null
 source "/opt/ros/${ROS_DISTRO_NAME}/setup.bash"
-if [[ -f "${WS_ROOT}/install/setup.bash" ]]; then
+if [[ -n "${WORKSPACE_SETUP}" && -f "${WORKSPACE_SETUP}" ]]; then
   # shellcheck source=/dev/null
-  source "${WS_ROOT}/install/setup.bash"
+  source "${WORKSPACE_SETUP}"
 fi
 # shellcheck source=/dev/null
 source "${VELODYNE_OVERLAY}/install/setup.bash"
 set -u
 
 command -v ros2 >/dev/null 2>&1 || die "ros2 not found"
+require_rosbags
 ros2 pkg executables velodyne_pointcloud | grep -q 'velodyne_transform_node' || {
   die "velodyne_transform_node not available after sourcing ${VELODYNE_OVERLAY}"
 }
@@ -383,7 +413,8 @@ if [[ -z "${PACKET_TOPIC}" ]]; then
   PACKET_TOPIC="$(detect_topic_by_type \
     "${BAG_PATH}" \
     "velodyne_msgs/msg/VelodyneScan" \
-    "${VELODYNE_MSG_DIR}")"
+    "${VELODYNE_MSG_DIR}" \
+    "/front/")"
 fi
 [[ -n "${PACKET_TOPIC}" ]] || die "failed to detect VelodyneScan topic"
 
@@ -484,6 +515,10 @@ MAIN_PLAY_PID=""
 GNSS_PLAY_PID=""
 IMU_PLAY_PID=""
 VELODYNE_PID=""
+STAGED_PLAYBACK_DIRS=()
+MAIN_PLAY_BAG=""
+GNSS_PLAY_BAG=""
+IMU_PLAY_BAG=""
 cleanup() {
   for pid in "${IMU_PLAY_PID}" "${GNSS_PLAY_PID}" "${MAIN_PLAY_PID}" "${VELODYNE_PID}" "${LAUNCH_PID}"; do
     if [[ -n "${pid}" ]]; then
@@ -492,8 +527,15 @@ cleanup() {
     fi
   done
   rm -f "${TMP_PARAM}" "${VELODYNE_PARAM}" "${QOS_FILE}"
+  cleanup_playback_staging
 }
 trap cleanup EXIT INT TERM
+
+stage_playback_bag "${BAG_PATH}" "${SAVE_DIR}" MAIN_PLAY_BAG
+stage_playback_bag "${GNSS_BAG}" "${SAVE_DIR}" GNSS_PLAY_BAG
+if [[ "${USE_IMU,,}" == "true" ]]; then
+  stage_playback_bag "${IMU_BAG}" "${SAVE_DIR}" IMU_PLAY_BAG
+fi
 
 echo "Running Applanix + Velodyne GNSS smoke:"
 echo "  bag:                 ${BAG_PATH}"
@@ -510,6 +552,9 @@ fi
 echo "  velodyne_model:      ${VELODYNE_MODEL}"
 echo "  velodyne_calibration:${VELODYNE_CALIBRATION}"
 echo "  robot_frame:         ${ROBOT_FRAME_ID}"
+if [[ "${MAIN_PLAY_BAG}" != "${BAG_PATH}" ]]; then
+  echo "  playback_staging:    isolated FILE-compressed bag"
+fi
 echo "  save_dir:            ${SAVE_DIR}"
 
 ros2 run velodyne_pointcloud velodyne_transform_node \
@@ -538,7 +583,7 @@ LAUNCH_PID="$!"
 
 sleep 5
 
-timeout "${PLAY_WALL_SEC}" ros2 bag play "${BAG_PATH}" \
+timeout "${PLAY_WALL_SEC}" ros2 bag play "${MAIN_PLAY_BAG}" \
   --clock \
   --rate "${RATE}" \
   --topics "${PACKET_TOPIC}" \
@@ -546,13 +591,13 @@ timeout "${PLAY_WALL_SEC}" ros2 bag play "${BAG_PATH}" \
   >"${MAIN_PLAY_LOG}" 2>&1 &
 MAIN_PLAY_PID="$!"
 
-timeout "${PLAY_WALL_SEC}" ros2 bag play "${GNSS_BAG}" \
+timeout "${PLAY_WALL_SEC}" ros2 bag play "${GNSS_PLAY_BAG}" \
   --rate "${RATE}" \
   >"${GNSS_PLAY_LOG}" 2>&1 &
 GNSS_PLAY_PID="$!"
 
 if [[ "${USE_IMU,,}" == "true" ]]; then
-  timeout "${PLAY_WALL_SEC}" ros2 bag play "${IMU_BAG}" \
+  timeout "${PLAY_WALL_SEC}" ros2 bag play "${IMU_PLAY_BAG}" \
     --rate "${RATE}" \
     >"${IMU_PLAY_LOG}" 2>&1 &
   IMU_PLAY_PID="$!"
@@ -576,7 +621,7 @@ if ! call_map_save_with_retry "${MAP_SAVE_LOG}"; then
 fi
 
 if [[ "${VERIFY_MAP}" == "true" ]]; then
-  python3 "${REPO_ROOT}/scripts/verify_autoware_map.py" "${SAVE_DIR}" >"${VERIFY_LOG}" 2>&1
+  python3 "${SCRIPT_DIR}/verify_autoware_map.py" "${SAVE_DIR}" >"${VERIFY_LOG}" 2>&1
 fi
 
 if [[ -f "${SAVE_DIR}/map_projector_info.yaml" ]]; then

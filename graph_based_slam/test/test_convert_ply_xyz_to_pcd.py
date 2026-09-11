@@ -35,7 +35,15 @@ from pathlib import Path
 import struct
 
 import numpy as np
+import pytest
 
+try:
+    import open3d  # noqa: F401
+    HAS_OPEN3D = True
+except ImportError:  # pragma: no cover - environment dependent
+    HAS_OPEN3D = False
+
+pytestmark = pytest.mark.skipif(not HAS_OPEN3D, reason='open3d is not installed')
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / 'scripts' / 'convert_ply_xyz_to_pcd.py'

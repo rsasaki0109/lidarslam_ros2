@@ -1,0 +1,207 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/preflight-v4.schema.json",
+  "title": "lidarslam_ros2 preflight v4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "summary",
+    "recommendations",
+    "recommended_profile_id",
+    "beginner_commands",
+    "advisory",
+    "findings",
+    "missing_requirements"
+  ],
+  "properties": {
+    "schema_version": {"const": 4},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/preflight-v4.schema.json"
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "bag_path",
+        "topics",
+        "capabilities",
+        "pointcloud_inspection",
+        "timestamp_order"
+      ],
+      "properties": {
+        "pointcloud_inspection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "topic",
+            "fields",
+            "rko_lio_compatible",
+            "timestamp_field",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "not_applicable",
+                "unavailable",
+                "error",
+                "empty",
+                "inspected"
+              ]
+            },
+            "topic": {"type": ["string", "null"]},
+            "frame_id": {"type": ["string", "null"]},
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "datatype", "count"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "datatype": {"type": "integer"},
+                  "count": {"type": "integer", "minimum": 0}
+                }
+              }
+            },
+            "rko_lio_compatible": {"type": ["boolean", "null"]},
+            "timestamp_field": {"type": ["string", "null"]},
+            "reason": {"type": "string", "minLength": 1}
+          }
+        },
+        "timestamp_order": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "timestamp_source",
+            "max_records_per_topic",
+            "failed_topics",
+            "topics",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "not_applicable",
+                "unavailable",
+                "error",
+                "failed",
+                "sampled",
+                "passed"
+              ]
+            },
+            "timestamp_source": {"const": "header.stamp"},
+            "max_records_per_topic": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "failed_topics": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"type": "string", "minLength": 1}
+            },
+            "topics": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "topic",
+                  "msg_type",
+                  "expected_records",
+                  "records_scanned",
+                  "complete",
+                  "readable",
+                  "first_stamp_ns",
+                  "last_stamp_ns",
+                  "reversal_count",
+                  "invalid_stamp_count",
+                  "max_backward_jump_ns"
+                ],
+                "properties": {
+                  "topic": {"type": "string", "minLength": 1},
+                  "msg_type": {
+                    "enum": [
+                      "sensor_msgs/msg/PointCloud2",
+                      "sensor_msgs/msg/Imu"
+                    ]
+                  },
+                  "expected_records": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "records_scanned": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "complete": {"type": "boolean"},
+                  "readable": {"type": "boolean"},
+                  "first_stamp_ns": {
+                    "type": ["integer", "null"],
+                    "minimum": 0
+                  },
+                  "last_stamp_ns": {
+                    "type": ["integer", "null"],
+                    "minimum": 0
+                  },
+                  "reversal_count": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "invalid_stamp_count": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "max_backward_jump_ns": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "frame_id": {"type": ["string", "null"]},
+                  "frame_ids": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {"type": "string", "minLength": 1}
+                  }
+                }
+              }
+            },
+            "reason": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "recommended_profile_id": {"type": ["string", "null"]},
+    "beginner_commands": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "advisory": {"type": "array"},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "next_action"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "message": {"type": "string", "minLength": 1},
+          "next_action": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "missing_requirements": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

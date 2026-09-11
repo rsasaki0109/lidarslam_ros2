@@ -1,0 +1,155 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/social-demo-media-manifest-v1.schema.json",
+  "title": "lidarslam_ros2 generated social demo media manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "repository",
+    "source_revision",
+    "product_version",
+    "content_contract",
+    "canonical_docs",
+    "commands",
+    "video",
+    "captions",
+    "post_copy",
+    "source_images",
+    "claims",
+    "publication_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/social-demo-media-manifest-v1.schema.json"
+    },
+    "status": {"enum": ["LOCAL_PREVIEW", "PUBLICATION_CANDIDATE"]},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "product_version": {"const": "0.9.1"},
+    "content_contract": {"$ref": "#/definitions/repository_artifact"},
+    "canonical_docs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_path", "url"],
+      "properties": {
+        "source_path": {"const": "docs/getting-started.md"},
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/blob/[0-9a-f]{40}/docs/getting-started\\.md$"
+        }
+      }
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixed_demo", "own_bag"],
+      "properties": {
+        "fixed_demo": {"const": "lidarslam-map demo"},
+        "own_bag": {"const": "lidarslam-map start /path/to/rosbag2"}
+      }
+    },
+    "video": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "size_bytes",
+        "sha256",
+        "codec",
+        "width",
+        "height",
+        "fps",
+        "duration_seconds"
+      ],
+      "properties": {
+        "path": {"const": "social_autoware_map_authoring_demo.mp4"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "codec": {"const": "h264"},
+        "width": {"const": 1280},
+        "height": {"const": 720},
+        "fps": {"const": 24},
+        "duration_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 180}
+      }
+    },
+    "captions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "size_bytes",
+        "sha256",
+        "language",
+        "format",
+        "cue_count"
+      ],
+      "properties": {
+        "path": {"const": "social_autoware_map_authoring_demo.en.vtt"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "language": {"const": "en"},
+        "format": {"const": "text/vtt"},
+        "cue_count": {"const": 4}
+      }
+    },
+    "post_copy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256", "languages"],
+      "properties": {
+        "path": {"const": "autoware_map_authoring_post_v0.9.1.md"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "languages": {"const": ["ja", "en"]}
+      }
+    },
+    "source_images": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/repository_artifact"}
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerical_performance_claims",
+        "release_claim",
+        "package_availability_claim",
+        "sensor_compatibility_claim"
+      ],
+      "properties": {
+        "numerical_performance_claims": {"const": false},
+        "release_claim": {"const": false},
+        "package_availability_claim": {"const": false},
+        "sensor_compatibility_claim": {"const": false}
+      }
+    },
+    "publication_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_publication_authorized", "writes_performed"],
+      "properties": {
+        "external_publication_authorized": {"const": false},
+        "writes_performed": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "repository_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^[A-Za-z0-9._/-]+$"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

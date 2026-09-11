@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/install-upgrade-v1.schema.json",
+  "title": "lidarslam_ros2 install upgrade evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "started_at",
+    "finished_at",
+    "duration_sec",
+    "hardware_label",
+    "ros_distro",
+    "baseline",
+    "candidate",
+    "builds",
+    "validation",
+    "snapshots",
+    "checks"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/install-upgrade-v1.schema.json"
+    },
+    "status": {"enum": ["passed", "failed"]},
+    "started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {"type": "string", "format": "date-time"},
+    "duration_sec": {"type": "number", "minimum": 0},
+    "hardware_label": {"type": "string", "minLength": 1},
+    "ros_distro": {"enum": ["humble", "jazzy"]},
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference",
+        "commit",
+        "package_version",
+        "owned_file_count",
+        "has_product_cli"
+      ],
+      "properties": {
+        "reference": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "package_version": {"type": "string", "minLength": 1},
+        "owned_file_count": {"type": "integer", "minimum": 1},
+        "has_product_cli": {"type": "boolean"}
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "dirty", "package_version"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "dirty": {"type": "boolean"},
+        "package_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "builds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "upgrade", "fresh"],
+      "properties": {
+        "baseline": {"$ref": "#/definitions/execution"},
+        "upgrade": {"$ref": "#/definitions/execution"},
+        "fresh": {"$ref": "#/definitions/execution"}
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["upgrade", "fresh"],
+      "properties": {
+        "upgrade": {"$ref": "#/definitions/execution"},
+        "fresh": {"$ref": "#/definitions/execution"}
+      }
+    },
+    "snapshots": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "upgraded_file_count",
+        "fresh_file_count",
+        "stale_paths",
+        "missing_paths",
+        "mismatched_paths"
+      ],
+      "properties": {
+        "upgraded_file_count": {"type": "integer", "minimum": 1},
+        "fresh_file_count": {"type": "integer", "minimum": 1},
+        "stale_paths": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "missing_paths": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "mismatched_paths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "fields"],
+            "properties": {
+              "path": {"type": "string", "minLength": 1},
+              "fields": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "enum": [
+                    "kind",
+                    "executable",
+                    "normalized_text_sha256"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "passed", "observed"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "passed": {"type": "boolean"},
+          "observed": {"type": "string"}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exit_code",
+        "duration_sec",
+        "log",
+        "log_sha256"
+      ],
+      "properties": {
+        "exit_code": {"type": "integer"},
+        "duration_sec": {"type": "number", "minimum": 0},
+        "log": {"type": "string", "minLength": 1},
+        "log_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

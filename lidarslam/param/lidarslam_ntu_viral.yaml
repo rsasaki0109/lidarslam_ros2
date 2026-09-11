@@ -1,0 +1,88 @@
+scan_matcher:
+  ros__parameters:
+    global_frame_id: "map"
+    robot_frame_id: "base_link"
+    registration_method: "NDT"
+    ndt_resolution: 2.0
+    ndt_num_threads: 2
+    gicp_corr_dist_threshold: 5.0
+    trans_for_mapupdate: 1.5
+    vg_size_for_input: 0.5
+    vg_size_for_map: 0.1
+    use_min_max_filter: true
+    scan_min_range: 1.0
+    scan_max_range: 200.0
+    scan_period: 0.2
+    map_publish_period: 15.0
+    num_targeted_cloud: 20
+    set_initial_pose: true
+    initial_pose_x: 0.0
+    initial_pose_y: 0.0
+    initial_pose_z: 0.0
+    initial_pose_qx: 0.0
+    initial_pose_qy: 0.0
+    initial_pose_qz: 0.0
+    initial_pose_qw: 1.0
+    use_imu: false
+    use_odom: false
+    odom_prior_planar: false
+    odom_prior_translation_only: false
+    odom_prior_suspect_recovery_only: false
+    odom_prior_weight: 1.0
+    debug_flag: false
+
+graph_based_slam:
+    ros__parameters:
+      registration_method: "NDT"
+      ndt_resolution: 1.0
+      ndt_num_threads: 2
+      voxel_leaf_size: 0.1
+      threshold_loop_closure_score: 0.7
+      distance_loop_closure: 100.0
+      range_of_searching_loop_closure: 20.0
+      search_submap_num: 2
+      loop_search_query_stride: 1
+      max_loop_candidate_count: 3
+      loop_edge_dedup_index_window: 8
+      # Tnp_01 clean validation rejects larger mainly-vertical corrections:
+      # raw 0.99685 m -> dense graph-corrected 0.96421 m with this cap.
+      loop_max_translation_delta: 0.3
+      loop_max_rotation_delta_deg: 2.0
+      loop_min_overlap_ratio: 0.76
+      loop_min_overlap_ratio_large_correction: 0.0
+      loop_overlap_large_correction_translation_m: 0.0
+      loop_overlap_max_distance_m: 0.5
+      num_adjacent_pose_cnstraints: 5
+      # RKO-LIO processes this offline bag faster than sensor time. A long NDT
+      # loop query can therefore block the single graph executor long enough
+      # to overflow the generic 100-pair history. Pacing below plus a bounded
+      # 1024-pair history covers the measured worst burst; the benchmark drain
+      # barrier then waits until it is consumed.
+      odom_cloud_sync_queue_size: 1024
+      # The benchmark performs one explicit /map_save after graph quiescence.
+      # Synchronous PCD bundle writes inside each accepted loop closure block
+      # the subscription executor and can overflow even a deep input history.
+      use_save_map_in_loop: false
+      map_leaf_size: 0.1
+      adjacent_edge_info_weight: 1000.0
+      use_gnss: false
+      gnss_topic: "/gnss/fix"
+      gnss_info_weight: 1.0
+      gnss_use_covariance_weighting: true
+      gnss_covariance_min_variance_m2: 0.01
+      gnss_covariance_max_variance_m2: 25.0
+      gnss_rtk_fix_max_horizontal_stddev_m: 0.3
+      gnss_rtk_fix_weight_scale: 3.0
+      gnss_non_rtk_weight_scale: 1.0
+      use_dynamic_object_filter: false
+      dynamic_object_filter_voxel_size: 0.3
+      dynamic_object_filter_min_observations: 2
+      dynamic_object_filter_temporal_window: 5
+      dynamic_object_filter_max_range_from_sensor_m: 30.0
+      use_planar_map_filter: true
+      planar_map_filter_voxel_size: 0.1
+      planar_map_filter_min_neighbors: 3
+      planar_map_filter_max_small_eigenvalue_ratio: 0.24
+      planar_map_filter_min_middle_eigenvalue_ratio: 0.0
+      planar_map_filter_min_retained_ratio: 0.90
+      debug_flag: true

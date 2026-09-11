@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>graph_based_slam</name>
-  <version>0.6.0</version>
+  <version>0.9.1</version>
   <description>ros2 package of graph based slam</description>
   <maintainer email="rsasaki0109@gmail.com">sasaki</maintainer>
   <license>BSD-2-Clause</license>
@@ -11,7 +11,6 @@
 
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>rcl_interfaces</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2_ros</depend>
@@ -23,16 +22,16 @@
   <depend>message_filters</depend>
   <depend>rosbag2_cpp</depend>
   <depend>ndt_omp_ros2</depend>
-  <depend>lidarslam_plugin_interfaces</depend>
-  <depend>lidarslam_registration_loader</depend>
-  <depend>lidarslam_default_plugins</depend>
   <depend>libg2o</depend>
   <depend>libpcl-all-dev</depend>
+
+  <exec_depend>python3-imageio</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>python3-jsonschema</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

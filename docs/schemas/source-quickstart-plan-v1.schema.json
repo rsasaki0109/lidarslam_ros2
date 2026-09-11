@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/source-quickstart-plan-v1.schema.json",
+  "title": "lidarslam_ros2 source quickstart dry-run plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "plan_mode",
+    "status",
+    "ready",
+    "repository",
+    "workspace",
+    "ros",
+    "options",
+    "preflight",
+    "planned_actions",
+    "commands",
+    "side_effects"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/source-quickstart-plan-v1.schema.json"
+    },
+    "plan_mode": {"const": "dry_run"},
+    "status": {"const": "ready"},
+    "ready": {"const": true},
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "packages", "package_count"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "packages": {
+          "const": [
+            "graph_based_slam",
+            "lidarslam",
+            "lidarslam_msgs",
+            "ndt_omp_ros2",
+            "rko_lio",
+            "scanmatcher"
+          ]
+        },
+        "package_count": {"const": 6}
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "build_path",
+        "install_path",
+        "log_path",
+        "demo_root"
+      ],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "build_path": {"type": "string", "minLength": 1},
+        "install_path": {"type": "string", "minLength": 1},
+        "log_path": {"type": "string", "minLength": 1},
+        "demo_root": {"type": "string", "minLength": 1}
+      }
+    },
+    "ros": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["distribution", "setup_path"],
+      "properties": {
+        "distribution": {"enum": ["humble", "jazzy"]},
+        "setup_path": {"type": "string", "minLength": 1}
+      }
+    },
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["build_only", "viewer"],
+      "properties": {
+        "build_only": {"type": "boolean"},
+        "viewer": {"enum": ["browser", "none"]}
+      }
+    },
+    "preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["submodules", "tools", "package_inventory"],
+      "properties": {
+        "submodules": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["required", "missing"],
+          "properties": {
+            "required": {
+              "const": [
+                "Thirdparty/ndt_omp_ros2/package.xml",
+                "Thirdparty/rko_lio/package.xml"
+              ]
+            },
+            "missing": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "tools": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["required", "missing"],
+          "properties": {
+            "required": {"const": ["rosdep", "colcon"]},
+            "missing": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "package_inventory": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expected", "verified_during_live_run"],
+          "properties": {
+            "expected": {
+              "const": [
+                "graph_based_slam",
+                "lidarslam",
+                "lidarslam_msgs",
+                "ndt_omp_ros2",
+                "rko_lio",
+                "scanmatcher"
+              ]
+            },
+            "verified_during_live_run": {"const": false}
+          }
+        }
+      }
+    },
+    "planned_actions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "initialize_submodules",
+        "install_tools",
+        "install_repository_dependencies",
+        "build_workspace",
+        "run_fixed_demo"
+      ],
+      "properties": {
+        "initialize_submodules": {"type": "boolean"},
+        "install_tools": {"type": "boolean"},
+        "install_repository_dependencies": {"const": true},
+        "build_workspace": {"const": true},
+        "run_fixed_demo": {"type": "boolean"}
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "array",
+        "minItems": 1,
+        "items": {"type": "string"}
+      }
+    },
+    "side_effects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_accessed",
+        "apt_executed",
+        "submodule_checkout",
+        "workspace_build_executed",
+        "demo_executed",
+        "filesystem_writes"
+      ],
+      "properties": {
+        "network_accessed": {"const": false},
+        "apt_executed": {"const": false},
+        "submodule_checkout": {"const": false},
+        "workspace_build_executed": {"const": false},
+        "demo_executed": {"const": false},
+        "filesystem_writes": {"const": false}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "options": {
+            "properties": {"build_only": {"const": true}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "planned_actions": {
+            "properties": {"run_fixed_demo": {"const": false}}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "options": {
+            "properties": {"build_only": {"const": false}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "planned_actions": {
+            "properties": {"run_fixed_demo": {"const": true}}
+          }
+        }
+      }
+    }
+  ]
+}

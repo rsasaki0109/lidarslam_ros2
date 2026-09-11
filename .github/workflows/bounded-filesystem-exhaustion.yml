@@ -1,0 +1,180 @@
+name: bounded filesystem exhaustion
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - .github/workflows/bounded-filesystem-exhaustion.yml
+      - Dockerfile
+      - Thirdparty/ndt_omp_ros2/**
+      - Thirdparty/rko_lio/**
+      - configs/**
+      - docs/schemas/bounded-filesystem-exhaustion-v1.schema.json
+      - graph_based_slam/**
+      - lidarslam/**
+      - lidarslam_msgs/**
+      - scanmatcher/**
+      - docker/entrypoint.sh
+      - scripts/diagnose_autoware_map_run.py
+      - scripts/download_mid360_robot_public_dataset.py
+      - scripts/run_autoware_map_from_bag.py
+      - scripts/run_bounded_filesystem_exhaustion.py
+  schedule:
+    - cron: '41 18 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bounded-filesystem-exhaustion-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  driving-slam-mid360:
+    name: pinned MID-360 real ENOSPC
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install evidence dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-jsonschema python3-yaml
+
+      - name: Restore pinned dataset archive
+        uses: actions/cache@v5
+        with:
+          path: datasets/real-data-e2e/driving_slam_mid360/archives/rosbag2_2024_04_16-14_17_01.zip
+          key: driving-slam-mid360-517088133-0836c50859bb1af591966b69da166186
+
+      - name: Download and verify pinned real bag
+        shell: bash
+        run: |
+          python3 scripts/download_mid360_robot_public_dataset.py \
+            --dataset driving_slam_mid360 \
+            --dataset-root datasets/real-data-e2e \
+            --output-dir output/bounded-filesystem/intake
+
+      - name: Build the installed Jazzy product image
+        shell: bash
+        run: |
+          docker build \
+            --build-arg ROS_DISTRO=jazzy \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --tag "lidarslam-enospc:${GITHUB_SHA}" \
+            .
+
+      - name: Run real bounded-filesystem exhaustion gate
+        shell: bash
+        run: |
+          bag="datasets/real-data-e2e/driving_slam_mid360/extracted/rosbag2_2024_04_16-14_17_01/rosbag2_2024_04_16-14_17_01"
+          mkdir -p output/bounded-filesystem/evidence
+          python3 scripts/run_bounded_filesystem_exhaustion.py \
+            "${bag}" \
+            --image "lidarslam-enospc:${GITHUB_SHA}" \
+            --tmpfs-mib 32 \
+            --timeout-secs 600 \
+            --hardware-label github-hosted-ubuntu-24.04-amd64-jazzy \
+            --evidence-dir output/bounded-filesystem/evidence
+
+      - name: Validate evidence schema
+        if: always()
+        shell: bash
+        run: |
+          report="output/bounded-filesystem/evidence/bounded_filesystem_exhaustion_report.json"
+          if [[ ! -f "${report}" ]]; then
+            echo "bounded filesystem report was not produced" >&2
+            exit 1
+          fi
+          python3 - "${report}" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          import jsonschema
+
+          report = json.loads(Path(sys.argv[1]).read_text())
+          schema = json.loads(
+              Path(
+                  'docs/schemas/'
+                  'bounded-filesystem-exhaustion-v1.schema.json'
+              ).read_text()
+          )
+          jsonschema.validate(report, schema)
+          jsonschema.validate(
+              report['observed']['manifest'],
+              json.loads(
+                  Path('docs/schemas/run-manifest-v2.schema.json').read_text()
+              ),
+          )
+          jsonschema.validate(
+              report['observed']['diagnosis'],
+              json.loads(
+                  Path('docs/schemas/diagnosis-v1.schema.json').read_text()
+              ),
+          )
+          if report['status'] != 'passed':
+              raise SystemExit('bounded filesystem report did not pass')
+          print('bounded filesystem evidence: PASS')
+          PY
+
+      - name: Publish evidence summary
+        if: always()
+        shell: bash
+        run: |
+          report="output/bounded-filesystem/evidence/bounded_filesystem_exhaustion_report.json"
+          if [[ -f "${report}" ]]; then
+            python3 - "${report}" >> "${GITHUB_STEP_SUMMARY}" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+
+          report = json.loads(Path(sys.argv[1]).read_text())
+          print('## Bounded filesystem exhaustion')
+          print()
+          print(f"- Status: `{report['status']}`")
+          print(
+              '- Bounded capacity: '
+              f"`{report['bounded_filesystem']['limit_bytes']}` bytes"
+          )
+          print(
+              '- Product exit: '
+              f"`{report['execution']['container_exit_code']}`"
+          )
+          print()
+          for check in report['checks']:
+              marker = 'PASS' if check['passed'] else 'FAIL'
+              print(f"- {marker}: `{check['id']}` — {check['observed']}")
+          PY
+          else
+            echo "## Bounded filesystem report missing" \
+              >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Upload non-geometry evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: bounded-filesystem-exhaustion-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            docs/schemas/bounded-filesystem-exhaustion-v1.schema.json
+            datasets/real-data-e2e/driving_slam_mid360/mid360_robot_public_dataset_intake.json
+            datasets/real-data-e2e/driving_slam_mid360/mid360_robot_public_dataset_intake.md
+            output/bounded-filesystem/evidence/bounded_filesystem_exhaustion_report.json
+            output/bounded-filesystem/evidence/bounded_state.json
+            output/bounded-filesystem/evidence/container.log
+            output/bounded-filesystem/evidence/captured/run_manifest.json
+            output/bounded-filesystem/evidence/captured/autoware_map_diagnosis.json
+            output/bounded-filesystem/evidence/captured/autoware_map_diagnosis.md
+            output/bounded-filesystem/evidence/captured/verify_autoware_map.log
+            output/bounded-filesystem/evidence/captured/slam.launch.log
+            output/bounded-filesystem/evidence/captured/map_save.log

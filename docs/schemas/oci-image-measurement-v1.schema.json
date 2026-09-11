@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/oci-image-measurement-v1.schema.json",
+  "title": "lidarslam_ros2 verified OCI image measurement v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "archive",
+    "platform",
+    "image",
+    "verification",
+    "gate"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {"const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/oci-image-measurement-v1.schema.json"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "size_bytes", "sha256", "member_count"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "member_count": {"type": "integer", "minimum": 3}
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "architecture"],
+      "properties": {
+        "os": {"type": "string", "minLength": 1},
+        "architecture": {"type": "string", "minLength": 1}
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_digest",
+        "config_digest",
+        "layer_count",
+        "compressed_layer_bytes",
+        "uncompressed_layer_bytes",
+        "labels",
+        "layers"
+      ],
+      "properties": {
+        "manifest_digest": {"$ref": "#/definitions/digest"},
+        "config_digest": {"$ref": "#/definitions/digest"},
+        "layer_count": {"type": "integer", "minimum": 1},
+        "compressed_layer_bytes": {"type": "integer", "minimum": 1},
+        "uncompressed_layer_bytes": {"type": "integer", "minimum": 1},
+        "labels": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        "layers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/definitions/layer"}
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "safe_archive_members",
+        "descriptors_verified",
+        "diff_ids_verified",
+        "unreferenced_blobs",
+        "all_layers_gzip"
+      ],
+      "properties": {
+        "status": {"const": "PASS"},
+        "safe_archive_members": {"type": "integer", "minimum": 3},
+        "descriptors_verified": {"type": "integer", "minimum": 3},
+        "diff_ids_verified": {"type": "integer", "minimum": 1},
+        "unreferenced_blobs": {"const": 0},
+        "all_layers_gzip": {"const": true}
+      }
+    },
+    "gate": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/definitions/gate"}
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"gate": {"type": "null"}}},
+      "then": {"properties": {"status": {"const": "PASS"}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "gate": {
+            "type": "object",
+            "required": ["status"],
+            "properties": {"status": {"const": "PASS"}}
+          }
+        }
+      },
+      "then": {"properties": {"status": {"const": "PASS"}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "gate": {
+            "type": "object",
+            "required": ["status"],
+            "properties": {"status": {"const": "FAIL"}}
+          }
+        }
+      },
+      "then": {"properties": {"status": {"const": "FAIL"}}}
+    }
+  ],
+  "definitions": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "position",
+        "digest",
+        "media_type",
+        "compressed_bytes",
+        "diff_id",
+        "uncompressed_bytes"
+      ],
+      "properties": {
+        "position": {"type": "integer", "minimum": 1},
+        "digest": {"$ref": "#/definitions/digest"},
+        "media_type": {"const": "application/vnd.oci.image.layer.v1.tar+gzip"},
+        "compressed_bytes": {"type": "integer", "minimum": 1},
+        "diff_id": {"$ref": "#/definitions/digest"},
+        "uncompressed_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "baseline_reference",
+        "baseline_index_digest",
+        "baseline_manifest_digest",
+        "baseline_compressed_layer_bytes",
+        "minimum_reduction_percent",
+        "ceiling_compressed_layer_bytes",
+        "reduction_bytes",
+        "reduction_percent",
+        "margin_bytes"
+      ],
+      "properties": {
+        "status": {"enum": ["PASS", "FAIL"]},
+        "baseline_reference": {"type": "string", "minLength": 1},
+        "baseline_index_digest": {"$ref": "#/definitions/digest"},
+        "baseline_manifest_digest": {"$ref": "#/definitions/digest"},
+        "baseline_compressed_layer_bytes": {"type": "integer", "minimum": 1},
+        "minimum_reduction_percent": {"type": "number", "minimum": 0, "exclusiveMaximum": 100},
+        "ceiling_compressed_layer_bytes": {"type": "integer", "minimum": 1},
+        "reduction_bytes": {"type": "integer"},
+        "reduction_percent": {"type": "number"},
+        "margin_bytes": {"type": "integer"}
+      }
+    }
+  }
+}

@@ -7,6 +7,7 @@ OUT_DIR="${OUT_DIR:-/out}"
 RATE="${RATE:-1.0}"
 SHUTDOWN_GRACE_SECONDS="${SHUTDOWN_GRACE_SECONDS:-5}"
 SAVE_MAP="${SAVE_MAP:-0}"
+# MERGE: M6a10 opt-in path plus historical defaults.
 FAST_PROFILE="${FAST_PROFILE:-hilti22}"
 M6A10_FAST_V2=0
 
@@ -48,9 +49,24 @@ fi
 mkdir -p "${OUT_DIR}"
 source /runner/scripts/container_phase_evidence.sh
 source /runner/scripts/container_memory_evidence.sh
+MAPPING_LAUNCH_PATH="${MAPPING_LAUNCH:-}"
+MAPPING_MAP_LAUNCH_PATH="${MAPPING_MAP_LAUNCH:-}"
+
+mkdir -p "${OUT_DIR}"
+set +u
+source /opt/ros/noetic/setup.bash
+source /bench/catkin_ws/devel/setup.bash
+set -u
+export ROS_MASTER_URI=http://127.0.0.1:11311
+export ROS_HOME="${OUT_DIR}/ros_home"
+export ROS_LOG_DIR="${OUT_DIR}/ros_logs"
+mkdir -p "${ROS_HOME}" "${ROS_LOG_DIR}"
+if [[ "${SAVE_MAP}" == "1" ]]; then
+  mkdir -p /bench/FAST-LIVO2/Log/pcd
+fi
+
 write_status() { printf '%s\n' "$2" >"${OUT_DIR}/$1"; }
 cleanup() {
-  local exit_status=$?
   set +e
   for process_group in "${ODOM_PID:-}" "${MAPPER_PID:-}" "${ROSCORE_PID:-}"; do
     if [[ -n "${process_group}" ]]; then
@@ -58,6 +74,7 @@ cleanup() {
       kill -TERM "${process_group}" >/dev/null 2>&1 || true
     fi
   done
+# MERGE: M6a10 opt-in path plus historical defaults.
   # Do not use an unscoped `wait` here: the RSS sampler is an intentional
   # background child and is stopped by m6a10_phase_finalize below. Waiting for
   # every child first would deadlock the EXIT trap before evidence is written.
@@ -109,6 +126,8 @@ mkdir -p "${ROS_HOME}" "${ROS_LOG_DIR}"
 if [[ "${SAVE_MAP}" == "1" && "${M6A10_FAST_V2}" == 0 ]]; then
   mkdir -p /bench/FAST-LIVO2/Log/pcd
 fi
+  wait >/dev/null 2>&1 || true
+trap cleanup EXIT
 
 rosbag info --yaml "${BAG_PATH}" >"${OUT_DIR}/rosbag_info.yaml" 2>"${OUT_DIR}/rosbag_info.err"
 write_status rosbag_info_exit_status.txt "$?"
@@ -135,6 +154,7 @@ write_status master_ready.txt "${master_ready}"
 if [[ "${master_ready}" != 1 ]]; then exit 20; fi
 rosparam set use_sim_time true
 
+# MERGE: profile selection (ours) plus path overrides (develop).
 if [[ "${FAST_PROFILE}" == "ntu_viral" ]]; then
   MAPPING_LAUNCH=(fast_livo mapping_ouster_ntu.launch rviz:=false)
 elif [[ "${FAST_PROFILE}" == "hilti22" ]]; then
@@ -143,7 +163,12 @@ else
   echo "FAST_PROFILE is unsupported: ${FAST_PROFILE}" >&2
   exit 23
 fi
-if [[ "${SAVE_MAP}" == "1" && "${FAST_PROFILE}" == "hilti22" ]]; then
+if [[ -n "${MAPPING_LAUNCH_PATH}" ]]; then
+  MAPPING_LAUNCH=("${MAPPING_LAUNCH_PATH}")
+fi
+if [[ "${SAVE_MAP}" == "1" && -n "${MAPPING_MAP_LAUNCH_PATH}" ]]; then
+  MAPPING_LAUNCH=("${MAPPING_MAP_LAUNCH_PATH}")
+elif [[ "${SAVE_MAP}" == "1" ]]; then
   MAPPING_LAUNCH=(/runner/configs/fast_livo2/mapping_hesaixt32_hilti22_benchmark_map.launch)
 fi
 setsid bash /runner/scripts/run_with_resource_report.sh \

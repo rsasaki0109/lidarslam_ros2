@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "contract_id": "v43b-raw-intensity-place-identity-20260810",
+  "rationale": "Report-only, ground-truth-independent correction to v43. Exact-hash canonical ROS1 bags are screened for a real intensity channel, then every retained v42 geometry pass is challenged by overlap-local intensity texture before any edge can exist. Thresholds are global and frozen before real challenge scores are observed.",
+  "frames": {
+    "world": "map",
+    "body": "base_link",
+    "lidar_to_body_convention": "p_body=R_body_lidar*p_lidar+t_body_lidar"
+  },
+  "raw_pointcloud": {
+    "message_type": "sensor_msgs/msg/PointCloud2",
+    "height": 1,
+    "point_step_bytes": 48,
+    "little_endian": true,
+    "timestamp_source": "header.stamp",
+    "maximum_state_match_error_ns": 1000000,
+    "require_monotonic_header_timestamps": true,
+    "required_fields": [
+      {"name": "x", "offset": 0, "datatype": 7, "count": 1},
+      {"name": "y", "offset": 4, "datatype": 7, "count": 1},
+      {"name": "z", "offset": 8, "datatype": 7, "count": 1},
+      {"name": "intensity", "offset": 16, "datatype": 7, "count": 1},
+      {"name": "t", "offset": 20, "datatype": 6, "count": 1},
+      {"name": "reflectivity", "offset": 24, "datatype": 4, "count": 1},
+      {"name": "ring", "offset": 26, "datatype": 2, "count": 1},
+      {"name": "ambient", "offset": 28, "datatype": 4, "count": 1},
+      {"name": "range", "offset": 32, "datatype": 6, "count": 1}
+    ]
+  },
+  "intensity_health": {
+    "nonzero_epsilon": 1e-06,
+    "minimum_finite_fraction": 1.0,
+    "minimum_nonzero_fraction": 0.9,
+    "minimum_dynamic_range": 16.0,
+    "minimum_distinct_values": 32,
+    "distinct_value_cap": 256,
+    "distinct_samples_per_scan": 256,
+    "minimum_varying_scan_fraction": 0.9
+  },
+  "extraction": {
+    "minimum_range_m": 1.0,
+    "maximum_range_m": 50.0,
+    "voxel_size_m": 0.5,
+    "maximum_raw_points_per_scan": 200000,
+    "maximum_points_per_selected_scan": 12000,
+    "maximum_selected_scan_count": 256
+  },
+  "anchor": {
+    "minimum_translation_m": 1.5
+  },
+  "submap": {
+    "anchor_radius": 1,
+    "voxel_size_m": 0.5,
+    "maximum_points": 6000,
+    "cache_entries": 16,
+    "maximum_cache_bytes": 16777216
+  },
+  "identity": {
+    "sequence_offsets": [-6, -3, 0, 3, 6],
+    "maximum_correspondence_m": 0.5,
+    "minimum_mutual_correspondences": 128,
+    "minimum_mutual_correspondence_fraction": 0.05,
+    "minimum_overlap_intensity_dynamic_range": 16.0,
+    "minimum_overlap_intensity_standard_deviation": 5.0,
+    "minimum_overlap_local_pearson": 0.6,
+    "spatial_decoy_translation_m": 1.0,
+    "minimum_valid_spatial_decoys": 2,
+    "minimum_spatial_peak_margin": 0.08,
+    "require_every_sequence_pair": true
+  },
+  "legacy_challenge": {
+    "deduplication_index_window": 8,
+    "require_every_v42_geometry_pass": true
+  },
+  "memory": {
+    "maximum_message_bytes": 8388608,
+    "maximum_selected_cloud_bytes": 67108864,
+    "maximum_rss_mib": 256.0
+  },
+  "decision": {
+    "required_repetitions": 2,
+    "require_raw_intensity_on_every_sequence": true,
+    "maximum_legacy_challenge_survivors": 0,
+    "minimum_total_new_verified_constraints": 2,
+    "require_new_constraint_per_applicable_sequence": true
+  }
+}

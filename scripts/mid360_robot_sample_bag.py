@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-import math
-import shutil
 from dataclasses import asdict, dataclass
+import math
 from pathlib import Path
+import shutil
 from typing import Any
 
 import numpy as np
@@ -151,7 +151,7 @@ class Mid360SampleBagWriter:
             ))
         messages.sort(key=lambda item: (item[0], self._topic_priority(item[1])))
 
-        with Writer(output_path, version=9) as writer:
+        with Writer(output_path, version=8) as writer:
             connections = {
                 self._config.pointcloud_topic: writer.add_connection(
                     self._config.pointcloud_topic,
@@ -215,10 +215,10 @@ class Mid360SampleBagWriter:
     def _build_pointcloud(self, typestore: Any, stamp_ns: int, sequence_index: int) -> Any:
         PointField = typestore.types['sensor_msgs/msg/PointField']
         PointCloud2 = typestore.types['sensor_msgs/msg/PointCloud2']
-        point_step = 16
+        point_step = 20
         row_step = point_step * self._config.point_count
         data = np.zeros(row_step, dtype=np.uint8)
-        points = data.view(dtype=np.float32).reshape(self._config.point_count, 4)
+        points = data.view(dtype=np.float32).reshape(self._config.point_count, 5)
         phase = sequence_index * 0.1
         for point_index in range(self._config.point_count):
             angle = (2.0 * math.pi * point_index / self._config.point_count) + phase
@@ -227,6 +227,10 @@ class Mid360SampleBagWriter:
             points[point_index, 1] = radius * math.sin(angle)
             points[point_index, 2] = 0.2 + 0.01 * (point_index % 11)
             points[point_index, 3] = float((sequence_index + point_index) % 255) / 255.0
+            points[point_index, 4] = (
+                point_index
+                / (self._config.point_count * self._config.pointcloud_rate_hz)
+            )
 
         return PointCloud2(
             header=self._build_header(typestore, stamp_ns, self._config.lidar_frame),
@@ -237,6 +241,7 @@ class Mid360SampleBagWriter:
                 PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
                 PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
                 PointField(name='intensity', offset=12, datatype=PointField.FLOAT32, count=1),
+                PointField(name='time', offset=16, datatype=PointField.FLOAT32, count=1),
             ],
             is_bigendian=False,
             point_step=point_step,

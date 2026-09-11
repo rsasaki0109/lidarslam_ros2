@@ -37,7 +37,14 @@ import sys
 import numpy as np
 import pytest
 
-laspy = pytest.importorskip('laspy')
+try:
+    import laspy
+    HAS_LASPY = True
+except ImportError:  # pragma: no cover - environment dependent
+    laspy = None
+    HAS_LASPY = False
+
+pytestmark = pytest.mark.skipif(not HAS_LASPY, reason='laspy is not installed')
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOL_DIR = REPO_ROOT / 'tools' / 'gaussian_splatting'

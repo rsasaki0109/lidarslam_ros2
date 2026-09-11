@@ -1,0 +1,197 @@
+--- a/VoxelSLAM/src/voxelslam.cpp
++++ b/VoxelSLAM/src/voxelslam.cpp
+@@ -2111,7 +2111,7 @@
+   }
+ 
+   // Build the pose graph in loop closure
+-  void build_graph(gtsam::Values &initial, gtsam::NonlinearFactorGraph &graph, int cur_id, PGO_Edges &lp_edges, gtsam::noiseModel::Diagonal::shared_ptr default_noise, vector<int> &ids, vector<int> &stepsizes, int lpedge_enable)
++  void build_graph(gtsam::Values &initial, gtsam::NonlinearFactorGraph &graph, int cur_id, PGO_Edges &lp_edges, gtsam::noiseModel::Diagonal::shared_ptr default_noise, vector<int> &ids, vector<int> &stepsizes, int lpedge_enable, bool skip_odometry = false)
+   {
+     initial.clear(); graph = gtsam::NonlinearFactorGraph();
+     ids.clear();
+@@ -2129,7 +2129,7 @@
+         IMUST &xc = multimap_scanPoses[id]->at(j-bsize)->x;
+         gtsam::Pose3 pose3(gtsam::Rot3(xc.R), gtsam::Point3(xc.p));
+         initial.insert(j, pose3);
+-        if(j > bsize)
++        if(j > bsize && !skip_odometry)
+         {
+           gtsam::Vector samv6(6);
+           samv6 = multimap_scanPoses[ids[ii]]->at(j-1-bsize)->v6;
+@@ -2183,6 +2183,19 @@
+     {
+       // Stream locally optimized poses while releasing scan point vectors.
+       // The verified external backend owns loop acceptance for this candidate.
++      // GBA is enabled independently: keyframes are generated here so the
++      // global-mapping thread can run hierarchical BA for global alignment.
++      multimap_scanPoses.push_back(scanPoses);
++      multimap_keyframes.push_back(keyframes);
++      deque<ScanPose*> bl_local;
++      int buf_base = 0;
++      int keyframe_stride = 1;
++      double min_keyframe_distance = 0.5;
++      Eigen::Vector3d last_keyframe_pos = Eigen::Vector3d::Zero();
++      bool have_last_keyframe = false;
++      n.param<int>("Odometry/keyframe_stride", keyframe_stride, 1);
++      n.param<double>("Odometry/min_keyframe_distance",
++                      min_keyframe_distance, 0.5);
+       while(n.ok())
+       {
+         ScanPose *bl_head = nullptr;
+@@ -2196,7 +2209,48 @@
+ 
+         if(bl_head != nullptr)
+         {
+-          bl_head->pvec = nullptr;
++          bl_local.push_back(bl_head);
++          ++buf_base;
++          if((int)bl_local.size() >= win_size)
++          {
++            IMUST xc = bl_local.back()->x;
++            bool distance_ok = (!have_last_keyframe ||
++                (xc.p - last_keyframe_pos).norm() >= min_keyframe_distance);
++            if(distance_ok && buf_base % keyframe_stride == 0)
++            {
++              PVecPtr pptr(new PVec);
++              for(ScanPose *bl: bl_local)
++              {
++                Eigen::Vector3d delta_p = xc.R.transpose() * (bl->x.p - xc.p);
++                Eigen::Matrix3d delta_R = xc.R.transpose() * bl->x.R;
++                if(bl->pvec != nullptr)
++                {
++                  for(pointVar pv: *(bl->pvec))
++                  {
++                    pv.pnt = delta_R * pv.pnt + delta_p;
++                    pptr->push_back(pv);
++                  }
++                }
++              }
++              Keyframe *smp = new Keyframe(xc);
++              smp->id = buf_base - 1;
++              smp->jour = 0.0f;
++              down_sampling_pvec(*pptr, voxel_size / 10, *(smp->plptr));
++              if(smp->plptr->size() < 100)
++                printf("WARN: keyframe %d plptr size=%zu\n",
++                       buf_base - 1, smp->plptr->size());
++              mtx_keyframe.lock();
++              keyframes->push_back(smp);
++              mtx_keyframe.unlock();
++              last_keyframe_pos = xc.p;
++              have_last_keyframe = true;
++            }
++            for(int i=0; i<win_size; i++)
++            {
++              bl_local.front()->pvec = nullptr;
++              bl_local.pop_front();
++            }
++          }
+           scanPoses->push_back(bl_head);
+           continue;
+         }
+@@ -2205,6 +2259,29 @@
+         sleep(0.01);
+       }
+ 
++      if(!keyframes->empty() && !gba_edges1.edges.empty())
++      {
++        // Trigger one global HBA pass: the global-mapping thread consumes
++        // gba_edges1 and produces gba_edges2, then sets gba_flag back to zero.
++        // We then run the gtsam optimization and write corrected poses back.
++        // Only keyframe poses are inserted so every gtsam variable is
++        // constrained by at least one HBA edge (no isolated scans).
++        gtsam::Values initial;
++        gtsam::NonlinearFactorGraph graph;
++        vector<int> ids(1, 0), stepsizes;
++        int max_kf_id = 0;
++        for(Keyframe *kf: *keyframes)
++        {
++          max_kf_id = std::max(max_kf_id, kf->id);
++          IMUST &xc = scanPoses->at(kf->id)->x;
++          gtsam::Pose3 pose3(gtsam::Rot3(xc.R), gtsam::Point3(xc.p));
++          initial.insert(kf->id, pose3);
++        }
++        stepsizes.push_back(0);
++        stepsizes.push_back(max_kf_id + 1);
++        topDownProcess(initial, graph, ids, stepsizes);
++      }
++
+       if(is_save_map)
+         FileReaderWriter::instance().save_pose(
+             *scanPoses, bagname, "/alidarState.txt", savepath);
+@@ -2649,6 +2726,8 @@
+ 
+     double t0 = ros::Time::now().toSec();
+     while(gba_flag);
++    printf("topDownProcess: gba_edges1=%zu gba_edges2=%zu\n",
++           gba_edges1.edges.size(), gba_edges2.edges.size());
+     
+     for(PGO_Edge &edge: gba_edges1.edges)
+     {
+@@ -2691,6 +2770,8 @@
+     for(int i=0; i<5; i++) isam.update();
+     gtsam::Values results = isam.calculateEstimate();
+     int resultsize = results.size();
++    printf("topDownProcess: initial=%zu graph=%zu results=%d\n",
++           initial.size(), graph.size(), resultsize);
+ 
+     int idsize = ids.size();
+     for(int ii=0; ii<idsize; ii++)
+@@ -2758,6 +2839,11 @@
+     vector<double> gba_eigen_value_array_orig = gba_eigen_value_array;
+     double gba_min_eigen_value_orig = gba_min_eigen_value;
+     double gba_voxel_size_orig = gba_voxel_size;
++    if(smps.empty())
++      printf("HBA_add_edge: no smps\n");
++    else
++      printf("HBA_add_edge: n_smps=%d plptr0=%zu\n",
++             wdsize, smps[0]->plptr->size());
+ 
+     int up = 4;
+     int converge_flag = 0;
+@@ -2788,6 +2874,8 @@
+       opt_lsv.thd_num = thread_num;
+       vector<double> resis;
+       bool is_converge = opt_lsv.damping_iter(xs, voxhess, &hess, resis, up, is_display);
++      printf("HBA_iter: hess_norm=%.3e n=%d\n",
++             hess.norm(), (int)xs.size());
+       if(is_display)
+         printf("%lf\n", fabs(resis[0] - resis[1]) / resis[0]);
+       if((fabs(resis[0] - resis[1]) / resis[0] < converge_thre && is_converge) || (iterCnt == max_iter-2 && converge_flag == 0))
+@@ -2813,22 +2901,25 @@
+     {
+       bool isAdd = true;
+       Eigen::Matrix<double, 6, 1> v6;
++      double max_hc = 0.0;
+       for(int k=0; k<6; k++)
+       {
+         double hc = fabs(hess(6*i+k, 6*j+k));
++        max_hc = std::max(max_hc, hc);
+         if(hc < 1e-6) // 1e-6
+         {
+           isAdd = false; break;
+         }
+         v6[k] = 1.0 / hc;
+       }
+-
+       if(isAdd)
+       {
+         Keyframe &s1 = *smps[i]; Keyframe &s2 = *smps[j];
+         Eigen::Vector3d tra = xs[i].R.transpose() * (xs[j].p - xs[i].p);
+         Eigen::Matrix3d rot = xs[i].R.transpose() *  xs[j].R;
+         gba_edges.push(s1.mp, s2.mp, s1.id, s2.id, rot, tra, v6);
++        if(gba_edges.edges.size() < 5)
++          printf("EDGE added %d->%d max_hc=%.3e\n", s1.id, s2.id, max_hc);
+       }
+     }
+ 
+@@ -2890,7 +2981,9 @@
+   // The main thread of bottom up in global mapping
+   void thd_globalmapping(ros::NodeHandle &n)
+   {
+-    if(!loop_backend_enabled)
++    bool gba_enabled = true;
++    n.param<bool>("GBA/enable", gba_enabled, true);
++    if(!loop_backend_enabled && !gba_enabled)
+     {
+       while(n.ok() && !is_finish)
+         sleep(0.1);

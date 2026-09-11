@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/social-demo-media-v1.schema.json",
+  "title": "lidarslam_ros2 social demo media contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "product_version",
+    "docs_source_path",
+    "docs_url_template",
+    "maximum_duration_seconds",
+    "frame",
+    "commands",
+    "source_images",
+    "slides",
+    "publication_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/social-demo-media-v1.schema.json"
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "product_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "docs_source_path": {"const": "docs/getting-started.md"},
+    "docs_url_template": {
+      "const": "https://github.com/rsasaki0109/lidar_slam_ros2/blob/{source_revision}/docs/getting-started.md"
+    },
+    "maximum_duration_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 180},
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "fps", "slide_seconds", "fade_seconds"],
+      "properties": {
+        "width": {"const": 1280},
+        "height": {"const": 720},
+        "fps": {"const": 24},
+        "slide_seconds": {"type": "number", "minimum": 2, "maximum": 15},
+        "fade_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+      }
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixed_demo", "own_bag"],
+      "properties": {
+        "fixed_demo": {"const": "lidarslam-map demo"},
+        "own_bag": {"const": "lidarslam-map start /path/to/rosbag2"}
+      }
+    },
+    "source_images": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/source_image"}
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/slide"}
+    },
+    "publication_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_publication_authorized", "writes_performed"],
+      "properties": {
+        "external_publication_authorized": {"const": false},
+        "writes_performed": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "source_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "enum": [
+            "lidarslam/images/map.png",
+            "lidarslam/images/path.png",
+            "lidarslam/images/autoware_map_loader_proof.png"
+          ]
+        },
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "slide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "image", "eyebrow", "title", "body", "caption"],
+      "properties": {
+        "id": {"enum": ["promise", "beginner-path", "own-bag", "proof"]},
+        "image": {
+          "type": ["string", "null"],
+          "enum": [
+            "lidarslam/images/map.png",
+            "lidarslam/images/path.png",
+            "lidarslam/images/autoware_map_loader_proof.png",
+            null
+          ]
+        },
+        "eyebrow": {"type": "string", "minLength": 1, "maxLength": 80},
+        "title": {"type": "string", "minLength": 1, "maxLength": 100},
+        "body": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "caption": {"type": "string", "minLength": 1, "maxLength": 240}
+      }
+    }
+  }
+}

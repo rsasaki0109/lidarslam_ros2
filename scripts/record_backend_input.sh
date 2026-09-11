@@ -19,7 +19,7 @@ Usage:
   bash scripts/record_backend_input.sh --output-dir <dir> [options] -- <command...>
 
 Options:
-  --setup <setup.bash>       ROS/workspace setup (parent colcon workspace preferred)
+  --setup <setup.bash>       ROS/workspace setup override (active environment is accepted)
   --flush-timeout <seconds>  Recorder SIGINT flush timeout (default: 60)
 
 The output directory must not already contain a rosbag. The wrapped command and
@@ -42,16 +42,25 @@ done
 
 [[ -n "${OUTPUT_DIR}" && ${#COMMAND[@]} -gt 0 ]] || usage
 [[ "${FLUSH_TIMEOUT}" =~ ^[1-9][0-9]*$ ]] || usage
-[[ -f "${SETUP_FILE}" ]] || { echo "setup file not found: ${SETUP_FILE}" >&2; exit 2; }
+if [[ ! -f "${SETUP_FILE}" ]]; then
+  if [[ -n "${ROS_DISTRO:-}" ]] && command -v ros2 >/dev/null 2>&1; then
+    SETUP_FILE=""
+  else
+    echo "setup file not found and no active ROS environment is available: ${SETUP_FILE}" >&2
+    exit 2
+  fi
+fi
 if [[ -e "${OUTPUT_DIR}" ]]; then
   echo "output already exists; refusing to mix captures: ${OUTPUT_DIR}" >&2
   exit 2
 fi
 
-set +u
-# shellcheck disable=SC1090
-source "${SETUP_FILE}"
-set -u
+if [[ -n "${SETUP_FILE}" ]]; then
+  set +u
+  # shellcheck disable=SC1090
+  source "${SETUP_FILE}"
+  set -u
+fi
 
 stop_recorder() {
   [[ -n "${RECORDER_PID}" ]] || return 0

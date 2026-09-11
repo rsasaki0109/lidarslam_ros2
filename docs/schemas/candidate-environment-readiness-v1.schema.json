@@ -1,0 +1,301 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-environment-readiness-v1.schema.json",
+  "title": "lidarslam_ros2 candidate environment readiness v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "environment",
+    "scope",
+    "status",
+    "requirements",
+    "observed",
+    "findings",
+    "authority",
+    "operator_handoff",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-environment-readiness-v1.schema.json"
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "environment": {"const": "candidate-images"},
+    "scope": {"const": "read-only-candidate-environment-preflight"},
+    "status": {
+      "enum": ["READY", "ABSENT", "MISCONFIGURED", "BLOCKED"]
+    },
+    "requirements": {"$ref": "#/definitions/requirements"},
+    "observed": {"$ref": "#/definitions/observed"},
+    "findings": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {"$ref": "#/definitions/finding"}
+    },
+    "authority": {"$ref": "#/definitions/authority"},
+    "operator_handoff": {"$ref": "#/definitions/operatorHandoff"},
+    "decision": {"$ref": "#/definitions/decision"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "READY"}}},
+      "then": {
+        "properties": {
+          "observed": {
+            "properties": {
+              "target_present": {"const": true},
+              "target": {"$ref": "#/definitions/target"}
+            }
+          },
+          "findings": {"maxItems": 0},
+          "decision": {
+            "properties": {
+              "state": {"const": "READY_FOR_SEPARATE_E2_REVIEW"}
+            }
+          },
+          "operator_handoff": {
+            "properties": {
+              "kind": {"const": "REVIEW_E2_SEPARATELY"},
+              "authority_required": {"const": "separate-e2-approval"},
+              "external_write_required": {"const": false},
+              "settings_url": {"type": "null"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "ABSENT"}}},
+      "then": {
+        "properties": {
+          "observed": {
+            "properties": {
+              "target_present": {"const": false},
+              "target": {"type": "null"}
+            }
+          },
+          "findings": {"minItems": 1},
+          "decision": {"properties": {"state": {"const": "HOLD"}}},
+          "operator_handoff": {
+            "properties": {
+              "kind": {"const": "CREATE_AND_REVIEW_ENVIRONMENT"},
+              "authority_required": {"const": "repository-settings-admin"},
+              "external_write_required": {"const": true},
+              "settings_url": {
+                "const": "https://github.com/rsasaki0109/lidar_slam_ros2/settings/environments"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "MISCONFIGURED"}}},
+      "then": {
+        "properties": {
+          "observed": {
+            "properties": {
+              "target_present": {"const": true},
+              "target": {"type": "null"}
+            }
+          },
+          "findings": {"minItems": 1},
+          "decision": {"properties": {"state": {"const": "HOLD"}}},
+          "operator_handoff": {
+            "properties": {
+              "kind": {"const": "REPAIR_AND_REVIEW_ENVIRONMENT"},
+              "authority_required": {"const": "repository-settings-admin"},
+              "external_write_required": {"const": true},
+              "settings_url": {
+                "const": "https://github.com/rsasaki0109/lidar_slam_ros2/settings/environments"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}},
+      "then": {
+        "properties": {
+          "observed": {
+            "properties": {
+              "target_present": {"const": false},
+              "target": {"type": "null"}
+            }
+          },
+          "findings": {"minItems": 1},
+          "decision": {"properties": {"state": {"const": "HOLD"}}},
+          "operator_handoff": {
+            "properties": {
+              "kind": {"const": "RESTORE_READ_ACCESS"},
+              "authority_required": {"const": "read-access"},
+              "external_write_required": {"const": false},
+              "settings_url": {"type": "null"}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_reviewer_count_minimum",
+        "required_reviewer_count_maximum",
+        "prevent_self_review",
+        "deployment_branch_policy",
+        "allowed_protection_rule_types"
+      ],
+      "properties": {
+        "required_reviewer_count_minimum": {"const": 1},
+        "required_reviewer_count_maximum": {"const": 6},
+        "prevent_self_review": {"const": true},
+        "deployment_branch_policy": {"const": "develop_only"},
+        "allowed_protection_rule_types": {
+          "const": ["branch_policy", "required_reviewers"]
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "required_reviewer_count",
+        "prevent_self_review",
+        "deployment_branch_policy"
+      ],
+      "properties": {
+        "name": {"const": "candidate-images"},
+        "required_reviewer_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "prevent_self_review": {"const": true},
+        "deployment_branch_policy": {"const": "develop_only"}
+      }
+    },
+    "observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "environment_count",
+        "environment_names",
+        "target_present",
+        "target"
+      ],
+      "properties": {
+        "environment_count": {"type": "integer", "minimum": 0, "maximum": 100},
+        "environment_names": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 255}
+        },
+        "target_present": {"type": "boolean"},
+        "target": {
+          "anyOf": [
+            {"$ref": "#/definitions/target"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "severity", "detail"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$"},
+        "severity": {"const": "BLOCKER"},
+        "detail": {"type": "string", "minLength": 1, "maxLength": 1000}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_reads_performed",
+        "github_writes_authorized",
+        "environment_writes_authorized",
+        "artifact_publication_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "network_reads_performed": {"const": true},
+        "github_writes_authorized": {"const": false},
+        "environment_writes_authorized": {"const": false},
+        "artifact_publication_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    },
+    "operatorHandoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "authority_required",
+        "external_write_required",
+        "settings_url",
+        "steps",
+        "verification_command",
+        "writes_performed"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "CREATE_AND_REVIEW_ENVIRONMENT",
+            "REPAIR_AND_REVIEW_ENVIRONMENT",
+            "RESTORE_READ_ACCESS",
+            "REVIEW_E2_SEPARATELY"
+          ]
+        },
+        "authority_required": {
+          "enum": [
+            "repository-settings-admin",
+            "read-access",
+            "separate-e2-approval"
+          ]
+        },
+        "external_write_required": {"type": "boolean"},
+        "settings_url": {
+          "anyOf": [
+            {
+              "const": "https://github.com/rsasaki0109/lidar_slam_ros2/settings/environments"
+            },
+            {"type": "null"}
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 300}
+        },
+        "verification_command": {
+          "const": "python3 scripts/check_candidate_environment.py --json --require-ready"
+        },
+        "writes_performed": {"const": false}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "dispatch_authorized", "next_action"],
+      "properties": {
+        "state": {"enum": ["HOLD", "READY_FOR_SEPARATE_E2_REVIEW"]},
+        "dispatch_authorized": {"const": false},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 1000}
+      }
+    }
+  }
+}

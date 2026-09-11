@@ -31,21 +31,15 @@
 """Tests for the three-holdout, two-track suite gate."""
 
 import copy
-import hashlib
 import importlib.util
-import json
 from pathlib import Path
-import subprocess
 
-import pytest
 import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / 'scripts' / 'evaluate_competitive_suite_gate.py'
 PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
-EXECUTION_RECEIPT_PATH = ROOT / (
-    'configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml')
 SPEC = importlib.util.spec_from_file_location('suite_gate', SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -87,10 +81,10 @@ def test_missing_or_failed_track_prevents_suite_claim():
 
 
 def test_pending_input_hashes_prevent_suite_claim():
-    pending_contract = copy.deepcopy(CONTRACT)
-    pending_contract['datasets']['holdout_slots']['holdout_1'][
-        'status'] = 'assigned_inputs_pending_hash'
-    result = MODULE.evaluate(_gates(), pending_contract)
+    pending = copy.deepcopy(CONTRACT)
+    pending['datasets']['holdout_slots']['holdout_1']['status'] = (
+        'assigned_inputs_pending_hash')
+    result = MODULE.evaluate(_gates(), pending)
     assert result['checks']['all_holdout_inputs_frozen'] is False
     assert result['pass'] is False
 
@@ -799,3 +793,6 @@ def test_v2_score_artifact_digest_changes_with_scored_metric():
     assert first != second
     assert len(first) == 64
     assert len(second) == 64
+def test_formal_profile_has_all_holdout_inputs_frozen():
+    result = MODULE.evaluate(_gates(), CONTRACT)
+    assert result['checks']['all_holdout_inputs_frozen'] is True

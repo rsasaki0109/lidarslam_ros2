@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/canonical-ndt-convergence-contract-v1.schema.json",
+  "title": "Canonical ndt_omp convergence contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "contract_id",
+    "status",
+    "upstream",
+    "publication",
+    "parent_transition",
+    "collision",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/canonical-ndt-convergence-contract-v1.schema.json"
+    },
+    "contract_id": {"const": "canonical-ndt-convergence-20260812"},
+    "status": {"const": "LOCAL_REPRODUCIBLE_EXTERNAL_WRITES_REQUIRED"},
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "branch",
+        "base_commit",
+        "package",
+        "patch",
+        "required_api_markers",
+        "focused_tests"
+      ],
+      "properties": {
+        "repository": {"const": "https://github.com/koide3/ndt_omp.git"},
+        "branch": {"const": "master"},
+        "base_commit": {
+          "const": "5495fd9214945afcb4b35d5a1da385e405c52bf9"
+        },
+        "package": {"const": "ndt_omp"},
+        "patch": {"$ref": "#/definitions/artifact"},
+        "required_api_markers": {
+          "type": "array",
+          "minItems": 8,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "focused_tests": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        }
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "upstream_repository",
+        "fork_repository",
+        "proposed_branch",
+        "candidate_commit",
+        "candidate_subject",
+        "draft_pr",
+        "duplicate_search_terms"
+      ],
+      "properties": {
+        "upstream_repository": {"const": "koide3/ndt_omp"},
+        "fork_repository": {"const": "rsasaki0109/ndt_omp_ros2"},
+        "proposed_branch": {
+          "const": "lidarslam-priors-and-correspondence-diagnostics"
+        },
+        "candidate_commit": {
+          "const": "618f02f6b50a8590b81f48b4fee5b6cfc8d3f3ea"
+        },
+        "candidate_subject": {
+          "const": "Add optional priors and correspondence diagnostics"
+        },
+        "draft_pr": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title", "body", "draft_required"],
+          "properties": {
+            "title": {
+              "const": "Add optional NDT priors and correspondence diagnostics"
+            },
+            "body": {
+              "const": "## Summary\n\n- add opt-in per-axis rotation and translation priors to NDT;\n- add an optional maximum voxel-mean correspondence distance;\n- report the accepted correspondence count and mean distance after alignment; and\n- add four focused tests for priors, correspondence filtering/statistics, and invalid optional configuration.\n\n## Motivation\n\nA downstream ROS 2 consumer currently carries these APIs in a fork for IMU and translation priors plus adaptive correspondence filtering. That fork installs the same `pclomp` headers and `libndt_omp.so` as this package, so releasing both packages is not a safe long-term solution. Upstreaming the small algorithm/API delta lets downstream users return to the canonical package instead of publishing an overlapping implementation.\n\n## Compatibility\n\nExisting behavior is unchanged by default. Priors and distance filtering are disabled until explicitly configured. Non-finite or otherwise invalid optional values fail back to the disabled state. Correspondence statistics are observational and use the existing per-input-point reduction order.\n\n## Validation\n\n- clean ROS 2 Jazzy / PCL 1.14 build and install;\n- 4/4 focused GTests pass;\n- the same patch previously built and passed the four tests on clean Humble and Jazzy environments; and\n- both downstream consumers were separately built against the canonical package with the prepared dependency-transition patch.\n\nI am happy to split the API groups or adjust naming if a smaller upstream surface is preferred."
+            },
+            "draft_required": {"const": true}
+          }
+        },
+        "duplicate_search_terms": {
+          "const": [
+            "correspondence distance",
+            "rotation prior",
+            "translation prior",
+            "regularization"
+          ]
+        }
+      }
+    },
+    "parent_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_before",
+        "provider_after",
+        "patch",
+        "consumer_replacements",
+        "spelling_correction"
+      ],
+      "properties": {
+        "provider_before": {"const": "ndt_omp_ros2"},
+        "provider_after": {"const": "ndt_omp"},
+        "patch": {"$ref": "#/definitions/artifact"},
+        "consumer_replacements": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "before_count", "after_count"],
+            "properties": {
+              "path": {"$ref": "#/definitions/repo_path"},
+              "before_count": {"type": "integer", "minimum": 1},
+              "after_count": {"const": 0}
+            }
+          }
+        },
+        "spelling_correction": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "before", "after"],
+          "properties": {
+            "path": {"$ref": "#/definitions/repo_path"},
+            "before": {"const": "setOulierRatio"},
+            "after": {"const": "setOutlierRatio"}
+          }
+        }
+      }
+    },
+    "collision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "existing_package",
+        "fork_package",
+        "conflicting_install_surfaces",
+        "safe_resolution"
+      ],
+      "properties": {
+        "existing_package": {"const": "ndt_omp"},
+        "fork_package": {"const": "ndt_omp_ros2"},
+        "conflicting_install_surfaces": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "safe_resolution": {"const": "UPSTREAM_CONVERGENCE"}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_writes_authorized",
+        "remote_mutations_performed",
+        "allowed_next_local_action"
+      ],
+      "properties": {
+        "github_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false},
+        "allowed_next_local_action": {
+          "const": "RUN_READ_ONLY_DRAFT_PR_PREFLIGHT"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "repo_path": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[^\\r\\n]+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "paths", "additions", "deletions"],
+      "properties": {
+        "path": {"$ref": "#/definitions/repo_path"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/repo_path"}
+        },
+        "additions": {"type": "integer", "minimum": 1},
+        "deletions": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

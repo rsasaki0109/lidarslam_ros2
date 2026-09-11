@@ -88,13 +88,16 @@ apt-get install -yqq \
   ros-jazzy-autoware-system-msgs \
   ros-jazzy-autoware-utils-geometry \
   ros-jazzy-autoware-utils-math \
+  ros-jazzy-autoware-utils-rclcpp \
   ros-jazzy-autoware-vehicle-msgs \
   ros-jazzy-geographic-msgs \
   ros-jazzy-lanelet2-io \
   ros-jazzy-pcl-conversions \
   ros-jazzy-rclpy-message-converter \
   ros-jazzy-ros-testing \
+  ros-jazzy-diagnostic-updater \
   libgeographiclib-dev \
+  libgoogle-glog-dev \
   libpcl-dev \
   librange-v3-dev >/tmp/apt_install.log 2>&1
 
@@ -107,6 +110,7 @@ colcon build \
   --build-base /autoware_ws/build \
   --install-base /autoware_ws/install \
   --base-paths \
+    /autoware_core/common/autoware_agnocast_wrapper \
     /autoware_core/common/autoware_component_interface_specs \
     /autoware_core/common/autoware_geography_utils \
     /autoware_core/common/autoware_lanelet2_utils \

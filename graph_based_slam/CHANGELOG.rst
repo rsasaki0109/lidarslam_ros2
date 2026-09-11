@@ -2,6 +2,50 @@
 Changelog for package graph_based_slam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.1 (2026-08-12)
+------------------
+* Reject unsafe or inconsistent point-cloud layouts before conversion and
+  preserve deterministic backend behavior after a rejected input.
+* Add fail-closed first-map preflight, diagnosis, verification, local preview,
+  and atomic finalization/recovery support for the maintained workflows.
+* Add source-preserving map edit and multi-session merge plans with
+  machine-readable receipts and focused regression coverage.
+* Contributors: Ryohei Sasaki
+
+0.9.0 (2026-07-30)
+------------------
+* Preserve event-driven deterministic backend behavior under the v0.9
+  installed and package-manager golden-path contracts.
+* Carry versioned readiness, real-map, recovery, and distribution evidence
+  without changing the default loop-closure or map-output policy.
+* Contributors: Ryohei Sasaki
+
+0.7.0 (2026-07-29)
+------------------
+* Serialize event-driven backend work independently of the ROS executor, so
+  composable deployments cannot concurrently mutate ``BackendCore`` or lose a
+  submap notification that arrives while loop search is finishing.
+* Move authoritative map/edge ownership into ``GraphStateStore``. PCD cache
+  writes are staged before atomic state commits, and one immutable snapshot is
+  reused across a batch of loop-search queries instead of deep-copying the
+  complete ``MapArray`` for every query.
+* Hide ``BackendCore``, registration, voxel filtering, and 3D-BBS state behind
+  an implementation-only workspace, keeping g2o, pclomp, and descriptor
+  database headers out of the public ROS component interface.
+* Complete the component PImpl boundary: ROS subscriptions, configuration,
+  graph state, and sensor/cache implementation details now live in a private
+  source header, reducing the installed component header from 518 to 78 lines.
+* Centralize all 143 ROS parameters in a typed, source-private
+  ``GraphSlamConfig`` loader with startup validation, keeping parameter
+  declaration separate from live graph and sensor state.
+* Add pure composition builders for descriptor, loop-search, pose-graph,
+  filtering, grid, and GNSS configuration, and freeze the validated startup
+  snapshot before runtime initialization begins.
+* Remove the legacy wall-clock loop-search path, add deterministic map-quality
+  and offline-refinement gates, and preserve failure evidence during real
+  output-filesystem exhaustion.
+* Contributors: Ryohei Sasaki
+
 0.6.0 (2026-06-12)
 ------------------
 * Deterministic core / ROS shell refactor (v0.6 roadmap): the loop-closure

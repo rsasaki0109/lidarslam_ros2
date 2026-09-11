@@ -1,0 +1,891 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/issue-triage-proposal-v1.schema.json",
+  "repository": "rsasaki0109/lidar_slam_ros2",
+  "captured_at": "2026-08-10T23:56:43Z",
+  "source": {
+    "method": "github-rest-read-only",
+    "scope": "open-issues",
+    "issue_count": 29
+  },
+  "label_catalog": [
+    "bug",
+    "documentation",
+    "duplicate",
+    "enhancement",
+    "good first issue",
+    "help wanted",
+    "invalid",
+    "question",
+    "wontfix"
+  ],
+  "authority": {
+    "github_writes_authorized": false,
+    "proposal_applied": false,
+    "authorization_reference": null,
+    "remote_mutations_performed": false
+  },
+  "summary": {
+    "issue_count": 29,
+    "current_unlabeled": 16,
+    "current_good_first_issue": 1,
+    "themes": {
+      "advanced-scope": 3,
+      "install-dependency": 3,
+      "quality-reliability": 7,
+      "sensor-platform": 9,
+      "tf-input-output": 6,
+      "validation-community": 1
+    },
+    "priorities": {
+      "P1": 2,
+      "P2": 4,
+      "P3": 23
+    },
+    "decisions": {
+      "close-answered": 12,
+      "close-not-planned": 1,
+      "close-resolved": 7,
+      "close-superseded": 3,
+      "keep-open": 2,
+      "request-current-reproduction": 4
+    }
+  },
+  "privacy": {
+    "author_identities_written": false,
+    "comment_bodies_written": false,
+    "issue_bodies_written": false
+  },
+  "issues": [
+    {
+      "issue_number": 30,
+      "title": "Expected Performance with Ideal Pose",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/30",
+      "observed": {
+        "state": "open",
+        "updated_at": "2023-12-03T02:49:02Z",
+        "labels": [
+          "enhancement"
+        ]
+      },
+      "theme": "quality-reliability",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "enhancement"
+      ],
+      "decision": "close-resolved",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The current public implementation exposes odom_prior_weight for the frontend and translation-only, covariance-aware GNSS constraints in the backend. Those capabilities postdate this 2021 request and cover its requested weighting path.",
+      "response_summary": "Link the current odometry-prior and GNSS workflow, then ask for a new supported-version report only if that documented path fails.",
+      "evidence": [
+        "docs/workflows.md",
+        "scanmatcher/src/scanmatcher_component.cpp"
+      ]
+    },
+    {
+      "issue_number": 53,
+      "title": "Max distance (km) for mapping ",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/53",
+      "observed": {
+        "state": "open",
+        "updated_at": "2023-08-23T08:50:58Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "quality-reliability",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-superseded",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "This 2022 long-route report used an old configuration and has no current reproducible run contract. Current soak, bounded-disk, and diagnosis workflows supersede the open-ended hardware discussion while retaining long-run limits.",
+      "response_summary": "Point to the current soak and diagnosis workflow, state that route length has no single YAML limit, and request a new current-version report with bounded evidence if failure remains.",
+      "evidence": [
+        "docs/operational-reliability.md",
+        "docs/workflows.md"
+      ]
+    },
+    {
+      "issue_number": 64,
+      "title": "Transform lookup extrapolation warning",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/64",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-09-02T02:47:55Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "tf-input-output",
+      "priority": "P2",
+      "proposed_labels": [
+        "bug",
+        "question"
+      ],
+      "decision": "request-current-reproduction",
+      "state_reason": null,
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The original report used a Galactic port, but current scanmatcher still performs a timestamp-exact odom TF lookup without a configurable wait. A supported Humble or Jazzy reproduction is needed before choosing timeout, fallback, or rate-limited logging behavior.",
+      "response_summary": "Request an exact current revision, PointCloud2 and odom TF timestamps, tf2_echo output, rates, and the smallest reproducible bag metadata; recheck after 30 days.",
+      "evidence": [
+        "scanmatcher/src/scanmatcher_component.cpp",
+        "docs/workflows.md"
+      ]
+    },
+    {
+      "issue_number": 69,
+      "title": "scanmatcher_node-1 process has died",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/69",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-11-15T03:58:37Z",
+        "labels": [
+          "bug"
+        ]
+      },
+      "theme": "quality-reliability",
+      "priority": "P1",
+      "proposed_labels": [
+        "bug",
+        "help wanted"
+      ],
+      "decision": "keep-open",
+      "state_reason": null,
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "linked_claims": [
+        {
+          "id": "issue-69-public-draft",
+          "kind": "product-draft",
+          "repository": "rsasaki0109/lidar_slam_ros2",
+          "pull_request": 427,
+          "expected_head_sha": "4b2ab514a4f33b443e2c4283b3114d11a5e44e49",
+          "expected_status": "DRAFT_REVIEW_REQUIRED",
+          "expected_state": "OPEN",
+          "expected_is_draft": true,
+          "expected_mergeable": true,
+          "expected_passing_check_count": 10,
+          "expected_skipped_check_count": 4,
+          "expected_pending_check_count": 0,
+          "expected_failing_check_count": 0,
+          "expected_required_checks_complete": true
+        },
+        {
+          "id": "issue-69-stable-release-absence",
+          "kind": "stable-release-absence",
+          "repository": "rsasaki0109/lidar_slam_ros2",
+          "fix_commit_sha": "a2368c486fc35c0edcac6d9dbf2f9cb89475c820",
+          "expected_latest_stable_tag": "v0.9.0",
+          "expected_latest_stable_commit": "0df0c4a86df9f68a894c83f8342e4107c3d23b0f",
+          "expected_latest_stable_relation": "behind",
+          "expected_latest_stable_behind_by": 52,
+          "expected_candidate_tag": "v0.9.1",
+          "expected_candidate_tag_present": false,
+          "expected_candidate_release_present": false
+        }
+      ],
+      "rationale": "We traced this failure class to PCL's VoxelGrid overflow behavior: when coordinate extent and leaf size require more than signed-32-bit voxel indices, PCL returns the unfiltered cloud; issue #69 recorded a subsequent SIGFPE. We reproduced the warning class with privacy-safe synthetic points, not the unavailable historical bag. As of 2026-08-17, public Draft PR #427 checks all five classic scanmatcher VoxelGrid stages before PCL, rejects only the affected scan or map update, and passes Humble and Jazzy CI. No named stable release contains this reviewed fix commit yet.",
+      "response_summary": "We will keep this open until the fix is merged and a release containing it is named. On current releases, first check that coordinates are metres and remove extreme outliers. Increasing `vg_size_for_map` (initial map/map updates) or `vg_size_for_input` (input scans/non-NDT targets) can avoid the overflow when acceptable, but reduces map/detail resolution and is only a workaround. If testing Draft PR #427, report the ROS distribution, sensor, stage/reason code, and whether the same process accepts the next safe scan; the original 2 GB bag is not required.",
+      "evidence": [
+        "scanmatcher/src/scanmatcher_component.cpp",
+        "scanmatcher/include/scanmatcher/voxel_grid_safety.hpp",
+        "scanmatcher/test/test_voxel_grid_safety.cpp",
+        "scanmatcher/test/test_scanmatcher_voxel_grid_recovery.cpp",
+        "docs/operational-reliability.md",
+        "docs/evidence/voxel-grid-overflow-safety-2026-08-11.md"
+      ]
+    },
+    {
+      "issue_number": 83,
+      "title": "About the use in the window environment",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/83",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-02-26T02:46:47Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "sensor-platform",
+      "priority": "P3",
+      "proposed_labels": [
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "Native Windows is outside the maintained product contract, and the reporter explicitly chose Docker. The current Docker first-map route is the supported answer.",
+      "response_summary": "Link the Docker first-map path and the Windows support boundary; invite a new report only for a reproducible failure on the supported container route.",
+      "evidence": [
+        "SUPPORT.md",
+        "docs/getting-started.md",
+        "docs/product-contract.md"
+      ]
+    },
+    {
+      "issue_number": 89,
+      "title": "Perfomance in real time drone systems ",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/89",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-06-28T19:20:10Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "sensor-platform",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-resolved",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The reporter confirmed that horizontal sensor placement restored XY performance and that the localization-versus-mapping questions were answered. The remaining discussion moved to another repository and hardware sizing.",
+      "response_summary": "Record the geometric-degeneracy resolution, link the current guide, and close as resolved.",
+      "evidence": [
+        "docs/degeneracy-guide.md",
+        "docs/product-contract.md"
+      ]
+    },
+    {
+      "issue_number": 92,
+      "title": "Frame Changes",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/92",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-08-08T00:19:53Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "quality-reliability",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The thread received parameter, playback-rate, and IMU-model guidance but has no current reproducer. It is a historical tuning discussion rather than one bounded product defect.",
+      "response_summary": "Link the current degeneracy and sensor-input guidance, summarize that scan-matching failure must be diagnosed before loop tuning, and close as answered.",
+      "evidence": [
+        "docs/degeneracy-guide.md",
+        "docs/workflows.md"
+      ]
+    },
+    {
+      "issue_number": 93,
+      "title": "Nothing visualizing",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/93",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-06-24T08:21:39Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "tf-input-output",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-resolved",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The reporter explicitly stated that the issue no longer existed and identified simulated-time bag capture as the relevant condition.",
+      "response_summary": "Record the reporter-confirmed resolution, point to current input and clock checks, and close.",
+      "evidence": [
+        "docs/getting-started.md",
+        "docs/workflows.md"
+      ]
+    },
+    {
+      "issue_number": 94,
+      "title": "Dense map representation?",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/94",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-07-31T03:04:03Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "quality-reliability",
+      "priority": "P3",
+      "proposed_labels": [
+        "enhancement",
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The maintainer documented the historical long-loop and scan-matching limitations and provided tuning guidance. The issue has no current dataset contract or unresolved follow-up suitable for a bounded defect.",
+      "response_summary": "Link the current graph architecture and comparison limits, preserve the historical answer, and request a new evidence-backed report for current code.",
+      "evidence": [
+        "docs/graph-slam-architecture.md",
+        "docs/comparison.md"
+      ]
+    },
+    {
+      "issue_number": 95,
+      "title": "Please help noob",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/95",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-08-22T23:28:34Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "sensor-platform",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-resolved",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The Ouster topic and frame adaptation worked, and the reporter explicitly confirmed understanding after the map-save and tuning explanation.",
+      "response_summary": "Link the current custom-sensor and map-save workflow, credit the resolved report, and close.",
+      "evidence": [
+        "docs/workflows.md",
+        "docs/getting-started.md"
+      ]
+    },
+    {
+      "issue_number": 96,
+      "title": "General Advice for running LidarSlam and the IMU",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/96",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-08-24T08:09:44Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "sensor-platform",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The thread answered scan_period and LiDAR-to-IMU extrinsic requirements. Current maintained profiles and product boundaries replace the open-ended drone tuning discussion.",
+      "response_summary": "Summarize scan period and measured extrinsic requirements, link current maintained profiles, and close as answered.",
+      "evidence": [
+        "docs/workflows.md",
+        "docs/product-contract.md"
+      ]
+    },
+    {
+      "issue_number": 98,
+      "title": "I am using Unitree Go2, but since I am a beginner, I don't fully understand everything.",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/98",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-02-27T04:53:05Z",
+        "labels": []
+      },
+      "theme": "sensor-platform",
+      "priority": "P3",
+      "proposed_labels": [
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [
+        "starter-C4"
+      ],
+      "recheck_before_apply": true,
+      "rationale": "The Unitree L1 rig is outside the validated sensor matrix, no reproducible diagnostic bundle was supplied, and the follow-up asked for private contact rather than a public product defect.",
+      "response_summary": "Link the public sensor checklist and issue form, state the support boundary, and keep future collaboration public and reproducible.",
+      "evidence": [
+        "SUPPORT.md",
+        "docs/product-contract.md"
+      ]
+    },
+    {
+      "issue_number": 100,
+      "title": "some question about using on bipedal robot",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/100",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-11-06T05:22:00Z",
+        "labels": []
+      },
+      "theme": "sensor-platform",
+      "priority": "P3",
+      "proposed_labels": [
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The bipedal vibration scenario was answered as an unsupported platform-specific observability problem and has no diagnostic bundle or current follow-up.",
+      "response_summary": "Link the degeneracy and support boundaries, state that no bipedal compatibility claim exists, and close as answered.",
+      "evidence": [
+        "docs/degeneracy-guide.md",
+        "SUPPORT.md"
+      ]
+    },
+    {
+      "issue_number": 101,
+      "title": "Question to loop closing",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/101",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-12-05T06:37:43Z",
+        "labels": []
+      },
+      "theme": "advanced-scope",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The lower-rate modified path was explained as the expected submap-pose representation. The reporter acknowledged the explanation; the old screenshot is not a current defect contract.",
+      "response_summary": "Link the graph architecture, explain the submap sampling contract, and close as answered.",
+      "evidence": [
+        "docs/graph-slam-architecture.md"
+      ]
+    },
+    {
+      "issue_number": 102,
+      "title": "Message Filter dropping message: frame '' at time 0.000 for reason 'the frame id of the message is empty'",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/102",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-12-04T11:11:39Z",
+        "labels": []
+      },
+      "theme": "tf-input-output",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-superseded",
+      "state_reason": "completed",
+      "apply_after": [
+        "starter-C2",
+        "starter-C5"
+      ],
+      "recheck_before_apply": true,
+      "rationale": "The thread split into issue #103, while the actionable product gap is now a bounded empty-frame preflight check plus a no-map recovery card. Keep the historical symptom but close only after both replacements are public.",
+      "response_summary": "Link the empty-frame diagnostic and no-map card, explain that an empty message header cannot be repaired by RViz, and close as superseded.",
+      "evidence": [
+        "docs/evidence/growth/community-contributor-backlog-2026-08-11.md",
+        "scripts/lidarslam_tools/mid360_preflight.py"
+      ]
+    },
+    {
+      "issue_number": 103,
+      "title": "No map topic and visualization",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/103",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-12-09T01:47:03Z",
+        "labels": []
+      },
+      "theme": "tf-input-output",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-resolved",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The original reporter confirmed that a leading slash in the TF frame name caused the failure and that correcting the YAML and TF names made the package work.",
+      "response_summary": "Record the reporter-confirmed frame-name resolution, link current preflight guidance, and close.",
+      "evidence": [
+        "docs/getting-started.md",
+        "docs/workflows.md"
+      ]
+    },
+    {
+      "issue_number": 104,
+      "title": "Cause of incontinence results",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/104",
+      "observed": {
+        "state": "open",
+        "updated_at": "2024-12-24T07:30:49Z",
+        "labels": []
+      },
+      "theme": "quality-reliability",
+      "priority": "P2",
+      "proposed_labels": [
+        "bug"
+      ],
+      "decision": "request-current-reproduction",
+      "state_reason": null,
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "Repeatability is a product trust concern, but the report predates current determinism and lifecycle controls and includes no current run receipts. A supported-version repeated-run artifact is required to distinguish algorithm, scheduling, and input-order causes.",
+      "response_summary": "Request an exact revision, fixed bag identity, three run receipts, trajectories, thread count, and diagnosis outputs; recheck after 30 days.",
+      "evidence": [
+        "docs/operational-reliability.md",
+        "docs/research/determinism-variance-attribution.md"
+      ]
+    },
+    {
+      "issue_number": 105,
+      "title": "Issue with mapping indoors",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/105",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-02-27T07:30:04Z",
+        "labels": []
+      },
+      "theme": "sensor-platform",
+      "priority": "P3",
+      "proposed_labels": [
+        "question"
+      ],
+      "decision": "close-superseded",
+      "state_reason": "completed",
+      "apply_after": [
+        "starter-C4"
+      ],
+      "recheck_before_apply": true,
+      "rationale": "The thread mixes unsupported Aeva and RealSense sensors with an early, unvalidated MID-360 path. The project now has a measured MID-360 profile and should not preserve obsolete IMU guidance as current support.",
+      "response_summary": "Link the current MID-360 first-map route and custom-sensor checklist, state which original sensors remain unsupported, and invite a new current-profile report.",
+      "evidence": [
+        "docs/getting-started.md",
+        "docs/product-contract.md"
+      ]
+    },
+    {
+      "issue_number": 106,
+      "title": "No output from /map topic",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/106",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-01-27T04:37:53Z",
+        "labels": []
+      },
+      "theme": "tf-input-output",
+      "priority": "P2",
+      "proposed_labels": [
+        "bug",
+        "question"
+      ],
+      "decision": "request-current-reproduction",
+      "state_reason": null,
+      "apply_after": [
+        "starter-C2"
+      ],
+      "recheck_before_apply": true,
+      "rationale": "A Velodyne PointCloud2 input produced no map, but the thread ended before terminal, frame, connection, and current-version evidence was supplied. The symptom remains potentially supported and needs the bounded diagnosis contract.",
+      "response_summary": "After the no-map card is public, request current doctor output, topic connection, sampled header, TF path, exact command, and diagnosis; recheck after 30 days.",
+      "evidence": [
+        "docs/getting-started.md",
+        "SUPPORT.md"
+      ]
+    },
+    {
+      "issue_number": 108,
+      "title": "some problems",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/108",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-02-27T10:03:28Z",
+        "labels": [
+          "question"
+        ]
+      },
+      "theme": "install-dependency",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [
+        "starter-C1"
+      ],
+      "recheck_before_apply": true,
+      "rationale": "The report targets Foxy, which is outside the maintained Humble and Jazzy contract, and then expands into unrelated custom sensor setup. The current binary dependency path should replace source-clone advice.",
+      "response_summary": "Publish the supported g2o card, explain the Foxy boundary, link current install paths, and close as answered.",
+      "evidence": [
+        "docs/rosdistro-release.md",
+        "docs/product-contract.md"
+      ]
+    },
+    {
+      "issue_number": 110,
+      "title": "Installation in Docker with ROS2-Humble image",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/110",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-02-26T01:24:30Z",
+        "labels": []
+      },
+      "theme": "install-dependency",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-resolved",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The posted build completed; the launch command used package lidarslam_ros2 although the installed package is lidarslam. The project now also publishes an official Docker first-map command.",
+      "response_summary": "Correct the package name, link the official Docker route, distinguish build warnings from failures, and close as resolved.",
+      "evidence": [
+        "docs/getting-started.md",
+        "lidarslam/package.xml"
+      ]
+    },
+    {
+      "issue_number": 111,
+      "title": "Setting up lidarslam_ros2 for other LiDARs",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/111",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-03-13T23:22:16Z",
+        "labels": []
+      },
+      "theme": "sensor-platform",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [
+        "starter-C4"
+      ],
+      "recheck_before_apply": true,
+      "rationale": "The question asks for a generic custom-LiDAR adaptation and received only launch/YAML guidance. A bounded PointCloud2 input checklist is the reusable answer; CARLA-specific tuning is not a supported guarantee.",
+      "response_summary": "Link the custom sensor checklist and sensor issue form, explain the maintained input contract, and close as answered.",
+      "evidence": [
+        "docs/evidence/growth/community-contributor-backlog-2026-08-11.md",
+        "SUPPORT.md"
+      ]
+    },
+    {
+      "issue_number": 112,
+      "title": "Enabling Odometry",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/112",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-06-10T19:01:17Z",
+        "labels": []
+      },
+      "theme": "tf-input-output",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [
+        "starter-C3"
+      ],
+      "recheck_before_apply": true,
+      "rationale": "The thread established that an Odometry message does not itself create odom-to-base_link TF. The remaining timestamp advice is robot-specific and should be replaced by a safe public troubleshooting card.",
+      "response_summary": "Publish the Odometry-versus-TF card, avoid copying an unvalidated third-party broadcaster, summarize the distinction, and close.",
+      "evidence": [
+        "docs/evidence/growth/community-contributor-backlog-2026-08-11.md",
+        "scanmatcher/src/scanmatcher_component.cpp"
+      ]
+    },
+    {
+      "issue_number": 115,
+      "title": "RoboSense Lidar",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/115",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-04-30T06:52:29Z",
+        "labels": []
+      },
+      "theme": "sensor-platform",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [
+        "starter-C4"
+      ],
+      "recheck_before_apply": true,
+      "rationale": "The RS-16 question is a generic topic, frame, extrinsic, and parameter adaptation request with no hardware evidence. The custom PointCloud2 checklist is the bounded reusable answer, not an RS-16 support claim.",
+      "response_summary": "Link the checklist and sensor form, explicitly avoid claiming validated RS-16 support, and close as answered.",
+      "evidence": [
+        "docs/evidence/growth/community-contributor-backlog-2026-08-11.md",
+        "docs/product-contract.md"
+      ]
+    },
+    {
+      "issue_number": 116,
+      "title": "Loop closure",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/116",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-06-25T01:15:04Z",
+        "labels": []
+      },
+      "theme": "advanced-scope",
+      "priority": "P3",
+      "proposed_labels": [
+        "enhancement"
+      ],
+      "decision": "close-not-planned",
+      "state_reason": "not_planned",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "Feeding optimized submaps back into live mapping without discontinuity is a broad simultaneous localization-and-map-update feature. It is not in the v1 supported contract and has no bounded design or acceptance fixture.",
+      "response_summary": "Explain the current offline map-authoring boundary, state that continuous corrected-map feedback is not planned for v1, and close as not planned.",
+      "evidence": [
+        "docs/product-contract.md",
+        "docs/roadmap/1000-stars.md"
+      ]
+    },
+    {
+      "issue_number": 118,
+      "title": "Relocalization support",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/118",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-07-08T09:01:46Z",
+        "labels": []
+      },
+      "theme": "advanced-scope",
+      "priority": "P3",
+      "proposed_labels": [
+        "question"
+      ],
+      "decision": "close-resolved",
+      "state_reason": "completed",
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "The requested localization-only use case is handled by lidar_localization_ros2, and the participant explicitly confirmed that it met the need. Resume-and-update mapping remains outside this issue.",
+      "response_summary": "Link the localization repository, distinguish localization from map authoring, and close as resolved.",
+      "evidence": [
+        "https://github.com/rsasaki0109/lidar_localization_ros2",
+        "docs/product-contract.md"
+      ]
+    },
+    {
+      "issue_number": 122,
+      "title": "how about the g2o's version?",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/122",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-08-22T05:10:20Z",
+        "labels": []
+      },
+      "theme": "install-dependency",
+      "priority": "P3",
+      "proposed_labels": [
+        "documentation",
+        "question"
+      ],
+      "decision": "close-answered",
+      "state_reason": "completed",
+      "apply_after": [
+        "starter-C1"
+      ],
+      "recheck_before_apply": true,
+      "rationale": "The error comes from an unpinned source-built g2o on Foxy, which is outside the maintained distributions. The supported binary package and EOL boundary are the durable answer.",
+      "response_summary": "Publish the g2o setup card, link Humble and Jazzy package evidence, explain the Foxy boundary, and close.",
+      "evidence": [
+        "docs/rosdistro-release.md",
+        "docs/product-contract.md"
+      ]
+    },
+    {
+      "issue_number": 124,
+      "title": "wrong current_pose",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/124",
+      "observed": {
+        "state": "open",
+        "updated_at": "2025-12-12T02:22:31Z",
+        "labels": []
+      },
+      "theme": "quality-reliability",
+      "priority": "P2",
+      "proposed_labels": [
+        "bug",
+        "question"
+      ],
+      "decision": "request-current-reproduction",
+      "state_reason": null,
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "A horizontally mounted Velodyne HDL-32E reportedly drifts in z with both NDT and GICP. The report is recent enough and on a conventional sensor, but lacks exact revision, TF/odom evidence, bag identity, and current diagnostics.",
+      "response_summary": "Request exact revision, current doctor output, TF and odom frames, trajectory or receipt, environment description, and the smallest reproducible metadata; recheck after 30 days.",
+      "evidence": [
+        "SUPPORT.md",
+        "docs/degeneracy-guide.md"
+      ]
+    },
+    {
+      "issue_number": 422,
+      "title": "Help validate the public first-map path for v1.0",
+      "url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/422",
+      "observed": {
+        "state": "open",
+        "updated_at": "2026-07-30T05:37:37Z",
+        "labels": [
+          "documentation",
+          "good first issue",
+          "help wanted"
+        ]
+      },
+      "theme": "validation-community",
+      "priority": "P1",
+      "proposed_labels": [
+        "documentation",
+        "good first issue",
+        "help wanted"
+      ],
+      "decision": "keep-open",
+      "state_reason": null,
+      "apply_after": [],
+      "recheck_before_apply": true,
+      "rationale": "This is the active v1 adoption gate and has zero of three accepted independent first-map validations. Its privacy-bounded submission contract remains current.",
+      "response_summary": "Keep open without adding private guidance; update only from accepted public validation receipts and close after the three-user gate passes.",
+      "evidence": [
+        "docs/external-first-map-validation.md",
+        "docs/v1-readiness.md"
+      ]
+    }
+  ]
+}

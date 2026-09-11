@@ -1,0 +1,189 @@
+{
+  "artifact": {
+    "archive_root": "mid360_onboarding_50s_v1",
+    "filename": "mid360_onboarding_50s_v1.zip",
+    "format": "zip",
+    "max_size_bytes": 100000000,
+    "members": [
+      {
+        "path": "mid360_onboarding_50s_v1/ATTRIBUTION.md",
+        "sha256": "d363a9e9cf529876e38fa4b705e3b323cd40b0d642c02cf9ef5a003c3061aee8",
+        "size_bytes": 876
+      },
+      {
+        "path": "mid360_onboarding_50s_v1/bag/bag.db3",
+        "sha256": "0a38fbccdb9c135b9a8e72141515b87ff64172a3b80a2d27a260ecd30683b5dd",
+        "size_bytes": 264880128
+      },
+      {
+        "path": "mid360_onboarding_50s_v1/bag/metadata.yaml",
+        "sha256": "d866804b49e8208dfcd70c2f91584976df0ca3d918c910d2ae20786cd1fa5b18",
+        "size_bytes": 1665
+      }
+    ],
+    "sha256": "20e5151728522877bff75021a473e91c5ae900448fa9e6977bf88653fa464bd3",
+    "size_bytes": 98873952,
+    "size_gate_pass": true
+  },
+  "clip": {
+    "actual_duration_ns": 49999532958,
+    "bag": {
+      "directory_name": "bag",
+      "metadata": {
+        "filename": "metadata.yaml",
+        "sha256": "d866804b49e8208dfcd70c2f91584976df0ca3d918c910d2ae20786cd1fa5b18",
+        "size_bytes": 1665
+      },
+      "storage_files": [
+        {
+          "path": "bag.db3",
+          "sha256": "0a38fbccdb9c135b9a8e72141515b87ff64172a3b80a2d27a260ecd30683b5dd",
+          "size_bytes": 264880128
+        }
+      ],
+      "storage_identifier": "sqlite3"
+    },
+    "first_message_timestamp_ns": 1713244621183820185,
+    "message_count": 10501,
+    "raw_message_copy": true,
+    "requested_duration_ns": 50000000000,
+    "start_offset_ns": 0,
+    "topics": [
+      {
+        "message_count": 10001,
+        "name": "/livox/imu",
+        "type": "sensor_msgs/msg/Imu"
+      },
+      {
+        "message_count": 500,
+        "name": "/livox/lidar",
+        "type": "sensor_msgs/msg/PointCloud2"
+      }
+    ]
+  },
+  "fixture_id": "mid360_onboarding_50s_v1",
+  "generation": {
+    "archive_recipe": {
+      "compression": "deflate",
+      "compression_level": 9,
+      "member_mode": "0644",
+      "member_timestamp": "1980-01-01T00:00:00Z",
+      "sorted_members": true
+    },
+    "revision": {
+      "git_commit": "0f91452c505e03fc810c79a0b6e602101ffefce7",
+      "git_dirty": false
+    },
+    "slicer": {
+      "path": "scripts/slice_rosbag2.py",
+      "sha256": "79e7a6a9bdafed41d8fe0bf40cb01489c35d136f40e80c42e1e51b44371f2edd"
+    },
+    "source_contract": {
+      "path": "configs/real_data_e2e/driving_slam_mid360_v1.json",
+      "sha256": "93a027ee83e0557c2acdb95895dd0b029f9ab388fcf0ff1a3a5100c2b43b3d70"
+    },
+    "tool": {
+      "path": "scripts/build_mid360_onboarding_fixture.py",
+      "sha256": "ffc02599e364e0ac1947a167a7c686fc11c4a2799bdd55798065c8e5adcbfbe6"
+    },
+    "toolchain": {
+      "python_version": "3.12.3",
+      "rosbags_version": "0.11.0",
+      "sqlite_version": "3.45.1",
+      "zlib_runtime_version": "1.3",
+      "zlib_version": "1.3"
+    }
+  },
+  "publication": {
+    "attribution_member": "mid360_onboarding_50s_v1/ATTRIBUTION.md",
+    "contains_map_geometry": true,
+    "map_validation_status": "NOT_RUN",
+    "onboarding_only": true,
+    "replaces_full_real_data_gate": false,
+    "review_before_publishing": true,
+    "track_archive_in_git": false
+  },
+  "role": "onboarding",
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/mid360-onboarding-fixture-v1.schema.json",
+  "schema_version": 1,
+  "source": {
+    "archive": {
+      "filename": "rosbag2_2024_04_16-14_17_01.zip",
+      "md5": "0836c50859bb1af591966b69da166186",
+      "sha256": "f8f89eebf2aaf9cc1d465bfa5451bbb599cd92d079b59949104bb4e5cb619bdd",
+      "size_bytes": 517088133
+    },
+    "bag": {
+      "directory_name": "rosbag2_2024_04_16-14_17_01",
+      "duration_ns": 277166836670,
+      "message_count": 58217,
+      "metadata": {
+        "filename": "metadata.yaml",
+        "sha256": "65d66875f49248e38ff14d80e6e749fb50606f6f80bd4be337160e3752691e9a",
+        "size_bytes": 5590
+      },
+      "starting_time_ns": 1713244621183673999,
+      "storage_files": [
+        {
+          "path": "rosbag2_2024_04_16-14_17_01_0.db3",
+          "sha256": "3bbd390a97e57af47ad6699baa36eb4c5f39f61b35275505ecaf221c126354f5",
+          "size_bytes": 1468932096
+        }
+      ],
+      "storage_identifier": "sqlite3",
+      "topics": [
+        {
+          "message_count": 0,
+          "name": "/clicked_point",
+          "type": "geometry_msgs/msg/PointStamped"
+        },
+        {
+          "message_count": 0,
+          "name": "/events/write_split",
+          "type": "rosbag2_interfaces/msg/WriteSplitEvent"
+        },
+        {
+          "message_count": 0,
+          "name": "/initialpose",
+          "type": "geometry_msgs/msg/PoseWithCovarianceStamped"
+        },
+        {
+          "message_count": 55435,
+          "name": "/livox/imu",
+          "type": "sensor_msgs/msg/Imu"
+        },
+        {
+          "message_count": 2772,
+          "name": "/livox/lidar",
+          "type": "sensor_msgs/msg/PointCloud2"
+        },
+        {
+          "message_count": 0,
+          "name": "/move_base_simple/goal",
+          "type": "geometry_msgs/msg/PoseStamped"
+        },
+        {
+          "message_count": 0,
+          "name": "/parameter_events",
+          "type": "rcl_interfaces/msg/ParameterEvent"
+        },
+        {
+          "message_count": 10,
+          "name": "/rosout",
+          "type": "rcl_interfaces/msg/Log"
+        }
+      ]
+    },
+    "citation": "Koide, Kenji. Driving SLAM Test with Livox MID360. Zenodo. DOI: 10.5281/zenodo.14841855",
+    "creator": "Kenji Koide",
+    "dataset_id": "driving_slam_mid360",
+    "doi": "10.5281/zenodo.14841855",
+    "download_url": "https://zenodo.org/records/14841855/files/rosbag2_2024_04_16-14_17_01.zip?download=1",
+    "license_name": "Creative Commons Attribution 4.0 International",
+    "license_spdx": "CC-BY-4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source_url": "https://zenodo.org/records/14841855",
+    "title": "Driving SLAM Test with Livox MID360"
+  },
+  "status": "BUILT"
+}

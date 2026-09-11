@@ -39,6 +39,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -1184,12 +1185,118 @@ def bag_container_binding(bag: Path, asset_root: Path) -> tuple[str, list[str]]:
     return '/input/input.bag', ['-v', f'{bag}:/input/input.bag:ro']
 
 
-def map_output_binding(run_dir: Path, save_map: bool) -> list[str]:
-    if not save_map:
-        return []
+def fast_log_binding(run_dir: Path, save_map: bool) -> list[str]:
+    """Isolate official trajectory logs, and maps when requested, per run."""
     destination = run_dir / 'fast_log'
-    (destination / 'pcd').mkdir(parents=True, exist_ok=True)
+    (destination / 'result').mkdir(parents=True, exist_ok=True)
+    if save_map:
+        (destination / 'pcd').mkdir(parents=True, exist_ok=True)
     return ['-v', f'{destination}:/bench/FAST-LIVO2/Log']
+
+
+def select_fast_map(run_dir: Path) -> Path | None:
+    """Select the official downsampled map, never a partial interval PCD."""
+    candidates = (
+        run_dir / 'fast_log/pcd/all_downsampled_points.pcd',
+        run_dir / 'fast_log/pcd/all_raw_points.pcd',
+    )
+    return next((path for path in candidates
+                 if path.is_file() and path.stat().st_size > 0), None)
+
+
+def evaluate_map_quality(map_path: Path, run_dir: Path) -> dict[str, Any] | None:
+    """Run the common geometry evaluator and return its normalized payload."""
+    quality_dir = run_dir / 'map_quality'
+    command = [
+        'bash', str(ROOT / 'scripts/run_map_quality_check.sh'),
+        '--input', str(map_path), '--output-dir', str(quality_dir),
+        '--runs', '1', '--downsample', '0.1',
+        '--setup', str(ROOT / 'install/setup.bash')]
+    completed = subprocess.run(
+        command, cwd=ROOT, stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL, check=False)
+    report = quality_dir / 'run1/map_quality_report.yaml'
+    if completed.returncode != 0 or not report.is_file():
+        return None
+    payload = yaml.safe_load(report.read_text())['map_quality_report']
+    payload['source_map'] = {
+        'path': str(map_path.resolve()), 'sha256': sha256(map_path),
+        'bytes': map_path.stat().st_size}
+    return payload
+
+
+def tum_trajectory_info(path: Path) -> dict[str, Any]:
+    count = malformed = 0
+    first_stamp = last_stamp = None
+    if not path.is_file():
+        return {'samples': 0, 'malformed_rows': 0,
+                'first_stamp': None, 'last_stamp': None}
+    for line in path.read_text(errors='replace').splitlines():
+        fields = line.split()
+        try:
+            if len(fields) != 8:
+                raise ValueError
+            stamp = float(fields[0])
+            values = [float(value) for value in fields[1:]]
+            if not all(value == value for value in [stamp, *values]):
+                raise ValueError
+        except ValueError:
+            malformed += 1
+            continue
+        first_stamp = stamp if first_stamp is None else first_stamp
+        last_stamp, count = stamp, count + 1
+    return {'samples': count, 'malformed_rows': malformed,
+            'first_stamp': first_stamp, 'last_stamp': last_stamp}
+
+
+def collect_official_state_trajectory(run_dir: Path) -> tuple[dict[str, Any], str | None]:
+    """Collect FAST-LIVO2's exact LiDAR-update-time IMU state trajectory."""
+    candidates = sorted(path for path in (run_dir / 'fast_log/result').glob('*.txt')
+                        if path.stat().st_size > 0)
+    destination = run_dir / 'trajectory_imu.tum'
+    if len(candidates) != 1:
+        return tum_trajectory_info(destination), None
+    shutil.copyfile(candidates[0], destination)
+    return tum_trajectory_info(destination), str(candidates[0])
+
+
+def load_reference_offset(path: Path, source_frame: str) -> tuple[float, float, float]:
+    metadata = json.loads(path.read_text())
+    key = f'{source_frame}_to_prism_translation_m'
+    offset = metadata.get(key)
+    if not isinstance(offset, dict) or any(axis not in offset for axis in 'xyz'):
+        raise ValueError(f'reference metadata lacks {key}')
+    return tuple(float(offset[axis]) for axis in 'xyz')
+
+
+def apply_tum_translation_offset(source: Path, destination: Path,
+                                 offset: tuple[float, float, float]) -> None:
+    """Move each TUM pose origin by a fixed offset expressed in its local frame."""
+    tx, ty, tz = offset
+    lines = []
+    for line in source.read_text(errors='replace').splitlines():
+        fields = line.split()
+        if len(fields) != 8:
+            raise ValueError(f'invalid TUM line: {line}')
+        stamp = fields[0]
+        px, py, pz, qx, qy, qz, qw = map(float, fields[1:])
+        norm = (qw * qw + qx * qx + qy * qy + qz * qz) ** 0.5
+        if norm <= 0.0:
+            raise ValueError('zero-norm TUM quaternion')
+        qw, qx, qy, qz = (value / norm for value in (qw, qx, qy, qz))
+        rx = ((1.0 - 2.0 * (qy * qy + qz * qz)) * tx +
+              2.0 * (qx * qy - qz * qw) * ty +
+              2.0 * (qx * qz + qy * qw) * tz)
+        ry = (2.0 * (qx * qy + qz * qw) * tx +
+              (1.0 - 2.0 * (qx * qx + qz * qz)) * ty +
+              2.0 * (qy * qz - qx * qw) * tz)
+        rz = (2.0 * (qx * qz - qy * qw) * tx +
+              2.0 * (qy * qz + qx * qw) * ty +
+              (1.0 - 2.0 * (qx * qx + qy * qy)) * tz)
+        lines.append(
+            f'{stamp} {px + rx:.9f} {py + ry:.9f} {pz + rz:.9f} '
+            f'{fields[4]} {fields[5]} {fields[6]} {fields[7]}\n')
+    destination.write_text(''.join(lines))
 
 
 def validate_frozen_input_manifest(path: Path | None, hash_key: str,
@@ -1213,14 +1320,25 @@ def run_once(args: argparse.Namespace, asset_root: Path, output: Path,
     run_dir = output / f'run_{run_index:02d}'
     run_dir.mkdir(parents=True, exist_ok=False)
     bag_inside, bag_mount = bag_container_binding(args.bag, asset_root)
-    map_mount = map_output_binding(run_dir, args.save_map)
+    log_mount = fast_log_binding(run_dir, args.save_map)
+    launch_mounts: list[str] = []
+    launch_environment: list[str] = []
+    if args.mapping_launch is not None:
+        launch_mounts += ['-v', f'{args.mapping_launch}:/benchmark_launch.launch:ro']
+        launch_environment += ['-e', 'MAPPING_LAUNCH=/benchmark_launch.launch']
+    if args.mapping_map_launch is not None:
+        launch_mounts += [
+            '-v', f'{args.mapping_map_launch}:/benchmark_map_launch.launch:ro']
+        launch_environment += [
+            '-e', 'MAPPING_MAP_LAUNCH=/benchmark_map_launch.launch']
     command = [
         'docker', 'run', '--rm', '--init', '--name',
         f'fast-livo2-bench-{run_index}-{os.getpid()}',
         '-e', f'BAG_PATH={bag_inside}', '-e', f'RATE={args.rate}',
         '-e', f'SHUTDOWN_GRACE_SECONDS={args.shutdown_grace_seconds}',
         '-e', f'SAVE_MAP={1 if args.save_map else 0}',
-        '-v', f'{asset_root}:/bench', *bag_mount, *map_mount,
+        *launch_environment,
+        '-v', f'{asset_root}:/bench', *bag_mount, *log_mount, *launch_mounts,
         '-v', f'{ROOT}:/runner:ro',
         '-v', f'{run_dir}:/out', '--entrypoint', '/bin/bash', args.image,
         '/runner/scripts/fast_livo2_container_run.sh']
@@ -1230,8 +1348,14 @@ def run_once(args: argparse.Namespace, asset_root: Path, output: Path,
         completed = subprocess.run(command, stdout=stdout, stderr=stderr,
                                    check=False)
     finished = dt.datetime.now(dt.timezone.utc)
-    trajectory = odometry_csv_to_tum(
-        run_dir / 'odometry.csv', run_dir / 'trajectory.tum')
+    legacy_odometry = odometry_csv_to_tum(
+        run_dir / 'odometry.csv', run_dir / 'odometry_now_stamp.tum')
+    trajectory, official_path = collect_official_state_trajectory(run_dir)
+    scoring_path = run_dir / 'trajectory_prism.tum'
+    if trajectory['samples'] > 0:
+        apply_tum_translation_offset(
+            run_dir / 'trajectory_imu.tum', scoring_path, args.frame_offset)
+    scoring_trajectory = tum_trajectory_info(scoring_path)
     bag_start, bag_end = parse_bag_bounds(run_dir / 'rosbag_info.yaml')
     end_gap = (None if bag_end is None or trajectory['last_stamp'] is None
                else bag_end - trajectory['last_stamp'])
@@ -1245,8 +1369,14 @@ def run_once(args: argparse.Namespace, asset_root: Path, output: Path,
     bag_exit = read_int(run_dir / 'bag_exit_status.txt')
     alive_after_bag = read_int(run_dir / 'mapper_alive_after_bag.txt') == 1
     shutdown_exit = read_int(run_dir / 'mapper_shutdown_exit_status.txt')
+    map_path = select_fast_map(run_dir) if args.save_map else None
+    map_quality = (evaluate_map_quality(map_path, run_dir)
+                   if map_path is not None else None)
     complete = (bag_exit == 0 and alive_after_bag and trajectory['samples'] > 0 and
+                scoring_trajectory['samples'] == trajectory['samples'] and
                 end_gap is not None and end_gap <= args.maximum_end_gap_seconds)
+    if args.save_map and map_quality is None:
+        complete = False
     report = {
         'schema_version': 1, 'system': 'fast_livo2', 'run_index': run_index,
         'started_at': started.isoformat(), 'finished_at': finished.isoformat(),
@@ -1259,6 +1389,16 @@ def run_once(args: argparse.Namespace, asset_root: Path, output: Path,
                        'trajectory_end_gap_seconds': end_gap,
                        'process_exit_status': shutdown_exit},
         'trajectory': trajectory,
+        'scoring_trajectory': scoring_trajectory,
+        'trajectory_contract': {
+            'source': 'official_FAST_LIVO2_Log_result',
+            'source_path': official_path,
+            'timestamp': 'LidarMeasures.last_lio_update_time',
+            'source_frame': args.trajectory_source_frame,
+            'target_frame': 'leica_prism',
+            'offset_m': dict(zip('xyz', args.frame_offset)),
+            'legacy_now_stamp_odometry': legacy_odometry,
+        },
         'runtime': {'bag_duration_seconds': duration,
                     'replay_wall_realtime_factor': rtf,
                     'processing_realtime_factor_upper_bound': processing_bound,
@@ -1267,6 +1407,8 @@ def run_once(args: argparse.Namespace, asset_root: Path, output: Path,
                         'accuracy_and_count_validation'),
                     'mapper': mapper_time, 'bag_player': bag_time},
     }
+    if map_quality is not None:
+        report['mapping'] = map_quality
     (run_dir / 'run.json').write_text(json.dumps(report, indent=2) + '\n')
     return report
 
@@ -1279,8 +1421,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--bag', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--profile', type=Path, default=DEFAULT_PROFILE)
+    parser.add_argument(
+        '--mapping-launch', type=Path,
+        help='Optional official-source-compatible roslaunch file for this sensor')
+    parser.add_argument(
+        '--mapping-map-launch', type=Path,
+        help='Map-export roslaunch variant used together with --save-map')
     parser.add_argument('--input-manifest', type=Path)
-    parser.add_argument('--image', default='fast-livo2-benchmark:ros1-pinned')
+    parser.add_argument('--reference-meta', type=Path, required=True)
+    parser.add_argument('--trajectory-source-frame', choices=('imu', 'body', 'lidar'),
+                        default='imu')
+    parser.add_argument('--image', default='fast-livo2-benchmark:noetic')
     parser.add_argument('--runs', type=int)
     parser.add_argument('--rate', type=float, default=1.0)
     parser.add_argument('--shutdown-grace-seconds', type=float, default=5.0)
@@ -1342,6 +1493,24 @@ def main() -> int:
     if args.asset_root is None:
         raise ValueError('--asset-root is required for the legacy v1 path')
     args.asset_root = args.asset_root.resolve()
+    args.reference_meta = args.reference_meta.resolve()
+    if not args.reference_meta.is_file():
+        raise ValueError(f'--reference-meta is not a file: {args.reference_meta}')
+    args.frame_offset = load_reference_offset(
+        args.reference_meta, args.trajectory_source_frame)
+    if args.mapping_launch is not None:
+        args.mapping_launch = args.mapping_launch.resolve()
+        if not args.mapping_launch.is_file():
+            raise ValueError(f'--mapping-launch is not a file: {args.mapping_launch}')
+    if args.mapping_map_launch is not None:
+        args.mapping_map_launch = args.mapping_map_launch.resolve()
+        if not args.mapping_map_launch.is_file():
+            raise ValueError(
+                f'--mapping-map-launch is not a file: {args.mapping_map_launch}')
+    if args.save_map and args.mapping_launch is not None and args.mapping_map_launch is None:
+        raise ValueError(
+            '--mapping-map-launch is required with --save-map when '
+            '--mapping-launch is supplied')
     if not args.bag.is_file():
         raise ValueError(f'--bag is not a file: {args.bag}')
     contract = load_contract(args.profile)
@@ -1367,6 +1536,15 @@ def main() -> int:
         'container_image_id': command_output([
             'docker', 'image', 'inspect', args.image, '--format', '{{.Id}}']),
         'rate': args.rate, 'map_export_enabled': args.save_map,
+        'reference_metadata': {
+            'path': str(args.reference_meta), 'sha256': sha256(args.reference_meta)},
+        'trajectory_source_frame': args.trajectory_source_frame,
+        'trajectory_to_prism_offset_m': dict(zip('xyz', args.frame_offset)),
+        'mapping_launch': None if args.mapping_launch is None else {
+            'path': str(args.mapping_launch), 'sha256': sha256(args.mapping_launch)},
+        'mapping_map_launch': None if args.mapping_map_launch is None else {
+            'path': str(args.mapping_map_launch),
+            'sha256': sha256(args.mapping_map_launch)},
     }
     reports = []
     for index in range(1, runs + 1):
@@ -1378,6 +1556,7 @@ def main() -> int:
             report['completion']['trajectory_complete'] for report in reports),
         'clean_shutdowns': sum(
             report['completion']['process_exit_status'] == 0 for report in reports),
+        'completed_maps': sum('mapping' in report for report in reports),
         'runs': reports,
     }
     (args.output / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')

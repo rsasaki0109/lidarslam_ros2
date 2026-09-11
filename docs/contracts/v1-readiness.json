@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/v1-readiness-contract-v1.schema.json",
+  "product_version_source": "VERSION",
+  "target_version": "1.0.0",
+  "minimum_release_candidate_version": "0.9.0",
+  "gates": [
+    {
+      "id": "first-success",
+      "title": "Clean-machine first success",
+      "state": "complete",
+      "evidence": [
+        "docs/evidence/docker-first-map-2026-07-28.md",
+        "docs/evidence/cli-v1-install-2026-07-28.md"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "official-surface",
+      "title": "At most three beginner-facing entrypoints",
+      "state": "complete",
+      "evidence": [
+        "docs/product-contract.md",
+        "docs/contracts/cli-v1.json"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "diagnosability",
+      "title": "Actionable input and output diagnosis",
+      "state": "complete",
+      "evidence": [
+        "docs/schemas/preflight-v6.schema.json",
+        "docs/schemas/diagnosis-v1.schema.json",
+        "docs/schemas/map-session-recovery-v1.schema.json",
+        "docs/schemas/map-session-index-v1.schema.json",
+        "docs/evidence/timestamp-order-preflight-2026-07-29.md",
+        "docs/evidence/growth/odometry-tf-timing-preflight-2026-08-17.md"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "reproducibility",
+      "title": "Pinned inputs, manifests, and repeatable verification",
+      "state": "complete",
+      "evidence": [
+        "docs/schemas/run-manifest-v2.schema.json",
+        "docs/real-data-e2e.md",
+        "docs/evidence/real-data-soak-2026-07-28.json"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "distribution",
+      "title": "Supported Humble and Jazzy distribution",
+      "state": "incomplete",
+      "evidence": [
+        "docs/distribution.md",
+        "docs/evidence/official-rko-binary-compatibility-2026-07-29.json",
+        "docs/evidence/ndt-omp-release-preflight-2026-07-29.md",
+        "docs/evidence/ndt-omp-release-progress-2026-07-30.md",
+        "docs/evidence/ndt-omp-release-review-2026-08-12.md",
+        "docs/rosdistro-release.md",
+        "scripts/check_ndt_omp_release_readiness.py",
+        "docs/schemas/ndt-omp-release-readiness-v1.schema.json",
+        "docs/schemas/ndt-omp-release-readiness-v2.schema.json",
+        ".github/workflows/package-manager-install-upgrade.yml",
+        "scripts/check_package_manager_install.py",
+        "docs/schemas/package-manager-install-v1.schema.json",
+        "scripts/check_package_manager_release_readiness.py",
+        "docs/schemas/package-manager-release-readiness-v1.schema.json",
+        "scripts/check_ros_apt_dependency_readiness.py",
+        "docs/schemas/ros-apt-dependency-readiness-v1.schema.json",
+        "docs/evidence/ros-apt-dependency-readiness-2026-07-31.json",
+        "docs/evidence/ros-apt-dependency-readiness-2026-08-12.json"
+      ],
+      "blockers": [
+        "Answer the unresolved ndt_omp lineage review and replace the overlapping package with an upstream-converged or fully isolated dependency before merging ros/rosdistro PR #52949 or #52950.",
+        "Wait for Jazzy rko_lio 0.3.2 to sync from testing to the normal apt repository; Humble main is ready.",
+        "Run the package-manager install and upgrade E2E for lidarslam_ros2."
+      ]
+    },
+    {
+      "id": "reliability",
+      "title": "Automated failure recovery and bounded operation",
+      "state": "complete",
+      "evidence": [
+        "docs/operational-reliability.md",
+        "docs/evidence/bounded-filesystem-exhaustion-2026-07-29.md",
+        "docs/evidence/recovery-command-contract-2026-07-29.md",
+        "docs/schemas/map-session-recovery-v1.schema.json",
+        "docs/schemas/map-session-index-v1.schema.json",
+        "docs/evidence/published-release-v0.9.0-2026-07-31.md",
+        "scripts/check_published_release.py",
+        "docs/schemas/published-release-v1.schema.json"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "compatibility",
+      "title": "Versioned CLI and output compatibility policy",
+      "state": "complete",
+      "evidence": [
+        "docs/cli-compatibility.md",
+        "docs/contracts/cli-v1.json",
+        "docs/evidence/install-upgrade-2026-07-28.md"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "oss-operations",
+      "title": "Public OSS operations and ownership",
+      "state": "complete",
+      "evidence": [
+        "CONTRIBUTING.md",
+        "SECURITY.md",
+        "SUPPORT.md",
+        "GOVERNANCE.md",
+        "CODE_OF_CONDUCT.md",
+        "CITATION.cff",
+        "RELEASING.md"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "external-adoption",
+      "title": "Three independent first-map validations",
+      "state": "incomplete",
+      "evidence": [
+        "docs/external-first-map-validation.md",
+        ".github/ISSUE_TEMPLATE/first-map-validation.yml",
+        "docs/evidence/external-first-map-validations.json",
+        "scripts/prepare_external_first_map_acceptance.py",
+        "docs/schemas/external-first-map-acceptance-v1.schema.json"
+      ],
+      "blockers": [
+        "Accept three distinct independent-user first-map reports; the tracked ledger currently has zero."
+      ]
+    },
+    {
+      "id": "release-publication",
+      "title": "Stable v0.9 release candidate publication",
+      "state": "complete",
+      "evidence": [
+        "docs/roadmap/v0.9.md",
+        "docs/releases/v0.9.0.md",
+        "docs/evidence/published-release-v0.9.0-2026-07-31.md",
+        "RELEASING.md",
+        ".github/workflows/release.yml",
+        "scripts/check_published_release.py",
+        "docs/schemas/published-release-v1.schema.json"
+      ],
+      "blockers": []
+    }
+  ]
+}

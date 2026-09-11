@@ -104,16 +104,7 @@ struct BundleManifest
   int planar_map_filter_min_neighbors{3};
   double planar_map_filter_max_small_eigenvalue_ratio{0.24};
   double planar_map_filter_min_middle_eigenvalue_ratio{0.0};
-  double planar_map_filter_min_retained_ratio{0.80};
-  bool planar_map_consolidation{false};
-  double planar_map_consolidation_voxel_size{0.3};
-  int planar_map_consolidation_min_neighbors{12};
-  double planar_map_consolidation_max_small_eigenvalue_ratio{0.05};
-  double planar_map_consolidation_min_middle_eigenvalue_ratio{0.05};
-  double planar_map_consolidation_max_plane_distance_m{0.10};
-  double planar_map_consolidation_projection_gain{0.5};
-  double planar_map_consolidation_max_displacement_m{0.02};
-  double planar_map_consolidation_min_supported_ratio{0.10};
+  double planar_map_filter_min_retained_ratio{0.90};
 };
 
 inline std::string trajectoryTumLine(const TrajectoryPose & pose)
@@ -163,24 +154,6 @@ inline std::string bundleManifestYaml(const BundleManifest & manifest)
     manifest.planar_map_filter_min_middle_eigenvalue_ratio << "\n";
   out << "planar_map_filter_min_retained_ratio: " <<
     manifest.planar_map_filter_min_retained_ratio << "\n";
-  out << "planar_map_consolidation: " <<
-    (manifest.planar_map_consolidation ? "true" : "false") << "\n";
-  out << "planar_map_consolidation_voxel_size_m: " <<
-    manifest.planar_map_consolidation_voxel_size << "\n";
-  out << "planar_map_consolidation_min_neighbors: " <<
-    manifest.planar_map_consolidation_min_neighbors << "\n";
-  out << "planar_map_consolidation_max_small_eigenvalue_ratio: " <<
-    manifest.planar_map_consolidation_max_small_eigenvalue_ratio << "\n";
-  out << "planar_map_consolidation_min_middle_eigenvalue_ratio: " <<
-    manifest.planar_map_consolidation_min_middle_eigenvalue_ratio << "\n";
-  out << "planar_map_consolidation_max_plane_distance_m: " <<
-    manifest.planar_map_consolidation_max_plane_distance_m << "\n";
-  out << "planar_map_consolidation_projection_gain: " <<
-    manifest.planar_map_consolidation_projection_gain << "\n";
-  out << "planar_map_consolidation_max_displacement_m: " <<
-    manifest.planar_map_consolidation_max_displacement_m << "\n";
-  out << "planar_map_consolidation_min_supported_ratio: " <<
-    manifest.planar_map_consolidation_min_supported_ratio << "\n";
   out << "artifacts:\n";
   out << "  full_map: map.pcd\n";
   out << "  pointcloud_map: pointcloud_map\n";

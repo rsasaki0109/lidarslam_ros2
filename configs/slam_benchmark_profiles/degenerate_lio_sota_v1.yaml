@@ -1,0 +1,106 @@
+degenerate_lio_sota_profile:
+  schema_version: 1
+  name: degenerate_lio_sota_v1
+  status: preregistered_report_only
+  claim_policy:
+    current_scope: enwide_tunnel_bringup
+    sota_claim_allowed: false
+    unlock_requires:
+      - all_enwide_sequences_evaluated
+      - all_geode_degenerate_sequences_evaluated
+      - hidden_tunnel_holdout_evaluated
+      - all_rivals_reproduced_on_identical_inputs
+      - one_parameter_set_across_all_sequences
+  track:
+    name: lidar_intensity_imu_no_external_velocity
+    required_modalities: [lidar_geometry, lidar_intensity, imu]
+    forbidden_modalities: [radar, wheel_odometry, gnss, camera]
+    alignment: se3_no_scale
+    ground_truth: position_only_leica_ms60
+    segment_length_m: 10.0
+    maximum_interpolation_time_gap_s: 0.11
+    rte_aggregation: segment_mean
+    failure_rte_percent: 20.0
+  execution_contract:
+    same_bag_bytes: true
+    same_calibration: true
+    same_machine: true
+    same_alignment_policy: true
+    repetitions: 3
+    parameter_policy: one_frozen_parameter_set
+    report_failed_runs: true
+    minimum_matched_ground_truth_fraction: 0.98
+    require_input_sha256: true
+    require_runtime_and_peak_rss: true
+    candidate_config: configs/enwide/rko_lio_os0_degenerate_sota_v1.yaml
+  win_policy:
+    require_zero_incomplete_trajectories: true
+    require_zero_catastrophic_failures: true
+    minimum_primary_improvement_percent: 3.0
+    maximum_non_degenerate_regression_percent: 2.0
+    primary_aggregation_after_full_suite: median_ate_rmse_m
+    secondary_aggregation_after_full_suite: median_rte_percent
+  rivals:
+    coin_lio:
+      repository: https://github.com/ethz-asl/COIN-LIO.git
+      revision: 76729cc4feb3649cbd79d28f82d9f62a2c82889b
+      license: GPL-2.0
+    bievr_lio:
+      repository: https://github.com/ethz-asl/BIEVR-LIO.git
+      revision: 21121698f273d6fbfffca57546b940edb1de2ff0
+      license: BSD-3-Clause
+    fast_lio2:
+      repository: https://github.com/hku-mars/FAST_LIO.git
+      revision: 7cc4175de6f8ba2edf34bab02a42195b141027e9
+      license: GPL-2.0
+    point_lio:
+      repository: https://github.com/hku-mars/Point-LIO.git
+      revision: 4b86a469eb5572e70ed575af25b5f15dd06e8e3c
+      license: GPL-2.0
+    rko_lio_merged_baseline:
+      repository: https://github.com/rsasaki0109/rko_lio.git
+      revision: d5793a58dd8bd6743b5173172cd2ae2086d44e03
+      license: BSD-3-Clause
+  datasets:
+    enwide_tunnel_s:
+      source: https://doi.org/10.3929/ethz-c-000787551
+      license: CC-BY-4.0
+      sequence: tunnel_s
+      bag_name: 2023-08-08-17-12-37-tunnel_s.bag
+      expected_bag_bytes: 14983936757
+      official_bag_etag: 672ca9aa6fa170b8c4498974cea6a561
+      ground_truth_name: gt-tunnel_s.csv
+      expected_ground_truth_bytes: 9408508
+      official_ground_truth_etag: 640b8aa9844eb5db1ebb396ca69144ed
+      trajectory_length_m: 251.58
+      published_coin_lio:
+        ate_rmse_m: 0.743
+        rte_percent: 1.60
+      tuning_allowed: false
+    enwide_tunnel_d:
+      source: https://doi.org/10.3929/ethz-c-000787551
+      license: CC-BY-4.0
+      sequence: tunnel_d
+      bag_name: 2023-08-08-17-50-31-tunnel_d.bag
+      expected_bag_bytes: 7485669675
+      official_bag_etag: f6afd377894e90a85322e425172f7b89
+      ground_truth_name: gt-tunnel_d.csv
+      expected_ground_truth_bytes: 4678234
+      official_ground_truth_etag: f012aef67efd0e14261342fac1ac233f
+      trajectory_length_m: 179.71
+      published_coin_lio:
+        ate_rmse_m: 0.487
+        rte_percent: 1.59
+      tuning_allowed: false
+  required_metrics:
+    - completion.trajectory_complete
+    - completion.process_exit_status
+    - trajectory.ate_rmse_m
+    - trajectory.rte_translation_percent_10m
+    - trajectory.matched_ground_truth_fraction
+    - runtime.processing_realtime_factor
+    - runtime.peak_rss_mb
+  optional_metrics:
+    - mapping.point_projection_rmse_5m
+    - mapping.point_projection_rmse_10m
+    - mapping.point_projection_rmse_20m

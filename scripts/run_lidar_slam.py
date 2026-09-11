@@ -23,7 +23,7 @@ from lidarslam_benchmark_tools.lidarslam_tools.slam_runtime import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HILTI_RUNNER = REPO_ROOT / 'tools/gaussian_splatting/bim_reference_scripts/run_hilti_slam.sh'
+HILTI_RUNNER = REPO_ROOT / 'tools/colored_map/bim_reference_scripts/run_hilti_slam.sh'
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description='SSDのROS bagを見つけて、LiDAR SLAM地図を簡単に生成します。',

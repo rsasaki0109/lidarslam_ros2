@@ -1,0 +1,109 @@
+# =============================================================================
+# WARNING -- READ BEFORE ENABLING. Environment-specific; validated HARMFUL in
+# two of the three environments it has been tested on. Default-off for a
+# reason. This is the radar-less fallback, not a general-purpose fix.
+# =============================================================================
+#
+# Symptom addressed: trajectory falls far short of the true traveled
+# distance in a long, geometrically self-similar corridor/tunnel, and you
+# have NO radar available (see tunnel_radar.ros.yaml if you do -- radar is
+# strictly better where both apply).
+#
+# APPLICABILITY CONDITION (this is the entire point of this preset -- do not
+# skip it): only enable this when the corridor's GEOMETRY is self-similar
+# but its REFLECTIVITY TEXTURE is distinctive -- irregular paint, cabling,
+# signage, lighting fixtures, wet patches, etc. at irregular intervals along
+# the travel axis. This was true of the NTNU tunnel sequence.
+#
+# It is HARMFUL when:
+#   - the reflectivity texture is ALSO self-similar/periodic along the
+#     travel axis. Validated on HILTI 2022 exp07 (a long, self-similar
+#     corridor with mm-ground-truth control points): baseline APE 0.318 m,
+#     this gate made it 0.94-2.39 m -- 2.9x to 7.5x WORSE, at EVERY
+#     disagreement-min-mps threshold tried (0.2, 0.05, 0.02). Root cause is
+#     correlation aliasing: periodic texture produces plausible-looking but
+#     wrong shift estimates that exceed the correlation threshold on 52% of
+#     attempts and get injected at full weight.
+#   - the texture is fake / sensor-coupled, e.g. fog or dust aerosol
+#     returns. Validated on the NTNU "fog" sequence: start-end drift went
+#     from 32.80 m baseline to 36.97 m -- WORSE than baseline, even though
+#     the intensity correlation itself looked plausible (706/744 valid).
+#
+# Bottom line: visually confirm your corridor has irregular reflectivity
+# markings on real 3D data (not just "it looks like a boring hallway") before
+# turning this on, and A/B it against degeneracy_off.ros.yaml on a held-out
+# run before trusting it operationally. See
+# docs/research/lidar-degeneracy-radar-intensity-ab-2026-07.md ("knowledge 3",
+# "knowledge 4", and the 2026-07-17 HILTI exp07 addendum) for the full
+# analysis, and the negative-result reference config at
+# configs/hilti2022/rko_lio_hilti2022_pandar_intensity_disagreement.yaml.
+#
+# Sensors required: LiDAR + IMU only (the LiDAR must report a per-point
+# "intensity" or "reflectivity" float field).
+#
+# TODO-USER knobs: none required to enable this preset, but you should
+# re-tune intensity_min_correlation / intensity_disagreement_min_mps if you
+# see it misfiring on your own corridor's texture statistics.
+#
+# Validated numbers (NTNU "tunnel" sequence, radar-less, one-way reach; true
+# distance ~500 m):
+#   baseline (all off)               98.67 m,  path 233.8 m
+#   + this preset                   153.75 m,  path 413.8 m (635 scans
+#                                                              corrected)
+# Does not reach the radar-assisted 457-495 m of tunnel_radar.ros.yaml, but
+# meaningfully recovers a radar-less rig where the applicability condition
+# holds.
+#
+# This file contains ONLY degeneracy-feature params -- it is meant to be
+# layered as a SECOND --params-file on top of your own sensor config
+# (extrinsics, voxel_size, min/max_range, etc. stay in your own file):
+#
+#   ros2 run rko_lio offline_node --ros-args \
+#     --params-file <your_sensor_config>.ros.yaml \
+#     --params-file lidarslam/param/presets/tunnel_intensity_no_radar.ros.yaml \
+#     -p bag_path:=/path/to/bag
+#
+# See docs/degeneracy-guide.md for the symptom -> preset table, how to
+# verify the gate is firing, and honest limitations.
+/**:
+  ros__parameters:
+    # Hessian-eigenvalue weak-direction gates -- these fire in tunnels and
+    # matter here.
+    degeneracy_aware_solve: true
+    degeneracy_well_conditioned_ratio: 1.5e-5
+    degeneracy_multiplicity_relative_gap: 1.0e-8
+    degeneracy_prior_weight: 0.25
+    degeneracy_persistence_gate: true
+    degeneracy_persistence_min_scans: 3
+    degeneracy_persistence_tracking_ratio: 1.5e-5
+    degeneracy_persistence_min_absolute_cosine: 0.98
+    degeneracy_persistence_min_translation_fraction: 0.99
+    degeneracy_multiscan_observability_gate: true
+    degeneracy_observability_window_scans: 10
+    degeneracy_observability_min_scans: 5
+    degeneracy_observability_max_directional_ratio: 1.0e-5
+
+    # Persistence-confirmed reflectivity-profile prior. Independent of the
+    # disagreement gate below (core/lio.cpp builds the intensity profile
+    # once and both features share it), but only engages along a
+    # persistence-confirmed weak Hessian direction.
+    intensity_constraint: true
+    intensity_bin_size_m: 0.25
+    intensity_profile_half_length_m: 30.0
+    intensity_max_shift_m: 1.5
+    intensity_min_correlation: 0.6
+    intensity_min_filled_bins: 40
+
+    # Hessian-gate-free intensity-vs-ICP disagreement gate: the radar-less
+    # analogue of radar_disagreement_gate. Tracks the scan's own ICP motion
+    # axis every scan instead of waiting for degeneracy_persistence_gate to
+    # confirm a weak direction, so it also catches "soft" degeneracy between
+    # confirmations -- and this is what actually recovers the tunnel number
+    # above. min_scans is 3, not 10 (unlike radar_disagreement_min_scans):
+    # valid shift correlations only land on ~40% of scans here (vs radar's
+    # near-every-scan Doppler), so requiring 10 consecutive valid+disagreeing
+    # scans essentially never accumulates.
+    intensity_disagreement_gate: true
+    intensity_disagreement_min_mps: 0.2
+    intensity_disagreement_min_scans: 3
+    intensity_disagreement_weight: 1.0

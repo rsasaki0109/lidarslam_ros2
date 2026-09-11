@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/canonical-ndt-convergence-contract-v1.schema.json",
+  "contract_id": "canonical-ndt-convergence-20260812",
+  "status": "LOCAL_REPRODUCIBLE_EXTERNAL_WRITES_REQUIRED",
+  "upstream": {
+    "repository": "https://github.com/koide3/ndt_omp.git",
+    "branch": "master",
+    "base_commit": "5495fd9214945afcb4b35d5a1da385e405c52bf9",
+    "package": "ndt_omp",
+    "patch": {
+      "path": "packaging/ndt_omp/koide3-ndt-omp-lidarslam-priors.patch",
+      "sha256": "7b641c32ec4f30faa302e60aaa89765bb9acf67f3f0feb85f9e4e11e88b4dc9f",
+      "paths": [
+        "CMakeLists.txt",
+        "include/pclomp/ndt_omp.h",
+        "include/pclomp/ndt_omp_impl.hpp",
+        "package.xml",
+        "test/test_ndt_regularization.cpp"
+      ],
+      "additions": 342,
+      "deletions": 1
+    },
+    "required_api_markers": [
+      "clearRotationPrior",
+      "clearTranslationPrior",
+      "getLastCorrespondenceCount",
+      "getLastMeanCorrespondenceDistance",
+      "getMaxCorrespondenceDistance",
+      "setMaxCorrespondenceDistance",
+      "setRotationPrior",
+      "setTranslationPrior"
+    ],
+    "focused_tests": [
+      "AppliesPerAxisTranslationPrior",
+      "AppliesRotationPriorToSelectedAxes",
+      "FiltersByVoxelMeanDistanceAndReportsStatistics",
+      "InvalidConfigurationDisablesOptionalTerms"
+    ]
+  },
+  "publication": {
+    "upstream_repository": "koide3/ndt_omp",
+    "fork_repository": "rsasaki0109/ndt_omp_ros2",
+    "proposed_branch": "lidarslam-priors-and-correspondence-diagnostics",
+    "candidate_commit": "618f02f6b50a8590b81f48b4fee5b6cfc8d3f3ea",
+    "candidate_subject": "Add optional priors and correspondence diagnostics",
+    "draft_pr": {
+      "title": "Add optional NDT priors and correspondence diagnostics",
+      "body": "## Summary\n\n- add opt-in per-axis rotation and translation priors to NDT;\n- add an optional maximum voxel-mean correspondence distance;\n- report the accepted correspondence count and mean distance after alignment; and\n- add four focused tests for priors, correspondence filtering/statistics, and invalid optional configuration.\n\n## Motivation\n\nA downstream ROS 2 consumer currently carries these APIs in a fork for IMU and translation priors plus adaptive correspondence filtering. That fork installs the same `pclomp` headers and `libndt_omp.so` as this package, so releasing both packages is not a safe long-term solution. Upstreaming the small algorithm/API delta lets downstream users return to the canonical package instead of publishing an overlapping implementation.\n\n## Compatibility\n\nExisting behavior is unchanged by default. Priors and distance filtering are disabled until explicitly configured. Non-finite or otherwise invalid optional values fail back to the disabled state. Correspondence statistics are observational and use the existing per-input-point reduction order.\n\n## Validation\n\n- clean ROS 2 Jazzy / PCL 1.14 build and install;\n- 4/4 focused GTests pass;\n- the same patch previously built and passed the four tests on clean Humble and Jazzy environments; and\n- both downstream consumers were separately built against the canonical package with the prepared dependency-transition patch.\n\nI am happy to split the API groups or adjust naming if a smaller upstream surface is preferred.",
+      "draft_required": true
+    },
+    "duplicate_search_terms": [
+      "correspondence distance",
+      "rotation prior",
+      "translation prior",
+      "regularization"
+    ]
+  },
+  "parent_transition": {
+    "provider_before": "ndt_omp_ros2",
+    "provider_after": "ndt_omp",
+    "patch": {
+      "path": "packaging/ndt_omp/lidarslam-canonical-ndt-transition.patch",
+      "sha256": "c090b8f2228b21dcf30650114f9638f38497ca5a0214e3e6063a53aa7bef66b1",
+      "paths": [
+        "graph_based_slam/CMakeLists.txt",
+        "graph_based_slam/package.xml",
+        "scanmatcher/CMakeLists.txt",
+        "scanmatcher/package.xml",
+        "scanmatcher/src/scanmatcher_component.cpp"
+      ],
+      "additions": 12,
+      "deletions": 12
+    },
+    "consumer_replacements": [
+      {
+        "path": "graph_based_slam/CMakeLists.txt",
+        "before_count": 7,
+        "after_count": 0
+      },
+      {
+        "path": "graph_based_slam/package.xml",
+        "before_count": 1,
+        "after_count": 0
+      },
+      {
+        "path": "scanmatcher/CMakeLists.txt",
+        "before_count": 2,
+        "after_count": 0
+      },
+      {
+        "path": "scanmatcher/package.xml",
+        "before_count": 1,
+        "after_count": 0
+      }
+    ],
+    "spelling_correction": {
+      "path": "scanmatcher/src/scanmatcher_component.cpp",
+      "before": "setOulierRatio",
+      "after": "setOutlierRatio"
+    }
+  },
+  "collision": {
+    "existing_package": "ndt_omp",
+    "fork_package": "ndt_omp_ros2",
+    "conflicting_install_surfaces": [
+      "include/pclomp/*",
+      "lib/libndt_omp.so"
+    ],
+    "safe_resolution": "UPSTREAM_CONVERGENCE"
+  },
+  "authority": {
+    "github_writes_authorized": false,
+    "remote_mutations_performed": false,
+    "allowed_next_local_action": "RUN_READ_ONLY_DRAFT_PR_PREFLIGHT"
+  }
+}

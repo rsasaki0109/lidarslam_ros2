@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-project-v1.schema.json",
+  "title": "lidar_slam multi-session map project v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project_type",
+    "anchor_session_index",
+    "session_count",
+    "sources",
+    "transforms_to_anchor",
+    "options",
+    "receipt"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "project_type": {"const": "gravity_aligned_multi_session_pointcloud_map"},
+    "anchor_session_index": {"const": 0},
+    "session_count": {"type": "integer", "minimum": 2},
+    "sources": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/definitions/source"}
+    },
+    "transforms_to_anchor": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/definitions/alignment"}
+    },
+    "options": {"type": "object"},
+    "receipt": {"const": "map_merge_receipt.json"}
+  },
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "session_index",
+        "source_dir",
+        "map_bundle_sha256",
+        "full_map_sha256",
+        "pointcloud_map_sha256",
+        "trajectory_sha256",
+        "projector_info_sha256",
+        "point_count",
+        "trajectory_pose_count"
+      ],
+      "properties": {
+        "session_index": {"type": "integer", "minimum": 0},
+        "source_dir": {"type": "string", "minLength": 1},
+        "map_bundle_sha256": {"$ref": "#/definitions/sha256"},
+        "full_map_sha256": {"$ref": "#/definitions/sha256"},
+        "pointcloud_map_sha256": {"$ref": "#/definitions/sha256"},
+        "trajectory_sha256": {"$ref": "#/definitions/sha256"},
+        "projector_info_sha256": {"$ref": "#/definitions/sha256"},
+        "point_count": {"type": "integer", "minimum": 1},
+        "trajectory_pose_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "alignment": {
+      "type": "object",
+      "required": [
+        "session_index",
+        "method",
+        "rotation",
+        "translation",
+        "yaw_deg",
+        "translation_norm_m"
+      ],
+      "properties": {
+        "session_index": {"type": "integer", "minimum": 0},
+        "method": {"type": "string", "minLength": 1},
+        "rotation": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {"type": "number"}
+          }
+        },
+        "translation": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {"type": "number"}
+        },
+        "yaw_deg": {"type": "number"},
+        "translation_norm_m": {"type": "number", "minimum": 0}
+      }
+    }
+  }
+}

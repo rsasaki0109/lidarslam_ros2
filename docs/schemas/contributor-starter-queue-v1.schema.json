@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/contributor-starter-queue-v1.schema.json",
+  "title": "lidar_slam_ros2 contributor starter queue v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "queue_id",
+    "generated_at",
+    "repository",
+    "status",
+    "prepared_environment",
+    "remote_duplicate_audit",
+    "published_issue_dependencies",
+    "local_task_publication_dependency",
+    "tasks",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/contributor-starter-queue-v1.schema.json"
+    },
+    "queue_id": {"const": "g0-community-starters-2026-08-16-r4"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "status": {"const": "PREPARED_NOT_PUBLISHED"},
+    "prepared_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["estimate_excludes", "maximum_task_minutes", "maximum_focused_check_minutes"],
+      "properties": {
+        "estimate_excludes": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "maximum_task_minutes": {"const": 30},
+        "maximum_focused_check_minutes": {"const": 5}
+      }
+    },
+    "remote_duplicate_audit": {"$ref": "#/definitions/remoteDuplicateAudit"},
+    "published_issue_dependencies": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {"$ref": "#/definitions/publishedIssueDependency"}
+    },
+    "local_task_publication_dependency": {
+      "$ref": "#/definitions/localTaskPublicationDependency"
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {"$ref": "#/definitions/task"}
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_writes_authorized",
+        "issues_published",
+        "remote_mutations_performed",
+        "publication_requires_maintainer_confirmation"
+      ],
+      "properties": {
+        "github_writes_authorized": {"const": false},
+        "issues_published": {"const": false},
+        "remote_mutations_performed": {"const": false},
+        "publication_requires_maintainer_confirmation": {"const": true}
+      }
+    }
+  },
+  "definitions": {
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[^\\r\\n]+$"
+    },
+    "taskId": {
+      "enum": ["starter-C5", "starter-C6", "starter-C7", "starter-C8", "starter-C9"]
+    },
+    "publishedIssueDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "issue_number",
+        "issue_title",
+        "check_command",
+        "eligible_statuses"
+      ],
+      "properties": {
+        "id": {"const": "first-map-validator-cohort-v1"},
+        "issue_number": {"const": 422},
+        "issue_title": {
+          "const": "Help validate the public first-map path for v1.0"
+        },
+        "check_command": {
+          "const": [
+            "python3",
+            "scripts/first_map_validator_cohort.py",
+            "--json"
+          ]
+        },
+        "eligible_statuses": {
+          "const": ["READY_FOR_NEXT_ATTEMPT"]
+        }
+      }
+    },
+    "localTaskPublicationDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "pull_request_number",
+        "base_ref",
+        "public_queue_path"
+      ],
+      "properties": {
+        "id": {"const": "product-draft-public-queue-v1"},
+        "pull_request_number": {"const": 427},
+        "base_ref": {"const": "develop"},
+        "public_queue_path": {
+          "const": "docs/contracts/contributor-starter-queue-v1.json"
+        }
+      }
+    },
+    "remoteDuplicateAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "checked_at",
+        "open_pull_request_count",
+        "open_pull_request_numbers",
+        "task_matches",
+        "recheck_before_publication"
+      ],
+      "properties": {
+        "method": {"const": "gh-api-get-read-only"},
+        "checked_at": {"type": "string", "format": "date-time"},
+        "open_pull_request_count": {"type": "integer", "minimum": 0, "maximum": 500},
+        "open_pull_request_numbers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 1}
+        },
+        "task_matches": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["task_id", "query", "matching_open_pull_requests"],
+            "properties": {
+              "task_id": {"$ref": "#/definitions/taskId"},
+              "query": {"type": "string", "minLength": 1, "maxLength": 160},
+              "matching_open_pull_requests": {
+                "type": "array",
+                "maxItems": 50,
+                "uniqueItems": true,
+                "items": {"type": "integer", "minimum": 1}
+              }
+            }
+          }
+        },
+        "recheck_before_publication": {"const": true}
+      }
+    },
+    "focusedCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "argv"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {"type": "string", "minLength": 1, "maxLength": 300}
+        }
+      }
+    },
+    "gapProbe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "mode", "value", "failure_detail"],
+      "properties": {
+        "path": {"$ref": "#/definitions/repoPath"},
+        "mode": {"enum": ["contains", "not_contains"]},
+        "value": {"type": "string", "minLength": 1, "maxLength": 500},
+        "failure_detail": {"type": "string", "minLength": 1, "maxLength": 240}
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "publication_status",
+        "title",
+        "outcome",
+        "estimate_minutes",
+        "labels",
+        "source_issue_numbers",
+        "allowed_paths",
+        "non_goals",
+        "acceptance",
+        "focused_checks",
+        "check_profile",
+        "gap_probes",
+        "private_data_required",
+        "hardware_required"
+      ],
+      "properties": {
+        "id": {"$ref": "#/definitions/taskId"},
+        "publication_status": {"const": "PREPARED_NOT_PUBLISHED"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 200},
+        "outcome": {"type": "string", "minLength": 1, "maxLength": 500},
+        "estimate_minutes": {"type": "integer", "minimum": 1, "maximum": 30},
+        "labels": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"enum": ["bug", "documentation", "good first issue", "help wanted"]}
+        },
+        "source_issue_numbers": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 1}
+        },
+        "allowed_paths": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/repoPath"}
+        },
+        "non_goals": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 240}
+        },
+        "acceptance": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 300}
+        },
+        "focused_checks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {"$ref": "#/definitions/focusedCheck"}
+        },
+        "check_profile": {"enum": ["docs-strict", "mid360-empty-frame"]},
+        "gap_probes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {"$ref": "#/definitions/gapProbe"}
+        },
+        "private_data_required": {"const": false},
+        "hardware_required": {"const": false}
+      }
+    }
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/sensor-setup-v1.schema.json",
+  "title": "lidarslam_ros2 sensor setup bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "created_at",
+    "bundle_path",
+    "input",
+    "profile",
+    "topics",
+    "frames",
+    "pointcloud",
+    "timestamp_order",
+    "calibration",
+    "parameters",
+    "run"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {"const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/sensor-setup-v1.schema.json"},
+    "status": {"const": "ready"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "bundle_path": {"type": "string", "minLength": 1},
+    "input": {
+      "type": "object",
+      "required": [
+        "bag_path",
+        "metadata_path",
+        "metadata_size_bytes",
+        "metadata_sha256",
+        "storage_files",
+        "identity_algorithm"
+      ],
+      "properties": {
+        "bag_path": {"type": "string", "minLength": 1},
+        "metadata_path": {"type": "string", "minLength": 1},
+        "metadata_size_bytes": {"type": "integer", "minimum": 1},
+        "metadata_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "storage_identifier": {"type": ["string", "null"]},
+        "storage_files": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/file_identity"}
+        },
+        "identity_algorithm": {"const": "sha256"}
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1}
+      }
+    },
+    "topics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lidar",
+        "lidar_type",
+        "imu",
+        "gnss",
+        "navigation",
+        "navigation_quality"
+      ],
+      "properties": {
+        "lidar": {"type": "string", "minLength": 1},
+        "lidar_type": {
+          "enum": [
+            "sensor_msgs/msg/PointCloud2",
+            "velodyne_msgs/msg/VelodyneScan"
+          ]
+        },
+        "imu": {"type": ["string", "null"]},
+        "gnss": {"type": ["string", "null"]},
+        "navigation": {"type": ["string", "null"]},
+        "navigation_quality": {"type": ["string", "null"]}
+      }
+    },
+    "frames": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base", "lidar", "imu"],
+      "properties": {
+        "base": {"$ref": "#/definitions/frame"},
+        "lidar": {"$ref": "#/definitions/frame"},
+        "imu": {"$ref": "#/definitions/frame"}
+      }
+    },
+    "pointcloud": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inspection_status", "timestamp_field", "fields"],
+      "properties": {
+        "inspection_status": {"type": "string", "minLength": 1},
+        "timestamp_field": {"type": ["string", "null"]},
+        "fields": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "timestamp_order": {"type": "object"},
+    "calibration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "source",
+        "lidar_to_base_quat_xyzw_xyz",
+        "imu_to_base_quat_xyzw_xyz"
+      ],
+      "properties": {
+        "required": {"type": "boolean"},
+        "source": {
+          "enum": [
+            "accepted_profile_extrinsics",
+            "explicit_cli_transforms",
+            "not_applicable"
+          ]
+        },
+        "lidar_to_base_quat_xyzw_xyz": {"$ref": "#/definitions/optional_transform"},
+        "imu_to_base_quat_xyzw_xyz": {"$ref": "#/definitions/optional_transform"}
+      }
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "source_path", "bundle_path", "size_bytes", "sha256"],
+        "properties": {
+          "role": {"enum": ["graph_backend", "rko_lio"]},
+          "source_path": {"type": "string", "minLength": 1},
+          "bundle_path": {"type": "string", "minLength": 1},
+          "size_bytes": {"type": "integer", "minimum": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["output_dir", "argv", "command_shell"],
+      "properties": {
+        "output_dir": {"type": "string", "minLength": 1},
+        "argv": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "command_shell": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "definitions": {
+    "file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source"],
+      "properties": {
+        "id": {"type": ["string", "null"], "minLength": 1},
+        "source": {
+          "enum": [
+            "cli_or_default",
+            "cli_override",
+            "bag_header",
+            "fallback",
+            "not_applicable"
+          ]
+        }
+      }
+    },
+    "optional_transform": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": {"type": "number"}
+        }
+      ]
+    }
+  }
+}

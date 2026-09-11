@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/product-draft-review-ledger-report-v1.schema.json",
+  "title": "lidarslam_ros2 product Draft review ledger report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "pull_request",
+    "scope",
+    "status",
+    "exact_head",
+    "ledger_sha256",
+    "routing_contract_sha256",
+    "worktree_clean",
+    "event_count",
+    "reviewed_lane_count",
+    "passing_lane_count",
+    "blocked_lane_count",
+    "historical_finding_count",
+    "current_finding_count",
+    "open_blocker_count",
+    "current_lanes",
+    "next_lane_id",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/product-draft-review-ledger-report-v1.schema.json"
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "pull_request": {"const": 427},
+    "scope": {"const": "anonymous-product-draft-review-ledger-report"},
+    "status": {
+      "enum": [
+        "EMPTY_LOCAL_LEDGER",
+        "IN_PROGRESS_LOCAL_REVIEW",
+        "BLOCKED_LOCAL_REVIEW",
+        "COMPLETE_LOCAL_REVIEW"
+      ]
+    },
+    "exact_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "ledger_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "routing_contract_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "worktree_clean": {"const": true},
+    "event_count": {"type": "integer", "minimum": 0, "maximum": 100},
+    "reviewed_lane_count": {"type": "integer", "minimum": 0, "maximum": 4},
+    "passing_lane_count": {"type": "integer", "minimum": 0, "maximum": 4},
+    "blocked_lane_count": {"type": "integer", "minimum": 0, "maximum": 4},
+    "historical_finding_count": {"type": "integer", "minimum": 0},
+    "current_finding_count": {"type": "integer", "minimum": 0},
+    "open_blocker_count": {"type": "integer", "minimum": 0},
+    "current_lanes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/definitions/lane"}
+    },
+    "next_lane_id": {
+      "anyOf": [
+        {
+          "enum": [
+            "R1-runtime-safety",
+            "R2-operator-ux",
+            "R3-distribution",
+            "R4-integration-publication"
+          ]
+        },
+        {"type": "null"}
+      ]
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identities_collected",
+        "review_commands_executed_by_tool",
+        "github_reviewer_requests_authorized",
+        "github_reviews_authorized",
+        "mark_ready_authorized",
+        "merge_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "identities_collected": {"const": false},
+        "review_commands_executed_by_tool": {"const": false},
+        "github_reviewer_requests_authorized": {"const": false},
+        "github_reviews_authorized": {"const": false},
+        "mark_ready_authorized": {"const": false},
+        "merge_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "slice_ids",
+        "status",
+        "verification_status",
+        "latest_event_sequence",
+        "finding_count",
+        "blocker_count"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "R1-runtime-safety",
+            "R2-operator-ux",
+            "R3-distribution",
+            "R4-integration-publication"
+          ]
+        },
+        "order": {"type": "integer", "minimum": 1, "maximum": 4},
+        "slice_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^S[1-7]-[a-z0-9-]+$"}
+        },
+        "status": {"enum": ["NOT_REVIEWED", "PASS", "BLOCKED"]},
+        "verification_status": {
+          "enum": ["NOT_RECORDED", "PASS", "FAIL"]
+        },
+        "latest_event_sequence": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 100
+        },
+        "finding_count": {"type": "integer", "minimum": 0, "maximum": 10},
+        "blocker_count": {"type": "integer", "minimum": 0, "maximum": 10}
+      }
+    }
+  }
+}

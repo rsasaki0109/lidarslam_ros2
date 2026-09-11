@@ -171,3 +171,51 @@ README 掲載 GIF はこの実色点群(voxel 0.015、4M 点中 ~1.9M 着色)を
 - `output/koide_3dgs_firstlight/gsplat/point_cloud.ply` は後続実験で random-init の
   残骸に上書きされている（正: `pc_sh1_9k.ply`）。flythrough スクリプトを koide で
   回し直す場合は要再学習。
+
+## 追補 3 (2026-07-17): 着色精度の改善と README アセット再生成
+
+README の flythrough(webp/gif/mp4)の色が濁って見える問題を再調査し、
+着色パイプラインを改善してアセットを作り直した。
+
+原因は 2 つ:
+
+1. **アセットが着色改善前のコードで生成されていた**: 旧アセット (2026-07-12
+   20:33) の直後に edge-aware 補間 (#348) / 観測色 medoid (#347) / 露出ゲイン
+   クランプ (#349) が入っており、旧 webp には一切反映されていなかった。
+2. **レンズビネット**: RTK-SLAM cam0 (1600x1200) は四隅が完全に黒く落ちる。
+   縁のピクセルを点に投影すると黒ずみ・胡椒ノイズ源になる。
+
+追加した着色オプション(いずれも default off で既存挙動不変):
+
+- `--color-image-margin` (`colorize_by_projection_robust(image_margin=)`):
+  画像縁 N px を色サンプルから除外。z バッファ(遮蔽判定)はフルフレームの
+  まま維持するので、縁でしか見えない点は「他ビューの中央」から色を得る。
+- `--color-min-samples`: 生き残り観測数が閾値未満の色を unseen に降格
+  (遮蔽フリンジや鏡面の一発サンプルが平面に散らす胡椒ノイズを除去)。
+- `_read_pointcloud_xyz_time` が Livox `offset_time` (スキャン先頭からの
+  整数 ns) を認識し、mid360 bag でもスキャン内デスキューが効くようになった
+  (旧アセットは剛体スキャン扱い、歩行 ~1m/s で最大 ~10cm のスミア)。
+
+採用構成 (construction_seq1, 480–545s, RKO-LIO 軌跡):
+`--voxel 0.015 --min-range 1.5 --max-range 60 --min-neighbors 8
+--color-image-margin 140 --color-min-samples 3` → 4.84M 点中 3.52M 着色。
+A/B: Kalibr の camera timeshift (-20.6ms) は depth-edge アライメントで
+有意差なし (median 7.48 vs 7.41 px) のため time-offset 0 を維持。held-out
+RGB L2 はビネット領域を「正解」に含むため margin 適用側が僅かに悪く出る
+(64.5→66.3) が、目視では胡椒ノイズ・黒ずみが明確に減る — この指標は
+ビネット除外の評価には使えない、が学び。
+→ その後 `evaluate_heldout_point_colors.py --image-margin` で正解画素側も
+ビネット帯を除外できるようにしたところ順位は反転し、margin 版が忠実度でも
+勝つ (A 43.5 vs B 40.1 median、inlier_20 0.257→0.296)。「見た目」側は
+`scripts/evaluate_colored_map_appearance.py` (彩度保持率 chroma_retention +
+voxel 内色ラフネス roughness + coverage) が新設され、exp04 の旧着色→
+再着色→margin の視覚順位 (rough_p90 18.5→17.6→12.3、coverage 0.77→1.00)
+を数値で再現する。
+
+レンダは CUDA 不要になった: `render_path.render_frames_cpu` (深度量子化+
+点 ID を int64 に詰めて `np.minimum.at` 一発で可視性と色を同時解決する
+painter スプラッタ、2x supersample) を追加し、`--device cpu` でディスパッチ。
+600x450 で ~0.7s/frame。gsplat の soft splat と違い不透明ディスクなので、
+未マップ領域の黒い隙間はやや目立つ。
+
+再生成コマンドは `docs/3dgs-map-tutorial.md` の成果物例を参照。

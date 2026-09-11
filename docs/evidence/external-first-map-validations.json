@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/external-first-map-validations-v1.schema.json",
+  "required_validations": 3,
+  "program_url": "https://rsasaki0109.github.io/lidar_slam_ros2/external-first-map-validation.html",
+  "validations": []
+}

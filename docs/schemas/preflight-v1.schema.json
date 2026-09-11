@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/preflight-v1.schema.json",
+  "title": "lidarslam_ros2 preflight v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "summary",
+    "recommendations",
+    "recommended_profile_id",
+    "beginner_commands",
+    "advisory",
+    "missing_requirements"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/preflight-v1.schema.json"
+    },
+    "summary": {
+      "type": "object",
+      "required": ["bag_path", "topics", "capabilities"]
+    },
+    "recommendations": {"type": "array", "items": {"type": "object"}},
+    "recommended_profile_id": {"type": ["string", "null"]},
+    "beginner_commands": {"type": "array", "items": {"type": "object"}},
+    "advisory": {"type": "array"},
+    "missing_requirements": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

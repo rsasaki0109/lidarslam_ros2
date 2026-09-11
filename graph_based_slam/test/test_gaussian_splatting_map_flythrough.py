@@ -242,3 +242,32 @@ def test_ceiling_cut_mask_chunking_consistent():
     xyz = rng.uniform([-1, -1, -1], [21, 1, 5], size=(500, 3))
     assert np.array_equal(mf.ceiling_cut_mask(xyz, ride, 2.3, chunk=64),
                           mf.ceiling_cut_mask(xyz, ride, 2.3, chunk=100000))
+
+
+def test_cinematic_resampling_preserves_endpoints_and_slows_turns():
+    points = np.array([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0],
+                       [5.0, 5.0, 0.0]])
+    equal, _ = mf.resample_cinematic_arclength(points, 41, 0.0)
+    slow, total = mf.resample_cinematic_arclength(points, 41, 4.0)
+    np.testing.assert_allclose(slow[[0, -1]], points[[0, -1]])
+    assert total == pytest.approx(10.0)
+    corner = np.array([5.0, 0.0, 0.0])
+    assert np.count_nonzero(np.linalg.norm(slow - corner, axis=1) < 1.0) > \
+        np.count_nonzero(np.linalg.norm(equal - corner, axis=1) < 1.0)
+
+
+def test_look_ahead_targets_moves_focus_forward_without_overshoot():
+    path = np.column_stack([np.arange(6.0), np.zeros((6, 2))])
+    targets = mf.look_ahead_targets(path, 2.0)
+    np.testing.assert_allclose(targets[:, 0], [2, 3, 4, 5, 5, 5])
+
+
+def test_flythrough_metrics_reports_black_and_flicker():
+    frames = np.zeros((3, 4, 4, 3), dtype=np.uint8)
+    frames[0, :2] = 100
+    frames[1, :2] = 140
+    frames[2, :2] = 100
+    report = mf.flythrough_metrics(frames)
+    assert report['black_pixel_fraction'] == 0.5
+    assert report['temporal_luminance_delta_median'] > 0.0
+    assert report['temporal_flicker_p90'] > 0.0

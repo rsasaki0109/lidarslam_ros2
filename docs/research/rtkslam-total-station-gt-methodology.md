@@ -37,6 +37,23 @@ GT + 例軌跡: github.com/Willyzw/rtk-slam-eval（数 MB の git clone で取�
   低速 = submap が立たない）がギャップに落ちて採点不能。公開ベースラインも
   dense 形式で採点されており土俵が同じ。
 
+## 再現用 accuracy suite
+
+シーケンスごとの RKO-LIO preset、疎 checkpoint の association、bag 終端判定を
+手入力せず、リポジトリ管理の contract から実行する。
+
+```bash
+python3 scripts/download_rtk_slam_dataset.py --sequence construction_seq2 \
+  --eval-assets
+python3 scripts/run_rtk_slam_accuracy_suite.py --dry-run
+python3 scripts/run_rtk_slam_accuracy_suite.py
+```
+
+既定は最小の `construction_seq2`。複数は `--sequence` を繰り返し、全4本は
+`--sequence all` を使う。大容量データを別ディスクに置く場合だけ
+`--dataset-root <rtk_slam>` を指定する。exact command は `suite_plan.json`、
+最終結果は `suite_summary.json` および各シーケンスの `metrics.json` に残る。
+
 ## 結果(自前 RKO-LIO、v0.5 時点)
 
 | シーケンス | 環境 | config | chkpt | RMSE (m) | median | 公開手法(参考) |
@@ -63,6 +80,25 @@ outdoor config = `configs/mid360_robot/rko_lio_rtk_slam_mid360_outdoor.yaml`。
 | indoor（voxel 0.5, DD on） | 3.903 | 1.366 | 11.75 |
 | **voxel 0.5, DD off（採用）** | **0.835** | **0.327** | **3.05** |
 | voxel 1.0, corr 1.0, DD off | 2.348 | 0.468 | 8.96 |
+
+## v0.9 RKO-LIO voxel backend再検証
+
+RKO-LIO `d0923f4` では、v0.5時点のBonxai mapとunordered-map voxel samplerが
+robin-map + input-order samplerへ置き換わった。この変更はシーケンスごとに効果が
+逆であり、共有outdoor presetを一律に旧挙動へ戻すことはできない。
+
+| シーケンス / 設定 | chkpt | RMSE (m) | median | max |
+|---|---:|---:|---:|---:|
+| seq2 / modern, range 100 | 19/19 | 1.957 | 0.727 | 5.702 |
+| seq2 / legacy voxel order, range 100 | 19/19 | 1.652 | 0.634 | 4.795 |
+| **seq2 / legacy voxel order, range 105** | **19/19** | **0.426** | **0.264** | **1.246** |
+| seq1 / modern, range 100 | 36/36 | 0.838 | 0.511 | 2.468 |
+
+従ってseq1は共有outdoor presetのmodern samplerを維持し、seq2だけ
+`configs/mid360_robot/rko_lio_rtk_slam_mid360_stadtgarten_seq2.yaml` を使う。
+`legacy_voxel_downsample` は既定falseの互換optionであり、他のデータセットの
+軌跡は変えない。seq2公式bagはLiDARがIMUより約58秒長いため、完全再生時は
+`--completion-end-margin-secs 65` を指定する。
 
 ## ゲート構成(v0.5)
 

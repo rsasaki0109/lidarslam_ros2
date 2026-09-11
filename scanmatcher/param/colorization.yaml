@@ -7,6 +7,10 @@ pointcloud_colorization:
     zbuf_bin: 4               # per-frame z-buffer cell size [px] (occlusion)
     depth_tolerance: 0.15     # visible if within this (+2% range) of nearest [m]
     use_bilinear: true        # sub-pixel colour sampling (vs nearest)
+    image_margin: 0           # skip colour samples within N px of the border
+                              # (lens vignette; occlusion still uses full frame)
+    min_color_samples: 1      # voxel colour needs this many observations
+                              # before publishing (else grey; 1 keeps all)
     normalize_exposure: true  # rescale each frame toward a running median luma
     exposure_ema_alpha: 0.1   # smoothing of the exposure target
     publish_period: 2.0       # colored_map publish period [s]

@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/docker-map-bag-plan-v1.schema.json",
+  "title": "lidarslam_ros2 Docker own-bag dry-run plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "plan_mode",
+    "status",
+    "ready",
+    "launcher",
+    "input",
+    "output",
+    "ros_distro",
+    "image",
+    "route",
+    "execution",
+    "docker_command",
+    "side_effects"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/docker-map-bag-plan-v1.schema.json"
+    },
+    "plan_mode": {"const": "dry_run"},
+    "status": {"const": "ready"},
+    "ready": {"const": true},
+    "launcher": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "revision"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1}
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "metadata", "mount", "read_only"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "metadata": {"const": "metadata.yaml"},
+        "mount": {"const": "/input"},
+        "read_only": {"const": true}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "mount", "status", "created", "must_be_empty"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "mount": {"const": "/output"},
+        "status": {"enum": ["absent", "empty"]},
+        "created": {"const": false},
+        "must_be_empty": {"const": true}
+      }
+    },
+    "ros_distro": {"enum": ["humble", "jazzy"]},
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference",
+        "resolved_id",
+        "identity_bound",
+        "resolution",
+        "contract_preflight_performed"
+      ],
+      "properties": {
+        "reference": {"type": "string", "minLength": 1},
+        "resolved_id": {"const": null},
+        "identity_bound": {"const": false},
+        "resolution": {"const": "deferred_until_live_run"},
+        "contract_preflight_performed": {"const": false}
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "start_args", "viewer"],
+      "properties": {
+        "command": {
+          "const": ["lidarslam-map", "start", "/input"]
+        },
+        "start_args": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "viewer": {"const": "none"}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["interactive", "confirmation", "network_mode"],
+      "properties": {
+        "interactive": {"type": "boolean"},
+        "confirmation": {
+          "enum": [
+            "interactive_terminal",
+            "reviewed_yes",
+            "requires_interactive_or_yes"
+          ]
+        },
+        "network_mode": {"const": "none"}
+      }
+    },
+    "docker_command": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"}
+    },
+    "side_effects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "docker_called",
+        "network_accessed",
+        "filesystem_writes",
+        "input_mount_read_only"
+      ],
+      "properties": {
+        "docker_called": {"const": false},
+        "network_accessed": {"const": false},
+        "filesystem_writes": {"const": false},
+        "input_mount_read_only": {"const": true}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution": {
+            "properties": {"interactive": {"const": true}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "properties": {"confirmation": {"const": "interactive_terminal"}}
+          }
+        }
+      }
+    }
+  ]
+}

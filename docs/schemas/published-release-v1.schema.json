@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/published-release-v1.schema.json",
+  "title": "Published lidarslam_ros2 release audit v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "repository",
+    "expected_version",
+    "expected_tag",
+    "remote",
+    "checks",
+    "assets"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/published-release-v1.schema.json"
+    },
+    "status": {
+      "enum": ["NOT_PUBLISHED", "IN_PROGRESS", "PUBLISHED", "BLOCKED"]
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "expected_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "expected_tag": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "remote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tag_present",
+        "tag_commit",
+        "release_present",
+        "draft",
+        "prerelease",
+        "html_url",
+        "errors"
+      ],
+      "properties": {
+        "tag_present": {"type": "boolean"},
+        "tag_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "release_present": {"type": "boolean"},
+        "draft": {"type": ["boolean", "null"]},
+        "prerelease": {"type": ["boolean", "null"]},
+        "html_url": {
+          "type": ["string", "null"],
+          "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/releases/"
+        },
+        "errors": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/check"}
+    },
+    "assets": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/asset"}
+    },
+    "images": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {"$ref": "#/definitions/image"}
+    }
+  },
+  "definitions": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "detail"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS", "FAIL"]},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status", "size_bytes", "sha256", "detail"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS", "FAIL"]},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tag", "status", "digest", "detail"],
+      "properties": {
+        "tag": {
+          "type": "string",
+          "pattern": "^ghcr\\.io/rsasaki0109/lidar_slam_ros2:v[0-9]+\\.[0-9]+\\.[0-9]+-(humble|jazzy)$"
+        },
+        "status": {
+          "enum": ["PUBLISHED", "ABSENT", "NOT_CHECKED", "ERROR"]
+        },
+        "digest": {
+          "type": ["string", "null"],
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "detail": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "PUBLISHED"}}},
+      "then": {
+        "properties": {
+          "remote": {
+            "properties": {
+              "tag_present": {"const": true},
+              "release_present": {"const": true},
+              "draft": {"const": false},
+              "prerelease": {"const": false},
+              "errors": {"maxItems": 0}
+            }
+          },
+          "checks": {
+            "minItems": 6,
+            "items": {
+              "properties": {"status": {"const": "PASS"}}
+            }
+          },
+          "assets": {
+            "minItems": 6,
+            "maxItems": 7,
+            "items": {
+              "properties": {"status": {"const": "PASS"}}
+            }
+          },
+          "images": {
+            "items": {
+              "properties": {"status": {"const": "PUBLISHED"}}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

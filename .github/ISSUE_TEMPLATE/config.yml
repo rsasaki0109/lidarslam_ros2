@@ -1,5 +1,14 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Product Contract And Supported Scope
+    url: https://github.com/rsasaki0109/lidar_slam_ros2/blob/develop/docs/product-contract.md
+    about: Check the supported outcome, inputs, entrypoints, and non-goals before filing.
+  - name: Usage Support
+    url: https://github.com/rsasaki0109/lidar_slam_ros2/blob/develop/SUPPORT.md
+    about: If a session exists, review a support ZIP; otherwise use doctor --public-json and its first actionable finding code.
+  - name: Report A Security Vulnerability
+    url: https://github.com/rsasaki0109/lidar_slam_ros2/security/policy
+    about: Do not disclose suspected vulnerabilities in a public issue.
   - name: Autoware Quickstart
     url: https://github.com/rsasaki0109/lidarslam_ros2/blob/develop/docs/autoware-quickstart.md
     about: Start here if your main goal is to generate and view an Autoware pointcloud map.

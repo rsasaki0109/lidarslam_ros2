@@ -57,15 +57,18 @@ GLIM options:
                                Whether to disable IMU in GLIM configs (default: lidar-only)
   --glim-config-path DIR       Use a GLIM config directory as-is (skip preset copy+patch)
   --glim-timeout-sec SEC       Wall-clock timeout for GLIM run (0 disables, default: 180)
-  --glim-cache-dir DIR         Cache directory for GLIM reference trajectories
+  --glim-cache-dir DIR         Content-bound cache directory for verified GLIM trajectories
                                (default: ./output/glim_reference_cache)
+  --no-glim-cache              Disable verified cache lookup and storage
   --glim-viewer                Enable GLIM viewer modules (default: off)
   --no-glim-viewer             Keep GLIM viewer modules disabled (default)
 
 Notes:
   - This script treats GLIM as a reference trajectory (not ground-truth).
   - GLIM outputs are dumped under /tmp/dump; this script copies traj_lidar.txt into --out-dir.
-  - If fresh GLIM output cannot be collected, a cached traj_lidar.txt for the same bag/config is reused.
+  - A cache fallback is used only when bag bytes, effective config, GLIM runtime,
+    request options, harness, manifest, and TUM trajectory digest all match.
+  - Legacy path/topic-only cache files are ignored and never reused.
 EOF
 }
 
@@ -159,25 +162,6 @@ print(((base - start + offset) % span) + start)
 PY
 }
 
-glim_cache_key() {
-  python3 - "$@" <<'PY'
-import hashlib
-import json
-import os
-import sys
-
-bag_path, points_topic, imu_topic, mode, no_imu = sys.argv[1:6]
-payload = {
-    "bag_path": os.path.realpath(bag_path),
-    "imu_topic": imu_topic,
-    "mode": mode,
-    "no_imu": no_imu,
-    "points_topic": points_topic,
-}
-print(hashlib.sha1(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest())
-PY
-}
-
 find_recent_glim_traj() {
   local start_sec="${1:-0}"
   python3 - "${start_sec}" <<'PY'
@@ -244,30 +228,170 @@ else:
 PY
 }
 
-use_cached_glim_traj() {
+prepare_glim_cache_identity() {
+  if [[ "${GLIM_CACHE_ENABLED:-true}" != "true" ]]; then
+    GLIM_CACHE_STATUS="DISABLED"
+    return 1
+  fi
+  if [[ "${GLIM_CACHE_IDENTITY_READY:-false}" == "true" && -f "${GLIM_CACHE_IDENTITY_PATH:-}" ]]; then
+    GLIM_CACHE_KEY="$(python3 - "${GLIM_CACHE_IDENTITY_PATH}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as stream:
+    print(json.load(stream)["cache_key_sha256"])
+PY
+)" || return 1
+    GLIM_CACHE_TRAJ="${GLIM_CACHE_DIR}/${GLIM_CACHE_KEY}.traj_lidar.txt"
+    GLIM_CACHE_MANIFEST="${GLIM_CACHE_DIR}/${GLIM_CACHE_KEY}.manifest.json"
+    if [[ "${GLIM_CACHE_STATUS:-}" != "HIT_VERIFIED" && "${GLIM_CACHE_STATUS:-}" != "STORED" ]]; then
+      GLIM_CACHE_STATUS="IDENTITY_READY"
+    fi
+    return 0
+  fi
+  if [[ -z "${GLIM_CONFIG_REAL:-}" || ! -d "${GLIM_CONFIG_REAL}" ]]; then
+    GLIM_CACHE_STATUS="IDENTITY_UNAVAILABLE_CONFIG"
+    return 1
+  fi
+
+  local runtime_kind=""
+  local runtime_token=""
+  local runtime_path=""
+  local resolved_path=""
+  local glim_prefix=""
+  local glim_ros_prefix=""
+  local -a runtime_args=()
+  local -A seen_runtime_paths=()
+
+  if [[ -n "${GLIM_DOCKER_IMAGE:-}" ]]; then
+    if ! command -v docker >/dev/null 2>&1; then
+      GLIM_CACHE_STATUS="IDENTITY_UNAVAILABLE_RUNTIME"
+      return 1
+    fi
+    runtime_token="$(docker image inspect --format '{{.Id}}' "${GLIM_DOCKER_IMAGE}" 2>/dev/null || true)"
+    if [[ -z "${runtime_token}" ]]; then
+      GLIM_CACHE_STATUS="IDENTITY_UNAVAILABLE_RUNTIME"
+      return 1
+    fi
+    runtime_kind="docker-image"
+    runtime_args+=(--runtime-token "image=${GLIM_DOCKER_IMAGE};id=${runtime_token}")
+  else
+    glim_ros_prefix="$(ros2 pkg prefix glim_ros 2>/dev/null || true)"
+    glim_prefix="$(ros2 pkg prefix glim 2>/dev/null || true)"
+    if [[ -z "${glim_ros_prefix}" || -z "${glim_prefix}" ]]; then
+      GLIM_CACHE_STATUS="IDENTITY_UNAVAILABLE_RUNTIME"
+      return 1
+    fi
+    runtime_kind="local-install"
+    runtime_args+=(--runtime-token "ros=${ROS_DISTRO:-unknown};arch=$(uname -m)")
+    while IFS= read -r -d '' runtime_path; do
+      resolved_path="$(realpath "${runtime_path}" 2>/dev/null || true)"
+      if [[ -n "${resolved_path}" && -z "${seen_runtime_paths[${resolved_path}]:-}" ]]; then
+        seen_runtime_paths["${resolved_path}"]=1
+        runtime_args+=(--runtime-path "${resolved_path}")
+      fi
+    done < <(
+      find -L "${glim_prefix}/lib" -maxdepth 1 -type f -name 'libglim*.so*' -print0 2>/dev/null
+      for runtime_path in \
+        "${glim_ros_prefix}/lib/glim_ros/glim_rosbag" \
+        "${glim_ros_prefix}/share/glim_ros/package.xml" \
+        "${glim_prefix}/share/glim/package.xml"; do
+        [[ -e "${runtime_path}" ]] && printf '%s\0' "${runtime_path}"
+      done
+    )
+    if [[ "${#seen_runtime_paths[@]}" -eq 0 ]]; then
+      GLIM_CACHE_STATUS="IDENTITY_UNAVAILABLE_RUNTIME"
+      return 1
+    fi
+  fi
+
+  echo "building verified GLIM cache identity (hashing bag/config once)..."
+  local -a identity_args=(
+    identity
+    --bag-dir "${BAG_PATH}"
+    --config-dir "${GLIM_CONFIG_REAL}"
+    --runtime-kind "${runtime_kind}"
+    --harness "${REPO_ROOT}/scripts/compare_with_glim.sh"
+    --points-topic "${POINTS_TOPIC}"
+    --imu-topic "${IMU_TOPIC}"
+    --mode "${GLIM_MODE}"
+    --preset "${GLIM_PRESET}"
+    --no-imu "${NO_IMU}"
+    --viewer "${GLIM_VIEWER}"
+    --output "${GLIM_CACHE_IDENTITY_PATH}"
+  )
+  if [[ -n "${GLIM_OMP_NUM_THREADS:-}" ]]; then
+    identity_args+=(--omp-threads "${GLIM_OMP_NUM_THREADS}")
+  fi
+  identity_args+=("${runtime_args[@]}")
+  if GLIM_CACHE_KEY="$(
+    python3 "${REPO_ROOT}/scripts/glim_reference_cache.py" \
+      "${identity_args[@]}" 2>"${GLIM_CACHE_LOG}"
+  )"; then
+    GLIM_CACHE_TRAJ="${GLIM_CACHE_DIR}/${GLIM_CACHE_KEY}.traj_lidar.txt"
+    GLIM_CACHE_MANIFEST="${GLIM_CACHE_DIR}/${GLIM_CACHE_KEY}.manifest.json"
+    GLIM_CACHE_STATUS="IDENTITY_READY"
+    GLIM_CACHE_IDENTITY_READY="true"
+    echo "verified GLIM cache key: ${GLIM_CACHE_KEY}"
+    return 0
+  fi
+  GLIM_CACHE_STATUS="IDENTITY_ERROR"
+  echo "warn: verified GLIM cache identity could not be built" >&2
+  sed -n '1,3p' "${GLIM_CACHE_LOG}" >&2 || true
+  return 1
+}
+
+use_verified_glim_traj() {
   local reason="${1:-fresh_glim_unavailable}"
-  [[ -n "${GLIM_CACHE_TRAJ:-}" ]] || return 1
-  [[ -f "${GLIM_CACHE_TRAJ}" ]] || return 1
+  local cache_path=""
+  prepare_glim_cache_identity || {
+    echo "warn: no verified GLIM cache identity is available; stale/legacy cache is ignored" >&2
+    return 1
+  }
+  if ! cache_path="$(
+    python3 "${REPO_ROOT}/scripts/glim_reference_cache.py" lookup \
+      --identity "${GLIM_CACHE_IDENTITY_PATH}" \
+      --cache-dir "${GLIM_CACHE_DIR}" \
+      2>"${GLIM_CACHE_LOG}"
+  )"; then
+    GLIM_CACHE_STATUS="MISS"
+    echo "warn: no verified GLIM cache entry matches this exact run" >&2
+    sed -n '1,3p' "${GLIM_CACHE_LOG}" >&2 || true
+    return 1
+  fi
 
   mkdir -p "${GLIM_OUT}"
-  cp -f "${GLIM_CACHE_TRAJ}" "${GLIM_OUT}/traj_lidar.txt"
+  cp -f "${cache_path}" "${GLIM_OUT}/traj_lidar.txt"
   GLIM_TRAJ="${GLIM_OUT}/traj_lidar.txt"
   GLIM_TRAJ_LINES="$(wc -l < "${GLIM_TRAJ}" | tr -d ' ')"
   GLIM_REFERENCE_SOURCE="cache"
+  GLIM_CACHE_STATUS="HIT_VERIFIED"
   if [[ -z "${GLIM_FAILURE_REASON}" ]]; then
     GLIM_FAILURE_REASON="${reason}"
   fi
-  echo "warn: using cached GLIM trajectory (${reason}): ${GLIM_CACHE_TRAJ}" >&2
+  echo "warn: using content-verified GLIM trajectory (${reason}): ${cache_path}" >&2
   return 0
 }
 
-persist_glim_cache() {
+persist_verified_glim_cache() {
   local src="${1:-}"
-  local dst="${2:-}"
-  [[ -n "${src}" && -n "${dst}" ]] || return 1
+  [[ "${GLIM_CACHE_ENABLED:-true}" == "true" ]] || return 0
+  [[ -n "${src}" ]] || return 1
   [[ -f "${src}" ]] || return 1
-  mkdir -p "$(dirname "${dst}")"
-  cp -f "${src}" "${dst}"
+  prepare_glim_cache_identity || return 1
+  if python3 "${REPO_ROOT}/scripts/glim_reference_cache.py" store \
+    --identity "${GLIM_CACHE_IDENTITY_PATH}" \
+    --cache-dir "${GLIM_CACHE_DIR}" \
+    --trajectory "${src}" \
+    >"${GLIM_CACHE_LOG}" 2>&1; then
+    GLIM_CACHE_STATUS="STORED"
+    echo "verified GLIM cache stored: ${GLIM_CACHE_MANIFEST}"
+    return 0
+  fi
+  GLIM_CACHE_STATUS="STORE_REJECTED"
+  echo "warn: GLIM trajectory was used fresh but not cached" >&2
+  sed -n '1,3p' "${GLIM_CACHE_LOG}" >&2 || true
+  return 1
 }
 
 write_metrics_json() {
@@ -317,6 +441,11 @@ write_metrics_json() {
   GLIM_CONFIG_REAL="${GLIM_CONFIG_REAL:-}" \
   GLIM_REFERENCE_SOURCE="${GLIM_REFERENCE_SOURCE:-}" \
   GLIM_FAILURE_REASON="${GLIM_FAILURE_REASON:-}" \
+  GLIM_CACHE_ENABLED="${GLIM_CACHE_ENABLED:-}" \
+  GLIM_CACHE_STATUS="${GLIM_CACHE_STATUS:-}" \
+  GLIM_CACHE_KEY="${GLIM_CACHE_KEY:-}" \
+  GLIM_CACHE_IDENTITY_PATH="${GLIM_CACHE_IDENTITY_PATH:-}" \
+  GLIM_CACHE_MANIFEST="${GLIM_CACHE_MANIFEST:-}" \
   GLIM_CACHE_TRAJ="${GLIM_CACHE_TRAJ:-}" \
   EVO_APE_LOG="${EVO_APE_LOG:-}" \
   python3 - <<'PY'
@@ -409,6 +538,13 @@ data: dict[str, Any] = {
         "reference_source": get("GLIM_REFERENCE_SOURCE"),
         "failure_reason": get("GLIM_FAILURE_REASON"),
         "cache_traj_path": get("GLIM_CACHE_TRAJ"),
+        "cache": {
+            "enabled": get_bool("GLIM_CACHE_ENABLED"),
+            "status": get("GLIM_CACHE_STATUS"),
+            "key_sha256": get("GLIM_CACHE_KEY"),
+            "identity_path": get("GLIM_CACHE_IDENTITY_PATH"),
+            "manifest_path": get("GLIM_CACHE_MANIFEST"),
+        },
         "log_path": get("GLIM_LOG"),
         "out_dir": get("GLIM_OUT"),
         "config_path": get("GLIM_CONFIG_REAL"),
@@ -698,6 +834,7 @@ GLIM_MODE="lidar-only"
 GLIM_CONFIG_PATH=""
 GLIM_TIMEOUT_SEC="180"
 GLIM_CACHE_DIR="${REPO_ROOT}/output/glim_reference_cache"
+GLIM_CACHE_ENABLED="true"
 GLIM_VIEWER="false"
 USE_GRAPH_BASED_SLAM="true"
 GLIM_OMP_NUM_THREADS=""
@@ -767,6 +904,8 @@ while [[ $# -gt 0 ]]; do
       GLIM_TIMEOUT_SEC="${2:-}"; shift 2 ;;
     --glim-cache-dir)
       GLIM_CACHE_DIR="${2:-}"; shift 2 ;;
+    --no-glim-cache)
+      GLIM_CACHE_ENABLED="false"; shift ;;
     --glim-viewer)
       GLIM_VIEWER="true"; shift ;;
     --no-glim-viewer)
@@ -776,6 +915,21 @@ while [[ $# -gt 0 ]]; do
     ;;
   esac
 done
+
+case "${GLIM_PRESET}" in
+  cpu|gpu) ;;
+  *) die "--glim-preset must be cpu or gpu" ;;
+esac
+case "${GLIM_MODE}" in
+  lidar-only|lidar-imu) ;;
+  *) die "--glim-mode must be lidar-only or lidar-imu" ;;
+esac
+if ! [[ "${GLIM_TIMEOUT_SEC}" =~ ^[0-9]+$ ]]; then
+  die "--glim-timeout-sec must be a non-negative integer"
+fi
+if [[ -n "${GLIM_OMP_NUM_THREADS}" ]] && ! [[ "${GLIM_OMP_NUM_THREADS}" =~ ^[1-9][0-9]*$ ]]; then
+  die "GLIM_OMP_NUM_THREADS must be a positive integer when set"
+fi
 
 sanitize_frame_id() {
   local value="${1:-}"
@@ -851,6 +1005,15 @@ GLIM_OUT=""
 GLIM_REFERENCE_SOURCE="none"
 GLIM_FAILURE_REASON=""
 GLIM_CACHE_TRAJ=""
+GLIM_CACHE_MANIFEST=""
+GLIM_CACHE_KEY=""
+GLIM_CACHE_STATUS="ENABLED_UNRESOLVED"
+if [[ "${GLIM_CACHE_ENABLED}" != "true" ]]; then
+  GLIM_CACHE_STATUS="DISABLED"
+fi
+GLIM_CACHE_IDENTITY_PATH="${OUT_DIR}/glim_cache_identity.json"
+GLIM_CACHE_LOG="${OUT_DIR}/glim_cache.log"
+GLIM_CACHE_IDENTITY_READY="false"
 RUN_FRESH_GLIM="true"
 
 EVO_APE_LOG="${OUT_DIR}/evo_ape.txt"
@@ -1061,10 +1224,6 @@ echo "base frame:   ${BASE_FRAME}"
 echo "lidar frame:  ${LIDAR_FRAME}"
 echo "points frame user specified: ${POINTS_FRAME_ID_USER_SPECIFIED}"
 
-GLIM_CACHE_KEY="$(glim_cache_key "${BAG_PATH}" "${POINTS_TOPIC}" "${IMU_TOPIC}" "${GLIM_MODE}" "${NO_IMU}")"
-GLIM_CACHE_TRAJ="${GLIM_CACHE_DIR}/${GLIM_CACHE_KEY}_traj_lidar.txt"
-mkdir -p "${GLIM_CACHE_DIR}"
-
 write_metrics_json
 
 LIDARSLAM_DIR="${OUT_DIR}/lidarslam"
@@ -1158,14 +1317,11 @@ if [[ -z "${GLIM_DOCKER_IMAGE}" ]] && ! ros2 pkg prefix glim_ros >/dev/null 2>&1
   echo
   echo "warn: glim_ros not found. Install GLIM (ROS 2) to run the comparison step." >&2
   GLIM_FAILURE_REASON="glim_ros_missing"
-  if use_cached_glim_traj "${GLIM_FAILURE_REASON}"; then
-    RUN_FRESH_GLIM="false"
-  fi
+  GLIM_CACHE_STATUS="IDENTITY_UNAVAILABLE_RUNTIME"
+  echo "warn: verified cache reuse requires the current GLIM runtime identity" >&2
   echo "lidarslam tum: ${LIDARSLAM_TUM}"
   write_metrics_json
-  if [[ -z "${GLIM_TRAJ}" ]]; then
-    exit 0
-  fi
+  exit 0
 fi
 
 if [[ "${RUN_FRESH_GLIM}" == "true" ]]; then
@@ -1200,6 +1356,7 @@ if [[ "${RUN_FRESH_GLIM}" == "true" ]]; then
   fi
 
   GLIM_CONFIG_REAL="$(realpath "${glim_config_dir}")"
+  prepare_glim_cache_identity || true
 
   echo
   echo "running GLIM (preset=${GLIM_PRESET}, mode=${GLIM_MODE})..."
@@ -1229,6 +1386,7 @@ if [[ "${RUN_FRESH_GLIM}" == "true" ]]; then
         "${GLIM_DOCKER_IMAGE}" \
         bash -lc "source /opt/ros/jazzy/setup.bash && source /root/ros2_ws/install/setup.bash && ros2 run glim_ros glim_rosbag /bag --ros-args -p config_path:=/config -p auto_quit:=true -p dump_path:=/dump" \
         >"${GLIM_LOG}" 2>&1
+    fi
     GLIM_RC="$?"
   elif [[ "${GLIM_TIMEOUT_SEC}" != "0" ]] && command -v timeout >/dev/null 2>&1; then
     if [[ "${GLIM_VIEWER}" == "true" ]]; then
@@ -1353,7 +1511,7 @@ PY
         GLIM_FAILURE_REASON="no_dump_detected"
       fi
     fi
-    use_cached_glim_traj "${GLIM_FAILURE_REASON}" || true
+    use_verified_glim_traj "${GLIM_FAILURE_REASON}" || true
   fi
 
   if [[ -z "${post_dump}" && -z "${GLIM_TRAJ}" ]]; then
@@ -1380,7 +1538,7 @@ PY
     GLIM_TRAJ="${GLIM_OUT}/traj_lidar.txt"
     if [[ -f "${GLIM_TRAJ}" ]]; then
       GLIM_REFERENCE_SOURCE="fresh"
-      persist_glim_cache "${GLIM_TRAJ}" "${GLIM_CACHE_TRAJ}" || true
+      persist_verified_glim_cache "${GLIM_TRAJ}" || true
     else
       if [[ "${GLIM_RC}" -eq 124 ]]; then
         GLIM_FAILURE_REASON="timeout"
@@ -1390,7 +1548,7 @@ PY
           GLIM_FAILURE_REASON="no_traj_in_dump"
         fi
       fi
-      use_cached_glim_traj "${GLIM_FAILURE_REASON}" || true
+      use_verified_glim_traj "${GLIM_FAILURE_REASON}" || true
     fi
   fi
 

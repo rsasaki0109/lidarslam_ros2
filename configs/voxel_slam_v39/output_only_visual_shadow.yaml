@@ -1,0 +1,28 @@
+schema_version: 1
+name: v39_output_only_visual_longitudinal_shadow
+status: exposed_development_candidate
+ground_truth_allowed: false
+dataset_identity_allowed: false
+
+weak_axis:
+  eigen_ratio_max: 0.2
+  horizontal_norm_min: 0.9
+  min_speed_mps: 3.0
+  required_streak_scans: 5
+
+timing:
+  max_join_sec: 0.08
+  max_observation_age_sec: 0.2
+  max_integration_dt_sec: 0.2
+
+filter:
+  gain: 0.25
+  max_velocity_change_mps: 0.5
+  max_speed_mps: 20.0
+
+isolation:
+  mapper_state_mutated: false
+  map_state_mutated: false
+  inertial_state_mutated: false
+  baseline_orientation_mutated: false
+  observation_consumption: at_most_once

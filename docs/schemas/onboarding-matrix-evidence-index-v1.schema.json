@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-matrix-evidence-index-v1.schema.json",
+  "title": "lidar_slam_ros2 onboarding matrix evidence index v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "matrix_id",
+    "generated_at",
+    "repository",
+    "rows",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-matrix-evidence-index-v1.schema.json"
+    },
+    "matrix_id": {"const": "g0-humble-jazzy-docker-source"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "rows": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/definitions/row"}
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["remote_mutations_performed", "missing_rows_count_as_success"],
+      "properties": {
+        "remote_mutations_performed": {"const": false},
+        "missing_rows_count_as_success": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["row_id", "record_path"],
+      "properties": {
+        "row_id": {
+          "enum": [
+            "docker-humble",
+            "docker-jazzy",
+            "source-humble",
+            "source-jazzy"
+          ]
+        },
+        "record_path": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "^docs/evidence/onboarding/[A-Za-z0-9_.-]+\\.json$"
+        },
+        "measurement_supplement_path": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "^docs/evidence/onboarding/[A-Za-z0-9_.-]+\\.json$"
+        },
+        "validation_receipt_path": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "^docs/evidence/onboarding/[A-Za-z0-9_.-]+\\.json$"
+        }
+      }
+    }
+  }
+}

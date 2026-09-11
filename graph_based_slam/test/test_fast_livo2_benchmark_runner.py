@@ -129,7 +129,24 @@ def test_map_export_mount_is_separate_and_opt_in(tmp_path):
     assert RUNNER.map_output_binding(tmp_path, False) == []
     mount = RUNNER.map_output_binding(tmp_path, True)
     assert mount == ['-v', f"{tmp_path / 'fast_log'}:/bench/FAST-LIVO2/Log"]
+def test_fast_log_mount_always_isolates_exact_trajectory_and_optional_map(tmp_path):
+    mount = RUNNER.fast_log_binding(tmp_path, False)
+    assert mount == ['-v', f'{tmp_path / "fast_log"}:/bench/FAST-LIVO2/Log']
+    assert (tmp_path / 'fast_log' / 'result').is_dir()
+    assert not (tmp_path / 'fast_log' / 'pcd').exists()
+    mount = RUNNER.fast_log_binding(tmp_path, True)
     assert (tmp_path / 'fast_log' / 'pcd').is_dir()
+
+
+def test_fast_map_prefers_complete_downsampled_official_output(tmp_path):
+    pcd = tmp_path / 'fast_log' / 'pcd'
+    pcd.mkdir(parents=True)
+    raw = pcd / 'all_raw_points.pcd'
+    raw.write_bytes(b'raw')
+    assert RUNNER.select_fast_map(tmp_path) == raw
+    downsampled = pcd / 'all_downsampled_points.pcd'
+    downsampled.write_bytes(b'downsampled')
+    assert RUNNER.select_fast_map(tmp_path) == downsampled
 
 
 def test_odometry_csv_to_tum(tmp_path):
@@ -158,6 +175,38 @@ def test_odometry_csv_normalizes_ros1_nanosecond_stamp(tmp_path):
         '1646304541918177886,1,2,3,0,0,0,1\n')
     result = RUNNER.odometry_csv_to_tum(source, destination)
     assert abs(result['last_stamp'] - 1646304541.9181778) < 1e-6
+
+
+def test_official_state_trajectory_and_imu_prism_offset(tmp_path):
+    result_dir = tmp_path / 'fast_log' / 'result'
+    result_dir.mkdir(parents=True)
+    (result_dir / 'benchmark.txt').write_text(
+        '10.0 1 2 3 0 0 0 1\n'
+        '10.1 1 2 3 0 0 0.7071067811865475 0.7071067811865476\n')
+    info, source = RUNNER.collect_official_state_trajectory(tmp_path)
+    assert info['samples'] == 2
+    assert source.endswith('benchmark.txt')
+    output = tmp_path / 'trajectory_prism.tum'
+    RUNNER.apply_tum_translation_offset(
+        tmp_path / 'trajectory_imu.tum', output, (1.0, 0.0, 0.0))
+    rows = [[float(value) for value in line.split()]
+            for line in output.read_text().splitlines()]
+    assert rows[0][1:4] == [2.0, 2.0, 3.0]
+    assert abs(rows[1][1] - 1.0) < 1e-9
+    assert abs(rows[1][2] - 3.0) < 1e-9
+
+
+def test_reference_offset_requires_explicit_source_frame_key(tmp_path):
+    metadata = tmp_path / 'reference.json'
+    metadata.write_text(json.dumps({
+        'imu_to_prism_translation_m': {'x': -0.2, 'y': 0.1, 'z': -0.3}}))
+    assert RUNNER.load_reference_offset(metadata, 'imu') == (-0.2, 0.1, -0.3)
+    try:
+        RUNNER.load_reference_offset(metadata, 'lidar')
+    except ValueError as error:
+        assert 'lidar_to_prism' in str(error)
+    else:
+        raise AssertionError('missing source-frame lever arm was accepted')
 
 
 def test_scored_summary_rejects_mixed_provenance(tmp_path):

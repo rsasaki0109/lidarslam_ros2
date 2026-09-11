@@ -1,0 +1,38 @@
+rtk_slam_accuracy_suite:
+  schema_version: 1
+  name: rtk_slam_accuracy_v1
+  attribution: RTK-SLAM Dataset, Univ. Stuttgart, arXiv:2604.07151 (CC-BY 4.0)
+  sensor:
+    lidar_topic: /livox/points
+    imu_topic: /livox/imu
+    base_frame: os_sensor
+  lidarslam_param: lidarslam/param/lidarslam.yaml
+  runtime:
+    quiescence_secs: 20
+    offline_timeout_secs: 7200
+    save_timeout_secs: 600
+  sequences:
+    construction_seq2:
+      bag: ros2/construction_seq2
+      checkpoints: rtk_slam_eval/ground_truth/construction_seq2.csv
+      checkpoint_count: 16
+      rko_param: configs/mid360_robot/rko_lio_rtk_slam_mid360.yaml
+      completion_end_margin_secs: 0.25
+    construction_seq1:
+      bag: ros2/construction_seq1
+      checkpoints: rtk_slam_eval/ground_truth/construction_seq1.csv
+      checkpoint_count: 16
+      rko_param: configs/mid360_robot/rko_lio_rtk_slam_mid360.yaml
+      completion_end_margin_secs: 0.25
+    stadtgarten_seq2:
+      bag: ros2/stadtgarten_seq2
+      checkpoints: rtk_slam_eval/ground_truth/stadtgarten_seq2.csv
+      checkpoint_count: 19
+      rko_param: configs/mid360_robot/rko_lio_rtk_slam_mid360_stadtgarten_seq2.yaml
+      completion_end_margin_secs: 65
+    stadtgarten_seq1:
+      bag: ros2/stadtgarten_seq1
+      checkpoints: rtk_slam_eval/ground_truth/stadtgarten_seq1.csv
+      checkpoint_count: 36
+      rko_param: configs/mid360_robot/rko_lio_rtk_slam_mid360_outdoor.yaml
+      completion_end_margin_secs: 2

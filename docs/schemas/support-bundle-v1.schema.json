@@ -1,0 +1,507 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/support-bundle-v1.schema.json",
+  "title": "lidarslam_ros2 privacy-bounded support bundle v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "created_at",
+    "privacy",
+    "product",
+    "session",
+    "setup",
+    "diagnosis",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/support-bundle-v1.schema.json"
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contains_map_geometry",
+        "contains_raw_sensor_data",
+        "contains_raw_logs",
+        "contains_parameter_contents",
+        "local_paths_redacted",
+        "command_secrets_redacted",
+        "review_before_sharing"
+      ],
+      "properties": {
+        "contains_map_geometry": {"const": false},
+        "contains_raw_sensor_data": {"const": false},
+        "contains_raw_logs": {"const": false},
+        "contains_parameter_contents": {"const": false},
+        "local_paths_redacted": {"const": true},
+        "command_secrets_redacted": {"const": true},
+        "review_before_sharing": {"const": true}
+      }
+    },
+    "product": {"$ref": "#/definitions/product"},
+    "session": {"$ref": "#/definitions/session"},
+    "setup": {"$ref": "#/definitions/setup"},
+    "diagnosis": {"$ref": "#/definitions/diagnosis"},
+    "artifacts": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/artifact"},
+      "allOf": [
+        {"contains": {"required": ["name"], "properties": {"name": {"const": "setup_manifest"}}}},
+        {"contains": {"required": ["name"], "properties": {"name": {"const": "run_manifest"}}}},
+        {"contains": {"required": ["name"], "properties": {"name": {"const": "diagnosis_json"}}}},
+        {"contains": {"required": ["name"], "properties": {"name": {"const": "validation_receipt"}}}},
+        {"contains": {"required": ["name"], "properties": {"name": {"const": "pointcloud_map"}}}},
+        {"contains": {"required": ["name"], "properties": {"name": {"const": "map_preview_html"}}}},
+        {"contains": {"required": ["name"], "properties": {"name": {"const": "backend_input"}}}},
+        {"contains": {"required": ["name"], "properties": {"name": {"const": "recovery_receipt"}}}}
+      ]
+    }
+  },
+  "definitions": {
+    "optionalString": {"type": ["string", "null"], "maxLength": 256},
+    "optionalNonEmptyString": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "optionalBoolean": {"type": ["boolean", "null"]},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "source_revision",
+        "source_dirty",
+        "ros_distro",
+        "platform"
+      ],
+      "properties": {
+        "version": {"$ref": "#/definitions/optionalString"},
+        "source_revision": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          ]
+        },
+        "source_dirty": {"$ref": "#/definitions/optionalBoolean"},
+        "ros_distro": {"$ref": "#/definitions/optionalString"},
+        "platform": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["system", "release", "machine"],
+          "properties": {
+            "system": {"type": "string", "minLength": 1},
+            "release": {"type": "string", "minLength": 1},
+            "machine": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_sha256",
+        "created_at",
+        "status",
+        "runner_exit_code",
+        "profile_id",
+        "verification",
+        "progress",
+        "quality",
+        "reason_codes",
+        "action_kinds"
+      ],
+      "properties": {
+        "evidence_sha256": {"$ref": "#/definitions/sha256"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "status": {
+          "enum": ["running", "verified", "unverified", "action_required"]
+        },
+        "runner_exit_code": {"type": ["integer", "null"]},
+        "profile_id": {"type": "string", "minLength": 1},
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "result"],
+          "properties": {
+            "mode": {"enum": ["required", "off"]},
+            "result": {
+              "enum": ["pending", "PASS", "not_run", "not_completed"]
+            }
+          }
+        },
+        "progress": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["phase", "stage", "current_step", "total_steps"],
+          "properties": {
+            "phase": {"type": "string", "minLength": 1},
+            "stage": {"type": "string", "minLength": 1},
+            "current_step": {"type": "integer", "minimum": 1},
+            "total_steps": {"type": "integer", "minimum": 1}
+          }
+        },
+        "quality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["overall", "source_status", "checks"],
+          "properties": {
+            "overall": {"type": "string", "minLength": 1},
+            "source_status": {"type": "string", "minLength": 1},
+            "checks": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "uniqueItems": true,
+              "allOf": [
+                {"contains": {"required": ["id"], "properties": {"id": {"const": "workflow"}}}},
+                {"contains": {"required": ["id"], "properties": {"id": {"const": "map_output"}}}},
+                {"contains": {"required": ["id"], "properties": {"id": {"const": "verification"}}}},
+                {"contains": {"required": ["id"], "properties": {"id": {"const": "evidence"}}}}
+              ],
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "status", "source_checks"],
+                "properties": {
+                  "id": {
+                    "enum": ["workflow", "map_output", "verification", "evidence"]
+                  },
+                  "status": {"type": "string", "minLength": 1},
+                  "source_checks": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {"type": "string", "minLength": 1}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "reason_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "action_kinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "setup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "profile_id",
+        "input_identity",
+        "topics",
+        "frames",
+        "pointcloud",
+        "timestamp_order_status",
+        "calibration",
+        "parameters",
+        "run_command"
+      ],
+      "properties": {
+        "status": {"enum": ["valid", "missing", "invalid"]},
+        "profile_id": {"$ref": "#/definitions/optionalString"},
+        "input_identity": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "metadata_size_bytes",
+                "metadata_sha256",
+                "storage_identifier",
+                "storage_file_count",
+                "storage_file_sha256"
+              ],
+              "properties": {
+                "metadata_size_bytes": {"type": "integer", "minimum": 1},
+                "metadata_sha256": {"$ref": "#/definitions/sha256"},
+                "storage_identifier": {"$ref": "#/definitions/optionalString"},
+                "storage_file_count": {"type": "integer", "minimum": 0},
+                "storage_file_sha256": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {"$ref": "#/definitions/sha256"}
+                }
+              }
+            }
+          ]
+        },
+        "topics": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/definitions/topics"}
+          ]
+        },
+        "frames": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/definitions/frames"}
+          ]
+        },
+        "pointcloud": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["inspection_status", "timestamp_field", "field_count"],
+              "properties": {
+                "inspection_status": {"type": "string", "minLength": 1},
+                "timestamp_field": {"$ref": "#/definitions/optionalString"},
+                "field_count": {"type": "integer", "minimum": 0}
+              }
+            }
+          ]
+        },
+        "timestamp_order_status": {"$ref": "#/definitions/optionalString"},
+        "calibration": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/definitions/calibration"}
+          ]
+        },
+        "parameters": {
+          "type": "array",
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "size_bytes", "sha256"],
+            "properties": {
+              "role": {"type": "string", "minLength": 1},
+              "size_bytes": {"type": "integer", "minimum": 1},
+              "sha256": {"$ref": "#/definitions/sha256"}
+            }
+          }
+        },
+        "run_command": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["redacted", "argv_sha256"],
+              "properties": {
+                "redacted": {"type": "string", "minLength": 1},
+                "argv_sha256": {"$ref": "#/definitions/sha256"}
+              }
+            }
+          ]
+        }
+      }
+    },
+    "topics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lidar",
+        "lidar_type",
+        "imu",
+        "gnss",
+        "navigation",
+        "navigation_quality"
+      ],
+      "properties": {
+        "lidar": {"type": "string", "minLength": 1, "maxLength": 256},
+        "lidar_type": {
+          "enum": [
+            "sensor_msgs/msg/PointCloud2",
+            "velodyne_msgs/msg/VelodyneScan"
+          ]
+        },
+        "imu": {"$ref": "#/definitions/optionalNonEmptyString"},
+        "gnss": {"$ref": "#/definitions/optionalNonEmptyString"},
+        "navigation": {"$ref": "#/definitions/optionalNonEmptyString"},
+        "navigation_quality": {
+          "$ref": "#/definitions/optionalNonEmptyString"
+        }
+      }
+    },
+    "frames": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base", "lidar", "imu"],
+      "properties": {
+        "base": {"$ref": "#/definitions/frame"},
+        "lidar": {"$ref": "#/definitions/frame"},
+        "imu": {"$ref": "#/definitions/frame"}
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source"],
+      "properties": {
+        "id": {"$ref": "#/definitions/optionalNonEmptyString"},
+        "source": {
+          "enum": [
+            "cli_or_default",
+            "cli_override",
+            "bag_header",
+            "fallback",
+            "not_applicable"
+          ]
+        }
+      }
+    },
+    "calibration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "source",
+        "lidar_to_base_quat_xyzw_xyz",
+        "imu_to_base_quat_xyzw_xyz"
+      ],
+      "properties": {
+        "required": {"type": "boolean"},
+        "source": {
+          "enum": [
+            "accepted_profile_extrinsics",
+            "explicit_cli_transforms",
+            "not_applicable"
+          ]
+        },
+        "lidar_to_base_quat_xyzw_xyz": {
+          "$ref": "#/definitions/optionalTransform"
+        },
+        "imu_to_base_quat_xyzw_xyz": {
+          "$ref": "#/definitions/optionalTransform"
+        }
+      }
+    },
+    "optionalTransform": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": {"type": "number"}
+        }
+      ]
+    },
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_status",
+        "status",
+        "verify_result",
+        "projector_type",
+        "problem_hint_count",
+        "suggested_step_count"
+      ],
+      "properties": {
+        "evidence_status": {
+          "enum": [
+            "not_recorded",
+            "regular_file",
+            "missing",
+            "symlink",
+            "outside_evidence_roots",
+            "unexpected_name",
+            "oversized",
+            "unreadable",
+            "invalid_contract"
+          ]
+        },
+        "status": {"$ref": "#/definitions/optionalString"},
+        "verify_result": {"$ref": "#/definitions/optionalString"},
+        "projector_type": {"$ref": "#/definitions/optionalString"},
+        "problem_hint_count": {"type": "integer", "minimum": 0},
+        "suggested_step_count": {"type": "integer", "minimum": 0},
+        "reported_symptom": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["code", "basis"],
+              "properties": {
+                "code": {
+                  "enum": [
+                    "map-spins-or-spirals",
+                    "pose-drifts-or-oscillates",
+                    "map-stops-early",
+                    "map-is-too-sparse",
+                    "map-is-not-visible"
+                  ]
+                },
+                "basis": {
+                  "const": "USER_REPORTED_NOT_AUTOMATICALLY_DIAGNOSED"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "recorded",
+        "current_state",
+        "size_bytes",
+        "sha256"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "setup_manifest",
+            "run_manifest",
+            "diagnosis_json",
+            "validation_receipt",
+            "pointcloud_map",
+            "map_preview_html",
+            "backend_input",
+            "recovery_receipt"
+          ]
+        },
+        "recorded": {"type": "boolean"},
+        "current_state": {
+          "enum": [
+            "not_recorded",
+            "regular_file",
+            "directory",
+            "missing",
+            "symlink",
+            "outside_evidence_roots",
+            "unexpected_name",
+            "oversized",
+            "unreadable"
+          ]
+        },
+        "size_bytes": {"type": ["integer", "null"], "minimum": 0},
+        "sha256": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/definitions/sha256"}
+          ]
+        }
+      }
+    }
+  }
+}

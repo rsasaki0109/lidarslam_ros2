@@ -1,0 +1,65 @@
+{
+  "evidence_version": 1,
+  "status": "passed",
+  "observed_at": "2026-07-29T01:11:56Z",
+  "workflow": {
+    "name": "official RKO-LIO binary compatibility",
+    "run_id": 30412938777,
+    "run_url": "https://github.com/rsasaki0109/lidar_slam_ros2/actions/runs/30412938777",
+    "head_sha": "58907f8cf901029723499037bcab54e96e76619d"
+  },
+  "contract": {
+    "required_release_version": "0.3.2-1",
+    "dataset_id": "driving_slam_mid360",
+    "dataset_archive_md5": "0836c50859bb1af591966b69da166186",
+    "profile_id": "rko_lio_graph_mid360_preset",
+    "source_rko_lio_present": false,
+    "required_check_count": 18
+  },
+  "candidates": [
+    {
+      "ros_distro": "humble",
+      "deb_version": "0.3.2-1jammy.20260728.162644",
+      "package_prefix": "/opt/ros/humble",
+      "executable": "/opt/ros/humble/lib/rko_lio/offline_node",
+      "executable_sha256": "3fba0fa1b0ec620f80805155a47e11e67ff6fbaf9fe0bfc00d647c67bb3e123c",
+      "artifact": {
+        "id": 8709242047,
+        "name": "official-rko-humble-compatibility",
+        "digest": "sha256:8ef18f4d0277cacc8bb81f788937652b3ec453409bc6efd85ba2963c9afaf761"
+      },
+      "e2e": {
+        "status": "PASS",
+        "checks_passed": 18,
+        "checks_failed": 0,
+        "runtime_sec": 90.27149,
+        "raw_poses": 2569,
+        "corrected_poses": 574,
+        "pointcloud_tiles": 360,
+        "pointcloud_bytes": 64086808
+      }
+    },
+    {
+      "ros_distro": "jazzy",
+      "deb_version": "0.3.2-1noble.20260728.162143",
+      "package_prefix": "/opt/ros/jazzy",
+      "executable": "/opt/ros/jazzy/lib/rko_lio/offline_node",
+      "executable_sha256": "9210bdb662f4000db7661f0aa0d6610b1bfe8e7180c47036d0eb1e8d7ff89147",
+      "artifact": {
+        "id": 8709230472,
+        "name": "official-rko-jazzy-compatibility",
+        "digest": "sha256:92e15e51264d5be9c87c524a34b18dc927dab867506dc41b6021d3ac2e1c311c"
+      },
+      "e2e": {
+        "status": "PASS",
+        "checks_passed": 18,
+        "checks_failed": 0,
+        "runtime_sec": 94.139412,
+        "raw_poses": 2572,
+        "corrected_poses": 575,
+        "pointcloud_tiles": 358,
+        "pointcloud_bytes": 64242306
+      }
+    }
+  ]
+}

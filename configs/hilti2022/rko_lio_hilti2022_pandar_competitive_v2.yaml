@@ -1,61 +1,27 @@
-# RKO-LIO config for the HILTI 2022 challenge handheld (Phasma) platform:
-# Hesai PandarXT-32 + Alphasense IMU (/alphasense/imu), base frame = IMU.
+# RKO-LIO profile for the HILTI 2022 Phasma platform.
 #
-# Provenance: 2026-07-23, competitive GLIM-track RTF-optimized frontend
-# profile. Adds max_iterations=50, convergence_criterion=3.0e-5, and
-# icp_keypoint_voxel_multiplier=2.25 on top of the frozen
-# rko_lio_hilti2022_pandar.yaml base. Validated via -p CLI overrides on top
-# of that base config as exp01 (frontend-solo RTF 0.978, APE 0.062210,
-# -5.3% vs 0.065712 baseline) and exp04 (frontend-solo RTF 0.504, APE
-# 0.067399, -5.7% vs 0.071463 baseline). See
-# docs/research/competitive-slam-plan-2026-07.md. This file is a candidate
-# freeze that reproduces those override-based results directly from YAML
-# (no -p overrides needed for the three tuned keys) so it can be consumed
-# as-is by scripts/run_rko_lio_graph_benchmark.sh --rko-param.
-#
-# Extrinsics from the official 2022 calibration release
-# (2022322_calibration_files.zip, lidar_calibration.yaml). The calibration
-# quaternion [0.7071068, -0.7071068, 0, 0] is read literally as [x, y, z, w]
-# — verified empirically on exp01: this reading yields a flat handheld
-# trajectory (z span 1.8 m, 151 m walk) and sub-meter APE against the
-# millimeter control points, while the [w, x, y, z] reading diverges
-# (z plunges to -229 m).
+# The three frontend tuning keys were frozen after development on exp01 and
+# regression validation on exp04. The larger publisher queue preserves the
+# reliable frontend/backend link without forcing both executors into lockstep.
 extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
 extrinsic_lidar2base_quat_xyzw_xyz: [0.7071068, -0.7071068, 0.0, 0.0, -0.001, -0.00855, 0.055]
 initialization_phase: true
-# PandarXT-32 clouds carry per-point float64 absolute 'timestamp' fields.
+odom_topic: /rko_lio/odometry
 deskew: true
 voxel_size: 0.25
 min_range: 0.7
 max_range: 100.0
 double_downsample: true
-# Competition scope is SLAM-only. Keep all saved/global-map recovery paths
-# explicitly disabled rather than relying on upstream defaults.
+
+# Production scope is SLAM-only; recovery research paths stay disabled.
 enable_kidnap_relocalization: false
 reset_on_registration_failure: false
 relocalize_after_scan_gap: false
-# RTF-optimized frontend profile (validated exp01/exp04, see header).
+
+# Clean development evidence:
+# exp01 RTF 0.9783, APE RMSE 0.06221018 m
+# exp04 RTF 0.5037, APE RMSE 0.06739868 m
 max_iterations: 50
 convergence_criterion: 3.0e-5
 icp_keypoint_voxel_multiplier: 2.25
-# Throughput fix (2026-07-24): cloud_subscriber_qos_reliable=true (backend
-# default, see graph_based_slam_component.h cloud_subscriber_qos_reliable_)
-# made exp04 maps byte-identical (P2 fixed) but made the rko_lio<->
-# graph_based_slam publish/subscribe pair a RELIABLE, KEEP_LAST(1)-history
-# link by default (node.cpp:241-249: publisher_queue_depth defaults to 1).
-# A RELIABLE writer with KEEP_LAST(1) is only obligated to reliably deliver
-# its single most recent sample, so once the backend's single-threaded
-# executor falls even briefly behind the frontend's publish rate, the
-# writer has nowhere to buffer the next sample and stalls/backpressures the
-# publish call, putting the frontend and backend in lockstep (observed:
-# exp01 offline_node wall time ~270s -> ~600s after the QoS-reliable
-# default flipped). Raising publisher_queue_depth gives the writer room to
-# buffer in-flight odometry+cloud samples across a transient backend stall
-# without ever dropping them (still RELIABLE, so nothing is silently lost
-# as long as the backend drains within this window), decoupling the two
-# processes' schedules again. 128 matches the paired backend
-# odom_cloud_sync_queue_size (see lidarslam_competitive_v2.yaml) and the
-# precedent already used elsewhere in this repo for the same param
-# (rko_lio_hilti2022_pandar_piecewise_gyro_capture.yaml,
-# rko_lio_hilti2022_pandar_fixed_lag_capture.yaml).
 publisher_queue_depth: 128

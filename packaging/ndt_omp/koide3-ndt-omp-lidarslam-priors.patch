@@ -1,0 +1,452 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3a8ba80..1a413e0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -126,5 +126,13 @@ install(
+   INCLUDES DESTINATION include
+ )
+ 
++if(BUILD_TESTING)
++  find_package(ament_cmake_gtest REQUIRED)
++  ament_add_gtest(test_ndt_regularization test/test_ndt_regularization.cpp)
++  if(TARGET test_ndt_regularization)
++    target_link_libraries(test_ndt_regularization ndt_omp ${PCL_LIBRARIES})
++  endif()
++endif()
++
+ ament_auto_package()
+ endif()
+diff --git a/include/pclomp/ndt_omp.h b/include/pclomp/ndt_omp.h
+index 85fbfda..ec4cee7 100644
+--- a/include/pclomp/ndt_omp.h
++++ b/include/pclomp/ndt_omp.h
+@@ -47,6 +47,9 @@
+ 
+ #include <unsupported/Eigen/NonLinearOptimization>
+ 
++#include <atomic>
++#include <cmath>
++
+ namespace pclomp
+ {
+ 	enum NeighborSearchMethod {
+@@ -116,6 +119,91 @@ namespace pclomp
+       num_threads_ = n;
+     }
+ 
++		/** \brief Set a quadratic rotation prior for the optimization.
++		  * \param[in] prior_rpy target rotation as [roll, pitch, yaw] in radians
++		  * \param[in] weight regularization weight; non-positive or non-finite values disable the prior
++		  * \param[in] roll_pitch_only if true, constrain only roll and pitch
++		  */
++		inline void
++			setRotationPrior(const Eigen::Vector3d &prior_rpy, double weight, bool roll_pitch_only = true)
++		{
++			if (!prior_rpy.allFinite() || !std::isfinite(weight) || weight <= 0.0)
++			{
++				clearRotationPrior();
++				return;
++			}
++			rotation_prior_rpy_ = prior_rpy;
++			rotation_prior_weight_ = weight;
++			rotation_prior_roll_pitch_only_ = roll_pitch_only;
++			has_rotation_prior_ = true;
++		}
++
++		/** \brief Clear the rotation prior. */
++		inline void
++			clearRotationPrior()
++		{
++			has_rotation_prior_ = false;
++			rotation_prior_weight_ = 0.0;
++		}
++
++		/** \brief Set a quadratic translation prior for the optimization.
++		  * \param[in] prior_xyz target translation [x, y, z]
++		  * \param[in] weights non-negative per-axis regularization weights [wx, wy, wz]
++		  */
++		inline void
++			setTranslationPrior(const Eigen::Vector3d &prior_xyz, const Eigen::Vector3d &weights)
++		{
++			if (!prior_xyz.allFinite() || !weights.allFinite() || (weights.array() < 0.0).any() ||
++				weights.maxCoeff() <= 0.0)
++			{
++				clearTranslationPrior();
++				return;
++			}
++			translation_prior_xyz_ = prior_xyz;
++			translation_prior_weights_ = weights;
++			has_translation_prior_ = true;
++		}
++
++		/** \brief Clear the translation prior. */
++		inline void
++			clearTranslationPrior()
++		{
++			has_translation_prior_ = false;
++			translation_prior_weights_.setZero();
++		}
++
++		/** \brief Set the maximum distance between a transformed point and a voxel mean.
++		  * \param[in] distance positive finite threshold, or zero/invalid to disable filtering
++		  */
++		inline void
++			setMaxCorrespondenceDistance(double distance)
++		{
++			max_correspondence_distance_ =
++				std::isfinite(distance) && distance > 0.0 ? distance : 0.0;
++		}
++
++		/** \brief Get the maximum correspondence distance, or zero when disabled. */
++		inline double
++			getMaxCorrespondenceDistance() const
++		{
++			return max_correspondence_distance_;
++		}
++
++		/** \brief Get the mean distance of correspondences accepted by the latest derivative evaluation. */
++		inline double
++			getLastMeanCorrespondenceDistance() const
++		{
++			const std::size_t count = last_correspondence_count_.load();
++			return count == 0 ? 0.0 : last_correspondence_distance_sum_.load() / count;
++		}
++
++		/** \brief Get the number of correspondences accepted by the latest derivative evaluation. */
++		inline std::size_t
++			getLastCorrespondenceCount() const
++		{
++			return last_correspondence_count_.load();
++		}
++
+ 		/** \brief Provide a pointer to the input target (e.g., the point cloud that we want to align the input source to).
+ 		  * \param[in] cloud the input point cloud target
+ 		  */
+@@ -279,9 +367,17 @@ namespace pclomp
+ 			target_cells_.setLeafSize(resolution_, resolution_, resolution_);
+ 			target_cells_.setInputCloud(target_);
+ 			// Initiate voxel structure.
+-			target_cells_.filter(true);
++			 target_cells_.filter(true);
+ 		}
+ 
++		/** \brief Add configured rotation and translation prior terms to NDT derivatives. */
++		void
++			applyRegularizationPriors(const Eigen::Matrix<double, 6, 1> &p,
++				double &score,
++				Eigen::Matrix<double, 6, 1> &score_gradient,
++				Eigen::Matrix<double, 6, 6> &hessian,
++				bool compute_hessian) const;
++
+ 		/** \brief Compute derivatives of probability function w.r.t. the transformation vector.
+ 		  * \note Equation 6.10, 6.12 and 6.13 [Magnusson 2009].
+ 		  * \param[out] score_gradient the gradient vector of the probability function w.r.t. the transformation vector
+@@ -495,6 +591,24 @@ namespace pclomp
+ 
+     int num_threads_;
+ 
++		/** \brief Optional correspondence-distance filter; zero disables filtering. */
++		double max_correspondence_distance_;
++
++		/** \brief Statistics from the latest derivative evaluation. */
++		mutable std::atomic<double> last_correspondence_distance_sum_;
++		mutable std::atomic<std::size_t> last_correspondence_count_;
++
++		/** \brief Optional quadratic rotation regularization. */
++		bool has_rotation_prior_;
++		Eigen::Vector3d rotation_prior_rpy_;
++		double rotation_prior_weight_;
++		bool rotation_prior_roll_pitch_only_;
++
++		/** \brief Optional per-axis quadratic translation regularization. */
++		bool has_translation_prior_;
++		Eigen::Vector3d translation_prior_xyz_;
++		Eigen::Vector3d translation_prior_weights_;
++
+ 	public:
+ 		NeighborSearchMethod search_method;
+ 
+diff --git a/include/pclomp/ndt_omp_impl.hpp b/include/pclomp/ndt_omp_impl.hpp
+index 220d201..fa2b1e1 100644
+--- a/include/pclomp/ndt_omp_impl.hpp
++++ b/include/pclomp/ndt_omp_impl.hpp
+@@ -73,6 +73,19 @@ pclomp::NormalDistributionsTransform<PointSource, PointTarget>::NormalDistributi
+ 
+   search_method = DIRECT7;
+   num_threads_ = omp_get_max_threads();
++
++	max_correspondence_distance_ = 0.0;
++	last_correspondence_distance_sum_.store(0.0);
++	last_correspondence_count_.store(0);
++
++	has_rotation_prior_ = false;
++	rotation_prior_rpy_.setZero();
++	rotation_prior_weight_ = 0.0;
++	rotation_prior_roll_pitch_only_ = true;
++
++	has_translation_prior_ = false;
++	translation_prior_xyz_.setZero();
++	translation_prior_weights_.setZero();
+ }
+ 
+ 
+@@ -175,6 +188,45 @@ int omp_get_max_threads() { return 1; }
+ int omp_get_thread_num() { return 0; }
+ #endif
+ 
++//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++template<typename PointSource, typename PointTarget> void
++pclomp::NormalDistributionsTransform<PointSource, PointTarget>::applyRegularizationPriors(
++	const Eigen::Matrix<double, 6, 1> &p,
++	double &score,
++	Eigen::Matrix<double, 6, 1> &score_gradient,
++	Eigen::Matrix<double, 6, 6> &hessian,
++	bool compute_hessian) const
++{
++	if (has_rotation_prior_)
++	{
++		const int end_idx = rotation_prior_roll_pitch_only_ ? 5 : 6;
++		const double two_pi = 6.28318530717958647692;
++		for (int i = 3; i < end_idx; ++i)
++		{
++			const double diff = std::remainder(p(i) - rotation_prior_rpy_(i - 3), two_pi);
++			score -= rotation_prior_weight_ * diff * diff;
++			score_gradient(i) -= 2.0 * rotation_prior_weight_ * diff;
++			if (compute_hessian)
++				hessian(i, i) -= 2.0 * rotation_prior_weight_;
++		}
++	}
++
++	if (has_translation_prior_)
++	{
++		for (int i = 0; i < 3; ++i)
++		{
++			const double weight = translation_prior_weights_(i);
++			if (weight == 0.0)
++				continue;
++			const double diff = p(i) - translation_prior_xyz_(i);
++			score -= weight * diff * diff;
++			score_gradient(i) -= 2.0 * weight * diff;
++			if (compute_hessian)
++				hessian(i, i) -= 2.0 * weight;
++		}
++	}
++}
++
+ //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ template<typename PointSource, typename PointTarget> double
+ pclomp::NormalDistributionsTransform<PointSource, PointTarget>::computeDerivatives(Eigen::Matrix<double, 6, 1> &score_gradient,
+@@ -186,10 +238,14 @@ pclomp::NormalDistributionsTransform<PointSource, PointTarget>::computeDerivativ
+ 	score_gradient.setZero();
+ 	hessian.setZero();
+ 	double score = 0;
++	last_correspondence_distance_sum_.store(0.0);
++	last_correspondence_count_.store(0);
+ 
+   std::vector<double> scores(input_->points.size());
+   std::vector<Eigen::Matrix<double, 6, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 6, 1>>> score_gradients(input_->points.size());
+   std::vector<Eigen::Matrix<double, 6, 6>, Eigen::aligned_allocator<Eigen::Matrix<double, 6, 6>>> hessians(input_->points.size());
++	std::vector<double> correspondence_distance_sums(input_->points.size(), 0.0);
++	std::vector<std::size_t> correspondence_counts(input_->points.size(), 0);
+   for (std::size_t i = 0; i < input_->points.size(); i++) {
+ 		scores[i] = 0;
+ 		score_gradients[i].setZero();
+@@ -260,6 +316,12 @@ pclomp::NormalDistributionsTransform<PointSource, PointTarget>::computeDerivativ
+ 
+ 			// Denorm point, x_k' in Equations 6.12 and 6.13 [Magnusson 2009]
+ 			x_trans -= cell->getMean();
++			const double correspondence_distance = x_trans.norm();
++			if (max_correspondence_distance_ > 0.0 &&
++				correspondence_distance > max_correspondence_distance_)
++				continue;
++			correspondence_distance_sums[idx] += correspondence_distance;
++			++correspondence_counts[idx];
+ 			// Uses precomputed covariance for speed.
+ 			c_inv = cell->getInverseCov();
+ 
+@@ -275,11 +337,19 @@ pclomp::NormalDistributionsTransform<PointSource, PointTarget>::computeDerivativ
+ 	}
+ 
+   // Ensure that the result is invariant against the summing up order
++	double correspondence_distance_sum = 0.0;
++	std::size_t correspondence_count = 0;
+   for (std::size_t i = 0; i < input_->points.size(); i++) {
+ 		score += scores[i];
+ 		score_gradient += score_gradients[i];
+ 		hessian += hessians[i];
++		correspondence_distance_sum += correspondence_distance_sums[i];
++		correspondence_count += correspondence_counts[i];
+ 	}
++	last_correspondence_distance_sum_.store(correspondence_distance_sum);
++	last_correspondence_count_.store(correspondence_count);
++
++	applyRegularizationPriors(p, score, score_gradient, hessian, compute_hessian);
+ 
+ 	return (score);
+ }
+diff --git a/package.xml b/package.xml
+index 71b639f..953b4e6 100644
+--- a/package.xml
++++ b/package.xml
+@@ -18,6 +18,8 @@
+ 
+   <depend condition="$ROS_VERSION == 2">libpcl-all-dev</depend>
+ 
++  <test_depend condition="$ROS_VERSION == 2">ament_cmake_gtest</test_depend>
++
+   <export>
+     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
+     <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
+diff --git a/test/test_ndt_regularization.cpp b/test/test_ndt_regularization.cpp
+new file mode 100644
+index 0000000..2675a2c
+--- /dev/null
++++ b/test/test_ndt_regularization.cpp
+@@ -0,0 +1,147 @@
++/*
++ * Software License Agreement (BSD License)
++ *
++ * Copyright (c) 2026, Sasaki
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ *  * Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ *  * Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <gtest/gtest.h>
++
++#include <pcl/point_cloud.h>
++#include <pcl/point_types.h>
++#include <pclomp/ndt_omp.h>
++
++#include <cmath>
++#include <limits>
++
++namespace
++{
++using Ndt = pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>;
++using Vector6d = Eigen::Matrix<double, 6, 1>;
++using Matrix6d = Eigen::Matrix<double, 6, 6>;
++
++class TestableNdt : public Ndt
++{
++public:
++	double applyPriors(const Vector6d &p, Vector6d &gradient, Matrix6d &hessian,
++		bool compute_hessian = true) const
++	{
++		double score = 0.0;
++		gradient.setZero();
++		hessian.setZero();
++		applyRegularizationPriors(p, score, gradient, hessian, compute_hessian);
++		return score;
++	}
++};
++
++TEST(NdtRegularization, AppliesRotationPriorToSelectedAxes)
++{
++	TestableNdt ndt;
++	ndt.setRotationPrior(Eigen::Vector3d::Zero(), 2.0, true);
++
++	Vector6d p = Vector6d::Zero();
++	p(3) = 0.5;
++	p(4) = -0.25;
++	p(5) = 1.0;
++	Vector6d gradient;
++	Matrix6d hessian;
++
++	EXPECT_DOUBLE_EQ(ndt.applyPriors(p, gradient, hessian), -0.625);
++	EXPECT_DOUBLE_EQ(gradient(3), -2.0);
++	EXPECT_DOUBLE_EQ(gradient(4), 1.0);
++	EXPECT_DOUBLE_EQ(gradient(5), 0.0);
++	EXPECT_DOUBLE_EQ(hessian(3, 3), -4.0);
++	EXPECT_DOUBLE_EQ(hessian(4, 4), -4.0);
++	EXPECT_DOUBLE_EQ(hessian(5, 5), 0.0);
++}
++
++TEST(NdtRegularization, AppliesPerAxisTranslationPrior)
++{
++	TestableNdt ndt;
++	ndt.setTranslationPrior(Eigen::Vector3d(1.0, 2.0, 3.0), Eigen::Vector3d(1.0, 0.0, 3.0));
++
++	Vector6d p = Vector6d::Zero();
++	p.head<3>() << 2.0, 100.0, 1.0;
++	Vector6d gradient;
++	Matrix6d hessian;
++
++	EXPECT_DOUBLE_EQ(ndt.applyPriors(p, gradient, hessian), -13.0);
++	EXPECT_DOUBLE_EQ(gradient(0), -2.0);
++	EXPECT_DOUBLE_EQ(gradient(1), 0.0);
++	EXPECT_DOUBLE_EQ(gradient(2), 12.0);
++	EXPECT_DOUBLE_EQ(hessian(0, 0), -2.0);
++	EXPECT_DOUBLE_EQ(hessian(1, 1), 0.0);
++	EXPECT_DOUBLE_EQ(hessian(2, 2), -6.0);
++}
++
++TEST(NdtRegularization, InvalidConfigurationDisablesOptionalTerms)
++{
++	TestableNdt ndt;
++	ndt.setRotationPrior(Eigen::Vector3d::Zero(), std::numeric_limits<double>::quiet_NaN());
++	ndt.setTranslationPrior(Eigen::Vector3d::Zero(), Eigen::Vector3d(0.0, -1.0, 2.0));
++	ndt.setMaxCorrespondenceDistance(std::numeric_limits<double>::infinity());
++
++	Vector6d p = Vector6d::Ones();
++	Vector6d gradient;
++	Matrix6d hessian;
++	EXPECT_DOUBLE_EQ(ndt.applyPriors(p, gradient, hessian), 0.0);
++	EXPECT_TRUE(gradient.isZero());
++	EXPECT_TRUE(hessian.isZero());
++	EXPECT_DOUBLE_EQ(ndt.getMaxCorrespondenceDistance(), 0.0);
++}
++
++pcl::PointCloud<pcl::PointXYZ>::Ptr makeCubeCloud()
++{
++	auto cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
++	for (int x = -1; x <= 1; ++x)
++		for (int y = -1; y <= 1; ++y)
++			for (int z = -1; z <= 1; ++z)
++				cloud->push_back(pcl::PointXYZ(
++					2.5f + 0.1f * x, 2.5f + 0.1f * y, 2.5f + 0.1f * z));
++	return cloud;
++}
++
++TEST(NdtCorrespondences, FiltersByVoxelMeanDistanceAndReportsStatistics)
++{
++	const auto cloud = makeCubeCloud();
++	Ndt ndt;
++	ndt.setResolution(1.0f);
++	ndt.setNeighborhoodSearchMethod(pclomp::DIRECT1);
++	ndt.setMaximumIterations(1);
++	ndt.setInputTarget(cloud);
++	ndt.setInputSource(cloud);
++	pcl::PointCloud<pcl::PointXYZ> output;
++
++	ndt.align(output);
++	const std::size_t unfiltered_count = ndt.getLastCorrespondenceCount();
++	EXPECT_GT(unfiltered_count, 0u);
++	EXPECT_GT(ndt.getLastMeanCorrespondenceDistance(), 0.0);
++
++	ndt.setMaxCorrespondenceDistance(0.01);
++	ndt.align(output);
++	EXPECT_LT(ndt.getLastCorrespondenceCount(), unfiltered_count);
++	EXPECT_LE(ndt.getLastMeanCorrespondenceDistance(), 0.01);
++}
++}  // namespace

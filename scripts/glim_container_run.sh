@@ -77,6 +77,7 @@ for override in config.json config_sensors.json config_ros.json config_logging.j
   cp "${OVERRIDE_CONFIG}/${override}" "/tmp/glim_benchmark_config/${override}"
 done
 
+# M6A3 synthetic smoke (opt-in) and M6A10 phased main flow coexist.
 if [[ "${M6A3_SYNTHETIC_SMOKE:-0}" == "1" ]]; then
   smoke_log="${OUT_DIR}/synthetic_smoke_glim.log"
   setsid ros2 run glim_ros glim_rosbag "${BAG_PATH}" --ros-args \
@@ -145,6 +146,7 @@ fi
 
 setsid bash /runner/scripts/run_with_resource_report.sh \
   "${OUT_DIR}/process_time.txt" \
+/usr/bin/time -v -o "${OUT_DIR}/process_time.txt" \
   ros2 run glim_ros glim_rosbag "${BAG_PATH}" --ros-args \
     -p config_path:=/tmp/glim_benchmark_config \
     -p auto_quit:=true \

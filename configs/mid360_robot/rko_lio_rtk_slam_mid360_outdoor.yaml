@@ -1,10 +1,11 @@
 # RKO-LIO outdoor config for the public RTK-SLAM dataset (Stadtgarten park
 # sequences; Livox MID-360 + total-station GT; arXiv:2604.07151, CC-BY 4.0).
 #
-# Identical to rko_lio_rtk_slam_mid360.yaml (the indoor preset) except
-# double_downsample is OFF: in the sparse park scene the second downsample
-# starves ICP of correspondences and the odometry drifts to 3.9 m RMSE on
-# stadtgarten_seq2; keeping every voxel sample brings it to 0.835 m
+# The shared RTK-SLAM preset now also disables double_downsample after clean
+# Construction Hall cross-validation improved both sequences. In the sparse
+# park scene the second downsample starves ICP of correspondences and the
+# odometry drifts to 3.9 m RMSE on stadtgarten_seq2; keeping every voxel sample
+# brings it to 0.835 m
 # (median 0.327). Coarser voxels (1.0 m + 1.0 m correspondence distance)
 # scored worse (2.35 m) — keep voxel 0.5 and just stop discarding points.
 # Sweep record: docs/research/rtkslam-total-station-gt-methodology.md.

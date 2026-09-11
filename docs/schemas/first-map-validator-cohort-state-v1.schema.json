@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-validator-cohort-state-v1.schema.json",
+  "title": "lidarslam_ros2 independent first-map cohort state v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "cohort_id",
+    "phase",
+    "extension_decision_url",
+    "operational_signals",
+    "attempts",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-validator-cohort-state-v1.schema.json"
+    },
+    "cohort_id": {"const": "g1-first-map-cohort-2026-08"},
+    "phase": {"enum": ["initial", "extended"]},
+    "extension_decision_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/(?:issues/[1-9][0-9]*#issuecomment-[1-9][0-9]*|pull/[1-9][0-9]*#(?:issuecomment|discussion_r)-[1-9][0-9]*)$"
+    },
+    "operational_signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observed_at",
+        "audit_url",
+        "public_source_or_documentation_drift",
+        "supported_p0_open",
+        "failed_release_gate",
+        "privacy_or_safety_incident"
+      ],
+      "properties": {
+        "observed_at": {"type": ["string", "null"], "format": "date-time"},
+        "audit_url": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/"
+        },
+        "public_source_or_documentation_drift": {"type": ["boolean", "null"]},
+        "supported_p0_open": {"type": ["boolean", "null"]},
+        "failed_release_gate": {"type": ["boolean", "null"]},
+        "privacy_or_safety_incident": {"type": ["boolean", "null"]}
+      }
+    },
+    "attempts": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {"$ref": "#/definitions/attempt"}
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "community_posts_authorized",
+        "github_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "community_posts_authorized": {"const": false},
+        "github_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "started_at",
+        "completed_at",
+        "documentation_path",
+        "documentation_page_sha256",
+        "public_revision",
+        "runtime_ref",
+        "report_url",
+        "active_operator_minutes",
+        "blocker_id",
+        "blocker_url",
+        "accepted_validation_id"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^attempt-[0-9]{3}$"},
+        "status": {
+          "enum": [
+            "active",
+            "reported-pass",
+            "reported-fail",
+            "accepted-pass",
+            "closed-pass",
+            "closed-fail",
+            "abandoned"
+          ]
+        },
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": ["string", "null"], "format": "date-time"},
+        "documentation_path": {
+          "enum": ["docker-first-map", "source-quickstart"]
+        },
+        "documentation_page_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "public_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "runtime_ref": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{40}|ghcr\\.io/[^\\s@]+@sha256:[0-9a-f]{64})$"
+        },
+        "report_url": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/issues/[1-9][0-9]*$"
+        },
+        "active_operator_minutes": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1440
+        },
+        "blocker_id": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z0-9][a-z0-9-]{2,63}$"
+        },
+        "blocker_url": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/(?:issues|pull)/[1-9][0-9]*"
+        },
+        "accepted_validation_id": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"
+        }
+      }
+    }
+  }
+}

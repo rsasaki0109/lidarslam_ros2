@@ -1,0 +1,53 @@
+{
+  "captured_at": "2026-08-10T14:06:49.764826Z",
+  "documentation_path": "docker-first-map",
+  "environment": {
+    "architecture": "x86_64",
+    "clean_start": true,
+    "os_family": "ubuntu-24.04",
+    "product_version": "0.9.0",
+    "revision": {
+      "kind": "image-digest",
+      "value": "sha256:6eabb19ac77ad24fd123772333357a0c5bfdb38055945213722f6484e0f134ef"
+    },
+    "ros_distro": "jazzy"
+  },
+  "evidence": {
+    "manifest_sha256": "e47d223d97b73c1cc8b5a9d766d3db5a47c247298bdbd65586cff23155ef1319",
+    "receipt_sha256": "80a89afec96948b45c0fea555a6b95a71100af795ce6128ef127c5248c6e65ac"
+  },
+  "input": {
+    "dataset_class": "fixed-public",
+    "dataset_id": "mid360-public-zenodo-14841855",
+    "download_bytes": 517088133
+  },
+  "measurements": {
+    "active_operator_time_sec": null,
+    "command_count": null,
+    "output_bytes": 132587520,
+    "peak_disk_bytes": null,
+    "wall_time_sec": 1140.525,
+    "workflow_download_bytes": 1906809522
+  },
+  "operator_class": "maintainer",
+  "outcome": {
+    "diagnosis_status": "success",
+    "failure_stage": "none",
+    "finding_codes": [],
+    "manifest_status": "succeeded",
+    "receipt_status": "PASS",
+    "runner_exit_code": 0,
+    "status": "PASS",
+    "undocumented_manual_steps": 0,
+    "verifier_status": "PASS"
+  },
+  "privacy": {
+    "contains_exact_command": false,
+    "contains_operator_identity": false,
+    "contains_private_paths": false,
+    "review_before_sharing": true
+  },
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-trial-v1.schema.json",
+  "schema_version": 1,
+  "trial_id": "g0-docker-jazzy-20260810-machine-a"
+}

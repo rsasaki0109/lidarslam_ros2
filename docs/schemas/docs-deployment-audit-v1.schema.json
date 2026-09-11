@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/docs-deployment-audit-v1.schema.json",
+  "title": "lidarslam_ros2 public documentation deployment audit v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "repository",
+    "manifest_url",
+    "network_requested",
+    "writes_performed",
+    "expectations",
+    "observed",
+    "checks",
+    "finding_codes",
+    "detail"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/docs-deployment-audit-v1.schema.json"
+    },
+    "status": {"enum": ["VERIFIED", "NOT_READY", "BLOCKED"]},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "manifest_url": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/docs-deployment-v1.json"
+    },
+    "network_requested": {"const": true},
+    "writes_performed": {"const": false},
+    "expectations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_revision", "product_version", "route_id"],
+      "properties": {
+        "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "product_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "route_id": {"enum": ["docker-first-map", "source-quickstart"]}
+      }
+    },
+    "observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_revision",
+        "product_version",
+        "page_url",
+        "page_size_bytes",
+        "page_sha256"
+      ],
+      "properties": {
+        "source_revision": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+        "product_version": {"type": ["string", "null"], "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "page_url": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "pattern": "^https://rsasaki0109\\.github\\.io/lidar_slam_ros2/"
+        },
+        "page_size_bytes": {"type": ["integer", "null"], "minimum": 1, "maximum": 16777216},
+        "page_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_schema_valid",
+        "manifest_route_contract_valid",
+        "source_revision_matches",
+        "product_version_matches",
+        "page_size_matches",
+        "page_sha256_matches",
+        "route_fragment_present"
+      ],
+      "properties": {
+        "manifest_schema_valid": {"type": "boolean"},
+        "manifest_route_contract_valid": {"type": "boolean"},
+        "manifest_content_contract_valid": {"type": "boolean"},
+        "source_revision_matches": {"type": "boolean"},
+        "product_version_matches": {"type": "boolean"},
+        "page_size_matches": {"type": "boolean"},
+        "page_sha256_matches": {"type": "boolean"},
+        "route_fragment_present": {"type": "boolean"},
+        "content_markers_present": {"type": "boolean"}
+      }
+    },
+    "finding_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "manifest-unavailable",
+          "manifest-invalid",
+          "manifest-route-contract-mismatch",
+          "source-revision-mismatch",
+          "product-version-mismatch",
+          "page-unavailable",
+          "page-size-mismatch",
+          "page-digest-mismatch",
+          "page-invalid",
+          "route-fragment-missing",
+          "manifest-content-contract-mismatch",
+          "content-marker-missing"
+        ]
+      }
+    },
+    "detail": {"type": "string", "minLength": 1, "maxLength": 1024}
+  }
+}

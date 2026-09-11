@@ -1,0 +1,68 @@
+# Tunnel variant of rko_lio_lidar_degeneracy_radar_continuous.ros.yaml:
+# radar_velocity_scale 1.05 corrects the sparse narrow-FOV radar's speed
+# underestimate on the tunnel geometry (see
+# rko_lio_lidar_degeneracy_radar_weak_direction_tunnel.ros.yaml, reach
+# 457.1 -> 495.3 m of ~500 m). Fog is near-unbiased along its corrected
+# direction, so the shared fog config keeps the default 1.0.
+/**:
+  ros__parameters:
+    extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+    extrinsic_lidar2base_quat_xyzw_xyz: [0.000462, 0.0008483, 0.0028835, 0.9999954, -0.00171, 0.02149, 0.0358]
+    lidar_timestamps.offset_seconds: 0.0
+    initialization_phase: true
+    deskew: true
+    voxel_size: 0.5
+    icp_keypoint_voxel_multiplier: 1.5
+    max_points_per_voxel: 20
+    min_range: 0.7
+    max_range: 100.0
+    max_correspondence_distance: 0.5
+    double_downsample: true
+    degeneracy_aware_solve: true
+    degeneracy_well_conditioned_ratio: 1.5e-5
+    degeneracy_multiplicity_relative_gap: 1.0e-8
+    degeneracy_prior_weight: 0.25
+    degeneracy_persistence_gate: true
+    degeneracy_persistence_min_scans: 3
+    degeneracy_persistence_tracking_ratio: 1.5e-5
+    degeneracy_persistence_min_absolute_cosine: 0.98
+    degeneracy_persistence_min_translation_fraction: 0.99
+    degeneracy_multiscan_observability_gate: true
+    degeneracy_observability_window_scans: 10
+    degeneracy_observability_min_scans: 5
+    degeneracy_observability_max_directional_ratio: 1.0e-5
+    radar_topic: /radar/cloud
+    extrinsic_radar2base_quat_xyzw_xyz: [0.953717, 0.0, -0.3007058, 0.0, 0.07771, 0.02141, -0.03631]
+    radar_doppler_sign: -1.0
+    radar_ransac_inlier_threshold: 0.15
+    radar_ransac_iterations: 100
+    radar_min_inliers: 8
+    radar_prior_max_time_offset_sec: 0.15
+    radar_velocity_scale: 1.05
+    radar_velocity_fusion: false
+    radar_disagreement_gate: true
+    radar_disagreement_min_mps: 0.2
+    radar_disagreement_min_scans: 10
+    radar_disagreement_weight: 1.0
+    # Same tuned continuous-fusion trust ratio as the fog config -- see
+    # rko_lio_lidar_degeneracy_radar_continuous.ros.yaml's header comment.
+    radar_velocity_continuous_fusion: true
+    radar_sigma_forward_mps: 0.06
+    radar_sigma_lateral_mps: 0.5
+    radar_sigma_vertical_mps: 0.5
+    radar_fusion_icp_information_scale: 0.2
+    enable_kidnap_relocalization: false
+    reset_on_registration_failure: false
+    relocalize_after_scan_gap: false
+
+    # Sliding-window absolute gravity alignment (rko_lio gravity_alignment.hpp):
+    # long-window raw-accel mean as an absolute up reference, fed back as a
+    # small capped roll/pitch correction. Fixes the slow pitch drift that the
+    # min_beta regularization cannot observe (its KF reference drifts with the
+    # estimate). NTNU A/B (gain 0.2): tunnel end-z sag -33.45 -> -5.22 m,
+    # transverse RMS 3.50 -> 1.79 m, reach preserved; fog start-end drift
+    # 11.21 -> 9.63 m. Samples are not accumulated while the world-frame yaw
+    # rate exceeds gravity_alignment_max_yaw_rate_rad_s (sustained turning =
+    # centripetal acceleration, which does not average out).
+    gravity_window_alignment: true
+    gravity_alignment_gain: 0.2

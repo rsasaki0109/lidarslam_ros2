@@ -1,0 +1,223 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/fixture-publication-audit-v1.schema.json",
+  "title": "lidarslam_ros2 published fixture audit v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "audited_at",
+    "readiness",
+    "publication",
+    "remote_asset",
+    "download",
+    "checks"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/fixture-publication-audit-v1.schema.json"
+    },
+    "status": {"const": "REMOTE_ARTIFACT_PASS"},
+    "audited_at": {"type": "string", "format": "date-time"},
+    "readiness": {"$ref": "#/definitions/readiness"},
+    "publication": {"$ref": "#/definitions/publication"},
+    "remote_asset": {"$ref": "#/definitions/remoteAsset"},
+    "download": {"$ref": "#/definitions/download"},
+    "checks": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/check"}
+    }
+  },
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "filename": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,239}$"
+    },
+    "host": {
+      "enum": ["github-release", "zenodo"]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "size_bytes", "sha256", "member_count"],
+      "properties": {
+        "filename": {"$ref": "#/definitions/filename"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "member_count": {"type": "integer", "minimum": 3}
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_id",
+        "reviewed_on",
+        "review_sha256",
+        "fixture_id",
+        "artifact",
+        "repository",
+        "generator_revision",
+        "review_revision",
+        "host"
+      ],
+      "properties": {
+        "review_id": {"$ref": "#/definitions/slug"},
+        "reviewed_on": {"type": "string", "format": "date"},
+        "review_sha256": {"$ref": "#/definitions/sha256"},
+        "fixture_id": {"$ref": "#/definitions/slug"},
+        "artifact": {"$ref": "#/definitions/artifact"},
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$"
+        },
+        "generator_revision": {"$ref": "#/definitions/commit"},
+        "review_revision": {"$ref": "#/definitions/commit"},
+        "host": {"$ref": "#/definitions/host"}
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host",
+        "record_id",
+        "asset_id",
+        "release_tag",
+        "doi",
+        "published_at",
+        "public_access",
+        "version_pinned",
+        "host_immutability",
+        "metadata_url"
+      ],
+      "properties": {
+        "host": {"$ref": "#/definitions/host"},
+        "record_id": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,19}$"
+        },
+        "asset_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9-]{1,128}$"
+        },
+        "release_tag": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "doi": {
+          "type": ["string", "null"],
+          "pattern": "^10\\.5281/zenodo\\.[1-9][0-9]{0,19}$"
+        },
+        "published_at": {"type": "string", "format": "date-time"},
+        "public_access": {"const": true},
+        "version_pinned": {"const": true},
+        "host_immutability": {
+          "enum": ["ENFORCED", "CHECKSUM_PINNED_VERSION"]
+        },
+        "metadata_url": {"type": "string", "format": "uri"}
+      }
+    },
+    "remoteAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "size_bytes",
+        "digest_algorithm",
+        "digest",
+        "download_url",
+        "download_count",
+        "state"
+      ],
+      "properties": {
+        "filename": {"$ref": "#/definitions/filename"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "digest_algorithm": {"enum": ["sha256", "md5"]},
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}([0-9a-f]{32})?$"
+        },
+        "download_url": {"type": "string", "format": "uri"},
+        "download_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "state": {"const": "PUBLISHED"}
+      }
+    },
+    "download": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "source",
+        "expected_size_bytes",
+        "expected_sha256",
+        "size_bytes",
+        "sha256",
+        "md5",
+        "resumed_bytes",
+        "transferred_bytes",
+        "remote_digest_verified"
+      ],
+      "properties": {
+        "status": {"const": "VERIFIED"},
+        "source": {
+          "enum": ["network", "resume", "complete-part", "cache"]
+        },
+        "expected_size_bytes": {"type": "integer", "minimum": 1},
+        "expected_sha256": {"$ref": "#/definitions/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "md5": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "resumed_bytes": {"type": "integer", "minimum": 0},
+        "transferred_bytes": {"type": "integer", "minimum": 0},
+        "remote_digest_verified": {"const": true}
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status"],
+      "properties": {
+        "id": {
+          "enum": [
+            "readiness_review_identity",
+            "publication_decision",
+            "public_host_metadata",
+            "version_identity",
+            "remote_asset_identity",
+            "downloaded_size",
+            "downloaded_sha256",
+            "remote_digest"
+          ]
+        },
+        "status": {"const": "PASS"}
+      }
+    }
+  }
+}

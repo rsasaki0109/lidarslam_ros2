@@ -43,6 +43,8 @@
 #     - reference_kind: ground_truth | cross_validation | unknown
 #     - reference_source_contains: substring of reference.source
 #     - min_ape_pairs: minimum evo.ape.pairs to filter out partial/incomplete runs
+#     - require_clean_provenance: require SHA-256 input/software identities from
+#       a clean Git revision; every shipped release profile enables this
 #   metric:
 #     ape_rmse_gt_m            -> evo.ape.rmse, only when reference.kind == ground_truth
 #     ape_rmse_vs_reference_m  -> evo.ape.rmse against any reference (typically cross_validation)
@@ -53,8 +55,10 @@
 
 release_profiles:
   - name: newer_college_math_hard
-    description: Newer College math-hard (~320m loop, Ouster OS0-128 + IMU, prism GT)
+    description: Newer College Maths-Hard (~320m loop, Ouster OS0-128 + IMU, ICP-to-survey-map GT)
+    remediation: Follow docs/benchmarking.md#newer-college-maths-hard to acquire the form-gated official bag, ground-truth CSV, and collection calibration, then rerun the exact candidate commit.
     match:
+      require_clean_provenance: true
       bag_name_contains: math_hard
       reference_kind: ground_truth
     metric: ape_rmse_gt_m
@@ -63,7 +67,9 @@ release_profiles:
 
   - name: ntu_viral_tnp_01
     description: NTU VIRAL tnp_01 (~580s outdoor, Ouster OS1-16 + VN-100, Leica prism GT)
+    remediation: Run scripts/download_ntu_viral_tnp01.sh --dry-run, choose a large enough destination, then follow the canonical NTU command in docs/benchmarking.md and retain metrics.json under the benchmark root.
     match:
+      require_clean_provenance: true
       bag_name_contains: tnp_01
       reference_kind: ground_truth
       min_ape_pairs: 200
@@ -78,6 +84,7 @@ release_profiles:
   - name: mid360_vs_glim
     description: Livox MID-360 vs GLIM cross-validation (~277s indoor loop; report-only since v0.5)
     match:
+      require_clean_provenance: true
       points_topic: /livox/lidar
       reference_kind: cross_validation
       reference_source_contains: glim_mid360
@@ -98,7 +105,9 @@ release_profiles:
   # RMSE 0.154 m (median 0.061), vs published fast_lio_sam 0.086 / okvis 0.075.
   - name: mid360_gt_rtkslam_construction_seq2
     description: Livox MID-360 vs total-station checkpoints, RTK-SLAM Construction Hall 2 (~600s, 16 chkpt, dense odometry)
+    remediation: Download construction_seq2 plus eval assets with scripts/download_rtk_slam_dataset.py and run scripts/run_rtk_slam_accuracy_suite.py for the exact candidate commit.
     match:
+      require_clean_provenance: true
       points_topic: /livox/points
       reference_kind: ground_truth
       reference_source_contains: rtk_slam_construction_seq2_gt
@@ -114,7 +123,9 @@ release_profiles:
   # College. Graduated to blocking in v0.5 together with construction_seq2.
   - name: mid360_gt_rtkslam_construction_seq1
     description: Livox MID-360 vs total-station checkpoints, RTK-SLAM Construction Hall 1 (~741s, 16 chkpt, dense odometry)
+    remediation: Download construction_seq1 plus eval assets with scripts/download_rtk_slam_dataset.py and run scripts/run_rtk_slam_accuracy_suite.py for the exact candidate commit.
     match:
+      require_clean_provenance: true
       points_topic: /livox/points
       reference_kind: ground_truth
       reference_source_contains: rtk_slam_construction_seq1_gt
@@ -123,17 +134,19 @@ release_profiles:
     pass: 0.55
     target: 0.30
 
-  # Outdoor pair (Stadtgarten park) -- measured with the outdoor preset
-  # (configs/mid360_robot/rko_lio_rtk_slam_mid360_outdoor.yaml,
-  # double_downsample off; the indoor preset drifts to 3.9 m here). These are
+  # Outdoor pair (Stadtgarten park) -- sequence 1 uses the shared modern dd-off
+  # preset; sequence 2 uses the measured compatibility preset
+  # (rko_lio_rtk_slam_mid360_stadtgarten_seq2.yaml: legacy voxel order,
+  # 105 m range). The former shared dd-on preset drifts to 3.9 m here. These are
   # honest capability-boundary numbers for LiDAR-inertial raw odometry without
   # GNSS or loop closure (published GNSS-anchored baselines sit at ~0.07 m):
-  # stadtgarten_seq2 0.835 m (median 0.327, 19 chkpt), stadtgarten_seq1
-  # 1.666 m (median 1.511, 36 chkpt, 26 min / ~1 km loop). Soak as
+  # stadtgarten_seq2 0.426 m (median 0.264, 19 chkpt), stadtgarten_seq1
+  # 0.838 m (median 0.511, 36 chkpt, 26 min / ~1 km loop). Soak as
   # report-only with indoor-like headroom before graduating.
   - name: mid360_gt_rtkslam_stadtgarten_seq2
     description: Livox MID-360 vs total-station checkpoints, RTK-SLAM Stadtgarten 2 (~876s outdoor park, 19 chkpt, dense odometry)
     match:
+      require_clean_provenance: true
       points_topic: /livox/points
       reference_kind: ground_truth
       reference_source_contains: rtk_slam_stadtgarten_seq2_gt
@@ -146,6 +159,7 @@ release_profiles:
   - name: mid360_gt_rtkslam_stadtgarten_seq1
     description: Livox MID-360 vs total-station checkpoints, RTK-SLAM Stadtgarten 1 (~1603s outdoor park, 36 chkpt, dense odometry)
     match:
+      require_clean_provenance: true
       points_topic: /livox/points
       reference_kind: ground_truth
       reference_source_contains: rtk_slam_stadtgarten_seq1_gt
@@ -166,6 +180,7 @@ release_profiles:
   - name: hilti2022_exp01
     description: HILTI 2022 Hesai PandarXT-32 exp01 construction ground level vs mm total-station control points (feature-rich, dense raw odometry)
     match:
+      require_clean_provenance: true
       points_topic: /hesai/pandar
       reference_kind: ground_truth
       reference_source_contains: hilti2022_exp01_control_points_gt
@@ -183,6 +198,7 @@ release_profiles:
   - name: hilti2022_exp07
     description: HILTI 2022 Hesai PandarXT-32 exp07 long corridor vs mm total-station control points (degenerate, dense raw odometry)
     match:
+      require_clean_provenance: true
       points_topic: /hesai/pandar
       reference_kind: ground_truth
       reference_source_contains: hilti2022_exp07_control_points_gt
@@ -203,6 +219,7 @@ release_profiles:
   - name: hilti2022_exp04
     description: HILTI 2022 Hesai PandarXT-32 exp04 construction upper level vs mm total-station control points (feature-rich, dense raw odometry)
     match:
+      require_clean_provenance: true
       points_topic: /hesai/pandar
       reference_kind: ground_truth
       reference_source_contains: hilti2022_exp04_control_points_gt
@@ -213,7 +230,9 @@ release_profiles:
 
   - name: leo_drive_applanix_velodyne_cross
     description: Leo Drive applanix/velodyne open data vs Applanix GSOF49 cross-validation
+    remediation: Run the Leo Drive command in docs/benchmarking.md with --verify-map on the exact candidate commit and retain metrics.json under the benchmark root.
     match:
+      require_clean_provenance: true
       points_topic: /open_data/velodyne_points
       reference_kind: cross_validation
       reference_source_contains: applanix_gsof49

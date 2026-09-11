@@ -197,6 +197,11 @@ def test_generated_reference_scores_as_ground_truth(tmp_path):
     assert meta['source'] == 'rtk_slam_test_gt'
     assert meta['kind'] == 'ground_truth'
     assert meta['checkpoint_count'] == 12
+    assert meta['max_time_diff_sec'] == 2.0
+    assert meta['reference_point_frame'] == 'base_center'
+    assert meta['imu_to_reference_translation_m'] == {
+        'x': -0.073, 'y': -0.023, 'z': -0.172}
+    assert 'calib/calib.yaml' in meta['reference_translation_source']
 
     # Build an estimate that differs from GT by a pure rigid translation, which
     # SE(3) alignment removes -> RMSE ~ 0 over the sparse checkpoint set.
@@ -212,6 +217,7 @@ def test_generated_reference_scores_as_ground_truth(tmp_path):
 
     bag_dir = tmp_path / 'bag'
     bag_dir.mkdir(parents=True, exist_ok=True)
+    (bag_dir / 'data.db3').write_bytes(b'synthetic bag payload')
     (bag_dir / 'metadata.yaml').write_text(
         'rosbag2_bagfile_information:\n  duration:\n    nanoseconds: 1000000000\n',
         encoding='utf-8',
@@ -227,6 +233,7 @@ def test_generated_reference_scores_as_ground_truth(tmp_path):
             '--reference-tum', str(ref_tum),
             '--corrected-tum', str(est_tum),
             '--reference-source', 'rtk_slam_test_gt',
+            '--runtime-artifact', 'true=/bin/true',
         ],
         capture_output=True, text=True, check=False, cwd=REPO_ROOT,
     )
@@ -270,6 +277,7 @@ def test_match_tolerance_recovers_offset_sparse_checkpoints(tmp_path):
 
     bag_dir = tmp_path / 'bag'
     bag_dir.mkdir(parents=True, exist_ok=True)
+    (bag_dir / 'data.db3').write_bytes(b'synthetic bag payload')
     (bag_dir / 'metadata.yaml').write_text(
         'rosbag2_bagfile_information:\n  duration:\n    nanoseconds: 1000000000\n',
         encoding='utf-8',
@@ -284,6 +292,7 @@ def test_match_tolerance_recovers_offset_sparse_checkpoints(tmp_path):
                 '--reference-tum', str(ref_tum),
                 '--corrected-tum', str(est_tum),
                 '--reference-source', 'rtk_slam_test_gt',
+                '--runtime-artifact', 'true=/bin/true',
             ] + extra,
             capture_output=True, text=True, check=False, cwd=REPO_ROOT,
         )

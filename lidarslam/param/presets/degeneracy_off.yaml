@@ -1,0 +1,28 @@
+# Degeneracy-resilience preset: OFF (documented no-op baseline).
+#
+# Symptoms addressed: none -- this is the control arm for A/B testing the
+# other presets in this directory against unmodified rko_lio behavior.
+# Sensors required: none beyond your normal LiDAR + IMU rig.
+# Knobs to touch: none.
+#
+# Every flag below already matches the rko_lio default (see
+# Thirdparty/rko_lio/rko_lio/core/lio.hpp), so layering this file changes
+# nothing versus not layering any degeneracy preset at all. It exists so you
+# can diff it against corridor_fog_radar.yaml / tunnel_radar.yaml /
+# tunnel_intensity_no_radar.yaml and see exactly which knobs each preset
+# flips.
+#
+# This file contains ONLY degeneracy-feature params -- it is meant to be
+# layered as a SECOND --params-file on top of your own sensor config
+# (extrinsics, voxel_size, min/max_range, etc. stay in your own file).
+#
+# See docs/degeneracy-guide.md for the symptom -> preset table and the
+# validated numbers behind each feature.
+degeneracy_aware_solve: false
+degeneracy_persistence_gate: false
+degeneracy_multiscan_observability_gate: false
+radar_velocity_fusion: false
+radar_disagreement_gate: false
+intensity_constraint: false
+intensity_disagreement_gate: false
+kinematic_velocity_blend: false

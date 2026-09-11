@@ -1,0 +1,207 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-comparison-v1.schema.json",
+  "title": "lidarslam_ros2 evidence-backed session comparison v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "created_at",
+    "policy",
+    "left",
+    "right",
+    "summary",
+    "comparisons"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-comparison-v1.schema.json"
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["numeric_score", "winner_selected", "missing_evidence"],
+      "properties": {
+        "numeric_score": {"const": false},
+        "winner_selected": {"const": false},
+        "missing_evidence": {"const": "unavailable_not_inferred"}
+      }
+    },
+    "left": {"$ref": "#/definitions/session"},
+    "right": {"$ref": "#/definitions/session"},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["same", "different", "unavailable", "total"],
+      "properties": {
+        "same": {"type": "integer", "minimum": 0},
+        "different": {"type": "integer", "minimum": 0},
+        "unavailable": {"type": "integer", "minimum": 0},
+        "total": {"const": 14}
+      }
+    },
+    "comparisons": {
+      "type": "array",
+      "minItems": 14,
+      "maxItems": 14,
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/comparison"},
+      "allOf": [
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "session_status"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "quality_overall"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "quality_workflow"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "quality_map_output"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "quality_verification"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "quality_evidence"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "verification"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "profile"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "input_identity"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "topics"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "frames"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "calibration"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "parameters"}}}},
+        {"contains": {"required": ["id"], "properties": {"id": {"const": "recorded_artifacts"}}}}
+      ]
+    }
+  },
+  "definitions": {
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "bundle_path",
+        "session_path",
+        "page_path",
+        "created_at",
+        "status",
+        "summary",
+        "profile",
+        "verification",
+        "quality",
+        "setup_source"
+      ],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "bundle_path": {"type": "string", "minLength": 1},
+        "session_path": {"type": "string", "minLength": 1},
+        "page_path": {"type": ["string", "null"]},
+        "created_at": {"type": "string", "format": "date-time"},
+        "status": {
+          "enum": ["running", "verified", "unverified", "action_required"]
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title", "message"],
+          "properties": {
+            "title": {"type": "string", "minLength": 1},
+            "message": {"type": "string", "minLength": 1}
+          }
+        },
+        "profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "label"],
+          "properties": {
+            "id": {"type": "string", "minLength": 1},
+            "label": {"type": "string", "minLength": 1}
+          }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "result"],
+          "properties": {
+            "mode": {"enum": ["required", "off"]},
+            "result": {
+              "enum": ["pending", "PASS", "not_run", "not_completed"]
+            }
+          }
+        },
+        "quality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["overall", "headline"],
+          "properties": {
+            "overall": {
+              "enum": [
+                "pending",
+                "pass",
+                "not_verified",
+                "action_required",
+                "unavailable"
+              ]
+            },
+            "headline": {"type": "string", "minLength": 1}
+          }
+        },
+        "setup_source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "artifact"],
+          "properties": {
+            "status": {"enum": ["valid", "missing", "invalid"]},
+            "artifact": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "label",
+        "source",
+        "result",
+        "left",
+        "right"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "session_status",
+            "quality_overall",
+            "quality_workflow",
+            "quality_map_output",
+            "quality_verification",
+            "quality_evidence",
+            "verification",
+            "profile",
+            "input_identity",
+            "topics",
+            "frames",
+            "calibration",
+            "parameters",
+            "recorded_artifacts"
+          ]
+        },
+        "category": {"enum": ["readiness", "setup", "artifacts"]},
+        "label": {"type": "string", "minLength": 1},
+        "source": {"enum": ["session.json", "sensor_setup.json"]},
+        "result": {"enum": ["same", "different", "unavailable"]},
+        "left": {"$ref": "#/definitions/value"},
+        "right": {"$ref": "#/definitions/value"}
+      }
+    },
+    "value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["availability", "display", "value"],
+      "properties": {
+        "availability": {"enum": ["available", "unavailable"]},
+        "display": {"type": "string", "minLength": 1},
+        "value": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -41,6 +41,7 @@
 #include <array>
 #include <cmath>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -135,6 +136,9 @@ struct ImuEdgeConfig
 struct OptimizationResult
 {
   std::vector<Eigen::Isometry3d> poses;
+  // Canonical g2o artifact bytes. Persistence belongs to an outer output
+  // port; the optimizer never opens a path or touches the filesystem.
+  std::string pose_graph_g2o;
   // Post-optimization adjacent-edge chi2 contributions, for the caller's
   // NIS auto-scale update (finite values only, in edge construction order).
   std::vector<double> adjacent_chi2;
@@ -168,7 +172,6 @@ inline OptimizationResult optimizePoseGraph(
   // settle into the anchor (ENU) frame; the historical default pins it.
   bool fix_first_vertex = true,
   int iterations = 10,
-  const std::string & save_path = std::string(),
   const std::vector<PlaneRevisitConstraint> & plane_constraints = {})
 {
   g2o::SparseOptimizer optimizer;
@@ -323,11 +326,11 @@ inline OptimizationResult optimizePoseGraph(
 
   optimizer.initializeOptimization();
   optimizer.optimize(iterations);
-  if (!save_path.empty()) {
-    optimizer.save(save_path.c_str());
-  }
 
   OptimizationResult result;
+  std::ostringstream graph_stream;
+  optimizer.save(graph_stream);
+  result.pose_graph_g2o = graph_stream.str();
   result.plane_revisit_edges = static_cast<int>(plane_edges.size());
   result.plane_revisit_chi2_before = plane_chi2_before;
   result.poses.reserve(submaps_size);

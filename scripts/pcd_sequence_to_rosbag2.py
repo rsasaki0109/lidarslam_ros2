@@ -196,7 +196,7 @@ def write_bag(frames: list[tuple[Path, float]], output: Path, topic: str,
     Vector3 = typestore.types['geometry_msgs/msg/Vector3']
     fields = [PointField(name=name, offset=offset, datatype=PointField.FLOAT32, count=1)
               for name, offset in zip(('x', 'y', 'z', 'intensity'), (0, 4, 8, 12))]
-    with Writer(output, version=9) as writer:
+    with Writer(output, version=8) as writer:
         connection = writer.add_connection(
             topic, 'sensor_msgs/msg/PointCloud2', typestore=typestore)
         odom_connection = None

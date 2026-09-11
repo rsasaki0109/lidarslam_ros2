@@ -34,7 +34,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / 'scripts' / 'evaluate_bim_regression_gate.py'
-PROFILE = REPO_ROOT / 'tools' / 'gaussian_splatting' / 'bim_regression_profile_v1.json'
+PROFILE = REPO_ROOT / 'tools' / 'colored_map' / 'bim_regression_profile_v1.json'
 
 
 def _load():

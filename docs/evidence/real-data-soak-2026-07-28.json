@@ -1,0 +1,121 @@
+{
+  "evidence_version": 1,
+  "recorded_at": "2026-07-28",
+  "scope": "Named-hardware real-data soak evidence for the golden-path map runner",
+  "schema_uri": "../schemas/soak-report-v4.schema.json",
+  "hardware": {
+    "label": "sasaki-laptop-i5-1145G7-32GiB-jazzy-native",
+    "architecture": "x86_64",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-1145G7 @ 2.60GHz",
+    "logical_cpu_count": 8,
+    "memory_total_kb": 32461332,
+    "os_release": "Ubuntu 24.04.4 LTS",
+    "kernel_release": "6.17.0-35-generic"
+  },
+  "software": {
+    "git_commit": "0ec55575ffc16eb008e9f24bd6c6f24700bf2f8a",
+    "git_dirty": false,
+    "product_version": "0.6.0",
+    "ros_distro": "jazzy",
+    "map_profile": "pointcloud_gnss_smoke",
+    "runner_sha256": "e9dc617e9d9bafe2348408b7bd90422538ca3048d08b3e662d8a3d038ce83657",
+    "product_cli_sha256": "1ae79c5d00313199388382a2625f3b75105241bd8c903f0763562e3cc44ccdf3"
+  },
+  "input": {
+    "description": "Istanbul bag4 uncompressed rosbag2",
+    "storage_identifier": "sqlite3",
+    "metadata_sha256": "1b9be8f18b0cbbb369c3f38549ac4c3bb7f8bb895ef417c0fbe57a0a926d2f71",
+    "metadata_size_bytes": 13238,
+    "storage_files": [
+      {
+        "path": "istanbul_bag4_0.db3",
+        "sha256": "e833a6ae89d5f0ccf0ee8d4bdde3232e7c49d04a8342db452b4ad743ef43b185",
+        "size_bytes": 1061437440
+      }
+    ]
+  },
+  "runs": [
+    {
+      "profile": "one-hour",
+      "status": "passed",
+      "started_at": "2026-07-27T21:05:50.934118Z",
+      "completed_at": "2026-07-27T22:06:29.689661Z",
+      "report_sha256": "25a677d0944fec42bc63421c67a3a055993afd6d44a1991dfe5b49b973f35a3e",
+      "checks": {
+        "all_iterations_succeeded": true,
+        "dropped_inputs_within_budget": true,
+        "free_space_within_budget": true,
+        "iteration_duration_within_budget": true,
+        "output_size_within_budget": true,
+        "peak_rss_within_budget": true,
+        "provenance_recorded": true,
+        "target_duration_reached": true
+      },
+      "metrics": {
+        "iterations_completed": 86,
+        "iterations_failed": 0,
+        "wall_time_sec": 3638.6452590459958,
+        "max_observed_iteration_sec": 43.16417389898561,
+        "peak_rss_mib": 209.3203125,
+        "output_size_bytes": 1889888063,
+        "minimum_free_space_bytes": 85689724928,
+        "dropped_inputs_total": 0,
+        "telemetry_samples": 258
+      },
+      "thresholds": {
+        "max_iteration_sec": 300.0,
+        "max_peak_rss_mib": 1024.0,
+        "max_output_bytes": 5368709120,
+        "minimum_free_space_bytes": 64424509440,
+        "max_dropped_inputs": 0
+      }
+    },
+    {
+      "profile": "eight-hour",
+      "status": "passed",
+      "started_at": "2026-07-27T22:07:07.879111Z",
+      "completed_at": "2026-07-28T06:07:42.690131Z",
+      "report_sha256": "67aace0d8521178357bdc3264acdeca57e35c414ecf9dd516b29cf9612eb1361",
+      "checks": {
+        "all_iterations_succeeded": true,
+        "dropped_inputs_within_budget": true,
+        "free_space_within_budget": true,
+        "iteration_duration_within_budget": true,
+        "output_size_within_budget": true,
+        "peak_rss_within_budget": true,
+        "provenance_recorded": true,
+        "target_duration_reached": true
+      },
+      "metrics": {
+        "iterations_completed": 671,
+        "iterations_failed": 0,
+        "wall_time_sec": 28834.114774872083,
+        "max_observed_iteration_sec": 45.73242361890152,
+        "peak_rss_mib": 210.87109375,
+        "output_size_bytes": 14553359036,
+        "minimum_free_space_bytes": 70752927744,
+        "dropped_inputs_total": 0,
+        "telemetry_samples": 2013
+      },
+      "thresholds": {
+        "max_iteration_sec": 300.0,
+        "max_peak_rss_mib": 1024.0,
+        "max_output_bytes": 32212254720,
+        "minimum_free_space_bytes": 42949672960,
+        "max_dropped_inputs": 0
+      }
+    }
+  ],
+  "verification": {
+    "schema_validated": true,
+    "same_clean_provenance_for_both_runs": true,
+    "input_hashes_match_for_both_runs": true,
+    "scoped_processes_remaining_after_eight_hour_run": 0,
+    "evidence_worktree_clean_after_eight_hour_run": true
+  },
+  "limitations": [
+    "This evidence covers one named amd64 machine, ROS 2 Jazzy, one input identity, and one map profile.",
+    "It is not a universal hardware, sensor, map-quality, or Humble performance guarantee.",
+    "The compact ledger records report hashes and audited metrics; full reports and per-iteration artifacts are retained outside the source repository."
+  ]
+}

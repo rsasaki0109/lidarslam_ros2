@@ -32,6 +32,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 import subprocess
 import sys
@@ -51,6 +52,25 @@ def _write_metadata(
     tf: bool = True,
 ) -> Path:
     bag_dir = tmp_path / 'mid360_robot_bag'
+    if pointcloud and imu:
+        command = [
+            sys.executable,
+            str(REPO_ROOT / 'scripts' / 'generate_mid360_robot_sample_bag.py'),
+            str(bag_dir),
+            '--duration-sec',
+            '5',
+            '--pointcloud-rate-hz',
+            '10',
+            '--imu-rate-hz',
+            '100',
+            '--point-count',
+            '16',
+        ]
+        if not tf:
+            command.append('--no-tf-static')
+        subprocess.run(command, check=True, cwd=REPO_ROOT)
+        return bag_dir
+
     bag_dir.mkdir()
     topics = []
     if pointcloud:
@@ -134,8 +154,16 @@ def test_readiness_pass_writes_report_and_manifest(tmp_path: Path):
     assert result.returncode == 0
     assert report['status'] == 'PASS'
     assert report['counts']['fail'] == 0
-    assert report['bag_diagnostics']['topics']['pointcloud']['metadata_rate_hz'] == 10.0
-    assert report['bag_diagnostics']['topics']['imu']['metadata_rate_hz'] == 100.0
+    assert math.isclose(
+        report['bag_diagnostics']['topics']['pointcloud']['metadata_rate_hz'],
+        10.0,
+        rel_tol=0.02,
+    )
+    assert math.isclose(
+        report['bag_diagnostics']['topics']['imu']['metadata_rate_hz'],
+        100.0,
+        rel_tol=0.02,
+    )
     assert any(check['id'] == 'pointcloud_metadata_rate' for check in report['checks'])
     assert (output_dir / 'mid360_robot_readiness.md').is_file()
     assert (output_dir / 'mid360_robot_run_plan.json').is_file()

@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/product-draft-review-routing-v1.schema.json",
+  "repository": "rsasaki0109/lidar_slam_ros2",
+  "pull_request": 427,
+  "scope": "role-based-product-draft-review-routing",
+  "policy": {
+    "advisory_reviewer_target": 2,
+    "advisory_target_is_merge_gate": false,
+    "max_parallel_active_lanes": 2,
+    "lane_completion_order_required": true,
+    "final_decision_role": "lead-maintainer"
+  },
+  "lanes": [
+    {
+      "id": "R1-runtime-safety",
+      "order": 1,
+      "title": "Runtime safety",
+      "capability": "ROS 2 C++, PCL, and asynchronous failure containment",
+      "slice_ids": [
+        "S1-runtime-safety",
+        "S2-first-map-foundation"
+      ],
+      "depends_on_lanes": [],
+      "expected_path_count": 50,
+      "expected_verification_count": 5
+    },
+    {
+      "id": "R2-operator-ux",
+      "order": 2,
+      "title": "First-map and operator UX",
+      "capability": "rosbag2, CLI, documentation, and onboarding",
+      "slice_ids": [
+        "S3-map-lifecycle",
+        "S4-source-onboarding"
+      ],
+      "depends_on_lanes": [
+        "R1-runtime-safety"
+      ],
+      "expected_path_count": 63,
+      "expected_verification_count": 4
+    },
+    {
+      "id": "R3-distribution",
+      "order": 3,
+      "title": "Distribution and dependency readiness",
+      "capability": "ROS distribution, dependency ownership, and release evidence",
+      "slice_ids": [
+        "S5-distribution-readiness"
+      ],
+      "depends_on_lanes": [
+        "R1-runtime-safety",
+        "R2-operator-ux"
+      ],
+      "expected_path_count": 74,
+      "expected_verification_count": 9
+    },
+    {
+      "id": "R4-integration-publication",
+      "order": 4,
+      "title": "Product integration and publication control",
+      "capability": "CI, product integration, and publication authority boundaries",
+      "slice_ids": [
+        "S6-product-shell-integration",
+        "S7-publication-control"
+      ],
+      "depends_on_lanes": [
+        "R1-runtime-safety",
+        "R2-operator-ux",
+        "R3-distribution"
+      ],
+      "expected_path_count": 162,
+      "expected_verification_count": 16
+    }
+  ],
+  "authority": {
+    "github_reviewer_requests_authorized": false,
+    "github_reviews_authorized": false,
+    "mark_ready_authorized": false,
+    "merge_authorized": false,
+    "remote_mutations_performed": false
+  }
+}

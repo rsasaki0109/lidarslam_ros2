@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/release-image-v1.schema.json",
+  "title": "lidarslam_ros2 release image evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "ros_distro",
+    "platform",
+    "tag",
+    "digest",
+    "git_commit",
+    "product_version",
+    "cli_version"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "status": {"const": "PASS"},
+    "ros_distro": {"enum": ["humble", "jazzy"]},
+    "platform": {"const": "linux/amd64"},
+    "tag": {
+      "type": "string",
+      "pattern": "^ghcr\\.io/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+:v[0-9]+\\.[0-9]+\\.[0-9]+-(humble|jazzy)$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "git_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "product_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "cli_version": {
+      "type": "string",
+      "pattern": "^lidarslam_ros2 [0-9]+\\.[0-9]+\\.[0-9]+$"
+    }
+  }
+}

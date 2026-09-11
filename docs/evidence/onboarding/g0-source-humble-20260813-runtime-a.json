@@ -1,0 +1,53 @@
+{
+  "captured_at": "2026-08-13T00:24:36.970820Z",
+  "documentation_path": "source-quickstart",
+  "environment": {
+    "architecture": "x86_64",
+    "clean_start": true,
+    "os_family": "ubuntu-22.04",
+    "product_version": "0.9.1",
+    "revision": {
+      "kind": "git-commit",
+      "value": "549ef03017c776f23fc968881b346aa685356274"
+    },
+    "ros_distro": "humble"
+  },
+  "evidence": {
+    "manifest_sha256": "e2222bdd747461dba6651d2a8834e90ff89c93567532e1e0f0d7ecda3f5392e0",
+    "receipt_sha256": "83569f844d2eea6d16a63957f6b199983c63f349e8c5a82a76135a08b3137279"
+  },
+  "input": {
+    "dataset_class": "fixed-public",
+    "dataset_id": "mid360-public-zenodo-14841855",
+    "download_bytes": 517088133
+  },
+  "measurements": {
+    "active_operator_time_sec": null,
+    "command_count": null,
+    "output_bytes": 132128768,
+    "peak_disk_bytes": 3652968448,
+    "wall_time_sec": 1372.015,
+    "workflow_download_bytes": 728086424
+  },
+  "operator_class": "maintainer",
+  "outcome": {
+    "diagnosis_status": "success",
+    "failure_stage": "none",
+    "finding_codes": [],
+    "manifest_status": "succeeded",
+    "receipt_status": "PASS",
+    "runner_exit_code": 0,
+    "status": "PASS",
+    "undocumented_manual_steps": 0,
+    "verifier_status": "PASS"
+  },
+  "privacy": {
+    "contains_exact_command": false,
+    "contains_operator_identity": false,
+    "contains_private_paths": false,
+    "review_before_sharing": true
+  },
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-trial-v1.schema.json",
+  "schema_version": 1,
+  "trial_id": "g0-source-humble-20260813-runtime-a"
+}

@@ -1,0 +1,75 @@
+{
+  "canonical_docs": {
+    "source_path": "docs/getting-started.md",
+    "url": "https://github.com/rsasaki0109/lidar_slam_ros2/blob/d0c84bb9bb7bef37d7e318000e3071a7f536d631/docs/getting-started.md"
+  },
+  "captions": {
+    "cue_count": 4,
+    "format": "text/vtt",
+    "language": "en",
+    "path": "social_autoware_map_authoring_demo.en.vtt",
+    "sha256": "18b14ad549fe6f7e0d3c28f81ee7643c318316c0a2eda2bd30a663a0c65d02b7",
+    "size_bytes": 562
+  },
+  "claims": {
+    "numerical_performance_claims": false,
+    "package_availability_claim": false,
+    "release_claim": false,
+    "sensor_compatibility_claim": false
+  },
+  "commands": {
+    "fixed_demo": "lidarslam-map demo",
+    "own_bag": "lidarslam-map start /path/to/rosbag2"
+  },
+  "content_contract": {
+    "path": "docs/contracts/social-demo-media-v1.json",
+    "sha256": "f9674c39c174954dc2ec9dc27df121dc02eb12eed1f1819bab1af68b78ef4cdc",
+    "size_bytes": 3245
+  },
+  "post_copy": {
+    "languages": [
+      "ja",
+      "en"
+    ],
+    "path": "autoware_map_authoring_post_v0.9.1.md",
+    "sha256": "e44aa1b38aabac8812a00ba0f284e0a87e08c0adb612433b37e6ff4e8f3eaa29",
+    "size_bytes": 1953
+  },
+  "product_version": "0.9.1",
+  "publication_boundary": {
+    "external_publication_authorized": false,
+    "writes_performed": false
+  },
+  "repository": "rsasaki0109/lidar_slam_ros2",
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/social-demo-media-manifest-v1.schema.json",
+  "schema_version": 1,
+  "source_images": [
+    {
+      "path": "lidarslam/images/map.png",
+      "sha256": "152965b33b627730024ec728f1326e154887386c94b247c86d2b7d25699a6b3a",
+      "size_bytes": 80036
+    },
+    {
+      "path": "lidarslam/images/path.png",
+      "sha256": "738433942a6e7b8c2c6d450548266b1178f30d33319454b57a86fbc987657010",
+      "size_bytes": 40036
+    },
+    {
+      "path": "lidarslam/images/autoware_map_loader_proof.png",
+      "sha256": "a716229498a86bf4b6c23a9c27f5143620373574bdd14c7044e0928a55bd79d9",
+      "size_bytes": 303246
+    }
+  ],
+  "source_revision": "d0c84bb9bb7bef37d7e318000e3071a7f536d631",
+  "status": "PUBLICATION_CANDIDATE",
+  "video": {
+    "codec": "h264",
+    "duration_seconds": 10.666667,
+    "fps": 24,
+    "height": 720,
+    "path": "social_autoware_map_authoring_demo.mp4",
+    "sha256": "57bb4d1ead298529ddd4323319c16180d390833e1fa8a6bfe592eab4db82e194",
+    "size_bytes": 447994,
+    "width": 1280
+  }
+}

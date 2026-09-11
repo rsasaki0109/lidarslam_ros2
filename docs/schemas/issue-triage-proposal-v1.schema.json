@@ -1,0 +1,363 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/issue-triage-proposal-v1.schema.json",
+  "title": "lidarslam_ros2 open-issue triage proposal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "captured_at",
+    "source",
+    "label_catalog",
+    "authority",
+    "summary",
+    "privacy",
+    "issues"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/issue-triage-proposal-v1.schema.json"
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "captured_at": {"type": "string", "format": "date-time"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "scope", "issue_count"],
+      "properties": {
+        "method": {"const": "github-rest-read-only"},
+        "scope": {"const": "open-issues"},
+        "issue_count": {"type": "integer", "minimum": 1, "maximum": 500}
+      }
+    },
+    "label_catalog": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 80}
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_writes_authorized",
+        "proposal_applied",
+        "authorization_reference",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "github_writes_authorized": {"type": "boolean"},
+        "proposal_applied": {"type": "boolean"},
+        "authorization_reference": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "remote_mutations_performed": {"const": false}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issue_count",
+        "current_unlabeled",
+        "current_good_first_issue",
+        "themes",
+        "priorities",
+        "decisions"
+      ],
+      "properties": {
+        "issue_count": {"$ref": "#/definitions/nonNegativeInteger"},
+        "current_unlabeled": {"$ref": "#/definitions/nonNegativeInteger"},
+        "current_good_first_issue": {"$ref": "#/definitions/nonNegativeInteger"},
+        "themes": {"$ref": "#/definitions/themeCounts"},
+        "priorities": {"$ref": "#/definitions/priorityCounts"},
+        "decisions": {"$ref": "#/definitions/decisionCounts"}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "author_identities_written",
+        "comment_bodies_written",
+        "issue_bodies_written"
+      ],
+      "properties": {
+        "author_identities_written": {"const": false},
+        "comment_bodies_written": {"const": false},
+        "issue_bodies_written": {"const": false}
+      }
+    },
+    "issues": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {"$ref": "#/definitions/issueProposal"}
+    }
+  },
+  "definitions": {
+    "nonNegativeInteger": {"type": "integer", "minimum": 0},
+    "theme": {
+      "enum": [
+        "advanced-scope",
+        "install-dependency",
+        "quality-reliability",
+        "sensor-platform",
+        "tf-input-output",
+        "validation-community"
+      ]
+    },
+    "priority": {"enum": ["P1", "P2", "P3"]},
+    "decision": {
+      "enum": [
+        "close-answered",
+        "close-not-planned",
+        "close-resolved",
+        "close-superseded",
+        "keep-open",
+        "request-current-reproduction"
+      ]
+    },
+    "linkedClaim": {
+      "oneOf": [
+        {"$ref": "#/definitions/productDraftClaim"},
+        {"$ref": "#/definitions/stableReleaseAbsenceClaim"}
+      ]
+    },
+    "productDraftClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "repository",
+        "pull_request",
+        "expected_head_sha",
+        "expected_status",
+        "expected_state",
+        "expected_is_draft",
+        "expected_mergeable",
+        "expected_passing_check_count",
+        "expected_skipped_check_count",
+        "expected_pending_check_count",
+        "expected_failing_check_count",
+        "expected_required_checks_complete"
+      ],
+      "properties": {
+        "id": {"const": "issue-69-public-draft"},
+        "kind": {"const": "product-draft"},
+        "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+        "pull_request": {"const": 427},
+        "expected_head_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "expected_status": {"const": "DRAFT_REVIEW_REQUIRED"},
+        "expected_state": {"const": "OPEN"},
+        "expected_is_draft": {"const": true},
+        "expected_mergeable": {"const": true},
+        "expected_passing_check_count": {"const": 10},
+        "expected_skipped_check_count": {"const": 4},
+        "expected_pending_check_count": {"const": 0},
+        "expected_failing_check_count": {"const": 0},
+        "expected_required_checks_complete": {"const": true}
+      }
+    },
+    "stableReleaseAbsenceClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "repository",
+        "fix_commit_sha",
+        "expected_latest_stable_tag",
+        "expected_latest_stable_commit",
+        "expected_latest_stable_relation",
+        "expected_latest_stable_behind_by",
+        "expected_candidate_tag",
+        "expected_candidate_tag_present",
+        "expected_candidate_release_present"
+      ],
+      "properties": {
+        "id": {"const": "issue-69-stable-release-absence"},
+        "kind": {"const": "stable-release-absence"},
+        "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+        "fix_commit_sha": {
+          "const": "a2368c486fc35c0edcac6d9dbf2f9cb89475c820"
+        },
+        "expected_latest_stable_tag": {"const": "v0.9.0"},
+        "expected_latest_stable_commit": {
+          "const": "0df0c4a86df9f68a894c83f8342e4107c3d23b0f"
+        },
+        "expected_latest_stable_relation": {"const": "behind"},
+        "expected_latest_stable_behind_by": {"const": 52},
+        "expected_candidate_tag": {"const": "v0.9.1"},
+        "expected_candidate_tag_present": {"const": false},
+        "expected_candidate_release_present": {"const": false}
+      }
+    },
+    "themeCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "advanced-scope",
+        "install-dependency",
+        "quality-reliability",
+        "sensor-platform",
+        "tf-input-output",
+        "validation-community"
+      ],
+      "properties": {
+        "advanced-scope": {"$ref": "#/definitions/nonNegativeInteger"},
+        "install-dependency": {"$ref": "#/definitions/nonNegativeInteger"},
+        "quality-reliability": {"$ref": "#/definitions/nonNegativeInteger"},
+        "sensor-platform": {"$ref": "#/definitions/nonNegativeInteger"},
+        "tf-input-output": {"$ref": "#/definitions/nonNegativeInteger"},
+        "validation-community": {"$ref": "#/definitions/nonNegativeInteger"}
+      }
+    },
+    "priorityCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["P1", "P2", "P3"],
+      "properties": {
+        "P1": {"$ref": "#/definitions/nonNegativeInteger"},
+        "P2": {"$ref": "#/definitions/nonNegativeInteger"},
+        "P3": {"$ref": "#/definitions/nonNegativeInteger"}
+      }
+    },
+    "decisionCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "close-answered",
+        "close-not-planned",
+        "close-resolved",
+        "close-superseded",
+        "keep-open",
+        "request-current-reproduction"
+      ],
+      "properties": {
+        "close-answered": {"$ref": "#/definitions/nonNegativeInteger"},
+        "close-not-planned": {"$ref": "#/definitions/nonNegativeInteger"},
+        "close-resolved": {"$ref": "#/definitions/nonNegativeInteger"},
+        "close-superseded": {"$ref": "#/definitions/nonNegativeInteger"},
+        "keep-open": {"$ref": "#/definitions/nonNegativeInteger"},
+        "request-current-reproduction": {"$ref": "#/definitions/nonNegativeInteger"}
+      }
+    },
+    "issueProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {"issue_number": {"const": 69}},
+            "required": ["issue_number"]
+          },
+          "then": {
+            "required": ["linked_claims"],
+            "properties": {
+              "linked_claims": {"minItems": 2, "maxItems": 2}
+            }
+          },
+          "else": {
+            "properties": {
+              "linked_claims": {"maxItems": 0}
+            }
+          }
+        }
+      ],
+      "required": [
+        "issue_number",
+        "title",
+        "url",
+        "observed",
+        "theme",
+        "priority",
+        "proposed_labels",
+        "decision",
+        "state_reason",
+        "apply_after",
+        "recheck_before_apply",
+        "rationale",
+        "response_summary",
+        "evidence"
+      ],
+      "properties": {
+        "issue_number": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1, "maxLength": 300},
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[1-9][0-9]*$"
+        },
+        "observed": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "updated_at", "labels"],
+          "properties": {
+            "state": {"const": "open"},
+            "updated_at": {"type": "string", "format": "date-time"},
+            "labels": {
+              "type": "array",
+              "maxItems": 20,
+              "uniqueItems": true,
+              "items": {"type": "string", "minLength": 1, "maxLength": 80}
+            }
+          }
+        },
+        "theme": {"$ref": "#/definitions/theme"},
+        "priority": {"$ref": "#/definitions/priority"},
+        "proposed_labels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "decision": {"$ref": "#/definitions/decision"},
+        "state_reason": {"enum": ["completed", "not_planned", null]},
+        "apply_after": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "starter-C1",
+              "starter-C2",
+              "starter-C3",
+              "starter-C4",
+              "starter-C5"
+            ]
+          }
+        },
+        "recheck_before_apply": {"const": true},
+        "linked_claims": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/linkedClaim"}
+        },
+        "rationale": {"type": "string", "minLength": 1, "maxLength": 600},
+        "response_summary": {"type": "string", "minLength": 1, "maxLength": 600},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 300}
+        }
+      }
+    }
+  }
+}

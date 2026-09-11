@@ -1,0 +1,499 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/issue-triage-application-packet-v1.schema.json",
+  "title": "lidar_slam_ros2 issue-triage application packet v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "repository",
+    "source",
+    "selection",
+    "live_check",
+    "linked_check",
+    "summary",
+    "actions",
+    "authority",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/issue-triage-application-packet-v1.schema.json"
+    },
+    "status": {"const": "PREPARED_NOT_AUTHORIZED"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposal_path",
+        "proposal_canonical_sha256",
+        "proposal_captured_at",
+        "generator_path",
+        "generator_sha256"
+      ],
+      "properties": {
+        "proposal_path": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$"
+        },
+        "proposal_canonical_sha256": {"$ref": "#/definitions/sha256"},
+        "proposal_captured_at": {"type": "string", "format": "date-time"},
+        "generator_path": {
+          "const": "scripts/prepare_issue_triage_application.py"
+        },
+        "generator_sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_issue_number",
+        "proposal_issue_count",
+        "selected_action_count"
+      ],
+      "properties": {
+        "requested_issue_number": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "proposal_issue_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        },
+        "selected_action_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        }
+      }
+    },
+    "live_check": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["performed", "status"],
+          "properties": {
+            "performed": {"const": false},
+            "status": {"const": "NOT_RUN"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["performed", "status"],
+          "properties": {
+            "performed": {"const": true},
+            "status": {"const": "PASS"}
+          }
+        }
+      ]
+    },
+    "linked_check": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["performed", "status", "claim_count", "results"],
+          "properties": {
+            "performed": {"const": false},
+            "status": {"const": "NOT_REQUIRED"},
+            "claim_count": {"const": 0},
+            "results": {"type": "array", "maxItems": 0}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["performed", "status", "claim_count", "results"],
+          "properties": {
+            "performed": {"const": false},
+            "status": {"const": "NOT_RUN"},
+            "claim_count": {"type": "integer", "minimum": 1, "maximum": 20},
+            "results": {"type": "array", "maxItems": 0}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["performed", "status", "claim_count", "results"],
+          "properties": {
+            "performed": {"const": true},
+            "status": {"const": "PASS"},
+            "claim_count": {"type": "integer", "minimum": 1, "maximum": 20},
+            "results": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 20,
+              "items": {"$ref": "#/definitions/linkedCheckResult"}
+            }
+          }
+        }
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "close_action_count",
+        "reproduction_request_count",
+        "dependency_review_count",
+        "monitor_only_count"
+      ],
+      "properties": {
+        "close_action_count": {"$ref": "#/definitions/count"},
+        "reproduction_request_count": {"$ref": "#/definitions/count"},
+        "dependency_review_count": {"$ref": "#/definitions/count"},
+        "monitor_only_count": {"$ref": "#/definitions/count"}
+      }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {"$ref": "#/definitions/action"}
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_requests",
+        "github_writes_authorized",
+        "issue_comments_authorized",
+        "issue_label_changes_authorized",
+        "issue_state_changes_authorized",
+        "local_files_written",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "github_requests": {"enum": ["NONE", "GET_ONLY"]},
+        "github_writes_authorized": {"const": false},
+        "issue_comments_authorized": {"const": false},
+        "issue_label_changes_authorized": {"const": false},
+        "issue_state_changes_authorized": {"const": false},
+        "local_files_written": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "author_identities_retained",
+        "comment_bodies_requested",
+        "issue_bodies_retained",
+        "raw_github_records_written"
+      ],
+      "properties": {
+        "author_identities_retained": {"const": false},
+        "comment_bodies_requested": {"const": false},
+        "issue_bodies_retained": {"const": false},
+        "raw_github_records_written": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "count": {"type": "integer", "minimum": 0, "maximum": 500},
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "dependencyId": {
+      "enum": [
+        "starter-C1",
+        "starter-C2",
+        "starter-C3",
+        "starter-C4",
+        "starter-C5"
+      ]
+    },
+    "theme": {
+      "enum": [
+        "advanced-scope",
+        "install-dependency",
+        "quality-reliability",
+        "sensor-platform",
+        "tf-input-output",
+        "validation-community"
+      ]
+    },
+    "priority": {"enum": ["P1", "P2", "P3"]},
+    "decision": {
+      "enum": [
+        "close-answered",
+        "close-not-planned",
+        "close-resolved",
+        "close-superseded",
+        "keep-open",
+        "request-current-reproduction"
+      ]
+    },
+    "observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["updated_at", "labels"],
+      "properties": {
+        "updated_at": {"type": "string", "format": "date-time"},
+        "labels": {
+          "type": "array",
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/label"}
+        }
+      }
+    },
+    "prerequisites": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_recheck_required",
+        "linked_claim_ids",
+        "dependency_ids",
+        "maintainer_content_review_required",
+        "explicit_write_authorization_required"
+      ],
+      "properties": {
+        "live_recheck_required": {"const": true},
+        "linked_claim_ids": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "issue-69-public-draft",
+              "issue-69-stable-release-absence"
+            ]
+          }
+        },
+        "dependency_ids": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/dependencyId"}
+        },
+        "maintainer_content_review_required": {"const": true},
+        "explicit_write_authorization_required": {"const": true}
+      }
+    },
+    "proposedChanges": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "labels_to_add",
+        "comment_required",
+        "close_issue",
+        "state_reason"
+      ],
+      "properties": {
+        "labels_to_add": {
+          "type": "array",
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/label"}
+        },
+        "comment_required": {"type": "boolean"},
+        "close_issue": {"type": "boolean"},
+        "state_reason": {"enum": ["completed", "not_planned", null]}
+      }
+    },
+    "repositoryEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256"],
+      "properties": {
+        "kind": {"const": "repository_file"},
+        "path": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$"
+        },
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "externalEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "url"],
+      "properties": {
+        "kind": {"const": "external_url"},
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/?$"
+        }
+      }
+    },
+    "linkedCheckResult": {
+      "oneOf": [
+        {"$ref": "#/definitions/productDraftCheckResult"},
+        {"$ref": "#/definitions/stableReleaseAbsenceCheckResult"}
+      ]
+    },
+    "linkedCheckAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_reads_performed",
+        "github_writes_authorized",
+        "merge_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "network_reads_performed": {"const": true},
+        "github_writes_authorized": {"const": false},
+        "merge_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    },
+    "productDraftCheckResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "issue_number",
+        "kind",
+        "status",
+        "remote_head",
+        "state",
+        "is_draft",
+        "mergeable",
+        "passing_check_count",
+        "skipped_check_count",
+        "pending_check_count",
+        "failing_check_count",
+        "required_checks_complete",
+        "authority"
+      ],
+      "properties": {
+        "id": {"const": "issue-69-public-draft"},
+        "issue_number": {"const": 69},
+        "kind": {"const": "product-draft"},
+        "status": {"const": "PASS"},
+        "remote_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "state": {"const": "OPEN"},
+        "is_draft": {"const": true},
+        "mergeable": {"const": true},
+        "passing_check_count": {"const": 10},
+        "skipped_check_count": {"const": 4},
+        "pending_check_count": {"const": 0},
+        "failing_check_count": {"const": 0},
+        "required_checks_complete": {"const": true},
+        "authority": {"$ref": "#/definitions/linkedCheckAuthority"}
+      }
+    },
+    "stableReleaseAbsenceCheckResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "issue_number",
+        "kind",
+        "status",
+        "fix_commit",
+        "latest_stable_tag",
+        "latest_stable_commit",
+        "latest_stable_relation",
+        "latest_stable_behind_by",
+        "candidate_tag",
+        "candidate_tag_present",
+        "candidate_release_present",
+        "authority"
+      ],
+      "properties": {
+        "id": {"const": "issue-69-stable-release-absence"},
+        "issue_number": {"const": 69},
+        "kind": {"const": "stable-release-absence"},
+        "status": {"const": "PASS"},
+        "fix_commit": {
+          "const": "a2368c486fc35c0edcac6d9dbf2f9cb89475c820"
+        },
+        "latest_stable_tag": {"const": "v0.9.0"},
+        "latest_stable_commit": {
+          "const": "0df0c4a86df9f68a894c83f8342e4107c3d23b0f"
+        },
+        "latest_stable_relation": {"const": "behind"},
+        "latest_stable_behind_by": {"const": 52},
+        "candidate_tag": {"const": "v0.9.1"},
+        "candidate_tag_present": {"const": false},
+        "candidate_release_present": {"const": false},
+        "authority": {"$ref": "#/definitions/linkedCheckAuthority"}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order",
+        "issue_number",
+        "title",
+        "url",
+        "observed",
+        "theme",
+        "priority",
+        "decision",
+        "content_status",
+        "prerequisites",
+        "proposed_changes",
+        "rationale",
+        "response_summary",
+        "public_response_draft",
+        "evidence",
+        "recheck_before_apply"
+      ],
+      "properties": {
+        "order": {"type": "integer", "minimum": 1, "maximum": 500},
+        "issue_number": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1, "maxLength": 300},
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/issues/[1-9][0-9]*$"
+        },
+        "observed": {"$ref": "#/definitions/observed"},
+        "theme": {"$ref": "#/definitions/theme"},
+        "priority": {"$ref": "#/definitions/priority"},
+        "decision": {"$ref": "#/definitions/decision"},
+        "content_status": {
+          "enum": [
+            "READY_FOR_MAINTAINER_REVIEW",
+            "DEPENDENCY_REVIEW_REQUIRED",
+            "MONITOR_ONLY"
+          ]
+        },
+        "prerequisites": {"$ref": "#/definitions/prerequisites"},
+        "proposed_changes": {"$ref": "#/definitions/proposedChanges"},
+        "rationale": {"type": "string", "minLength": 1, "maxLength": 600},
+        "response_summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "public_response_draft": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "oneOf": [
+              {"$ref": "#/definitions/repositoryEvidence"},
+              {"$ref": "#/definitions/externalEvidence"}
+            ]
+          }
+        },
+        "recheck_before_apply": {"const": true}
+      }
+    }
+  }
+}

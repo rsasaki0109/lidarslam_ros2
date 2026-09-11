@@ -54,6 +54,8 @@ def _result(system, track='glim_cpu_lidar_imu'):
         'input_manifest_sha256': 'a' * 64, 'reference_sha256': 'b' * 64,
         'calibration_sha256': 'c' * 64, 'machine_id': 'machine',
         'rival_source_closure': closure_identity,
+        'calibration_sha256': 'c' * 64,
+        'evaluation_reference_sha256': 'd' * 64, 'machine_id': 'machine',
         'excluded_capabilities': CONTRACT['excluded_capabilities'],
         'repetitions': {'valid': 3, 'failures': 0},
         'trajectory': {'ape_rmse_median_m': 0.09 if system == 'ours' else 0.1},

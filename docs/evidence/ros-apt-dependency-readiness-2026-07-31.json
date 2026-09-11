@@ -1,0 +1,132 @@
+{
+  "actions": [
+    "Wait for required testing-channel packages: humble-testing-ndt-omp-ros2, jazzy-testing-ndt-omp-ros2"
+  ],
+  "channels": {
+    "main": {
+      "ready": false
+    },
+    "testing": {
+      "ready": false
+    }
+  },
+  "checks": [
+    {
+      "detail": "minimum=0.1.0; observed=['not-published']",
+      "id": "humble-main-ndt-omp-ros2",
+      "status": "FAIL"
+    },
+    {
+      "detail": "minimum=0.3.2; observed=['0.3.0-1jammy', '0.3.0-1jammy.20260617.082534']",
+      "id": "humble-main-rko-lio",
+      "status": "FAIL"
+    },
+    {
+      "detail": "minimum=0.1.0; observed=['not-published']",
+      "id": "humble-testing-ndt-omp-ros2",
+      "status": "FAIL"
+    },
+    {
+      "detail": "minimum=0.3.2; observed=['0.3.2-1jammy', '0.3.2-1jammy.20260728.162644']",
+      "id": "humble-testing-rko-lio",
+      "status": "PASS"
+    },
+    {
+      "detail": "minimum=0.1.0; observed=['not-published']",
+      "id": "jazzy-main-ndt-omp-ros2",
+      "status": "FAIL"
+    },
+    {
+      "detail": "minimum=0.3.2; observed=['0.2.0-1noble', '0.2.0-1noble.20260615.164707']",
+      "id": "jazzy-main-rko-lio",
+      "status": "FAIL"
+    },
+    {
+      "detail": "minimum=0.1.0; observed=['not-published']",
+      "id": "jazzy-testing-ndt-omp-ros2",
+      "status": "FAIL"
+    },
+    {
+      "detail": "minimum=0.3.2; observed=['0.3.2-1noble', '0.3.2-1noble.20260728.162143']",
+      "id": "jazzy-testing-rko-lio",
+      "status": "PASS"
+    }
+  ],
+  "dependency_minimums": {
+    "ndt-omp-ros2": "0.1.0",
+    "rko-lio": "0.3.2"
+  },
+  "distros": {
+    "humble": {
+      "main": {
+        "ndt-omp-ros2": {
+          "debian_versions": [],
+          "minimum_version": "0.1.0",
+          "ready": false
+        },
+        "rko-lio": {
+          "debian_versions": [
+            "0.3.0-1jammy",
+            "0.3.0-1jammy.20260617.082534"
+          ],
+          "minimum_version": "0.3.2",
+          "ready": false
+        }
+      },
+      "testing": {
+        "ndt-omp-ros2": {
+          "debian_versions": [],
+          "minimum_version": "0.1.0",
+          "ready": false
+        },
+        "rko-lio": {
+          "debian_versions": [
+            "0.3.2-1jammy",
+            "0.3.2-1jammy.20260728.162644"
+          ],
+          "minimum_version": "0.3.2",
+          "ready": true
+        }
+      }
+    },
+    "jazzy": {
+      "main": {
+        "ndt-omp-ros2": {
+          "debian_versions": [],
+          "minimum_version": "0.1.0",
+          "ready": false
+        },
+        "rko-lio": {
+          "debian_versions": [
+            "0.2.0-1noble",
+            "0.2.0-1noble.20260615.164707"
+          ],
+          "minimum_version": "0.3.2",
+          "ready": false
+        }
+      },
+      "testing": {
+        "ndt-omp-ros2": {
+          "debian_versions": [],
+          "minimum_version": "0.1.0",
+          "ready": false
+        },
+        "rko-lio": {
+          "debian_versions": [
+            "0.3.2-1noble",
+            "0.3.2-1noble.20260728.162143"
+          ],
+          "minimum_version": "0.3.2",
+          "ready": true
+        }
+      }
+    }
+  },
+  "remote": {
+    "errors": [],
+    "inspected": true
+  },
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/ros-apt-dependency-readiness-v1.schema.json",
+  "schema_version": 1,
+  "status": "IN_PROGRESS"
+}

@@ -1,0 +1,219 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-trial-session-v1.schema.json",
+  "title": "Candidate trial session v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "started_at",
+    "completed_at",
+    "repository",
+    "workflow_run_url",
+    "row",
+    "handoff",
+    "execution",
+    "outputs",
+    "sharing",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {"const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-trial-session-v1.schema.json"},
+    "status": {"enum": ["PREFLIGHT_BLOCKED", "TRIAL_RECORDED", "HARNESS_ERROR"]},
+    "started_at": {"$ref": "#/definitions/timestamp"},
+    "completed_at": {"$ref": "#/definitions/timestamp"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "workflow_run_url": {"$ref": "#/definitions/workflowRunUrl"},
+    "row": {"$ref": "#/definitions/row"},
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory",
+        "preparation_json",
+        "preparation_sha256",
+        "status",
+        "run_id",
+        "source_pr",
+        "source_commit",
+        "product_version",
+        "candidate_bundle_sha256",
+        "candidate_set_sha256",
+        "artifact_expires_at"
+      ],
+      "properties": {
+        "directory": {"const": "handoff"},
+        "preparation_json": {"const": "handoff/preparation.json"},
+        "preparation_sha256": {"$ref": "#/definitions/sha256"},
+        "status": {"const": "READY_FOR_OBSERVER"},
+        "run_id": {"type": "integer", "minimum": 1},
+        "source_pr": {"type": "integer", "minimum": 1},
+        "source_commit": {"$ref": "#/definitions/commit"},
+        "product_version": {"$ref": "#/definitions/version"},
+        "candidate_bundle_sha256": {"$ref": "#/definitions/sha256"},
+        "candidate_set_sha256": {"$ref": "#/definitions/sha256"},
+        "artifact_expires_at": {"$ref": "#/definitions/timestamp"}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory",
+        "execution_json",
+        "execution_sha256",
+        "status",
+        "trial_id",
+        "outcome_status",
+        "measurement_status",
+        "comparable"
+      ],
+      "properties": {
+        "directory": {"const": "execution"},
+        "execution_json": {"const": "execution/execution.json"},
+        "execution_sha256": {"$ref": "#/definitions/sha256"},
+        "status": {"enum": ["PREFLIGHT_BLOCKED", "TRIAL_RECORDED", "HARNESS_ERROR"]},
+        "trial_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"},
+        "outcome_status": {"type": ["string", "null"], "enum": ["PASS", "FAIL", null]},
+        "measurement_status": {"type": ["string", "null"], "enum": ["COMPLETE", "INCOMPLETE", null]},
+        "comparable": {"type": ["boolean", "null"]}
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["handoff_directory", "execution_directory", "session_json"],
+      "properties": {
+        "handoff_directory": {"const": "handoff"},
+        "execution_directory": {"const": "execution"},
+        "session_json": {"const": "session.json"}
+      }
+    },
+    "sharing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bounded_outputs",
+        "private_evidence_directory",
+        "private_evidence_shareable",
+        "review_before_sharing"
+      ],
+      "properties": {
+        "bounded_outputs": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^(session\\.json|handoff/[A-Za-z0-9._/-]+|execution/[A-Za-z0-9._/-]+)$"}
+        },
+        "private_evidence_directory": {"type": ["string", "null"], "enum": ["execution/private", null]},
+        "private_evidence_shareable": {"const": false},
+        "review_before_sharing": {"const": true}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_reads_performed",
+        "local_files_written",
+        "atomic_output_publication",
+        "candidate_handoff_prepared",
+        "trial_executed",
+        "docker_observer_bootstrap_requested",
+        "github_writes_authorized",
+        "registry_writes_authorized",
+        "release_writes_authorized",
+        "community_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "network_reads_performed": {"const": true},
+        "local_files_written": {"const": true},
+        "atomic_output_publication": {"const": true},
+        "candidate_handoff_prepared": {"const": true},
+        "trial_executed": {"type": "boolean"},
+        "docker_observer_bootstrap_requested": {"type": "boolean"},
+        "github_writes_authorized": {"const": false},
+        "registry_writes_authorized": {"const": false},
+        "release_writes_authorized": {"const": false},
+        "community_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "PREFLIGHT_BLOCKED"}}},
+      "then": {
+        "properties": {
+          "execution": {
+            "properties": {
+              "status": {"const": "PREFLIGHT_BLOCKED"},
+              "outcome_status": {"const": null},
+              "measurement_status": {"const": null},
+              "comparable": {"const": null}
+            }
+          },
+          "authority": {"properties": {"trial_executed": {"const": false}}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "TRIAL_RECORDED"}}},
+      "then": {
+        "properties": {
+          "execution": {
+            "properties": {
+              "status": {"const": "TRIAL_RECORDED"},
+              "outcome_status": {"enum": ["PASS", "FAIL"]},
+              "measurement_status": {"enum": ["COMPLETE", "INCOMPLETE"]},
+              "comparable": {"type": "boolean"}
+            }
+          },
+          "authority": {"properties": {"trial_executed": {"const": true}}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "HARNESS_ERROR"}}},
+      "then": {"properties": {"execution": {"properties": {"status": {"const": "HARNESS_ERROR"}}}}}
+    },
+    {
+      "if": {"properties": {"row": {"properties": {"route": {"const": "docker"}}}}},
+      "then": {"properties": {"authority": {"properties": {"docker_observer_bootstrap_requested": {"const": true}}}}},
+      "else": {"properties": {"authority": {"properties": {"docker_observer_bootstrap_requested": {"const": false}}}}}
+    }
+  ],
+  "definitions": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "workflowRunUrl": {"type": "string", "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/actions/runs/[1-9][0-9]*$"},
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["row_id", "route", "ros_distro", "os_family", "product_version", "identity"],
+      "properties": {
+        "row_id": {"enum": ["docker-humble", "docker-jazzy", "source-humble", "source-jazzy"]},
+        "route": {"enum": ["docker", "source"]},
+        "ros_distro": {"enum": ["humble", "jazzy"]},
+        "os_family": {"enum": ["ubuntu-22.04", "ubuntu-24.04"]},
+        "product_version": {"$ref": "#/definitions/version"},
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value", "immutable_ref"],
+          "properties": {
+            "kind": {"enum": ["image-digest", "git-commit"]},
+            "value": {"type": "string"},
+            "immutable_ref": {"type": "string"}
+          }
+        }
+      }
+    }
+  }
+}

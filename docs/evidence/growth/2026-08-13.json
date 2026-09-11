@@ -1,0 +1,95 @@
+{
+  "annotations": [
+    "G0 Draft PR CI green; v0.9.1 publication and independent first-map gates remain open"
+  ],
+  "captured_at": "2026-08-13T02:42:50Z",
+  "github": {
+    "community": {
+      "external_merged_contributors_180d": 0,
+      "external_prs_90d": 1,
+      "issue_first_response_90d": {
+        "eligible": 0,
+        "median_hours": null,
+        "responded": 0,
+        "scope": "external_non_bot_issues",
+        "unanswered": 0
+      },
+      "open_issues": 29,
+      "untriaged_open_issues": 16
+    },
+    "forks": 172,
+    "latest_release": {
+      "primary_bundle": {
+        "downloads": 13,
+        "name": "lidarslam_ros2_v0.9.0_release_bundle.tar.gz"
+      },
+      "published_at": "2026-07-31T12:37:23Z",
+      "tag": "v0.9.0",
+      "total_asset_downloads": 74
+    },
+    "stars": 837,
+    "subscribers": 12,
+    "traffic_14d": {
+      "clones": {
+        "total": 1563,
+        "unique": 321
+      },
+      "referrals": {
+        "autoware_tier4_unique_sum": 6,
+        "top_referrer_unique_sum": 195
+      },
+      "views": {
+        "total": 882,
+        "unique": 281
+      }
+    }
+  },
+  "goal": {
+    "stars_to_goal": 163,
+    "target_stars": 1000
+  },
+  "privacy": {
+    "personal_identifiers_written": false,
+    "raw_records_written": false
+  },
+  "product": {
+    "external_first_maps": {
+      "accepted": 0,
+      "cohort": {
+        "accepted": 0,
+        "active": 0,
+        "attempted": 0,
+        "completion_rate": null,
+        "id": "g1-first-map-cohort-2026-08",
+        "median_active_operator_minutes": null,
+        "next_attempt_permitted_by_state": false,
+        "operational_signals_fresh": false,
+        "phase": "initial",
+        "review_wip": 0,
+        "status": "WAITING_FOR_PUBLIC_GATES",
+        "stop_conditions": [],
+        "successful": 0,
+        "target": 3,
+        "terminal": 0
+      },
+      "remaining": 3,
+      "required": 3
+    },
+    "v1_readiness": {
+      "complete": 8,
+      "incomplete": 2,
+      "status": "NOT_READY",
+      "total": 10
+    }
+  },
+  "repository": "rsasaki0109/lidar_slam_ros2",
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/growth-snapshot-v1.schema.json",
+  "schema_version": 1,
+  "source": {
+    "external_contributor_window_days": 180,
+    "external_pr_window_days": 90,
+    "github": "live",
+    "response_window_days": 90,
+    "traffic_window_days": 14
+  }
+}

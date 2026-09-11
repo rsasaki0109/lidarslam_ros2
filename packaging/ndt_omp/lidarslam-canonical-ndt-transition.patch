@@ -1,0 +1,122 @@
+diff --git a/graph_based_slam/CMakeLists.txt b/graph_based_slam/CMakeLists.txt
+--- a/graph_based_slam/CMakeLists.txt
++++ b/graph_based_slam/CMakeLists.txt
+@@ -39,6 +39,6 @@ find_package(lidarslam_msgs REQUIRED)
+ find_package(message_filters REQUIRED)
+ find_package(rosbag2_cpp REQUIRED)
+-find_package(ndt_omp_ros2 REQUIRED)
++find_package(ndt_omp REQUIRED)
+ find_package(PCL REQUIRED)
+ find_package(g2o QUIET
+   COMPONENTS
+@@ -126,7 +126,7 @@ set_target_properties(graph_slam_application PROPERTIES POSITION_INDEPENDENT_CO
+ target_include_directories(
+   graph_slam_application PUBLIC include ${EIGEN3_INCLUDE_DIR} ${PCL_INCLUDE_DIRS}
+ )
+-ament_target_dependencies(graph_slam_application ndt_omp_ros2)
++ament_target_dependencies(graph_slam_application ndt_omp)
+ target_link_libraries(
+   graph_slam_application
+   ${PCL_LIBRARIES}
+@@ -326,7 +326,7 @@ if(BUILD_TESTING)
+   )
+   if(TARGET test_backend_core)
+     target_include_directories(test_backend_core PRIVATE include ${EIGEN3_INCLUDE_DIR})
+-    ament_target_dependencies(test_backend_core ndt_omp_ros2)
++    ament_target_dependencies(test_backend_core ndt_omp)
+     target_link_libraries(
+       test_backend_core ${PCL_LIBRARIES} graph_based_slam_3d_bbs_vendor
+     )
+@@ -340,7 +340,7 @@ if(BUILD_TESTING)
+     target_include_directories(
+       test_graph_slam_application PRIVATE include ${EIGEN3_INCLUDE_DIR}
+     )
+-    ament_target_dependencies(test_graph_slam_application ndt_omp_ros2)
++    ament_target_dependencies(test_graph_slam_application ndt_omp)
+     target_link_libraries(
+       test_graph_slam_application
+       graph_slam_application
+@@ -583,7 +583,7 @@ if(BUILD_TESTING)
+     target_include_directories(
+       test_registration_determinism PRIVATE ${EIGEN3_INCLUDE_DIR} ${PCL_INCLUDE_DIRS}
+     )
+-    ament_target_dependencies(test_registration_determinism ndt_omp_ros2)
++    ament_target_dependencies(test_registration_determinism ndt_omp)
+     target_link_libraries(test_registration_determinism ${PCL_LIBRARIES})
+   endif()
+   ament_add_gtest(
+@@ -1279,7 +1279,7 @@ ament_target_dependencies(graph_based_slam_component
+   std_srvs
+   lidarslam_msgs
+   message_filters
+-  ndt_omp_ros2
++  ndt_omp
+ )
+ 
+ target_link_libraries(graph_based_slam_component
+@@ -1345,7 +1345,7 @@ ament_target_dependencies(graph_slam_offline_runner
+   pcl_conversions
+   nav_msgs
+   sensor_msgs
+-  ndt_omp_ros2
++  ndt_omp
+ )
+ 
+ target_link_libraries(graph_slam_offline_runner
+diff --git a/graph_based_slam/package.xml b/graph_based_slam/package.xml
+--- a/graph_based_slam/package.xml
++++ b/graph_based_slam/package.xml
+@@ -21,7 +21,7 @@
+   <depend>lidarslam_msgs</depend>
+   <depend>message_filters</depend>
+   <depend>rosbag2_cpp</depend>
+-  <depend>ndt_omp_ros2</depend>
++  <depend>ndt_omp</depend>
+   <depend>libg2o</depend>
+   <depend>libpcl-all-dev</depend>
+ 
+diff --git a/scanmatcher/CMakeLists.txt b/scanmatcher/CMakeLists.txt
+--- a/scanmatcher/CMakeLists.txt
++++ b/scanmatcher/CMakeLists.txt
+@@ -32,7 +32,7 @@ find_package(tf2_geometry_msgs REQUIRED)
+ find_package(tf2_eigen REQUIRED)
+ find_package(pcl_conversions REQUIRED)
+ find_package(lidarslam_msgs REQUIRED)
+-find_package(ndt_omp_ros2 REQUIRED)
++find_package(ndt_omp REQUIRED)
+ find_package(fast_gicp QUIET)
+ find_package(small_gicp QUIET)
+ find_package(PCL REQUIRED)
+@@ -50,7 +50,7 @@ set(dependencies
+   sensor_msgs
+   nav_msgs
+   lidarslam_msgs
+-  ndt_omp_ros2
++  ndt_omp
+ )
+ 
+ if(fast_gicp_FOUND)
+diff --git a/scanmatcher/package.xml b/scanmatcher/package.xml
+--- a/scanmatcher/package.xml
++++ b/scanmatcher/package.xml
+@@ -24,7 +24,7 @@
+   <depend>message_filters</depend>
+   <depend>lidarslam_msgs</depend>
+   <depend>rosbag2_cpp</depend>
+-  <depend>ndt_omp_ros2</depend>
++  <depend>ndt_omp</depend>
+   <!-- Optional: fast_gicp and small_gicp (from Thirdparty) -->
+   <!-- <depend>fast_gicp</depend> -->
+   <!-- <depend>small_gicp</depend> -->
+diff --git a/scanmatcher/src/scanmatcher_component.cpp b/scanmatcher/src/scanmatcher_component.cpp
+--- a/scanmatcher/src/scanmatcher_component.cpp
++++ b/scanmatcher/src/scanmatcher_component.cpp
+@@ -441,7 +441,7 @@ ScanMatcherComponent::ScanMatcherComponent(const rclcpp::NodeOptions & options)
+     ndt->setTransformationEpsilon(ndt_transformation_epsilon_);
+     ndt->setMaximumIterations(ndt_max_iterations_);
+     ndt->setStepSize(ndt_step_size);
+-    ndt->setOulierRatio(ndt_outlier_ratio_);
++    ndt->setOutlierRatio(ndt_outlier_ratio_);
+     // ndt_omp
+     ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
+     if (ndt_num_threads > 0) {ndt->setNumThreads(ndt_num_threads);}

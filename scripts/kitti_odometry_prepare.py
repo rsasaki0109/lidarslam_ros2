@@ -270,7 +270,7 @@ def write_rosbag2(
     if not lidar_only:
         messages.sort(key=lambda x: (x[0], 0 if x[1] == 'imu' else 1))
 
-    with Writer(bag_out, version=9) as writer:
+    with Writer(bag_out, version=8) as writer:
         conn_lidar = writer.add_connection(
             lidar_topic,
             'sensor_msgs/msg/PointCloud2',

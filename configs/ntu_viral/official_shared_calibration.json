@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "dataset": "NTU-VIRAL",
+  "frames": {
+    "body_T_lidar": [
+      -0.05,
+      0.0,
+      0.055,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "lidar_T_body": [
+      0.05,
+      0.0,
+      -0.055,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "body_T_left_camera_optical": [
+      0.00552938,
+      -0.12431338,
+      0.01614686,
+      0.50158807,
+      0.49175768,
+      0.49725142,
+      0.50923945
+    ],
+    "body_T_prism_translation_m": [
+      -0.293656,
+      -0.012288,
+      -0.273095
+    ]
+  },
+  "left_camera": {
+    "image_size": [752, 480],
+    "intrinsics_fx_fy_cx_cy": [
+      425.0258563372763,
+      426.7976260903337,
+      386.015186655088,
+      241.913033674344
+    ],
+    "distortion_model": "plumb_bob",
+    "distortion_k1_k2_p1_p2": [
+      -0.288105327549552,
+      0.074578284234601,
+      0.0007784489598138802,
+      -0.0002277853975035461
+    ]
+  },
+  "time_offsets_seconds": {
+    "lidar_after_author_header_regularization": -0.1,
+    "imu": 0.0,
+    "left_camera": 0.0
+  },
+  "sources": {
+    "fast_livo2_revision": "0d2c0346107b75b59934975adec9a6eeeb913c64",
+    "fast_livo2_sensor_config": "config/NTU_VIRAL.yaml",
+    "fast_livo2_camera_config": "config/camera_NTU_VIRAL.yaml",
+    "prism_lever_arm": "NTU-VIRAL official evaluation tutorial T_B_prism"
+  }
+}

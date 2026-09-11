@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/package-manager-install-v1.schema.json",
+  "title": "ROS package-manager installation evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "mode",
+    "ros_distro",
+    "apt_channel",
+    "expected_version",
+    "source",
+    "packages",
+    "snapshot",
+    "baseline",
+    "checks"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {"const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/package-manager-install-v1.schema.json"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "mode": {
+      "enum": ["clean-install", "upgrade-baseline", "upgrade-candidate"]
+    },
+    "ros_distro": {"enum": ["humble", "jazzy"]},
+    "apt_channel": {"enum": ["main", "testing"]},
+    "expected_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git_commit", "git_dirty"],
+      "properties": {
+        "git_commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "git_dirty": {"type": "boolean"}
+      }
+    },
+    "packages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lidarslam",
+        "lidarslam-msgs",
+        "scanmatcher",
+        "graph-based-slam",
+        "ndt-omp-ros2",
+        "rko-lio"
+      ],
+      "properties": {
+        "lidarslam": {"$ref": "#/definitions/package"},
+        "lidarslam-msgs": {"$ref": "#/definitions/package"},
+        "scanmatcher": {"$ref": "#/definitions/package"},
+        "graph-based-slam": {"$ref": "#/definitions/package"},
+        "ndt-omp-ros2": {"$ref": "#/definitions/package"},
+        "rko-lio": {"$ref": "#/definitions/package"}
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_count", "owned_path_count", "sha256"],
+      "properties": {
+        "package_count": {"const": 6},
+        "owned_path_count": {"type": "integer", "minimum": 6},
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "baseline": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expected_version", "status", "snapshot_sha256"],
+          "properties": {
+            "expected_version": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "status": {"enum": ["PASS", "FAIL"]},
+            "snapshot_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/check"}
+    }
+  },
+  "definitions": {
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "debian_name",
+        "debian_version",
+        "upstream_version",
+        "owned_paths"
+      ],
+      "properties": {
+        "debian_name": {"type": "string", "pattern": "^ros-(humble|jazzy)-"},
+        "debian_version": {"type": "string", "minLength": 1},
+        "upstream_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "owned_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^/"}
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "detail"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS", "FAIL"]},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"mode": {"const": "upgrade-candidate"}}
+      },
+      "then": {
+        "properties": {"baseline": {"type": "object"}}
+      },
+      "else": {
+        "properties": {"baseline": {"type": "null"}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "PASS"}}
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {"git_dirty": {"const": false}}
+          },
+          "checks": {
+            "items": {
+              "properties": {"status": {"const": "PASS"}}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

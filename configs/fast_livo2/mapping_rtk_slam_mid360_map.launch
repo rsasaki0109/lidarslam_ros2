@@ -1,0 +1,13 @@
+<launch>
+  <rosparam command="load" file="/runner/configs/fast_livo2/rtk_slam_mid360.yaml" />
+  <param name="pcd_save/pcd_save_en" value="true" />
+  <param name="pcd_save/type" value="0" />
+  <param name="pcd_save/interval" value="-1" />
+  <param name="pcd_save/colmap_output_en" value="false" />
+  <node pkg="fast_livo" type="fastlivo_mapping" name="laserMapping" output="screen">
+    <rosparam file="/runner/configs/fast_livo2/camera_rtk_slam_mid360.yaml" />
+  </node>
+  <node pkg="image_transport" type="republish" name="republish"
+        args="compressed in:=/camera/image_raw raw out:=/camera/image_raw"
+        output="screen" respawn="true" />
+</launch>

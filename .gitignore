@@ -5,6 +5,11 @@ lidarslam/rviz/test.rviz
 build/
 install/
 log/
+# Named colcon roots used by benchmark and release-profile worktrees.
+/build-*/
+/install-*/
+/log-*/
+/symlink_install_manifest.txt
 demo_data/
 # Local data roots may be directories or symlinks to an external SSD.
 /datasets

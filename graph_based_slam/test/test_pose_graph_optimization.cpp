@@ -184,6 +184,8 @@ TEST(PoseGraphOptimization, SameInputsGiveBitwiseIdenticalPoses)
   for (size_t i = 0; i < a.adjacent_chi2.size(); ++i) {
     EXPECT_EQ(a.adjacent_chi2[i], b.adjacent_chi2[i]);
   }
+  EXPECT_FALSE(a.pose_graph_g2o.empty());
+  EXPECT_EQ(a.pose_graph_g2o, b.pose_graph_g2o);
 }
 
 TEST(PoseGraphOptimization, GnssAnchorPullsVertexTowardAnchor)
@@ -337,7 +339,7 @@ TEST(PoseGraphOptimization, PlaneRevisitCorrectsNormalDirectionDriftOnly)
   no_odometry.num_adjacent_pose_constraints = 0;
   const auto result = optimizePoseGraph(
     submaps, {}, {}, {}, no_odometry, LoopEdgeConfig{}, ImuEdgeConfig{},
-    Chi2Collection::NONE, true, 20, std::string(), {plane});
+    Chi2Collection::NONE, true, 20, {plane});
 
   ASSERT_EQ(result.plane_revisit_edges, 1);
   EXPECT_GT(result.plane_revisit_chi2_before, 1.0);
@@ -368,7 +370,7 @@ TEST(PoseGraphOptimization, PlaneRevisitAlignsNormalsWithoutConstrainingNormalYa
   no_odometry.num_adjacent_pose_constraints = 0;
   const auto result = optimizePoseGraph(
     submaps, {}, {}, {}, no_odometry, LoopEdgeConfig{}, ImuEdgeConfig{},
-    Chi2Collection::NONE, true, 20, std::string(), {plane});
+    Chi2Collection::NONE, true, 20, {plane});
   const Eigen::Vector3d corrected_normal =
     result.poses[1].rotation() * Eigen::Vector3d::UnitX();
   EXPECT_GT(corrected_normal.dot(Eigen::Vector3d::UnitX()), 0.999999);
@@ -489,7 +491,7 @@ TEST(PoseGraphOptimization, OrthogonalPlaneRevisitsReduceTrajectoryRmse)
   weak_odometry.info_weight = 1.0;
   const auto result = optimizePoseGraph(
     estimated, {}, {}, {}, weak_odometry, LoopEdgeConfig{}, ImuEdgeConfig{},
-    Chi2Collection::NONE, true, 50, std::string(), constraints);
+    Chi2Collection::NONE, true, 50, constraints);
 
   double squared_error_after = 0.0;
   for (std::size_t i = 0; i < result.poses.size(); ++i) {

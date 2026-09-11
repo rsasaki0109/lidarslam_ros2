@@ -1,0 +1,57 @@
+# Preregistered alias-aware ENWIDE Ouster OS0-128 candidate.
+#
+# This preserves the exploratory v2 sensor, geometry, and intensity parameters.
+# The only change is a 0.005 best-versus-second-peak margin selected without
+# consuming ENWIDE accuracy. The threshold is below the first percentile on
+# each NTNU diagnostic sequence (tunnel and fog), retaining at least 99% of
+# base-qualified observations on both.
+extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+extrinsic_lidar2base_quat_xyzw_xyz: [0.0, 0.0, 1.0, 0.0, -0.006253, 0.011775, 0.028525]
+
+lidar_timestamps.offset_seconds: 0.0
+lidar_timestamps.force_absolute: false
+lidar_timestamps.force_relative: true
+
+initialization_phase: true
+deskew: true
+voxel_size: 0.25
+icp_keypoint_voxel_multiplier: 1.5
+max_points_per_voxel: 20
+min_range: 0.7
+max_range: 100.0
+max_correspondence_distance: 0.5
+double_downsample: true
+
+degeneracy_aware_solve: true
+degeneracy_well_conditioned_ratio: 1.5e-5
+degeneracy_multiplicity_relative_gap: 1.0e-8
+degeneracy_prior_weight: 0.25
+degeneracy_persistence_gate: true
+degeneracy_persistence_min_scans: 3
+degeneracy_persistence_tracking_ratio: 1.5e-5
+degeneracy_persistence_min_absolute_cosine: 0.98
+degeneracy_persistence_min_translation_fraction: 0.99
+degeneracy_multiscan_observability_gate: true
+degeneracy_observability_window_scans: 10
+degeneracy_observability_min_scans: 5
+degeneracy_observability_max_directional_ratio: 1.0e-5
+
+intensity_constraint: true
+intensity_bin_size_m: 0.25
+intensity_profile_half_length_m: 30.0
+intensity_max_shift_m: 1.5
+intensity_min_correlation: 0.6
+intensity_min_peak_margin: 0.005
+intensity_peak_exclusion_radius_bins: 1
+intensity_min_filled_bins: 40
+
+intensity_disagreement_gate: true
+intensity_disagreement_min_mps: 0.2
+intensity_disagreement_min_scans: 3
+intensity_disagreement_weight: 1.0
+
+radar_velocity_fusion: false
+radar_velocity_continuous_fusion: false
+enable_kidnap_relocalization: false
+reset_on_registration_failure: false
+relocalize_after_scan_gap: false

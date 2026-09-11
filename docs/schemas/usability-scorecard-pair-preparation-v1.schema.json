@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/usability-scorecard-pair-preparation-v1.schema.json",
+  "title": "LiDAR SLAM usability scorecard pair preparation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "receipt_filename",
+    "status",
+    "comparison_pair_id",
+    "public_identity_check",
+    "files",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/usability-scorecard-pair-preparation-v1.schema.json"
+    },
+    "receipt_filename": {
+      "const": "usability-scorecard-pair-preparation-v1.json"
+    },
+    "status": {"const": "PREPARED_INCOMPLETE"},
+    "comparison_pair_id": {"$ref": "#/definitions/slug"},
+    "public_identity_check": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "performed",
+            "status",
+            "network_reads_performed",
+            "results"
+          ],
+          "properties": {
+            "performed": {"const": false},
+            "status": {"const": "NOT_RUN"},
+            "network_reads_performed": {"const": false},
+            "results": {"type": "array", "maxItems": 0}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "performed",
+            "status",
+            "network_reads_performed",
+            "results"
+          ],
+          "properties": {
+            "performed": {"const": true},
+            "status": {"const": "PASS"},
+            "network_reads_performed": {"const": true},
+            "results": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {"$ref": "#/definitions/publicIdentityResult"}
+            }
+          }
+        }
+      ]
+    },
+    "files": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {"$ref": "#/definitions/file"}
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_requests",
+        "registry_requests",
+        "documentation_requests",
+        "github_writes_authorized",
+        "local_worksheets_written",
+        "local_preparation_receipt_written",
+        "rollback_on_publication_error",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "github_requests": {"enum": ["NONE", "GET_ONLY"]},
+        "registry_requests": {"enum": ["NONE", "GET_ONLY"]},
+        "documentation_requests": {"enum": ["NONE", "GET_ONLY"]},
+        "github_writes_authorized": {"const": false},
+        "local_worksheets_written": {"const": true},
+        "local_preparation_receipt_written": {"const": true},
+        "rollback_on_publication_error": {"const": true},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "httpsUrl": {
+      "type": "string",
+      "pattern": "^https://\\S+$",
+      "maxLength": 500
+    },
+    "publicIdentityResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_id",
+        "identity_source",
+        "revision_kind",
+        "requested_revision",
+        "resolved_revision",
+        "documentation_url",
+        "documentation_http_status",
+        "documentation_final_url"
+      ],
+      "properties": {
+        "product_id": {"enum": ["lidarslam_ros2", "glim"]},
+        "identity_source": {
+          "enum": [
+            "github.com/rsasaki0109/lidar_slam_ros2",
+            "github.com/koide3/glim",
+            "ghcr.io/rsasaki0109/lidar_slam_ros2",
+            "docker.io/koide3/glim_ros2"
+          ]
+        },
+        "revision_kind": {
+          "enum": ["git-commit", "release-tag", "image-digest"]
+        },
+        "requested_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "resolved_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "documentation_url": {"$ref": "#/definitions/httpsUrl"},
+        "documentation_http_status": {"const": 200},
+        "documentation_final_url": {"$ref": "#/definitions/httpsUrl"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "revision_kind": {"const": "git-commit"}
+            }
+          },
+          "then": {
+            "properties": {
+              "requested_revision": {"$ref": "#/definitions/sha"},
+              "resolved_revision": {"$ref": "#/definitions/sha"}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"revision_kind": {"const": "release-tag"}}
+          },
+          "then": {
+            "properties": {"resolved_revision": {"$ref": "#/definitions/sha"}}
+          }
+        },
+        {
+          "if": {
+            "properties": {"revision_kind": {"const": "image-digest"}}
+          },
+          "then": {
+            "properties": {
+              "requested_revision": {"$ref": "#/definitions/digest"},
+              "resolved_revision": {"$ref": "#/definitions/digest"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["product_id", "revision_kind"],
+            "properties": {
+              "product_id": {"const": "lidarslam_ros2"},
+              "revision_kind": {"enum": ["git-commit", "release-tag"]}
+            }
+          },
+          "then": {
+            "properties": {
+              "identity_source": {
+                "const": "github.com/rsasaki0109/lidar_slam_ros2"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["product_id", "revision_kind"],
+            "properties": {
+              "product_id": {"const": "lidarslam_ros2"},
+              "revision_kind": {"const": "image-digest"}
+            }
+          },
+          "then": {
+            "properties": {
+              "identity_source": {
+                "const": "ghcr.io/rsasaki0109/lidar_slam_ros2"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["product_id", "revision_kind"],
+            "properties": {
+              "product_id": {"const": "glim"},
+              "revision_kind": {"enum": ["git-commit", "release-tag"]}
+            }
+          },
+          "then": {
+            "properties": {
+              "identity_source": {"const": "github.com/koide3/glim"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["product_id", "revision_kind"],
+            "properties": {
+              "product_id": {"const": "glim"},
+              "revision_kind": {"const": "image-digest"}
+            }
+          },
+          "then": {
+            "properties": {
+              "identity_source": {"const": "docker.io/koide3/glim_ros2"}
+            }
+          }
+        }
+      ]
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "product",
+        "product_order",
+        "trial_id",
+        "sha256"
+      ],
+      "properties": {
+        "filename": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{2,79}\\.json$"
+        },
+        "product": {"enum": ["lidarslam_ros2", "glim"]},
+        "product_order": {"enum": ["first", "second"]},
+        "trial_id": {"$ref": "#/definitions/slug"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

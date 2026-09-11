@@ -7,42 +7,46 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: Existing git tag to publish, for example v0.2.2
+        description: Existing git tag to publish; it must match v<VERSION>
         required: true
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.event.inputs.tag_name || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
-  publish:
-    name: publish release
+  metadata:
+    name: validate release metadata
     runs-on: ubuntu-24.04
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    outputs:
+      bundle_name: ${{ steps.meta.outputs.bundle_name }}
+      git_commit: ${{ steps.meta.outputs.git_commit }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+      release_notes: ${{ steps.meta.outputs.release_notes }}
+      tag_name: ${{ steps.meta.outputs.tag_name }}
+      version: ${{ steps.meta.outputs.version }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event.inputs.tag_name || github.ref }}
-
-      - name: Install Python test dependency
-        shell: bash
-        run: |
-          python3 -m pip install --upgrade pytest
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag_name) || github.ref }}
 
       - name: Resolve release metadata
         id: meta
         shell: bash
+        env:
+          REQUESTED_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
         run: |
           VERSION="$(tr -d '\n' < VERSION)"
-          TAG_NAME="${{ github.event.inputs.tag_name || github.ref_name }}"
+          TAG_NAME="${REQUESTED_TAG}"
 
           if [[ -z "${TAG_NAME}" ]]; then
             echo "failed to resolve release tag name" >&2
@@ -52,9 +56,21 @@ jobs:
             echo "tag ${TAG_NAME} does not match VERSION ${VERSION}" >&2
             exit 1
           fi
+          RELEASE_CHANNEL="$(
+            python3 scripts/release_channel.py "${VERSION}"
+          )"
+          if [[ "${RELEASE_CHANNEL}" == "prerelease" ]]; then
+            PRERELEASE=true
+          elif [[ "${RELEASE_CHANNEL}" == "stable" ]]; then
+            PRERELEASE=false
+          else
+            echo "unknown release channel: ${RELEASE_CHANNEL}" >&2
+            exit 1
+          fi
 
           git fetch --force --tags
-          if ! git rev-parse "${TAG_NAME}" >/dev/null 2>&1; then
+          TAG_REF="refs/tags/${TAG_NAME}"
+          if ! git show-ref --verify --quiet "${TAG_REF}"; then
             echo "git tag ${TAG_NAME} does not exist" >&2
             exit 1
           fi
@@ -64,60 +80,382 @@ jobs:
             echo "release notes not found: ${RELEASE_NOTES}" >&2
             exit 1
           fi
+          # RELEASE_NOTES_PUBLICATION_GUARD_BEGIN
+          if grep -Fq -- \
+            '> **Release candidate status — HOLD; not published or tagged**' \
+            "${RELEASE_NOTES}"; then
+            echo "release notes still contain the candidate-only status" >&2
+            exit 1
+          fi
+          if grep -Fq -- '## Release decision: HOLD' "${RELEASE_NOTES}"; then
+            echo "release notes still contain a HOLD decision" >&2
+            exit 1
+          fi
+          if ! grep -Fq -- '## Release verification' "${RELEASE_NOTES}"; then
+            echo "release notes lack the final verification section" >&2
+            exit 1
+          fi
+          # RELEASE_NOTES_PUBLICATION_GUARD_END
 
           BUNDLE_NAME="lidarslam_ros2_${TAG_NAME}_release_bundle.tar.gz"
-          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "tag_name=${TAG_NAME}" >> "${GITHUB_OUTPUT}"
-          echo "release_notes=${RELEASE_NOTES}" >> "${GITHUB_OUTPUT}"
-          echo "bundle_name=${BUNDLE_NAME}" >> "${GITHUB_OUTPUT}"
+          TAG_COMMIT="$(git rev-parse --verify "${TAG_REF}^{commit}")"
+          if [[ "$(git rev-parse HEAD)" != "${TAG_COMMIT}" ]]; then
+            echo "checkout does not match immutable tag ${TAG_REF}" >&2
+            exit 1
+          fi
+          {
+            echo "version=${VERSION}"
+            echo "tag_name=${TAG_NAME}"
+            echo "git_commit=${TAG_COMMIT}"
+            echo "prerelease=${PRERELEASE}"
+            echo "release_notes=${RELEASE_NOTES}"
+            echo "bundle_name=${BUNDLE_NAME}"
+          } >> "${GITHUB_OUTPUT}"
+
+  images:
+    name: publish ${{ matrix.ros_distro }} amd64 image
+    needs: metadata
+    runs-on: ubuntu-24.04
+    permissions:
+      artifact-metadata: write
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro:
+          - humble
+          - jazzy
+
+    steps:
+      - name: Check out tagged repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ format('refs/tags/{0}', needs.metadata.outputs.tag_name) }}
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Resolve source revision
+        id: source
+        shell: bash
+        run: echo "revision=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve an existing immutable version tag
+        id: final_tag
+        shell: bash
+        env:
+          FINAL_IMAGE_TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.metadata.outputs.tag_name }}-${{ matrix.ros_distro }}
+        run: |
+          if MANIFEST="$(
+            docker buildx imagetools inspect "${FINAL_IMAGE_TAG}" \
+              --format '{{json .Manifest}}' 2>/dev/null
+          )"; then
+            DIGEST="$(jq -er '.digest' <<< "${MANIFEST}")"
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+            echo "digest=${DIGEST}" >> "${GITHUB_OUTPUT}"
+            echo "Reusing ${FINAL_IMAGE_TAG}@${DIGEST}; the tag will not move."
+          else
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Resolve OCI metadata
+        id: image_meta
+        if: steps.final_tag.outputs.exists != 'true'
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.title=lidarslam_ros2
+            org.opencontainers.image.description=Installed ROS 2 LiDAR SLAM map-authoring product
+            org.opencontainers.image.licenses=BSD-2-Clause
+            org.opencontainers.image.revision=${{ needs.metadata.outputs.git_commit }}
+            org.opencontainers.image.version=${{ needs.metadata.outputs.version }}
+
+      - name: Build and publish candidate digest
+        id: image
+        if: steps.final_tag.outputs.exists != 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          build-args: |
+            ROS_DISTRO=${{ matrix.ros_distro }}
+            LIDARSLAM_SOURCE_REVISION=${{ steps.source.outputs.revision }}
+            LIDARSLAM_SOURCE_DIRTY=false
+          platforms: linux/amd64
+          outputs: |
+            type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          labels: ${{ steps.image_meta.outputs.labels }}
+          sbom: true
+          provenance: mode=max
+          cache-from: type=gha,scope=release-${{ matrix.ros_distro }}
+          cache-to: type=gha,mode=max,scope=release-${{ matrix.ros_distro }}
+
+      - name: Attest published image
+        if: steps.final_tag.outputs.exists != 'true'
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Pull and smoke-test published digest
+        id: smoke
+        shell: bash
+        env:
+          EXPECTED_DIGEST: ${{ steps.final_tag.outputs.digest || steps.image.outputs.digest }}
+          EXPECTED_GIT_COMMIT: ${{ needs.metadata.outputs.git_commit }}
+          EXPECTED_VERSION: ${{ needs.metadata.outputs.version }}
+          IMAGE_TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.metadata.outputs.tag_name }}-${{ matrix.ros_distro }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ steps.final_tag.outputs.exists }}" == "true" ]]; then
+            TAG_DIGEST="$(
+              docker buildx imagetools inspect "${IMAGE_TAG}" \
+                --format '{{json .Manifest}}' | jq -r '.digest'
+            )"
+            if [[ "${TAG_DIGEST}" != "${EXPECTED_DIGEST}" ]]; then
+              echo "existing tag digest ${TAG_DIGEST} != ${EXPECTED_DIGEST}" >&2
+              exit 1
+            fi
+          fi
+
+          IMAGE_REF="${REGISTRY}/${IMAGE_NAME}@${EXPECTED_DIGEST}"
+          docker pull "${IMAGE_REF}"
+          OBSERVED_VERSION="$(docker run --rm "${IMAGE_REF}" lidarslam-map --version)"
+          OBSERVED_COMMIT="$(
+            docker image inspect "${IMAGE_REF}" \
+              --format '{{index .Config.Labels "org.opencontainers.image.revision"}}'
+          )"
+          EXPECTED_OUTPUT="lidarslam_ros2 ${EXPECTED_VERSION}"
+          if [[ "${OBSERVED_VERSION}" != "${EXPECTED_OUTPUT}" ]]; then
+            echo "CLI version '${OBSERVED_VERSION}' != '${EXPECTED_OUTPUT}'" >&2
+            exit 1
+          fi
+          docker run --rm --network none "${IMAGE_REF}" \
+            lidarslam-map --help >/tmp/lidarslam-cli-help.txt
+          grep -Fq 'report <output>' /tmp/lidarslam-cli-help.txt
+          docker run --rm --network none "${IMAGE_REF}" \
+            lidarslam-map start --help >/tmp/lidarslam-start-help.txt
+          grep -Fq 'Detect and configure the sensors' /tmp/lidarslam-start-help.txt
+          grep -Fq -- '--map-output-dir' /tmp/lidarslam-start-help.txt
+          OBSERVED_REVISION="$(
+            docker run --rm "${IMAGE_REF}" python3 -c \
+              'import json, pathlib, subprocess; prefix = pathlib.Path(subprocess.check_output(["ros2", "pkg", "prefix", "lidarslam"], text=True).strip()); print(json.loads((prefix / "share/lidarslam/product/product-build-info.json").read_text())["revision"])'
+          )"
+          if [[ "${OBSERVED_REVISION}" != "${EXPECTED_GIT_COMMIT}" ]]; then
+            echo "installed source revision '${OBSERVED_REVISION}' != '${EXPECTED_GIT_COMMIT}'" >&2
+            exit 1
+          fi
+          if [[ "${OBSERVED_COMMIT}" != "${EXPECTED_GIT_COMMIT}" ]]; then
+            echo "image revision '${OBSERVED_COMMIT}' != '${EXPECTED_GIT_COMMIT}'" >&2
+            exit 1
+          fi
+
+          SBOM="$(
+            docker buildx imagetools inspect "${IMAGE_REF}" \
+              --format '{{json .SBOM}}'
+          )"
+          PROVENANCE="$(
+            docker buildx imagetools inspect "${IMAGE_REF}" \
+              --format '{{json .Provenance}}'
+          )"
+          if [[ -z "${SBOM}" || "${SBOM}" == "null" ]]; then
+            echo "published digest has no BuildKit SBOM attestation" >&2
+            exit 1
+          fi
+          if [[ -z "${PROVENANCE}" || "${PROVENANCE}" == "null" ]]; then
+            echo "published digest has no BuildKit provenance attestation" >&2
+            exit 1
+          fi
+          gh attestation verify "oci://${IMAGE_REF}" \
+            -R "${GITHUB_REPOSITORY}"
+
+          EVIDENCE_FILE="release-image-${{ matrix.ros_distro }}.json"
+          python3 -m venv .release-contract-venv
+          .release-contract-venv/bin/python -m pip install --quiet jsonschema
+          .release-contract-venv/bin/python \
+            scripts/create_release_image_record.py \
+            --ros-distro "${{ matrix.ros_distro }}" \
+            --platform linux/amd64 \
+            --tag "${IMAGE_TAG}" \
+            --digest "${EXPECTED_DIGEST}" \
+            --git-commit "${EXPECTED_GIT_COMMIT}" \
+            --product-version "${EXPECTED_VERSION}" \
+            --cli-version "${OBSERVED_VERSION}" \
+            --output "${EVIDENCE_FILE}"
+          ROLLBACK_FILE="rollback-plan-${{ matrix.ros_distro }}.json"
+          .release-contract-venv/bin/python scripts/plan_image_rollback.py \
+            "${EVIDENCE_FILE}" --json > "${ROLLBACK_FILE}"
+          echo "evidence_file=${EVIDENCE_FILE}" >> "${GITHUB_OUTPUT}"
+          echo "rollback_file=${ROLLBACK_FILE}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "## ${{ matrix.ros_distro }} release image"
+            echo
+            echo "- Tag: \`${IMAGE_TAG}\`"
+            echo "- Digest: \`${EXPECTED_DIGEST}\`"
+            echo "- CLI: \`${OBSERVED_VERSION}\`"
+            echo "- Installed source revision: \`${OBSERVED_REVISION}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload release-image evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-image-${{ matrix.ros_distro }}
+          path: |
+            ${{ steps.smoke.outputs.evidence_file }}
+            ${{ steps.smoke.outputs.rollback_file }}
+          if-no-files-found: error
+
+  publish:
+    name: publish release
+    needs:
+      - metadata
+      - images
+    runs-on: ubuntu-24.04
+    permissions:
+      artifact-metadata: write
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ format('refs/tags/{0}', needs.metadata.outputs.tag_name) }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Python test dependency
+        shell: bash
+        run: |
+          python3 -m pip install --upgrade pytest jsonschema
 
       - name: Validate release docs
         shell: bash
         run: |
+          python3 scripts/check_first_map_verification_package.py --json
           python3 -m pytest graph_based_slam/test/test_docs_entrypoints.py -q
           bash -n scripts/run_autoware_quickstart.sh
           bash -n scripts/download_ntu_viral_tnp01.sh
+          bash -n scripts/run_first_map_demo.sh
+          bash -n scripts/run_docker_demo.sh
+          bash -n scripts/docker_map_bag.sh
           bash -n scripts/prepare_velodyne_pointcloud_overlay.sh
           bash -n scripts/run_open_data_applanix_velodyne_gnss_smoke.sh
+
+      - name: Build version-pinned standalone Docker launcher
+        shell: bash
+        run: |
+          python3 scripts/build_docker_launcher_asset.py \
+            --tag "${{ needs.metadata.outputs.tag_name }}" \
+            --source-revision "${{ needs.metadata.outputs.git_commit }}" \
+            --output lidarslam-map-docker
+          EXPECTED="lidarslam-map-docker ${{ needs.metadata.outputs.tag_name }} (${{ needs.metadata.outputs.git_commit }})"
+          test "$(./lidarslam-map-docker --version)" = "${EXPECTED}"
+          bash -n lidarslam-map-docker
 
       - name: Build release bundle
         shell: bash
         run: |
-          rm -rf release_bundle
-          mkdir -p release_bundle/docs/releases release_bundle/docs/social release_bundle/docs/assets release_bundle/output release_bundle/lidarslam/images
-          cp README.md CHANGELOG.md CONTRIBUTING.md RELEASING.md VERSION mkdocs.yml release_bundle/
-          cp docs/index.md docs/autoware-map-authoring.md docs/autoware-foxglove.md docs/autoware-quickstart.md docs/workflows.md docs/benchmarking.md docs/comparison.md release_bundle/docs/
-          cp -r docs/assets/. release_bundle/docs/assets/
-          cp docs/social/autoware_map_authoring_post_v0.2.2.md release_bundle/docs/social/
-          cp lidarslam/images/autoware_map_loader_proof.png release_bundle/lidarslam/images/
-          cp lidarslam/images/dynamic_object_filter_bag6_summary.svg release_bundle/lidarslam/images/
-          cp lidarslam/images/social_autoware_map_authoring.png release_bundle/lidarslam/images/
-          cp lidarslam/images/social_autoware_map_authoring_demo.mp4 release_bundle/lidarslam/images/
-          cp "${{ steps.meta.outputs.release_notes }}" release_bundle/docs/releases/
-          for artifact in \
-            output/benchmark_summary.md \
-            output/benchmark_summary.csv \
-            output/latest_report.html \
-            output/stress_validation_report_20260325.md \
-            output/v2_beta_readiness_20260324.md
-          do
-            if [[ -f "${artifact}" ]]; then
-              cp "${artifact}" release_bundle/output/
-            fi
-          done
-          tar -czf "${{ steps.meta.outputs.bundle_name }}" release_bundle
+          python3 -m venv /tmp/lidarslam-release-bundle-venv
+          /tmp/lidarslam-release-bundle-venv/bin/python \
+            -m pip install --quiet jsonschema
+          /tmp/lidarslam-release-bundle-venv/bin/python \
+            scripts/build_release_bundle.py \
+            --tag "${{ needs.metadata.outputs.tag_name }}" \
+            --output "${{ needs.metadata.outputs.bundle_name }}"
 
       - name: Upload release bundle artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ steps.meta.outputs.tag_name }}-release-bundle
-          path: ${{ steps.meta.outputs.bundle_name }}
+          name: ${{ needs.metadata.outputs.tag_name }}-release-bundle
+          path: |
+            ${{ needs.metadata.outputs.bundle_name }}
+            lidarslam-map-docker
+
+      - name: Attest release bundle
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            ${{ needs.metadata.outputs.bundle_name }}
+            lidarslam-map-docker
+
+      - name: Download release-image evidence
+        uses: actions/download-artifact@v7
+        with:
+          pattern: release-image-*
+          path: release_image_evidence
+          merge-multiple: true
+
+      - name: Promote tested digests without moving version tags
+        shell: bash
+        run: |
+          python3 -m venv .release-promotion-venv
+          .release-promotion-venv/bin/python -m pip install --quiet jsonschema
+          .release-promotion-venv/bin/python \
+            scripts/promote_release_images.py \
+            release_image_evidence/release-image-humble.json \
+            release_image_evidence/release-image-jazzy.json \
+            --repository "${GITHUB_REPOSITORY}" \
+            --apply \
+            --json > release-promotion.json
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.tag_name }}
-          name: lidarslam_ros2 v${{ steps.meta.outputs.version }}
-          body_path: ${{ steps.meta.outputs.release_notes }}
-          prerelease: true
-          files: ${{ steps.meta.outputs.bundle_name }}
+          tag_name: ${{ needs.metadata.outputs.tag_name }}
+          name: lidarslam_ros2 v${{ needs.metadata.outputs.version }}
+          body_path: ${{ needs.metadata.outputs.release_notes }}
+          prerelease: ${{ needs.metadata.outputs.prerelease == 'true' }}
+          files: |
+            ${{ needs.metadata.outputs.bundle_name }}
+            lidarslam-map-docker
+            release_image_evidence/*.json
+            release-promotion.json
+
+      - name: Verify published release and recovery assets
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/check_published_release.py \
+            --version "${{ needs.metadata.outputs.version }}" \
+            --require-published \
+            --output-json published-release-audit.json
+
+      - name: Upload published release audit
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ needs.metadata.outputs.tag_name }}-published-release-audit
+          path: published-release-audit.json
+          retention-days: 90
+          if-no-files-found: error

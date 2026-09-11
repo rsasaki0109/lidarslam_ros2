@@ -1,0 +1,426 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-index-v1.schema.json",
+  "title": "lidarslam_ros2 map session index v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "created_at",
+    "status",
+    "bag_path",
+    "setup_bundle",
+    "map_output",
+    "profile",
+    "runner_exit_code",
+    "verification",
+    "progress",
+    "quality",
+    "summary",
+    "reason",
+    "findings",
+    "actions",
+    "artifacts",
+    "files_preserved"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-index-v1.schema.json"
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {
+      "enum": ["running", "verified", "unverified", "action_required"]
+    },
+    "bag_path": {"type": "string", "minLength": 1},
+    "setup_bundle": {"type": "string", "minLength": 1},
+    "map_output": {"type": "string", "minLength": 1},
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1}
+      }
+    },
+    "runner_exit_code": {"type": ["integer", "null"]},
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "result"],
+      "properties": {
+        "mode": {"enum": ["required", "off"]},
+        "result": {
+          "enum": ["pending", "PASS", "not_run", "not_completed"]
+        }
+      }
+    },
+    "progress": {"$ref": "#/definitions/progress"},
+    "quality": {"$ref": "#/definitions/quality"},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "message"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "message": {"type": "string", "minLength": 1}
+      }
+    },
+    "reason": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/definitions/reason"}
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/reason"}
+    },
+    "actions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/action"}
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "setup_manifest",
+        "run_manifest",
+        "diagnosis_json",
+        "validation_receipt",
+        "pointcloud_map",
+        "map_preview_html",
+        "backend_input",
+        "recovery_receipt"
+      ],
+      "properties": {
+        "setup_manifest": {"$ref": "#/definitions/optional_path"},
+        "run_manifest": {"$ref": "#/definitions/optional_path"},
+        "diagnosis_json": {"$ref": "#/definitions/optional_path"},
+        "validation_receipt": {"$ref": "#/definitions/optional_path"},
+        "pointcloud_map": {"$ref": "#/definitions/optional_path"},
+        "map_preview_html": {"$ref": "#/definitions/optional_path"},
+        "backend_input": {"$ref": "#/definitions/optional_path"},
+        "recovery_receipt": {"$ref": "#/definitions/optional_path"}
+      }
+    },
+    "files_preserved": {"const": true}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "running"}}},
+      "then": {
+        "properties": {
+          "runner_exit_code": {"type": "null"},
+          "verification": {
+            "properties": {"result": {"const": "pending"}}
+          },
+          "progress": {
+            "properties": {
+              "phase": {
+                "enum": [
+                  "preparing",
+                  "mapping",
+                  "verifying",
+                  "finalizing",
+                  "evidence"
+                ]
+              }
+            }
+          },
+          "quality": {
+            "properties": {"overall": {"const": "pending"}}
+          },
+          "reason": {"type": "null"},
+          "findings": {"maxItems": 0},
+          "actions": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "verified"}}},
+      "then": {
+        "properties": {
+          "runner_exit_code": {"const": 0},
+          "verification": {
+            "properties": {
+              "mode": {"const": "required"},
+              "result": {"const": "PASS"}
+            }
+          },
+          "reason": {"type": "null"},
+          "findings": {"maxItems": 0},
+          "actions": {"minItems": 1},
+          "progress": {
+            "properties": {
+              "phase": {"const": "complete"},
+              "stage": {"const": "complete"}
+            }
+          },
+          "quality": {
+            "properties": {
+              "overall": {
+                "enum": ["pass", "action_required", "unavailable"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "unverified"}}},
+      "then": {
+        "properties": {
+          "runner_exit_code": {"const": 0},
+          "verification": {
+            "properties": {
+              "mode": {"const": "off"},
+              "result": {"const": "not_run"}
+            }
+          },
+          "reason": {"type": "null"},
+          "findings": {"maxItems": 0},
+          "actions": {"minItems": 1},
+          "progress": {
+            "properties": {
+              "phase": {"const": "complete"},
+              "stage": {"const": "complete"}
+            }
+          },
+          "quality": {
+            "properties": {"overall": {"const": "not_verified"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "action_required"}}
+      },
+      "then": {
+        "properties": {
+          "reason": {"$ref": "#/definitions/reason"},
+          "findings": {"minItems": 1},
+          "actions": {"minItems": 1},
+          "progress": {
+            "properties": {"phase": {"const": "stopped"}}
+          },
+          "quality": {
+            "properties": {"overall": {"const": "action_required"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "action_required"},
+          "verification": {
+            "properties": {"mode": {"const": "required"}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "verification": {
+            "properties": {"result": {"const": "not_completed"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "action_required"},
+          "verification": {
+            "properties": {"mode": {"const": "off"}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "verification": {
+            "properties": {"result": {"const": "not_run"}}
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overall", "headline", "source", "checks"],
+      "properties": {
+        "overall": {
+          "enum": [
+            "pending",
+            "pass",
+            "not_verified",
+            "action_required",
+            "unavailable"
+          ]
+        },
+        "headline": {"type": "string", "minLength": 1},
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "artifact"],
+          "properties": {
+            "status": {
+              "enum": ["pending", "valid", "missing", "invalid", "recovery"]
+            },
+            "artifact": {"$ref": "#/definitions/optional_path"}
+          }
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/quality_check"}
+        }
+      }
+    },
+    "quality_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "status",
+        "observed",
+        "source_checks"
+      ],
+      "properties": {
+        "id": {
+          "enum": ["workflow", "map_output", "verification", "evidence"]
+        },
+        "label": {"type": "string", "minLength": 1},
+        "status": {
+          "enum": ["pending", "pass", "not_run", "fail", "unavailable"]
+        },
+        "observed": {"type": "string", "minLength": 1},
+        "source_checks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "manifest_succeeded",
+              "lifecycle_complete",
+              "runner_exit_zero",
+              "diagnosis_success",
+              "autoware_verification_pass",
+              "diagnosis_bound_to_manifest",
+              "verify_log_bound_to_manifest"
+            ]
+          }
+        }
+      }
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "stage",
+        "current_step",
+        "total_steps",
+        "label",
+        "updated_at"
+      ],
+      "properties": {
+        "phase": {
+          "enum": [
+            "preparing",
+            "mapping",
+            "verifying",
+            "finalizing",
+            "evidence",
+            "complete",
+            "stopped"
+          ]
+        },
+        "stage": {
+          "enum": [
+            "preparing",
+            "initialized",
+            "workflow_running",
+            "workflow_finished",
+            "verifying",
+            "verified",
+            "finalizing",
+            "finalized",
+            "diagnosing",
+            "diagnosed",
+            "checksumming",
+            "preparing_preview",
+            "complete"
+          ]
+        },
+        "current_step": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "total_steps": {"const": 6},
+        "label": {"type": "string", "minLength": 1},
+        "updated_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "recovery_code": {
+      "enum": [
+        "ambiguous-output-state",
+        "run-manifest-unreadable",
+        "workflow-state-uncertain",
+        "postprocessing-incomplete",
+        "storage-exhausted",
+        "workflow-interrupted",
+        "ros-parameters-invalid",
+        "tf-messages-invalid",
+        "tf-tree-disconnected",
+        "map-save-failed",
+        "ros-node-died",
+        "gnss-constraints-missing",
+        "map-verification-failed",
+        "runner-start-failed",
+        "map-output-incomplete",
+        "workflow-failed"
+      ]
+    },
+    "reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"$ref": "#/definitions/recovery_code"},
+        "message": {"type": "string", "minLength": 1}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "label", "command"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "view",
+            "inspect",
+        "verify",
+        "resume",
+        "retry",
+        "recover",
+        "share",
+        "support"
+          ]
+        },
+        "label": {"type": "string", "minLength": 1},
+        "command": {"type": "string", "minLength": 1}
+      }
+    },
+    "optional_path": {"type": ["string", "null"]}
+  }
+}

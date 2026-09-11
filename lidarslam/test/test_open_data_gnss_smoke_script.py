@@ -54,3 +54,11 @@ def test_smoke_script_autodetects_navsatfix_topic():
         '"sensor_msgs/msg/NavSatFix")"' in script
     )
     assert '[[ -n "${GNSS_TOPIC}" ]] || die "failed to detect NavSatFix topic"' in script
+
+
+def test_smoke_script_reports_profile_specific_rosbags_dependency():
+    script = SCRIPT_PATH.read_text(encoding='utf-8')
+
+    assert 'require_rosbags' in script
+    assert "requires the Python package 'rosbags'" in script
+    assert 'docs/distribution.md#profile-specific-extras' in script

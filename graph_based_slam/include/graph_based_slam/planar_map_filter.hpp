@@ -56,7 +56,7 @@ struct PlanarMapFilterConfig
   // If fewer than this fraction of input points have planar support, return
   // the original cloud. This prevents a plane-oriented quality refinement
   // from silently deleting most of a geometrically diverse map.
-  double min_retained_ratio {0.80};
+  double min_retained_ratio {0.90};
 };
 
 struct PlanarMapFilterStats

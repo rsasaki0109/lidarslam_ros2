@@ -15,7 +15,8 @@ Options:
   --release-profile <path>      Release-profile YAML (per-dataset pass/target)
                                 Default: scripts/release_profiles.yaml when omitted
   --no-release-profile          Disable the release-profile gate
-  --fail-on-profiles            Exit non-zero if any release-profile FAILs
+  --fail-on-profiles            Fail if a blocking profile FAILs or has NO_DATA;
+                                evidence is bound to the current Git commit
   --skip-default-ci             Skip scripts/run_default_ci_checks.sh
   --skip-benchmark-summary      Skip benchmark summary generation
   --public-mid360-completion    Run the public MID-360 segment-reset completion gate
@@ -73,14 +74,6 @@ Options:
                                 report-only
   --map-quality-downsample <m>  Downsample for the map-quality stage
                                 (default: 0.1)
-  --map-quality-baseline-report <yaml>
-                                Baseline map_quality_report.yaml for an
-                                optional paired non-regression check; this
-                                never relaxes an absolute profile
-  --map-quality-max-regression-percent <percent>
-                                Relative regression budget for the paired
-                                map-quality check (default: 2.0 when a
-                                baseline is supplied)
   --degeneracy-report <csv>     Run the degeneracy diagnostics report stage
                                 (v0.8 Phase 1, docs/roadmap/v0.8.md §5) on a
                                 per-scan diagnostics CSV produced by
@@ -131,11 +124,17 @@ When --ape-threshold is provided, the benchmark summary becomes a hard gate and
 the script exits non-zero if any selected run is missing APE or exceeds the
 threshold. By default this gate is scoped to `ground_truth` runs so
 cross-validation artifacts can appear in reports without blocking release.
+Hard benchmark gates also exit non-zero when the benchmark root contains no
+metrics.json evidence. --skip-benchmark-summary cannot be combined with
+--ape-threshold or --fail-on-profiles.
 
 The release-profile gate runs in addition to (or instead of) --ape-threshold:
 each profile in the YAML scores its own pass/target threshold against the best
 matching run, with optional report_only_until semantics so hard datasets
-(MID-360, NTU) can be reported without blocking release.
+can soak without blocking release. A blocking profile with no matching run
+fails closed. With --fail-on-profiles, blocking evidence must also have clean,
+complete provenance for the exact current repository commit. Report-only
+profiles remain historical comparisons and are not commit-bound.
 EOF
 }
 
@@ -185,9 +184,6 @@ OFFLINE_DETERMINISM_MAP_QUALITY_PROFILE=""
 MAP_QUALITY_PCDS=()
 MAP_QUALITY_PROFILES=()
 MAP_QUALITY_DOWNSAMPLE=""
-MAP_QUALITY_BASELINE_REPORT=""
-MAP_QUALITY_MAX_REGRESSION_PERCENT="2.0"
-MAP_QUALITY_MAX_REGRESSION_PERCENT_SET=false
 DEGENERACY_REPORT_CSVS=()
 FRONTEND_DETERMINISM_BAG=""
 FRONTEND_DETERMINISM_CLOUD_TOPIC=""
@@ -336,17 +332,6 @@ while [[ $# -gt 0 ]]; do
       MAP_QUALITY_DOWNSAMPLE="$2"
       shift 2
       ;;
-    --map-quality-baseline-report)
-      require_value "$1" "${2:-}"
-      MAP_QUALITY_BASELINE_REPORT=$(realpath -m "$2")
-      shift 2
-      ;;
-    --map-quality-max-regression-percent)
-      require_value "$1" "${2:-}"
-      MAP_QUALITY_MAX_REGRESSION_PERCENT="$2"
-      MAP_QUALITY_MAX_REGRESSION_PERCENT_SET=true
-      shift 2
-      ;;
     --degeneracy-report)
       require_value "$1" "${2:-}"
       DEGENERACY_REPORT_CSVS+=("$(realpath -m "$2")")
@@ -425,18 +410,36 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "${MAP_QUALITY_MAX_REGRESSION_PERCENT_SET}" == "true" && \
-      -z "${MAP_QUALITY_BASELINE_REPORT}" ]]; then
-  fail "--map-quality-max-regression-percent requires --map-quality-baseline-report"
+if [[ "${RUN_BENCHMARK_SUMMARY}" != "true" \
+  && ( -n "${APE_THRESHOLD}" || "${FAIL_ON_PROFILES}" == "true" ) ]]; then
+  fail "--skip-benchmark-summary cannot disable a requested benchmark gate"
 fi
-if [[ -n "${MAP_QUALITY_BASELINE_REPORT}" && \
-      ! -f "${MAP_QUALITY_BASELINE_REPORT}" ]]; then
-  fail "map-quality baseline report not found: ${MAP_QUALITY_BASELINE_REPORT}"
+if [[ "${FAIL_ON_PROFILES}" == "true" && -z "${RELEASE_PROFILE}" ]]; then
+  fail "--fail-on-profiles requires an active --release-profile"
+fi
+if [[ "${FAIL_ON_PROFILES}" == "true" && ! -f "${RELEASE_PROFILE}" ]]; then
+  fail "release profile not found: ${RELEASE_PROFILE}"
+fi
+
+RELEASE_CANDIDATE_COMMIT=""
+if [[ "${FAIL_ON_PROFILES}" == "true" ]]; then
+  if ! RELEASE_CANDIDATE_COMMIT="$(
+    git -c "safe.directory=${REPO_ROOT}" \
+      -C "${REPO_ROOT}" rev-parse --verify HEAD^{commit}
+  )"; then
+    fail "cannot resolve the release-candidate Git commit from ${REPO_ROOT}"
+  fi
+  if [[ ! "${RELEASE_CANDIDATE_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then
+    fail "release-candidate Git commit is not an exact 40-character object ID"
+  fi
 fi
 
 mkdir -p "${OUT_DIR}"
 
 echo "Release readiness output: ${OUT_DIR}"
+if [[ -n "${RELEASE_CANDIDATE_COMMIT}" ]]; then
+  echo "Release candidate commit: ${RELEASE_CANDIDATE_COMMIT}"
+fi
 
 if [[ "${RUN_DEFAULT_CI}" == "true" ]]; then
   echo "==> Running default workflow checks"
@@ -446,30 +449,33 @@ fi
 
 if [[ "${RUN_BENCHMARK_SUMMARY}" == "true" ]]; then
   METRICS_FOUND="$(find "${BENCHMARK_ROOT}" -name metrics.json -print -quit 2>/dev/null || true)"
-  if [[ -n "${METRICS_FOUND}" ]]; then
-    echo "==> Generating benchmark summary from ${BENCHMARK_ROOT}"
-    SUMMARY_CMD=(
-      python3
-      "${REPO_ROOT}/scripts/benchmark_summary.py"
-      --root "${BENCHMARK_ROOT}"
-      --write-md "${OUT_DIR}/benchmark_summary.md"
-      --write-csv "${OUT_DIR}/benchmark_summary.csv"
+  SUMMARY_CMD=(
+    python3
+    "${REPO_ROOT}/scripts/benchmark_summary.py"
+    --root "${BENCHMARK_ROOT}"
+    --write-md "${OUT_DIR}/benchmark_summary.md"
+    --write-csv "${OUT_DIR}/benchmark_summary.csv"
+  )
+  if [[ -n "${APE_THRESHOLD}" ]]; then
+    SUMMARY_CMD+=(
+      --ape-threshold "${APE_THRESHOLD}"
+      --ape-threshold-reference-kind "${APE_THRESHOLD_REFERENCE_KIND}"
+      --fail-on-ape-threshold
     )
-    if [[ -n "${APE_THRESHOLD}" ]]; then
+  fi
+  if [[ -n "${RELEASE_PROFILE}" && -f "${RELEASE_PROFILE}" ]]; then
+    SUMMARY_CMD+=(--release-profile "${RELEASE_PROFILE}")
+    if [[ "${FAIL_ON_PROFILES}" == "true" ]]; then
       SUMMARY_CMD+=(
-        --ape-threshold "${APE_THRESHOLD}"
-        --ape-threshold-reference-kind "${APE_THRESHOLD_REFERENCE_KIND}"
-        --fail-on-ape-threshold
+        --fail-on-profiles
+        --required-git-commit "${RELEASE_CANDIDATE_COMMIT}"
       )
     fi
-    if [[ -n "${RELEASE_PROFILE}" && -f "${RELEASE_PROFILE}" ]]; then
-      SUMMARY_CMD+=(--release-profile "${RELEASE_PROFILE}")
-      if [[ "${FAIL_ON_PROFILES}" == "true" ]]; then
-        SUMMARY_CMD+=(--fail-on-profiles)
-      fi
-    elif [[ -n "${RELEASE_PROFILE}" ]]; then
-      echo "warning: release profile not found at ${RELEASE_PROFILE}; continuing without profile gate" >&2
-    fi
+  elif [[ -n "${RELEASE_PROFILE}" ]]; then
+    echo "warning: release profile not found at ${RELEASE_PROFILE}; continuing without profile gate" >&2
+  fi
+  if [[ -n "${METRICS_FOUND}" ]]; then
+    echo "==> Generating benchmark summary from ${BENCHMARK_ROOT}"
     "${SUMMARY_CMD[@]}" 2>&1 | tee "${OUT_DIR}/benchmark_summary.log"
     echo "==> Generating benchmark HTML report from ${BENCHMARK_ROOT}"
     python3 "${REPO_ROOT}/scripts/generate_html_report.py" \
@@ -477,7 +483,17 @@ if [[ "${RUN_BENCHMARK_SUMMARY}" == "true" ]]; then
       --out "${OUT_DIR}/benchmark_report.html" \
       2>&1 | tee "${OUT_DIR}/benchmark_report.log"
   else
-    echo "==> No metrics.json found under ${BENCHMARK_ROOT}; skipping benchmark summary" \
+    if [[ "${FAIL_ON_PROFILES}" == "true" ]]; then
+      echo "==> No metrics.json found under ${BENCHMARK_ROOT}; evaluating every release profile as missing evidence"
+      echo "==> No metrics.json found under ${BENCHMARK_ROOT}; skipping benchmark HTML report" \
+        | tee "${OUT_DIR}/benchmark_report.log"
+      "${SUMMARY_CMD[@]}" 2>&1 | tee "${OUT_DIR}/benchmark_summary.log"
+    elif [[ -n "${APE_THRESHOLD}" ]]; then
+      echo "error: no metrics.json found under ${BENCHMARK_ROOT}; requested benchmark gate has no evidence" \
+        | tee "${OUT_DIR}/benchmark_summary.log" >&2
+      exit 2
+    fi
+    echo "==> No metrics.json found under ${BENCHMARK_ROOT}; benchmark reporting is skipped" \
       | tee "${OUT_DIR}/benchmark_summary.log"
     echo "==> No metrics.json found under ${BENCHMARK_ROOT}; skipping benchmark HTML report" \
       | tee "${OUT_DIR}/benchmark_report.log"
@@ -633,12 +649,6 @@ if [[ ${#MAP_QUALITY_PCDS[@]} -gt 0 ]]; then
     fi
     if [[ -n "${MAP_QUALITY_PROFILE}" ]]; then
       MAP_QUALITY_CMD+=(--profile "${MAP_QUALITY_PROFILE}")
-    fi
-    if [[ -n "${MAP_QUALITY_BASELINE_REPORT}" ]]; then
-      MAP_QUALITY_CMD+=(
-        --baseline-report "${MAP_QUALITY_BASELINE_REPORT}"
-        --max-regression-percent "${MAP_QUALITY_MAX_REGRESSION_PERCENT}"
-      )
     fi
     "${MAP_QUALITY_CMD[@]}" 2>&1 | tee -a "${OUT_DIR}/map_quality.log"
   done

@@ -1,7 +1,11 @@
 # Keep the Docker build context to sources only: exclude VCS metadata,
 # colcon artifacts, datasets, and run outputs (regenerated inside the image).
 .git
+**/.git
 .github
+.pytest_cache/
+**/__pycache__/
+*.py[cod]
 build/
 install/
 log/

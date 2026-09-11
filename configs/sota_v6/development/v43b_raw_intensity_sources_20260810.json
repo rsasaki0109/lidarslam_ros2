@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "source_set_id": "sota-v6-v43b-exact-raw-sources-20260810",
+  "sequences": [
+    {
+      "sequence_id": "navinst_indoor02",
+      "bag_path": "/media/sasaki/aiueo/benchmarks/quarantine/opencode_inputs_20260810/navinst_canonical_ros1.bag",
+      "bag_size_bytes": 2349637247,
+      "bag_sha256": "b8afd9649a310669dcc39737a8f3e1d40f00adfa619ff61afda712c2924fc8ff",
+      "lidar_topic": "/velodyne/lidar/points",
+      "lidar_frame": "velodyne_lidar_link",
+      "voxel_dir": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_navinst_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/voxel/navinst_indoor02",
+      "state_sha256": "4162962d17195e11b134789ea26af29ceb568b099cf69615502a4cc9bb713fda",
+      "voxel_config_path": "configs/voxel_slam_v17/navinst_indoor02.yaml",
+      "voxel_config_sha256": "07ca2d2717dadbe2e069cb2822281d9072fb29c419b6a6bf68ac16406e7fb419",
+      "v42_report_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v42_streaming_pose_graph_audit_20260810/navinst_indoor02/run_01.json",
+      "v42_report_sha256": "33d2ee52eb95554fb13d497c63649458239750ea44c3e14d4711f47e88cec951",
+      "legacy_edges_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_navinst_voxel_v17_verified_graph_screen/run1/loop_edges.csv",
+      "legacy_edges_sha256": "5552acd91f2b6eb3f3704ccd78ffed2099db6641f374df842f88e32356984c74"
+    },
+    {
+      "sequence_id": "oxford_spires_keble_05",
+      "bag_path": "/media/sasaki/aiueo/benchmarks/quarantine/opencode_inputs_20260810/oxford_canonical_ros1.bag",
+      "bag_size_bytes": 6839129436,
+      "bag_sha256": "8e7660e600f1f52758e0301f861a2174500ef38f60df5ac9f9d7198df9c54217",
+      "lidar_topic": "/hesai/pandar",
+      "lidar_frame": "pandar",
+      "voxel_dir": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_oxford_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/voxel/oxford_spires_keble_05",
+      "state_sha256": "7f531a4121fc76afda19e3ac3b7cb7d075cc4d45884b64fc3ccf6c53ca92b522",
+      "voxel_config_path": "configs/voxel_slam_v17/oxford_spires_keble_05.yaml",
+      "voxel_config_sha256": "6c236bba79232a6bdaa48d68bb53a79eea58e1a46466f358e0c0aa1307cfb2c3",
+      "v42_report_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v42_streaming_pose_graph_audit_20260810/oxford_spires_keble_05/run_01.json",
+      "v42_report_sha256": "05245e21b29371fae7fb17fb30d354d971fcb46cd8e379b0292b1b1ae3c986c4",
+      "legacy_edges_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_oxford_voxel_v17_verified_graph_screen/run1/loop_edges.csv",
+      "legacy_edges_sha256": "3cffafa334cf5ae8719d263d77c29aa4ff123ae02c52e3fa8cca6ac6519d8047"
+    },
+    {
+      "sequence_id": "urbannav_hk_tunnel_1",
+      "bag_path": "/media/sasaki/aiueo/benchmarks/quarantine/opencode_inputs_20260810/urbannav_canonical_ros1.bag",
+      "bag_size_bytes": 6091193677,
+      "bag_sha256": "95524232d9a4c2781d919a9dc1c16f6037cd88dd4d4d40bf9958ab0a219297a1",
+      "lidar_topic": "/velodyne_points",
+      "lidar_frame": "velodyne",
+      "voxel_dir": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_urbannav_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/voxel/urbannav_hk_tunnel_1",
+      "state_sha256": "d91e54f0b46065a77cfcb6f727a5e8484712669750f600e420ef55b69b4d198b",
+      "voxel_config_path": "configs/voxel_slam_v17/urbannav_hk_tunnel_1.yaml",
+      "voxel_config_sha256": "337a2b741f77a28b440a7391951440e03369be2f570d900f5404d7bfc88759a0",
+      "v42_report_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v42_streaming_pose_graph_audit_20260810/urbannav_hk_tunnel_1/run_01.json",
+      "v42_report_sha256": "9f75f9863afd2a66ca496e2da6724c1b1b748430ffc6683f59d13cf8cc8d1e4c",
+      "legacy_edges_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_urbannav_voxel_v17_verified_graph_screen/run1/loop_edges.csv",
+      "legacy_edges_sha256": "4c90fb5921414b59a43d90c7c5ff9bef82681c77254fa48f9ba683dff8f3768d"
+    }
+  ]
+}

@@ -41,7 +41,7 @@ bash scripts/compare_with_glim.sh \
 test -s "${TUM}" || { echo "ERROR: empty trajectory ${TUM}"; exit 1; }
 
 echo "== [2/3] extract posed images (auto clock alignment) =="
-python3 tools/gaussian_splatting/extract_posed_images.py \
+python3 tools/colored_map/extract_posed_images.py \
   --bag "${BAG}" --traj "${TUM}" \
   --camera-topic /image --camera-info-topic /camera_info \
   --extrinsic "${EXTRINSIC}" \
@@ -52,7 +52,7 @@ python3 tools/gaussian_splatting/extract_posed_images.py \
 INIT_ARGS=(--num-init "${NUM_INIT}")
 if [[ "${LIDAR_PRIMED}" == "1" ]]; then
   echo "== [3/4] build LiDAR-primed init cloud =="
-  python3 tools/gaussian_splatting/build_lidar_init.py \
+  python3 tools/colored_map/build_lidar_init.py \
     --bag "${BAG}" --traj "${TUM}" --points-topic /livox/points \
     --voxel 0.05 --max-points 200000 \
     --out "${OUT_DIR}/gsplat/lidar_init.ply"

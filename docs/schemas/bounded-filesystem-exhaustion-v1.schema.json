@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/bounded-filesystem-exhaustion-v1.schema.json",
+  "title": "lidarslam_ros2 bounded filesystem exhaustion report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "started_at",
+    "finished_at",
+    "duration_sec",
+    "hardware_label",
+    "image",
+    "harness",
+    "input",
+    "bounded_filesystem",
+    "execution",
+    "observed",
+    "checks"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "passed"}}
+      },
+      "then": {
+        "properties": {
+          "harness": {
+            "properties": {"dirty": {"const": false}}
+          },
+          "execution": {
+            "properties": {
+              "container_exit_code": {"not": {"const": 0}},
+              "timed_out": {"const": false}
+            }
+          },
+          "observed": {
+            "properties": {
+              "product_exit_code": {"not": {"const": 0}}
+            }
+          },
+          "checks": {
+            "items": {
+              "properties": {"passed": {"const": true}}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/bounded-filesystem-exhaustion-v1.schema.json"
+    },
+    "status": {"enum": ["passed", "failed"]},
+    "started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {"type": "string", "format": "date-time"},
+    "duration_sec": {"type": "number", "minimum": 0},
+    "hardware_label": {"type": "string", "minLength": 1},
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference",
+        "image_id",
+        "repo_digests",
+        "source_revision"
+      ],
+      "properties": {
+        "reference": {"type": "string", "minLength": 1},
+        "image_id": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "repo_digests": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "source_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit",
+        "dirty",
+        "script_sha256",
+        "runtime_payload"
+      ],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "dirty": {"type": "boolean"},
+        "script_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "runtime_payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["files", "sha256"],
+          "properties": {
+            "files": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path", "sha256"],
+                "properties": {
+                  "path": {"type": "string", "minLength": 1},
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                }
+              }
+            },
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bag_name",
+        "metadata_sha256",
+        "storage_identifier",
+        "message_count",
+        "storage_files"
+      ],
+      "properties": {
+        "bag_name": {"type": "string", "minLength": 1},
+        "metadata_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "storage_identifier": {"type": "string", "minLength": 1},
+        "message_count": {"type": "integer", "minimum": 1},
+        "storage_files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "size_bytes", "sha256"],
+            "properties": {
+              "path": {"type": "string", "minLength": 1},
+              "size_bytes": {"type": "integer", "minimum": 1},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          }
+        }
+      }
+    },
+    "bounded_filesystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "limit_bytes", "mount_path"],
+      "properties": {
+        "type": {"const": "docker_tmpfs"},
+        "limit_bytes": {"type": "integer", "minimum": 1048576},
+        "mount_path": {"const": "/bounded-output"}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "container_exit_code",
+        "timed_out",
+        "timeout_secs",
+        "container_log_sha256"
+      ],
+      "properties": {
+        "container_exit_code": {"type": "integer"},
+        "timed_out": {"type": "boolean"},
+        "timeout_secs": {"type": "integer", "minimum": 1},
+        "container_log_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_exit_code",
+        "output_layout",
+        "filesystem",
+        "manifest",
+        "diagnosis",
+        "storage_signatures",
+        "captured_files"
+      ],
+      "properties": {
+        "product_exit_code": {"type": "integer"},
+        "output_layout": {"enum": ["final", "partial", "missing"]},
+        "filesystem": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["capacity_bytes", "available_bytes", "used_bytes"],
+          "properties": {
+            "capacity_bytes": {"type": "integer", "minimum": 1},
+            "available_bytes": {"type": "integer", "minimum": 0},
+            "used_bytes": {"type": "integer", "minimum": 0}
+          }
+        },
+        "manifest": {"type": "object"},
+        "diagnosis": {"type": "object"},
+        "storage_signatures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "line", "text"],
+            "properties": {
+              "path": {"type": "string", "minLength": 1},
+              "line": {"type": "integer", "minimum": 1},
+              "text": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "captured_files": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^captured/[^/]+$"
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "passed", "observed"],
+        "properties": {
+          "id": {
+            "enum": [
+              "harness_revision_clean",
+              "runtime_matches_harness_revision",
+              "run_completed_within_timeout",
+              "product_failed_closed",
+              "tmpfs_capacity_enforced",
+              "real_enospc_signature_observed",
+              "filesystem_nearly_exhausted",
+              "manifest_records_failed_terminal_state",
+              "diagnosis_identifies_storage_exhaustion",
+              "success_not_claimed"
+            ]
+          },
+          "passed": {"type": "boolean"},
+          "observed": {"type": "string"}
+        }
+      },
+      "allOf": [
+        {"contains": {"properties": {"id": {"const": "harness_revision_clean"}}}},
+        {"contains": {"properties": {"id": {"const": "runtime_matches_harness_revision"}}}},
+        {"contains": {"properties": {"id": {"const": "run_completed_within_timeout"}}}},
+        {"contains": {"properties": {"id": {"const": "product_failed_closed"}}}},
+        {"contains": {"properties": {"id": {"const": "tmpfs_capacity_enforced"}}}},
+        {"contains": {"properties": {"id": {"const": "real_enospc_signature_observed"}}}},
+        {"contains": {"properties": {"id": {"const": "filesystem_nearly_exhausted"}}}},
+        {"contains": {"properties": {"id": {"const": "manifest_records_failed_terminal_state"}}}},
+        {"contains": {"properties": {"id": {"const": "diagnosis_identifies_storage_exhaustion"}}}},
+        {"contains": {"properties": {"id": {"const": "success_not_claimed"}}}}
+      ]
+    }
+  }
+}

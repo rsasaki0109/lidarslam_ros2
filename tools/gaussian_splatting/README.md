@@ -3,6 +3,12 @@
 SLAM の出力（最適化軌跡 + pointcloud_map）から **3D Gaussian Splatting** の
 photorealistic map / novel-view 成果物を後処理で再構成するための opt-in ツール群。
 
+> **Note**: カメラ着色・マップエクスポート系のツール（gsplat 非依存:
+> `pointcloud_io` / `build_lidar_init` / `colored_map_pipeline` /
+> `render_map_flythrough` / 各種 export / BIM）は
+> [`tools/colored_map/`](../colored_map/) へ移動した。旧パスは互換 shim で
+> そのまま import / 実行できる。
+
 設計の全体像・スコープ・ライセンス判断・PoC 計画は
 [`docs/research/3dgs-postprocess-map-design.md`](../../docs/research/3dgs-postprocess-map-design.md)
 を参照。

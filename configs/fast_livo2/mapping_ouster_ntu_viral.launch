@@ -1,0 +1,10 @@
+<launch>
+  <!-- Use only the pinned official FAST-LIVO2 NTU-VIRAL configuration. -->
+  <rosparam command="load" file="$(find fast_livo)/config/NTU_VIRAL.yaml" />
+  <!-- Logging-only overrides: preserve the exact LiDAR update timestamp. -->
+  <param name="evo/pose_output_en" value="true" />
+  <param name="evo/seq_name" value="benchmark" />
+  <node pkg="fast_livo" type="fastlivo_mapping" name="laserMapping" output="screen">
+    <rosparam file="$(find fast_livo)/config/camera_NTU_VIRAL.yaml" />
+  </node>
+</launch>

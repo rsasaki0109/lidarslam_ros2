@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-validator-cohort-state-v1.schema.json",
+  "cohort_id": "g1-first-map-cohort-2026-08",
+  "phase": "initial",
+  "extension_decision_url": null,
+  "operational_signals": {
+    "observed_at": null,
+    "audit_url": null,
+    "public_source_or_documentation_drift": null,
+    "supported_p0_open": null,
+    "failed_release_gate": null,
+    "privacy_or_safety_incident": null
+  },
+  "attempts": [],
+  "authority": {
+    "community_posts_authorized": false,
+    "github_writes_authorized": false,
+    "remote_mutations_performed": false
+  }
+}

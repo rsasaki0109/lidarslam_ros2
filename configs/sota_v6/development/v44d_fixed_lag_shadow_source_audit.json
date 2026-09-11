@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "contract_id": "v44d-fixed-lag-shadow-source-audit-20260810",
+  "stage": "report_only_shadow_source_implementation_and_static_audit",
+  "rationale": "Complete and statically audit one isolated fixed-lag estimator core before any raw bag adapter or execution contract exists. The source may be exercised only with deterministic in-memory synthetic records. It has no authority to replay raw data, score accuracy, access a reference map, publish ROS output, or mutate the primary trajectory, map, or bias state.",
+  "prerequisite": {
+    "architecture_contract_path": "configs/sota_v6/development/v44b_fixed_lag_shadow_architecture.json",
+    "architecture_contract_sha256": "74a80cca0e3dc7de9a10950d50c4fea7518dfe3d4fed8c5e1aeec77c3efee8e7",
+    "required_architecture_contract_id": "v44b-fixed-lag-shadow-architecture-20260810",
+    "synthetic_contract_path": "configs/sota_v6/development/v44c1_fixed_lag_synthetic_contracts.json",
+    "synthetic_contract_sha256": "e5e8a8a3ae8d7e6b17ae8c7c6580751ac3bee8ff914ba80274222617aedb6c92",
+    "required_synthetic_contract_id": "v44c1-fixed-lag-synthetic-contracts-20260810",
+    "synthetic_aggregate_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44c1_fixed_lag_synthetic_contracts_20260810/aggregate.json",
+    "synthetic_aggregate_sha256": "18dc483ae4a924608d16ed3f47b7dd5bb812f6baea027d931d7f2010287bf663",
+    "required_synthetic_aggregate_payload_sha256": "c89f1cf5fcece0799afd7d897423bf17ee850b85156706f2fc34cd68c00e4c6f",
+    "required_synthetic_decision": "AUTHORIZE_V44_STAGE4_REPORT_ONLY_SHADOW_IMPLEMENTATION"
+  },
+  "implementation": {
+    "path": "scripts/v44_fixed_lag_shadow_estimator.py",
+    "sha256": "c353cce1cde17e45ea1244871da8a7077f10b28055f8c8cdfae49a5bddaf8ee9",
+    "maximum_source_bytes": 131072,
+    "language": "Python_3_with_NumPy",
+    "kind": "in_memory_estimator_core_without_runtime_adapter",
+    "top_level_side_effects_allowed": false,
+    "command_line_interface_allowed": false,
+    "raw_bag_decoder_allowed": false,
+    "filesystem_read_or_write_allowed": false,
+    "network_or_subprocess_allowed": false,
+    "ros_subscription_or_publication_allowed": false,
+    "wall_clock_input_allowed": false,
+    "parallel_solver_allowed": false
+  },
+  "public_input_contract": {
+    "imu_record": {
+      "class": "ImuSample",
+      "exact_fields": [
+        "timestamp_ns",
+        "angular_velocity_B_rad_s",
+        "linear_acceleration_B_m_s2",
+        "source_index",
+        "serialized_size_bytes"
+      ]
+    },
+    "lidar_point_record": {
+      "class": "LidarPoint",
+      "exact_fields": [
+        "point_L_m",
+        "offset_ns",
+        "ring",
+        "source_index"
+      ]
+    },
+    "lidar_scan_record": {
+      "class": "LidarScan",
+      "exact_fields": [
+        "scan_index",
+        "header_stamp_ns",
+        "points",
+        "source_index",
+        "serialized_size_bytes"
+      ]
+    },
+    "fixed_extrinsic_record": {
+      "class": "BodyFromLidar",
+      "exact_fields": [
+        "rotation_BL",
+        "translation_BL_m"
+      ]
+    },
+    "forbidden_public_fields": [
+      "dataset",
+      "dataset_id",
+      "sequence",
+      "sequence_id",
+      "ground_truth",
+      "accuracy",
+      "reference_map",
+      "camera",
+      "gnss",
+      "wheel_odometry",
+      "external_pose",
+      "orientation",
+      "covariance",
+      "v17_state"
+    ]
+  },
+  "allowed_import_roots": [
+    "__future__",
+    "dataclasses",
+    "hashlib",
+    "json",
+    "math",
+    "struct",
+    "typing",
+    "numpy"
+  ],
+  "forbidden_import_roots": [
+    "argparse",
+    "asyncio",
+    "concurrent",
+    "cv2",
+    "geometry_msgs",
+    "multiprocessing",
+    "os",
+    "pathlib",
+    "rclpy",
+    "requests",
+    "rosbag",
+    "rosbags",
+    "sensor_msgs",
+    "shutil",
+    "socket",
+    "subprocess",
+    "threading",
+    "time",
+    "urllib"
+  ],
+  "forbidden_call_names": [
+    "__import__",
+    "compile",
+    "eval",
+    "exec",
+    "input",
+    "open"
+  ],
+  "forbidden_attribute_calls": [
+    "create_publisher",
+    "create_subscription",
+    "dump",
+    "dumps_to_file",
+    "mkdir",
+    "open",
+    "popen",
+    "publish",
+    "remove",
+    "rename",
+    "replace_file",
+    "rmdir",
+    "run",
+    "system",
+    "unlink",
+    "write",
+    "write_bytes",
+    "write_text"
+  ],
+  "forbidden_dataset_symbol_fragments": [
+    "navinst",
+    "oxford",
+    "urbannav",
+    "indoor02",
+    "spires_keble",
+    "tunnel_1"
+  ],
+  "required_constants": {
+    "ARCHITECTURE_CONTRACT_ID": "v44b-fixed-lag-shadow-architecture-20260810",
+    "SYNTHETIC_CONTRACT_ID": "v44c1-fixed-lag-synthetic-contracts-20260810",
+    "SOURCE_STAGE": "report_only_shadow_estimator_core",
+    "STATE_DOF": 15,
+    "GRAVITY_MAGNITUDE_M_S2": 9.80665,
+    "FACTOR_TYPE_ORDER": {
+      "gauge": 0,
+      "marginal_prior": 1,
+      "imu_preintegration": 2,
+      "bias_random_walk": 3,
+      "lidar_point_to_plane": 4
+    },
+    "SOURCE_AUTHORITY": {
+      "raw_shadow_replay": false,
+      "accuracy_or_reference_map_inputs": false,
+      "primary_trajectory_or_map_mutation": false,
+      "ros_publication": false,
+      "filesystem_output": false
+    }
+  },
+  "required_classes": [
+    "ContractViolation",
+    "BoundaryCoverageViolation",
+    "CapacityViolation",
+    "EstimatorTerminalFailure",
+    "ImuSample",
+    "LidarPoint",
+    "LidarScan",
+    "BodyFromLidar",
+    "FixedLagShadowConfig",
+    "PreintegratedImu",
+    "ImuBuffer",
+    "Knot",
+    "FrozenKnot",
+    "ImuFactor",
+    "Surfel",
+    "PreparedScan",
+    "LidarBatch",
+    "FirstEstimatePrior",
+    "StreamingHouseholderSystem",
+    "ProtectedOutputGuard",
+    "FixedLagShadowEstimator"
+  ],
+  "required_module_functions": [
+    "canonical_json",
+    "payload_sha256",
+    "skew",
+    "vee",
+    "validate_rotation",
+    "so3_exp",
+    "so3_log",
+    "rotation_from_two_vectors",
+    "rotation_to_quaternion_xyzw",
+    "preintegrate_midpoint",
+    "corrected_preintegration",
+    "state_delta",
+    "state_payload_bytes",
+    "robust_acceleration_mean",
+    "gravity_tangent_basis",
+    "perturb_gravity_direction",
+    "gravity_direction_delta",
+    "integrate_scan_trajectory",
+    "deterministic_voxel_select",
+    "build_surfels",
+    "lidar_residual_and_jacobians",
+    "build_lidar_batches",
+    "square_root_separator_prior"
+  ],
+  "required_estimator_methods": [
+    "consume_imu",
+    "consume_lidar",
+    "record_runtime_observation",
+    "_process_ready_scans",
+    "_prepare_scan",
+    "_attempt_bootstrap",
+    "_joint_bootstrap_optimize",
+    "_rebase_bootstrap_world",
+    "_add_streaming_scan",
+    "_refresh_preintegrations",
+    "_factor_system",
+    "_update_full_lag_bias_information_diagnostic",
+    "_optimize",
+    "_marginalize_oldest",
+    "_enforce_active_bounds",
+    "_fail",
+    "finalize"
+  ],
+  "required_architecture_markers": {
+    "integer_sensor_time": [
+      "timestamp_ns",
+      "header_stamp_ns",
+      "offset_ns"
+    ],
+    "dynamic_bootstrap": [
+      "robust_acceleration_mean",
+      "_initial_bootstrap_knots",
+      "_attempt_bootstrap",
+      "_joint_bootstrap_optimize",
+      "gravity_tangent_basis",
+      "perturb_gravity_direction",
+      "_rebase_bootstrap_world",
+      "bootstrap_velocity_prior_std_m_s",
+      "bootstrap_gyro_bias_prior_std_rad_s",
+      "bootstrap_accel_bias_prior_std_m_s2",
+      "bootstrap_gravity_direction_prior_std_rad",
+      "_bootstrap_gravity_jointly_optimized",
+      "first_delta_time"
+    ],
+    "preintegration_and_bias": [
+      "PreintegratedImu",
+      "J_R_bg",
+      "J_v_bg",
+      "J_v_ba",
+      "J_p_bg",
+      "J_p_ba",
+      "_refresh_preintegrations"
+    ],
+    "lidar_and_observability": [
+      "deterministic_voxel_select",
+      "integrate_scan_trajectory",
+      "build_surfels",
+      "lidar_residual_and_jacobians",
+      "build_lidar_batches",
+      "retained_left",
+      "bias_last_order",
+      "_update_full_lag_bias_information_diagnostic",
+      "full_lag_bias_information_rank",
+      "full_lag_bias_information_singular_values"
+    ],
+    "fixed_lag_optimizer": [
+      "StreamingHouseholderSystem",
+      "line_search_scales",
+      "_marginalize_until_room",
+      "square_root_separator_prior",
+      "FirstEstimatePrior"
+    ],
+    "fail_closed_isolation": [
+      "ProtectedOutputGuard",
+      "CapacityViolation",
+      "EstimatorTerminalFailure",
+      "valid_shadow_result",
+      "state_payload_sha256"
+    ]
+  },
+  "required_static_checks": [
+    "prerequisite_architecture_hash_and_id",
+    "prerequisite_synthetic_contract_hash_and_id",
+    "prerequisite_synthetic_aggregate_hash_payload_and_decision",
+    "implementation_hash_and_size",
+    "python_ast_parse",
+    "no_top_level_runtime_side_effect",
+    "imports_are_allowlisted",
+    "forbidden_imports_absent",
+    "forbidden_builtin_calls_absent",
+    "forbidden_attribute_calls_absent",
+    "no_command_line_entrypoint",
+    "no_raw_bag_or_ros_adapter",
+    "no_filesystem_network_or_subprocess_surface",
+    "no_wall_clock_or_parallel_solver_surface",
+    "no_dataset_specific_symbols",
+    "public_input_fields_exact",
+    "forbidden_public_input_fields_absent",
+    "required_constants_exact",
+    "source_authority_fail_closed",
+    "required_classes_present",
+    "required_module_functions_present",
+    "required_estimator_methods_present",
+    "fifteen_dof_state_layout_present",
+    "integer_sensor_time_path_present",
+    "dynamic_unbranched_bootstrap_path_present",
+    "all_five_bias_jacobians_present",
+    "binary_lidar_observability_path_present",
+    "factor_order_exact",
+    "bounded_householder_and_rank_solve_present",
+    "fixed_line_search_present",
+    "square_root_fej_marginalization_present",
+    "resource_preflight_present",
+    "protected_output_guard_present",
+    "terminal_zero_valid_output_present",
+    "diagnostic_required_fields_present",
+    "in_memory_smoke_probes_pass"
+  ],
+  "smoke_probe": {
+    "synthetic_only": true,
+    "random_seed": 4404001,
+    "required_probe_ids": [
+      "SO3_round_trip",
+      "preintegration_bias_inventory",
+      "covariance_PSD",
+      "binary_lidar_Jacobian",
+      "Householder_dense_equivalence",
+      "square_root_separator_equivalence",
+      "FEJ_payload_immutable",
+      "protected_output_identity",
+      "resource_preflight_rejection",
+      "authority_closed"
+    ]
+  },
+  "audit_resource_bounds": {
+    "rss_measurement_scope": "absolute_for_standalone_process_incremental_for_preloaded_host",
+    "maximum_rss_mib": 160.0,
+    "maximum_incremental_rss_mib": 64.0,
+    "maximum_ast_nodes": 30000,
+    "maximum_report_bytes": 8388608,
+    "capacity_violation_policy": "terminal_fail_closed_before_allocation_or_write"
+  },
+  "decision": {
+    "required_validation_repetitions": 2,
+    "required_static_check_count": 36,
+    "required_smoke_probe_count": 10,
+    "on_pass": "AUTHORIZE_V44_STAGE4_RAW_SHADOW_REPLAY_CONTRACT_DEFINITION",
+    "on_fail": "REJECT_V44D_SHADOW_SOURCE_BOUNDARY",
+    "raw_shadow_replay_contract_definition_authorized_on_pass": true,
+    "raw_shadow_replay_execution_authorized_on_pass": false,
+    "accuracy_or_reference_map_inputs_authorized_on_pass": false,
+    "primary_trajectory_or_map_mutation_authorized_on_pass": false
+  },
+  "next_execution_contract_requirements": [
+    "bind the exact v44a source manifest and all three raw bags by SHA-256",
+    "provide a read-only decoder adapter outside the estimator core",
+    "write only to a new bounded diagnostic evidence directory",
+    "hash protected v17 state and map artifacts before and after each run",
+    "enforce 330 MiB RSS and 0.85 processing RTF after every scan",
+    "require completion and identical state payloads across two repetitions",
+    "keep accuracy, ground truth, reference maps, ROS publication, and primary writeback closed"
+  ]
+}

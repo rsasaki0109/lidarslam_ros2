@@ -32,6 +32,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 import subprocess
 
@@ -63,8 +64,16 @@ def test_mid360_robot_runbook_smoke_script(tmp_path: Path):
 
     assert 'MID-360 robot runbook smoke: PASS' in result.stdout
     assert readiness['status'] == 'PASS'
-    assert readiness['bag_diagnostics']['topics']['pointcloud']['metadata_rate_hz'] == 10.0
-    assert readiness['bag_diagnostics']['topics']['imu']['metadata_rate_hz'] == 100.0
+    assert math.isclose(
+        readiness['bag_diagnostics']['topics']['pointcloud']['metadata_rate_hz'],
+        10.0,
+        rel_tol=0.02,
+    )
+    assert math.isclose(
+        readiness['bag_diagnostics']['topics']['imu']['metadata_rate_hz'],
+        100.0,
+        rel_tol=0.02,
+    )
     assert (output_dir / 'mid360_robot_session_dashboard.html').is_file()
     assert (output_dir / 'mid360_robot_field_session.json').is_file()
     assert (output_dir / 'mid360_robot_run_plan.json').is_file()

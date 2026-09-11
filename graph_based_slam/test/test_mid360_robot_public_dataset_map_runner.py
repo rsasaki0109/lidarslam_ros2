@@ -54,6 +54,9 @@ from mid360_robot_public_dataset_map_runner import (  # noqa: E402
 )
 
 
+TEST_SAFETY_OPTIONS = PublicDatasetMapSafetyOptions(min_free_bytes=0)
+
+
 def _write_bag(path: Path, duration_ns: int = 10_000_000_000) -> None:
     path.mkdir(parents=True)
     (path / 'metadata.yaml').write_text(
@@ -161,7 +164,11 @@ def test_runner_writes_plan_manifest(tmp_path: Path):
     report_path.write_text(json.dumps(_report(tmp_path)), encoding='utf-8')
 
     runner = PublicDatasetMapRunner(report_path=report_path, output_dir=output_dir)
-    manifest = runner.build_manifest(PublicDatasetMapSelectionOptions(limit=1), run=False)
+    manifest = runner.build_manifest(
+        PublicDatasetMapSelectionOptions(limit=1),
+        safety_options=TEST_SAFETY_OPTIONS,
+        run=False,
+    )
     paths = runner.write_manifest(manifest)
     markdown = render_map_candidates_markdown(manifest)
 
@@ -191,6 +198,7 @@ def test_runner_executes_candidates_when_run_is_requested(tmp_path: Path):
         output_dir=output_dir,
     ).build_manifest(
         PublicDatasetMapSelectionOptions(dataset_ids=('driving_slam_mid360',)),
+        safety_options=TEST_SAFETY_OPTIONS,
         run=True,
     )
 
@@ -213,6 +221,7 @@ def test_runner_times_out_and_cleans_up_process_group(tmp_path: Path):
         output_dir=output_dir,
     ).build_manifest(
         PublicDatasetMapSelectionOptions(dataset_ids=('driving_slam_mid360',)),
+        safety_options=TEST_SAFETY_OPTIONS,
         run_options=PublicDatasetMapRunOptions(timeout_sec=1),
         run=True,
     )
@@ -234,6 +243,7 @@ def test_runner_blocks_candidate_when_map_outputs_already_exist(tmp_path: Path):
         output_dir=tmp_path / 'manifest',
     ).build_manifest(
         PublicDatasetMapSelectionOptions(dataset_ids=('driving_slam_mid360',)),
+        safety_options=TEST_SAFETY_OPTIONS,
         run=False,
     )
 
@@ -279,6 +289,8 @@ def test_runner_cli_outputs_json(tmp_path: Path):
             'hard_pointcloud_mid360_outdoor_kidnap_a',
             '--run-timeout-sec',
             '10',
+            '--min-free-gb',
+            '0',
             '--json',
         ],
         check=True,

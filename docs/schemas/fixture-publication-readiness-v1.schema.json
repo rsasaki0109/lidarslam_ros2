@@ -1,0 +1,319 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/fixture-publication-readiness-v1.schema.json",
+  "title": "lidarslam_ros2 fixture publication readiness v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "review",
+    "fixture",
+    "provenance",
+    "local_validation",
+    "publication",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/fixture-publication-readiness-v1.schema.json"
+    },
+    "status": {
+      "enum": ["AWAITING_PUBLICATION_DECISION", "PUBLICATION_READY"]
+    },
+    "review": {"$ref": "#/definitions/review"},
+    "fixture": {"$ref": "#/definitions/fixture"},
+    "provenance": {"$ref": "#/definitions/provenance"},
+    "local_validation": {"$ref": "#/definitions/localValidation"},
+    "publication": {"$ref": "#/definitions/publication"},
+    "decision": {"$ref": "#/definitions/decision"}
+  },
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "filename": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,239}$"
+    },
+    "remoteStatus": {
+      "enum": ["RESOLVABLE", "UNRESOLVABLE", "NOT_CHECKED"]
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["review_id", "reviewed_on"],
+      "properties": {
+        "review_id": {"$ref": "#/definitions/slug"},
+        "reviewed_on": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "artifactIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "size_bytes", "sha256", "member_count"],
+      "properties": {
+        "filename": {"$ref": "#/definitions/filename"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "member_count": {"type": "integer", "minimum": 3}
+      }
+    },
+    "jsonIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "size_bytes", "sha256", "schema_status"],
+      "properties": {
+        "filename": {"$ref": "#/definitions/filename"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "schema_status": {"const": "PASS"}
+      }
+    },
+    "receiptIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "size_bytes",
+        "sha256",
+        "schema_status",
+        "status",
+        "passed_checks",
+        "total_checks",
+        "generator_revision_match",
+        "geometry_free"
+      ],
+      "properties": {
+        "filename": {"$ref": "#/definitions/filename"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "schema_status": {"const": "PASS"},
+        "status": {"const": "PASS"},
+        "passed_checks": {"const": 7},
+        "total_checks": {"const": 7},
+        "generator_revision_match": {"const": true},
+        "geometry_free": {"const": true}
+      }
+    },
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_id",
+        "artifact",
+        "build_manifest",
+        "map_receipt"
+      ],
+      "properties": {
+        "fixture_id": {"$ref": "#/definitions/slug"},
+        "artifact": {"$ref": "#/definitions/artifactIdentity"},
+        "build_manifest": {"$ref": "#/definitions/jsonIdentity"},
+        "map_receipt": {"$ref": "#/definitions/receiptIdentity"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "generator_revision",
+        "generator_revision_remote_status",
+        "review_revision",
+        "review_revision_remote_status",
+        "clean_rebuilds",
+        "rebuild_artifacts_byte_identical",
+        "rebuild_manifests_byte_identical"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$"
+        },
+        "generator_revision": {"$ref": "#/definitions/commit"},
+        "generator_revision_remote_status": {
+          "$ref": "#/definitions/remoteStatus"
+        },
+        "review_revision": {"$ref": "#/definitions/commit"},
+        "review_revision_remote_status": {
+          "$ref": "#/definitions/remoteStatus"
+        },
+        "clean_rebuilds": {"type": "integer", "minimum": 2},
+        "rebuild_artifacts_byte_identical": {"const": true},
+        "rebuild_manifests_byte_identical": {"const": true}
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status"],
+      "properties": {
+        "id": {
+          "enum": [
+            "fixture_manifest_schema",
+            "manifest_identity",
+            "artifact_identity",
+            "archive_member_safety",
+            "archive_recipe",
+            "archive_member_closure",
+            "archive_member_digests",
+            "attribution_and_limits",
+            "map_receipt_schema",
+            "map_receipt_outcome",
+            "map_receipt_revision",
+            "clean_rebuild_reproducibility",
+            "geometry_privacy_boundary"
+          ]
+        },
+        "status": {"const": "PASS"}
+      }
+    },
+    "archiveValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "safe_member_count",
+        "expected_member_count",
+        "member_digests_verified",
+        "member_bytes_verified",
+        "unexpected_members",
+        "sorted_members",
+        "fixed_timestamp",
+        "unix_mode_0644",
+        "deflate_only",
+        "encrypted_members",
+        "archive_comment_empty",
+        "member_metadata_empty"
+      ],
+      "properties": {
+        "safe_member_count": {"type": "integer", "minimum": 3},
+        "expected_member_count": {"type": "integer", "minimum": 3},
+        "member_digests_verified": {"type": "integer", "minimum": 3},
+        "member_bytes_verified": {"type": "integer", "minimum": 1},
+        "unexpected_members": {"const": 0},
+        "sorted_members": {"const": true},
+        "fixed_timestamp": {"const": true},
+        "unix_mode_0644": {"const": true},
+        "deflate_only": {"const": true},
+        "encrypted_members": {"const": 0},
+        "archive_comment_empty": {"const": true},
+        "member_metadata_empty": {"const": true}
+      }
+    },
+    "attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "member", "verified_fields"],
+      "properties": {
+        "status": {"const": "PASS"},
+        "member": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._/-]+/ATTRIBUTION\\.md$"
+        },
+        "verified_fields": {
+          "type": "array",
+          "minItems": 11,
+          "maxItems": 11,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "creator",
+              "title",
+              "source_url",
+              "doi",
+              "citation",
+              "license",
+              "license_url",
+              "change_notice",
+              "onboarding_limit",
+              "full_gate_limit",
+              "no_endorsement"
+            ]
+          }
+        }
+      }
+    },
+    "localValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "checks",
+        "archive",
+        "attribution",
+        "private_path_markers_found"
+      ],
+      "properties": {
+        "status": {"const": "LOCAL_ARTIFACT_PASS"},
+        "checks": {
+          "type": "array",
+          "minItems": 13,
+          "maxItems": 13,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/check"}
+        },
+        "archive": {"$ref": "#/definitions/archiveValidation"},
+        "attribution": {"$ref": "#/definitions/attribution"},
+        "private_path_markers_found": {"const": 0}
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host",
+        "authorization",
+        "upload_performed",
+        "immutable_record_id",
+        "immutable_artifact_url"
+      ],
+      "properties": {
+        "host": {
+          "type": ["string", "null"],
+          "enum": ["github-release", "zenodo", null]
+        },
+        "authorization": {"enum": ["NOT_GRANTED", "GRANTED"]},
+        "upload_performed": {"const": false},
+        "immutable_record_id": {"type": "null"},
+        "immutable_artifact_url": {"type": "null"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "blockers", "next_actions"],
+      "properties": {
+        "status": {
+          "enum": ["AWAITING_PUBLICATION_DECISION", "PUBLICATION_READY"]
+        },
+        "blockers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/slug"}
+        },
+        "next_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

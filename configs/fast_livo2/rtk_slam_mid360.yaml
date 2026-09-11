@@ -1,0 +1,93 @@
+common:
+  img_topic: "/camera/image_raw"
+  lid_topic: "/livox/lidar"
+  imu_topic: "/livox/imu"
+  img_en: 1
+  lidar_en: 1
+  ros_driver_bug_fix: false
+
+extrin_calib:
+  # Dataset calibration: LiDAR -> IMU.
+  extrinsic_T: [-0.011, -0.023, 0.044]
+  extrinsic_R: [1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0]
+  # Dataset calibration composed as LiDAR -> camera.
+  Rcl: [0.00108687073756647, 0.9999988715203714, -0.0010371451121827802,
+        -0.3836505154202839, -0.0005408029950234039, -0.9234782019895602,
+        -0.9234777207544047, 0.0014016026913775126, 0.38364949469554266]
+  Pcl: [-0.000973819217913, -0.084394858301839, -0.031208052999052]
+
+time_offset:
+  imu_time_offset: 0.0
+  # The released ROS bags already compensate the calibrated camera delay.
+  img_time_offset: 0.0
+  exposure_time_init: 0.0
+
+preprocess:
+  point_filter_num: 1
+  filter_size_surf: 0.1
+  lidar_type: 1
+  scan_line: 4
+  blind: 0.8
+
+vio:
+  max_iterations: 5
+  outlier_threshold: 1000
+  img_point_cov: 100
+  patch_size: 8
+  patch_pyrimid_level: 4
+  normal_en: true
+  raycast_en: false
+  inverse_composition_en: false
+  exposure_estimate_en: true
+  inv_expo_cov: 0.1
+
+imu:
+  imu_en: true
+  imu_int_frame: 30
+  acc_cov: 0.5
+  gyr_cov: 0.3
+  b_acc_cov: 0.0001
+  b_gyr_cov: 0.0001
+
+lio:
+  max_iterations: 5
+  dept_err: 0.02
+  beam_err: 0.05
+  min_eigen_value: 0.0025
+  voxel_size: 0.5
+  max_layer: 2
+  max_points_num: 50
+  layer_init_num: [5, 5, 5, 5, 5]
+
+local_map:
+  map_sliding_en: false
+  half_map_size: 100
+  sliding_thresh: 8
+
+uav:
+  imu_rate_odom: false
+  gravity_align_en: false
+
+publish:
+  dense_map_en: true
+  pub_effect_point_en: false
+  pub_plane_en: false
+  pub_scan_num: 1
+  blind_rgb_points: 0.0
+
+evo:
+  seq_name: "rtk_slam_mid360"
+  pose_output_en: false
+
+pcd_save:
+  pcd_save_en: false
+  type: 0
+  colmap_output_en: false
+  filter_size_pcd: 0.15
+  interval: -1
+
+image_save:
+  img_save_en: false
+  interval: 1

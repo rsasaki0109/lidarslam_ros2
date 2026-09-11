@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "dataset": "ENWIDE",
+  "source": "official_prism_imu_extrinsics",
+  "source_file": "prism_imu_extrinsics.txt",
+  "position_only": true,
+  "imu_to_prism_translation_m": {
+    "x": -0.006253,
+    "y": 0.011775,
+    "z": 0.10825
+  }
+}

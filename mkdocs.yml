@@ -34,14 +34,53 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - 日本語クイックスタート: getting-started-ja.md
+  - Product Contract: product-contract.md
+  - v1.0 Readiness: v1-readiness.md
+  - G0 Readiness Dashboard: g0-readiness.md
+  - Product Draft Review Routing: review-routing.md
+  - Weekly growth scorecard: growth-scorecard.md
+  - G0 clean-candidate audit: evidence/growth/g0-clean-candidate-audit-2026-08-11.md
+  - Current G0 action packet: evidence/growth/g0-current-action-packet-2026-08-14.md
+  - G0 external-action decision: evidence/growth/g0-external-action-decision-packet-2026-08-11.md
+  - Community contributor backlog: evidence/growth/community-contributor-backlog-2026-08-11.md
+  - Contributor Python test evidence: evidence/growth/contributor-python-test-entrypoint-2026-08-11.md
+  - Open-issue triage proposal: evidence/growth/open-issue-triage-proposal-2026-08-11.md
+  - Comparable onboarding trials: onboarding-trials.md
+  - Onboarding trial execution: onboarding-trial-execution.md
+  - GLIM usability scorecard: usability-scorecard.md
+  - Docker onboarding probe evidence: evidence/onboarding/docker-machine-probes-2026-08-10.md
+  - MID-360 fixture pilot evidence: evidence/onboarding/mid360-onboarding-fixture-pilot-2026-08-10.md
+  - MID-360 fixture publication review: evidence/onboarding/mid360-fixture-publication-review-2026-08-11.md
+  - Public dataset acquisition hardening: evidence/onboarding/public-dataset-acquisition-hardening-2026-08-11.md
+  - Published fixture audit gate: evidence/onboarding/published-fixture-audit-gate-2026-08-11.md
+  - Runtime image slimming evidence: evidence/onboarding/runtime-image-slimming-2026-08-11.md
+  - Golden-path CLI: golden-path-cli.md
+  - CLI compatibility: cli-compatibility.md
+  - CLI install evidence: evidence/cli-v1-install-2026-07-28.md
+  - Operational reliability: operational-reliability.md
+  - VoxelGrid overflow safety evidence: evidence/voxel-grid-overflow-safety-2026-08-11.md
+  - Named-hardware soak evidence: evidence/real-data-soak-2026-07-28.md
+  - Docker first-map evidence: evidence/docker-first-map-2026-07-28.md
+  - Independent first-map validation: external-first-map-validation.md
+  - Install upgrade evidence: evidence/install-upgrade-2026-07-28.md
+  - Pinned real-data E2E: real-data-e2e.md
+  - Distribution and installed CLI: distribution.md
   - Autoware-Compatible Map Authoring: autoware-map-authoring.md
   - Autoware Quickstart: autoware-quickstart.md
   - Autoware Foxglove: autoware-foxglove.md
   - Operator Workflows: workflows.md
+  - Repository Layout: repository-layout.md
+  - Degeneracy Resilience Guide: degeneracy-guide.md
+  - Graph SLAM Architecture: graph-slam-architecture.md
+  - Registration Plugin API: architecture/registration-plugin-api.md
+  - Registration Plugin Authoring: registration-plugin-authoring.md
   - 3DGS Photoreal Map: 3dgs-map-tutorial.md
   - 3DGS Map Viewer: 3dgs-viewer.md
   - Benchmarking And Release Gate: benchmarking.md
   - Benchmark Python Surface: benchmark-python-surface.md
+  - RKO-LIO voxel compatibility evidence: evidence/rko-voxel-compatibility-2026-07-31.md
+  - Leo Drive packet benchmark evidence: evidence/leo-drive-packet-benchmark-2026-07-30.md
   - rosdistro Binary Release: rosdistro-release.md
   - DDS / Large-Message Tuning: dds-tuning.md
   - Comparison: comparison.md
@@ -73,9 +112,16 @@ nav:
   - Roadmaps:
       - SOTA Product Development: roadmap/sota-product-development-2026-08.md
       - Extensible OSS Architecture: roadmap/extensible-architecture-2026-08.md
+      - 1,000 Stars: roadmap/1000-stars.md
+      - 2026–2029 Operating Plan: roadmap/1000-stars-2026-2029.md
+      - Quarterly Health Review Template: roadmap/1000-stars-quarterly-review-template.md
+      - v0.9 Product Foundation: roadmap/v0.9.md
   - Social:
-      - v0.2.2 Post Kit: social/autoware_map_authoring_post_v0.2.2.md
+      - v0.9.1 Candidate Media Kit: social/autoware_map_authoring_post_v0.9.1.md
   - Releases:
+      - v0.9.1: releases/v0.9.1.md
+      - v0.9.0: releases/v0.9.0.md
+      - v0.7.0: releases/v0.7.0.md
       - v0.6.0: releases/v0.6.0.md
       - v0.5.0: releases/v0.5.0.md
       - v0.3.0: releases/v0.3.0.md

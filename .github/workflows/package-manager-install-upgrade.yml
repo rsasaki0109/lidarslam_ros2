@@ -1,0 +1,279 @@
+name: package-manager install and upgrade
+run-name: package-manager / ${{ inputs.source_ref }} / ${{ inputs.target_version }} / ${{ inputs.target_channel }} / ${{ inputs.mode }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Exact release tag or candidate ref whose contracts are tested
+        required: true
+        default: develop
+        type: string
+      target_version:
+        description: Exact upstream version to install from ROS apt
+        required: true
+        type: string
+      target_channel:
+        description: ROS apt channel containing the target version
+        required: true
+        default: testing
+        type: choice
+        options:
+          - testing
+          - main
+      mode:
+        description: Clean install or main-to-target in-place upgrade
+        required: true
+        default: clean-install
+        type: choice
+        options:
+          - clean-install
+          - upgrade
+      baseline_version:
+        description: Exact main-channel version; required for upgrade
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-manager-${{ inputs.source_ref }}-${{ inputs.mode }}
+  cancel-in-progress: false
+
+jobs:
+  installed-golden-path:
+    name: ${{ matrix.ros_distro }} ${{ inputs.mode }}
+    runs-on: ${{ matrix.runs_on }}
+    container: ${{ matrix.container }}
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ros_distro: humble
+            runs_on: ubuntu-22.04
+            container: ros:humble-ros-core
+          - ros_distro: jazzy
+            runs_on: ubuntu-24.04
+            container: ros:jazzy-ros-core
+    env:
+      TARGET_VERSION: ${{ inputs.target_version }}
+      TARGET_CHANNEL: ${{ inputs.target_channel }}
+      INSTALL_MODE: ${{ inputs.mode }}
+      BASELINE_VERSION: ${{ inputs.baseline_version }}
+
+    steps:
+      - name: Install evidence tooling
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y \
+            git \
+            python3-jsonschema \
+            tar \
+            zstd
+
+      - name: Check out exact product contract
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_ref }}
+          submodules: false
+
+      - name: Validate requested release identity
+        shell: bash
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          [[ "${TARGET_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$(tr -d '\n' < VERSION)" = "${TARGET_VERSION}"
+          if [[ "${INSTALL_MODE}" == "upgrade" ]]; then
+            [[ "${BASELINE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+            dpkg --compare-versions \
+              "${BASELINE_VERSION}" lt "${TARGET_VERSION}"
+          else
+            test -z "${BASELINE_VERSION}"
+          fi
+
+      - name: Install and record main-channel baseline
+        if: inputs.mode == 'upgrade'
+        shell: bash
+        run: |
+          install_exact_product() {
+            local version="$1"
+            local specs=()
+            local logical package candidate
+            for logical in \
+              lidarslam \
+              lidarslam-msgs \
+              scanmatcher \
+              graph-based-slam
+            do
+              package="ros-${{ matrix.ros_distro }}-${logical}"
+              candidate="$(
+                apt-cache madison "${package}" \
+                  | awk -v prefix="${version}-" \
+                      'index($3, prefix) == 1 {print $3; exit}'
+              )"
+              if [[ -z "${candidate}" ]]; then
+                echo "No ${package} ${version} main candidate" >&2
+                apt-cache madison "${package}" >&2
+                return 1
+              fi
+              specs+=("${package}=${candidate}")
+            done
+            apt-get install -y "${specs[@]}"
+          }
+          install_exact_product "${BASELINE_VERSION}"
+          mkdir -p output/package-manager
+          source "/opt/ros/${{ matrix.ros_distro }}/setup.bash"
+          python3 scripts/check_package_manager_install.py \
+            --ros-distro "${{ matrix.ros_distro }}" \
+            --expected-version "${BASELINE_VERSION}" \
+            --mode upgrade-baseline \
+            --channel main \
+            --output-json output/package-manager/baseline.json
+
+      - name: Enable ROS testing channel
+        if: inputs.target_channel == 'testing'
+        shell: bash
+        run: |
+          apt-get install -y ros2-testing-apt-source
+          apt-get update
+
+      - name: Install exact target packages
+        shell: bash
+        run: |
+          install_exact_product() {
+            local version="$1"
+            local specs=()
+            local logical package candidate
+            for logical in \
+              lidarslam \
+              lidarslam-msgs \
+              scanmatcher \
+              graph-based-slam
+            do
+              package="ros-${{ matrix.ros_distro }}-${logical}"
+              candidate="$(
+                apt-cache madison "${package}" \
+                  | awk -v prefix="${version}-" \
+                      'index($3, prefix) == 1 {print $3; exit}'
+              )"
+              if [[ -z "${candidate}" ]]; then
+                echo "No ${package} ${version} ${TARGET_CHANNEL} candidate" >&2
+                apt-cache madison "${package}" >&2
+                return 1
+              fi
+              specs+=("${package}=${candidate}")
+            done
+            apt-get install -y "${specs[@]}"
+          }
+          install_exact_product "${TARGET_VERSION}"
+
+      - name: Verify package-manager result
+        shell: bash
+        run: |
+          mkdir -p output/package-manager
+          source "/opt/ros/${{ matrix.ros_distro }}/setup.bash"
+          args=(
+            --ros-distro "${{ matrix.ros_distro }}"
+            --expected-version "${TARGET_VERSION}"
+            --channel "${TARGET_CHANNEL}"
+            --output-json output/package-manager/install.json
+          )
+          if [[ "${INSTALL_MODE}" == "upgrade" ]]; then
+            args+=(
+              --mode upgrade-candidate
+              --baseline-report output/package-manager/baseline.json
+            )
+          else
+            args+=(--mode clean-install)
+          fi
+          python3 scripts/check_package_manager_install.py "${args[@]}"
+
+      - name: Restore pinned dataset archive
+        uses: actions/cache@v5
+        with:
+          path: datasets/real-data-e2e/driving_slam_mid360/archives/rosbag2_2024_04_16-14_17_01.zip
+          key: driving-slam-mid360-517088133-0836c50859bb1af591966b69da166186
+
+      - name: Download and verify pinned real bag
+        shell: bash
+        run: |
+          python3 scripts/download_mid360_robot_public_dataset.py \
+            --dataset driving_slam_mid360 \
+            --dataset-root datasets/real-data-e2e \
+            --output-dir output/package-manager/intake
+
+      - name: Run package-manager-installed golden path
+        shell: bash
+        run: |
+          source "/opt/ros/${{ matrix.ros_distro }}/setup.bash"
+          bag="datasets/real-data-e2e/driving_slam_mid360/extracted/rosbag2_2024_04_16-14_17_01/rosbag2_2024_04_16-14_17_01"
+          lidarslam-map doctor "${bag}" --json \
+            > output/package-manager/doctor.json
+          timeout --signal=TERM --kill-after=30s 20m \
+            lidarslam-map run "${bag}" \
+              --output-dir output/package-manager/run
+
+      - name: Validate package-manager E2E evidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          source = Path(
+              'configs/real_data_e2e/driving_slam_mid360_v1.json'
+          )
+          contract = json.loads(source.read_text(encoding='utf-8'))
+          distro = os.environ['ROS_DISTRO']
+          contract['id'] = f"package_manager_{distro}_mid360_v1"
+          contract['execution']['ros_distro'] = distro
+          Path('output/package-manager/e2e-contract.json').write_text(
+              json.dumps(contract, indent=2, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          PY
+          python3 scripts/validate_real_data_e2e.py \
+            --contract output/package-manager/e2e-contract.json \
+            --intake-manifest datasets/real-data-e2e/driving_slam_mid360/mid360_robot_public_dataset_intake.json \
+            --run-dir output/package-manager/run \
+            --output-json output/package-manager/e2e-evidence.json \
+            --output-markdown output/package-manager/e2e-evidence.md
+
+      - name: Publish evidence summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f output/package-manager/e2e-evidence.md ]]; then
+            sed -n '1,120p' output/package-manager/e2e-evidence.md \
+              >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "## Package-manager gate produced no E2E report" \
+              >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Upload non-geometry evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: package-manager-${{ matrix.ros_distro }}-${{ inputs.mode }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            output/package-manager/baseline.json
+            output/package-manager/install.json
+            output/package-manager/doctor.json
+            output/package-manager/e2e-contract.json
+            output/package-manager/e2e-evidence.json
+            output/package-manager/e2e-evidence.md
+            output/package-manager/run/run_manifest.json
+            output/package-manager/run/autoware_map_diagnosis.json
+            output/package-manager/run/autoware_map_diagnosis.md
+            output/package-manager/run/verify_autoware_map.log
+            output/package-manager/run/first_map_validation_receipt.json
+            output/package-manager/run/first_map_validation_receipt.md
+            output/package-manager/run/slam.launch.log
+            output/package-manager/run/map_save.log

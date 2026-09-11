@@ -1,0 +1,409 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/ndt-omp-release-readiness-v2.schema.json",
+  "title": "ndt_omp_ros2 initial release and review readiness report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "package",
+    "candidate",
+    "mode",
+    "status",
+    "local",
+    "remote",
+    "actions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/ndt-omp-release-readiness-v2.schema.json"
+    },
+    "package": {
+      "const": "ndt_omp_ros2"
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "commit"
+      ],
+      "properties": {
+        "version": {
+          "const": "0.1.0"
+        },
+        "commit": {
+          "const": "8b77fa5a6cdcad45bf35918361c892b6d94a287e"
+        }
+      }
+    },
+    "mode": {
+      "enum": [
+        "offline",
+        "online"
+      ]
+    },
+    "status": {
+      "enum": [
+        "LOCAL_READY",
+        "READY_TO_TAG",
+        "IN_PROGRESS",
+        "REVIEW_REQUIRED",
+        "RELEASED",
+        "BLOCKED"
+      ]
+    },
+    "local": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ready",
+        "gitlink_commit",
+        "head_commit",
+        "package_version",
+        "checks"
+      ],
+      "properties": {
+        "ready": {
+          "type": "boolean"
+        },
+        "gitlink_commit": {
+          "type": "string"
+        },
+        "head_commit": {
+          "type": "string"
+        },
+        "package_version": {
+          "type": "string"
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/check"
+          }
+        }
+      }
+    },
+    "remote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inspected",
+        "errors",
+        "origin_branch_commit",
+        "source_tag_present",
+        "release_repository_present",
+        "rosdistro",
+        "pull_requests"
+      ],
+      "properties": {
+        "inspected": {
+          "type": "boolean"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "origin_branch_commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_tag_present": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "release_repository_present": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "rosdistro": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "humble",
+            "jazzy"
+          ],
+          "properties": {
+            "humble": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "jazzy": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          }
+        },
+        "pull_requests": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "humble",
+            "jazzy"
+          ],
+          "properties": {
+            "humble": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/pull_request"
+                },
+                {
+                  "properties": {
+                    "number": {
+                      "const": 52949
+                    },
+                    "url": {
+                      "const": "https://github.com/ros/rosdistro/pull/52949"
+                    }
+                  }
+                }
+              ]
+            },
+            "jazzy": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/pull_request"
+                },
+                {
+                  "properties": {
+                    "number": {
+                      "const": 52950
+                    },
+                    "url": {
+                      "const": "https://github.com/ros/rosdistro/pull/52950"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "definitions": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "detail"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "author",
+        "created_at"
+      ],
+      "properties": {
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "author": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "pull_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "number",
+        "url",
+        "state",
+        "merged",
+        "mergeable",
+        "head_sha",
+        "updated_at",
+        "latest_actionable_review",
+        "response_pending",
+        "check_runs"
+      ],
+      "properties": {
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/ros/rosdistro/pull/[0-9]+$"
+        },
+        "state": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "open",
+            "closed",
+            null
+          ]
+        },
+        "merged": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "mergeable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "head_sha": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "updated_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "latest_actionable_review": {
+          "$ref": "#/definitions/review"
+        },
+        "response_pending": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "check_runs": {
+          "$ref": "#/definitions/check_runs"
+        }
+      }
+    },
+    "check_runs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inspected",
+        "total_count",
+        "passing_count",
+        "pending_count",
+        "failing_count",
+        "runs"
+      ],
+      "properties": {
+        "inspected": {
+          "type": "boolean"
+        },
+        "total_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "passing_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "pending_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "failing_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/check_run"
+          }
+        }
+      }
+    },
+    "check_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status",
+        "conclusion",
+        "details_url",
+        "classification"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "conclusion": {
+          "type": ["string", "null"]
+        },
+        "details_url": {
+          "type": ["string", "null"]
+        },
+        "classification": {
+          "enum": ["PASSING", "PENDING", "FAILING"]
+        }
+      }
+    }
+  }
+}

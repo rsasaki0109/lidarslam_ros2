@@ -1,0 +1,22 @@
+colored_map_quality_profile:
+  name: rtkslam_construction_seq1_colored_map
+  enforcement: report_only
+  thresholds:
+    # Calibrated on the 480--545 s construction_seq1 A/B/D comparison in
+    # rtkslam_seq1_colored_map_20260718. D is the adopted margin=140,
+    # min_samples=3 configuration. Keep report-only until another colour rig
+    # establishes run-to-run variation.
+    alignment_median_max_px: 8.0
+    alignment_inlier_2px_min: 0.20
+    heldout_rgb_median_max: 42.0
+    heldout_rgb_inlier_20_min: 0.28
+    heldout_scored_fraction_min: 0.70
+    appearance_coverage_min: 0.70
+    appearance_roughness_median_max: 6.0
+    appearance_roughness_p90_max: 22.0
+    appearance_chroma_retention_min: 0.90
+    # PCA-planar voxels amplify pepper regressions: A/B/D/I p90 scores are
+    # 25.89 / 28.12 / 23.75 / 23.50. The pipeline enables this metric
+    # automatically when these thresholds are present.
+    appearance_planar_roughness_median_max: 7.6
+    appearance_planar_roughness_p90_max: 25.0

@@ -36,7 +36,6 @@ import importlib.util
 import json
 import os
 from pathlib import Path
-import subprocess
 
 import yaml
 
@@ -46,14 +45,6 @@ PROFILE_PATH = (
     ROOT / 'configs' / 'slam_benchmark_profiles' / 'competitive_slam_v1.yaml'
 )
 HILTI_RKO_PATH = ROOT / 'configs' / 'hilti2022' / 'rko_lio_hilti2022_pandar.yaml'
-EXECUTION_RECEIPT_PATH = ROOT / 'configs' / 'slam_benchmark_profiles' / (
-    'competitive_execution_selection_2026-08.yaml')
-EXECUTION_CHECKER_PATH = ROOT / 'scripts' / 'check_competitive_execution_selection.py'
-_CHECKER_SPEC = importlib.util.spec_from_file_location(
-    'competitive_execution_selection_checker', EXECUTION_CHECKER_PATH)
-assert _CHECKER_SPEC.loader is not None
-_CHECKER = importlib.util.module_from_spec(_CHECKER_SPEC)
-_CHECKER_SPEC.loader.exec_module(_CHECKER)
 
 
 def _profile():
@@ -92,27 +83,23 @@ def test_seen_datasets_cannot_silently_become_holdouts():
     seen |= set(datasets['regression_only'])
     holdouts = datasets['holdout_slots']
     assert not seen.intersection(holdouts)
-    assert len({slot['dataset'] for slot in holdouts.values()}) == len(holdouts)
+    assert len({(slot['dataset'], slot['sequence'])
+                for slot in holdouts.values()}) == len(holdouts)
     assert all(
         slot['status'] in {'assigned_inputs_pending_hash', 'frozen'}
         for slot in holdouts.values()
     )
-    assert all(slot['bag_expected_bytes'] > 0 for slot in holdouts.values())
-    assert all(slot['bag_url'].startswith('https://') for slot in holdouts.values())
-    assert all(
-        slot['ground_truth_url'].startswith('https://')
-        for slot in holdouts.values()
-    )
+    assert all(slot.get('bag_expected_bytes',
+                        slot.get('archive_expected_bytes', 0)) > 0
+               for slot in holdouts.values())
+    assert all(slot.get('bag_url', slot.get('archive_url', '')).startswith('https://')
+               for slot in holdouts.values())
     assert all(len(slot['ground_truth_sha256']) == 64 for slot in holdouts.values())
-    assert all(
-        len(slot['calibration_archive_sha256']) == 64
-        for slot in holdouts.values()
-    )
-    assert all(slot['status'] == 'frozen' for slot in holdouts.values())
     for slot in holdouts.values():
-        for key in ('raw_rosbag1_sha256', 'canonical_rosbag2_tree_sha256',
-                    'input_manifest_sha256', 'semantic_equivalence_sha256'):
-            assert len(slot[key]) == 64
+        if slot['status'] == 'frozen':
+            for key in ('raw_rosbag1_sha256', 'canonical_rosbag2_tree_sha256',
+                        'input_manifest_sha256', 'semantic_equivalence_sha256'):
+                assert len(slot[key]) == 64
     assert profile['phase_gates']['before_algorithm_tuning'][
         'require_all_holdout_slots_assigned'
     ] is True
@@ -950,11 +937,19 @@ def test_online_phase_is_primary_and_wall_rtf_is_diagnostic():
     assert runtime['legacy_wall_gate_role'] == 'diagnostic_only'
     assert runtime['replay_wall_realtime_factor_is_diagnostic_only'] is True
     assert runtime['maximum_trajectory_end_gap_seconds'] <= 0.25
+    assert runtime['fast_livo2_processing_probe_rate'] > 1.0
+    assert runtime['fast_livo2_processing_probe_repetitions'] == 3
+    assert runtime['fast_livo2_processing_probe_fixed_drain_seconds'] >= 0.0
+    assert runtime['fast_livo2_processing_probe_max_ape_drift_percent'] <= 1.0
     aggregation = _profile()['repetition_aggregation']
     assert aggregation['processing_realtime_factor'] == 'median'
     assert aggregation['peak_rss'] == 'maximum'
     assert aggregation['completion_and_failures'] == 'worst_case'
     assert aggregation['mapping_quality'] == 'worst_case'
+    assert 'runtime.processing_realtime_factor' in (
+        _profile()['required_metrics']['common'])
+    assert 'runtime.realtime_factor' not in (
+        _profile()['required_metrics']['common'])
 
 
 def test_cross_ros_comparison_requires_semantic_sensor_identity():

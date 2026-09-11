@@ -129,7 +129,7 @@ def _copy_bag_window(
 
     with AnyReader([input_bag], default_typestore=typestore) as reader, Writer(
         output_bag,
-        version=9,
+        version=8,
     ) as writer:
         input_connections = [conn for conn in reader.connections if conn.topic in wanted]
         output_connections = {}

@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-catalog-v1.schema.json",
+  "title": "lidarslam_ros2 local map session catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "created_at",
+    "source",
+    "filter",
+    "summary",
+    "sessions"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-catalog-v1.schema.json"
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "scan_depth", "follows_symlinks"],
+      "properties": {
+        "root": {"type": "string", "minLength": 1},
+        "scan_depth": {"const": 1},
+        "follows_symlinks": {"const": false}
+      }
+    },
+    "filter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "limit"],
+      "properties": {
+        "status": {
+          "enum": [
+            "all",
+            "running",
+            "verified",
+            "unverified",
+            "action_required"
+          ]
+        },
+        "limit": {"type": "integer", "minimum": 1, "maximum": 200}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidates", "valid", "skipped_invalid", "displayed"],
+      "properties": {
+        "candidates": {"type": "integer", "minimum": 0},
+        "valid": {"type": "integer", "minimum": 0},
+        "skipped_invalid": {"type": "integer", "minimum": 0},
+        "displayed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {"$ref": "#/definitions/session"}
+    }
+  },
+  "definitions": {
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_path",
+        "session_name",
+        "session_path",
+        "page_path",
+        "created_at",
+        "status",
+        "profile",
+        "verification",
+        "quality",
+        "summary",
+        "bag_path",
+        "map_output",
+        "recommended_action"
+      ],
+      "properties": {
+        "bundle_path": {"type": "string", "minLength": 1},
+        "session_name": {"type": "string", "minLength": 1},
+        "session_path": {"type": "string", "minLength": 1},
+        "page_path": {"type": ["string", "null"]},
+        "created_at": {"type": "string", "format": "date-time"},
+        "status": {
+          "enum": ["running", "verified", "unverified", "action_required"]
+        },
+        "profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "label"],
+          "properties": {
+            "id": {"type": "string", "minLength": 1},
+            "label": {"type": "string", "minLength": 1}
+          }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "result"],
+          "properties": {
+            "mode": {"enum": ["required", "off"]},
+            "result": {
+              "enum": ["pending", "PASS", "not_run", "not_completed"]
+            }
+          }
+        },
+        "quality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["overall", "headline"],
+          "properties": {
+            "overall": {
+              "enum": [
+                "pending",
+                "pass",
+                "not_verified",
+                "action_required",
+                "unavailable"
+              ]
+            },
+            "headline": {"type": "string", "minLength": 1}
+          }
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title", "message"],
+          "properties": {
+            "title": {"type": "string", "minLength": 1},
+            "message": {"type": "string", "minLength": 1}
+          }
+        },
+        "bag_path": {"type": "string", "minLength": 1},
+        "map_output": {"type": "string", "minLength": 1},
+        "recommended_action": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/definitions/action"}
+          ]
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "label", "command"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "view",
+            "inspect",
+            "verify",
+            "resume",
+            "retry",
+            "recover"
+          ]
+        },
+        "label": {"type": "string", "minLength": 1},
+        "command": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

@@ -1,0 +1,249 @@
+--- a/VoxelSLAM/src/voxelslam.cpp
++++ b/VoxelSLAM/src/voxelslam.cpp
+@@ -2174,12 +2174,109 @@
+     
+   }
+ 
++  // Build the no-loop GBA graph in the source-scan id namespace. HBA edges
++  // use Keyframe::id, which is already the corresponding scan index; all
++  // scans must therefore be initialized and connected before top-down HBA.
++  bool build_no_loop_gba_graph(
++      gtsam::Values &initial, gtsam::NonlinearFactorGraph &graph,
++      vector<int> &ids, vector<int> &stepsizes, int map_id)
++  {
++    initial.clear(); graph = gtsam::NonlinearFactorGraph();
++    ids.clear(); stepsizes.clear();
++    if(map_id < 0 || map_id >= multimap_scanPoses.size() ||
++       multimap_scanPoses[map_id] == nullptr ||
++       multimap_scanPoses[map_id]->empty())
++    {
++      printf("v40 GBA graph rejected: empty or invalid scan map %d\n", map_id);
++      return false;
++    }
++
++    vector<ScanPose*> &scans = *multimap_scanPoses[map_id];
++    ids.push_back(map_id);
++    stepsizes.push_back(0);
++    stepsizes.push_back(scans.size());
++    for(int i=0; i<scans.size(); i++)
++    {
++      IMUST &xc = scans[i]->x;
++      gtsam::Pose3 pose3(gtsam::Rot3(xc.R), gtsam::Point3(xc.p));
++      initial.insert(i, pose3);
++      if(i > 0)
++      {
++        gtsam::Vector samv6(6);
++        samv6 = scans[i-1]->v6;
++        for(int axis=0; axis<6; axis++)
++        {
++          if(!std::isfinite(samv6[axis]) || samv6[axis] <= 0.0)
++          {
++            printf("v40 GBA graph rejected: invalid odometry variance "
++                   "scan=%d axis=%d value=%g\n", i-1, axis, samv6[axis]);
++            initial.clear(); graph = gtsam::NonlinearFactorGraph();
++            ids.clear(); stepsizes.clear();
++            return false;
++          }
++        }
++        gtsam::noiseModel::Diagonal::shared_ptr v6_noise =
++            gtsam::noiseModel::Diagonal::Variances(samv6);
++        add_edge(i-1, i, scans[i-1]->x, scans[i]->x, graph, v6_noise);
++      }
++    }
++
++    Eigen::Matrix<double, 6, 1> v6_fixd;
++    v6_fixd << 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9;
++    gtsam::noiseModel::Diagonal::shared_ptr fixd_noise =
++        gtsam::noiseModel::Diagonal::Variances(gtsam::Vector(v6_fixd));
++    IMUST &x0 = scans.front()->x;
++    gtsam::Pose3 pose0(gtsam::Rot3(x0.R), gtsam::Point3(x0.p));
++    graph.addPrior(0, pose0, fixd_noise);
++    printf("v40 full-scan GBA graph: scans=%zu odometry_edges=%zu prior=1\n",
++           scans.size(), scans.size()-1);
++    return true;
++  }
++
++  bool validate_no_loop_gba_keyframes(int map_id)
++  {
++    if(map_id < 0 || map_id >= multimap_scanPoses.size() ||
++       map_id >= multimap_keyframes.size())
++      return false;
++    const int scan_count = multimap_scanPoses[map_id]->size();
++    int previous_id = -1;
++    for(Keyframe *smp: *multimap_keyframes[map_id])
++    {
++      if(smp == nullptr || smp->id <= previous_id ||
++         smp->id < 0 || smp->id >= scan_count)
++      {
++        printf("v40 GBA keyframe contract rejected: previous=%d current=%d "
++               "scan_count=%d\n", previous_id,
++               smp == nullptr ? -1 : smp->id, scan_count);
++        return false;
++      }
++      previous_id = smp->id;
++    }
++    return true;
++  }
++
+   // The main thread of loop clousre
+   // The topDownProcess of HBA is also run here
+   void thd_loop_closure(ros::NodeHandle &n)
+   {
+     n.param<bool>("Loop/enable", loop_backend_enabled, false);
+-    if(!loop_backend_enabled)
++    bool no_loop_gba_enabled = false;
++    n.param<bool>("GBA/enable", no_loop_gba_enabled, false);
++    int no_loop_gba_keyframe_stride = 1;
++    double no_loop_gba_min_keyframe_distance = 5.0;
++    n.param<int>("GBA/keyframe_stride",
++                 no_loop_gba_keyframe_stride, 1);
++    n.param<double>("GBA/min_keyframe_distance",
++                    no_loop_gba_min_keyframe_distance, 5.0);
++    const bool no_loop_gba_config_valid =
++        no_loop_gba_keyframe_stride >= 1 &&
++        std::isfinite(no_loop_gba_min_keyframe_distance) &&
++        no_loop_gba_min_keyframe_distance >= 0.0;
++    if(no_loop_gba_enabled && !no_loop_gba_config_valid)
++      printf("v40 GBA disabled: invalid keyframe configuration\n");
++
++    if(!loop_backend_enabled &&
++       (!no_loop_gba_enabled || !no_loop_gba_config_valid))
+     {
+       // Stream locally optimized poses while releasing scan point vectors.
+       // The verified external backend owns loop acceptance for this candidate.
+@@ -2211,6 +2308,112 @@
+       return;
+     }
+ 
++    if(!loop_backend_enabled)
++    {
++      // GBA is independent from loop closure. Keyframe ids remain source scan
++      // ids, while the final graph below keeps every scan as a GTSAM variable.
++      multimap_scanPoses.push_back(scanPoses);
++      multimap_keyframes.push_back(keyframes);
++      const int map_id = multimap_scanPoses.size() - 1;
++      deque<ScanPose*> bl_local;
++      int scan_count = 0;
++      Eigen::Vector3d last_keyframe_position = Eigen::Vector3d::Zero();
++      bool have_last_keyframe = false;
++
++      while(n.ok())
++      {
++        ScanPose *bl_head = nullptr;
++        mtx_loop.lock();
++        if(!buf_lba2loop.empty())
++        {
++          bl_head = buf_lba2loop.front();
++          buf_lba2loop.pop_front();
++        }
++        mtx_loop.unlock();
++
++        if(bl_head != nullptr)
++        {
++          scanPoses->push_back(bl_head);
++          bl_local.push_back(bl_head);
++          scan_count++;
++          if((int)bl_local.size() >= win_size)
++          {
++            IMUST xc = bl_local.back()->x;
++            const bool distance_ok = !have_last_keyframe ||
++                (xc.p - last_keyframe_position).norm() >=
++                    no_loop_gba_min_keyframe_distance;
++            if(distance_ok &&
++               scan_count % no_loop_gba_keyframe_stride == 0)
++            {
++              PVecPtr pptr(new PVec);
++              for(ScanPose *bl: bl_local)
++              {
++                Eigen::Vector3d delta_p =
++                    xc.R.transpose() * (bl->x.p - xc.p);
++                Eigen::Matrix3d delta_R =
++                    xc.R.transpose() * bl->x.R;
++                if(bl->pvec != nullptr)
++                {
++                  for(pointVar pv: *bl->pvec)
++                  {
++                    pv.pnt = delta_R * pv.pnt + delta_p;
++                    pptr->push_back(pv);
++                  }
++                }
++              }
++              Keyframe *smp = new Keyframe(xc);
++              smp->id = scan_count - 1;
++              smp->jour = 0.0f;
++              down_sampling_pvec(
++                  *pptr, voxel_size / 10, *smp->plptr);
++              mtx_keyframe.lock();
++              keyframes->push_back(smp);
++              mtx_keyframe.unlock();
++              last_keyframe_position = xc.p;
++              have_last_keyframe = true;
++            }
++            for(int i=0; i<win_size; i++)
++            {
++              bl_local.front()->pvec = nullptr;
++              bl_local.pop_front();
++            }
++          }
++          continue;
++        }
++        if(is_finish)
++          break;
++        sleep(0.01);
++      }
++
++      for(ScanPose *bl: bl_local)
++        bl->pvec = nullptr;
++      bl_local.clear();
++
++      const bool keyframe_contract_valid =
++          validate_no_loop_gba_keyframes(map_id);
++      printf("v40 GBA keyframes: scans=%zu keyframes=%zu valid=%d\n",
++             scanPoses->size(), keyframes->size(),
++             keyframe_contract_valid ? 1 : 0);
++      if(keyframe_contract_valid && keyframes->size() >= 10)
++      {
++        gtsam::Values initial;
++        gtsam::NonlinearFactorGraph graph;
++        vector<int> ids, stepsizes;
++        if(build_no_loop_gba_graph(
++               initial, graph, ids, stepsizes, map_id))
++          topDownProcess(initial, graph, ids, stepsizes);
++      }
++      else
++      {
++        printf("v40 GBA skipped before optimization: keyframe contract\n");
++      }
++
++      if(is_save_map)
++        FileReaderWriter::instance().save_pose(
++            *scanPoses, bagname, "/alidarState.txt", savepath);
++      return;
++    }
++
+     pl_kdmap.reset(new pcl::PointCloud<PointType>);
+     vector<STDescManager*> std_managers;
+     PGO_Edges lp_edges;
+@@ -2890,7 +3093,11 @@
+   // The main thread of bottom up in global mapping
+   void thd_globalmapping(ros::NodeHandle &n)
+   {
+-    if(!loop_backend_enabled)
++    bool configured_loop_enabled = false;
++    bool configured_gba_enabled = false;
++    n.param<bool>("Loop/enable", configured_loop_enabled, false);
++    n.param<bool>("GBA/enable", configured_gba_enabled, false);
++    if(!configured_loop_enabled && !configured_gba_enabled)
+     {
+       while(n.ok() && !is_finish)
+         sleep(0.1);
+@@ -2935,6 +3142,9 @@
+       {
+         if(smp_flag == 0)
+         {
++          if(!configured_loop_enabled && configured_gba_enabled &&
++             is_finish && gba_flag == 0)
++            break;
+           sleep(0.1); continue;
+         }
+       }

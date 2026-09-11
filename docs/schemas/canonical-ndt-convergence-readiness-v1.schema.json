@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/canonical-ndt-convergence-readiness-v1.schema.json",
+  "title": "Canonical ndt_omp convergence readiness report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "contract_id",
+    "mode",
+    "status",
+    "checks",
+    "upstream_checkout",
+    "candidate_checkout",
+    "publication_preflight",
+    "draft_pr_handoff",
+    "actions",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/canonical-ndt-convergence-readiness-v1.schema.json"
+    },
+    "contract_id": {"const": "canonical-ndt-convergence-20260812"},
+    "mode": {
+      "enum": ["artifacts", "upstream-checkout", "draft-preflight"]
+    },
+    "status": {
+      "enum": [
+        "ARTIFACTS_READY",
+        "READY_FOR_UPSTREAM_REVIEW",
+        "READY_FOR_DRAFT_PR",
+        "BLOCKED"
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/check"}
+    },
+    "upstream_checkout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inspected", "commit", "clean", "patch_applies"],
+      "properties": {
+        "inspected": {"type": "boolean"},
+        "commit": {"type": ["string", "null"]},
+        "clean": {"type": ["boolean", "null"]},
+        "patch_applies": {"type": ["boolean", "null"]}
+      }
+    },
+    "candidate_checkout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inspected",
+        "commit",
+        "parent_commit",
+        "clean",
+        "subject",
+        "patch_matches"
+      ],
+      "properties": {
+        "inspected": {"type": "boolean"},
+        "commit": {"type": ["string", "null"]},
+        "parent_commit": {"type": ["string", "null"]},
+        "clean": {"type": ["boolean", "null"]},
+        "subject": {"type": ["string", "null"]},
+        "patch_matches": {"type": ["boolean", "null"]}
+      }
+    },
+    "publication_preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inspected",
+        "upstream_repository",
+        "fork_repository",
+        "proposed_branch",
+        "errors",
+        "upstream_head_sha",
+        "fork_is_expected",
+        "proposed_branch_present",
+        "open_pr_count",
+        "duplicate_prs"
+      ],
+      "properties": {
+        "inspected": {"type": "boolean"},
+        "upstream_repository": {"const": "koide3/ndt_omp"},
+        "fork_repository": {"const": "rsasaki0109/ndt_omp_ros2"},
+        "proposed_branch": {
+          "const": "lidarslam-priors-and-correspondence-diagnostics"
+        },
+        "errors": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "upstream_head_sha": {"type": ["string", "null"]},
+        "fork_is_expected": {"type": ["boolean", "null"]},
+        "proposed_branch_present": {"type": ["boolean", "null"]},
+        "open_pr_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "duplicate_prs": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/duplicate_pr"}
+        }
+      }
+    },
+    "draft_pr_handoff": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/definitions/draft_pr_handoff"}
+      ]
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["github_writes_authorized", "remote_mutations_performed"],
+      "properties": {
+        "github_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "READY_FOR_DRAFT_PR"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "draft_pr_handoff": {"$ref": "#/definitions/draft_pr_handoff"}
+        }
+      },
+      "else": {
+        "properties": {"draft_pr_handoff": {"type": "null"}}
+      }
+    }
+  ],
+  "definitions": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "detail"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS", "FAIL", "NOT_CHECKED"]},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "duplicate_pr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "title", "url", "head_label", "head_sha"],
+      "properties": {
+        "number": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1},
+        "url": {"type": "string", "minLength": 1},
+        "head_label": {"type": "string", "minLength": 1},
+        "head_sha": {"type": "string", "minLength": 1}
+      }
+    },
+    "draft_pr_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "external_write_required",
+        "upstream_repository",
+        "base_branch",
+        "fork_repository",
+        "head_branch",
+        "upstream_base_commit",
+        "candidate_commit",
+        "candidate_subject",
+        "title",
+        "body",
+        "preflight",
+        "constraints",
+        "steps",
+        "writes_performed"
+      ],
+      "properties": {
+        "kind": {"const": "CREATE_CANONICAL_NDT_DRAFT_PR"},
+        "external_write_required": {"const": true},
+        "upstream_repository": {"const": "koide3/ndt_omp"},
+        "base_branch": {"const": "master"},
+        "fork_repository": {"const": "rsasaki0109/ndt_omp_ros2"},
+        "head_branch": {
+          "const": "lidarslam-priors-and-correspondence-diagnostics"
+        },
+        "upstream_base_commit": {
+          "const": "5495fd9214945afcb4b35d5a1da385e405c52bf9"
+        },
+        "candidate_commit": {
+          "const": "618f02f6b50a8590b81f48b4fee5b6cfc8d3f3ea"
+        },
+        "candidate_subject": {
+          "const": "Add optional priors and correspondence diagnostics"
+        },
+        "title": {
+          "const": "Add optional NDT priors and correspondence diagnostics"
+        },
+        "body": {"type": "string", "minLength": 100},
+        "preflight": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "upstream_base_verified",
+            "fork_identity_verified",
+            "branch_absent_verified",
+            "open_pr_count",
+            "duplicate_pr_count"
+          ],
+          "properties": {
+            "upstream_base_verified": {"const": true},
+            "fork_identity_verified": {"const": true},
+            "branch_absent_verified": {"const": true},
+            "open_pr_count": {"type": "integer", "minimum": 0},
+            "duplicate_pr_count": {"const": 0}
+          }
+        },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "draft_required",
+            "create_only",
+            "non_force_only",
+            "push_authorized",
+            "pr_creation_authorized",
+            "force_push_authorized",
+            "mark_ready_authorized",
+            "merge_authorized"
+          ],
+          "properties": {
+            "draft_required": {"const": true},
+            "create_only": {"const": true},
+            "non_force_only": {"const": true},
+            "push_authorized": {"const": false},
+            "pr_creation_authorized": {"const": false},
+            "force_push_authorized": {"const": false},
+            "mark_ready_authorized": {"const": false},
+            "merge_authorized": {"const": false}
+          }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "writes_performed": {"const": false}
+      }
+    }
+  }
+}

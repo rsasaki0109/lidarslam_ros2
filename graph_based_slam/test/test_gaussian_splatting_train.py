@@ -348,6 +348,35 @@ def test_load_transforms_groups_default_zero(tmp_path):
     assert ds['groups'] == [0]
 
 
+def test_load_transforms_retains_fusion_metadata(tmp_path):
+    import json
+
+    (tmp_path / 'images').mkdir()
+    (tmp_path / 'masks').mkdir()
+    (tmp_path / 'images' / '0.png').write_bytes(b'stub')
+    (tmp_path / 'masks' / '0.png').write_bytes(b'mask')
+    calibration = {
+        'accepted': True,
+        'uncertainty_dt_s_xyz_m_rpy_rad': [0.01] * 7,
+    }
+    document = {
+        'w': 8, 'h': 6, 'fl_x': 5.0, 'fl_y': 5.0,
+        'cx': 4.0, 'cy': 3.0,
+        'spatiotemporal_calibration': calibration,
+        'frames': [{
+            'file_path': 'images/0.png',
+            'dynamic_mask_path': 'masks/0.png', 'timestamp': 1.25,
+            'transform_matrix': np.eye(4).tolist(),
+        }],
+    }
+    (tmp_path / 'transforms.json').write_text(json.dumps(document))
+    dataset = tg.load_transforms(tmp_path / 'transforms.json')
+    assert dataset['timestamps'].tolist() == [1.25]
+    assert dataset['dynamic_mask_paths'][0] == (
+        tmp_path / 'masks' / '0.png').resolve()
+    assert dataset['spatiotemporal_calibration'] == calibration
+
+
 def test_parser_pose_group_and_exposure_flags():
     args = tg.build_parser().parse_args(['--transforms', 't', '--out', 'o'])
     assert args.optimize_pose_groups is False

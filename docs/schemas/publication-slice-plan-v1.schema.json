@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/publication-slice-plan-v1.schema.json",
+  "title": "lidar_slam_ros2 publication review slice plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "generated_at",
+    "candidate",
+    "whole_pr_review",
+    "review_slices",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {"const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/publication-slice-plan-v1.schema.json"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "pull_request",
+        "base_sha",
+        "public_head_sha",
+        "expected_path_count",
+        "expected_paths_sha256",
+        "scope"
+      ],
+      "properties": {
+        "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+        "pull_request": {"const": 427},
+        "base_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "public_head_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Frozen public review baseline for the follow-up range; not a live remote-head claim."
+        },
+        "expected_path_count": {"type": "integer", "minimum": 1},
+        "expected_paths_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "scope": {"const": "worktree-delta-from-pr-base"}
+      }
+    },
+    "whole_pr_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base_sha",
+        "expected_path_count",
+        "expected_paths_sha256",
+        "coverage_policy",
+        "linear_history_required",
+        "initial_review",
+        "bridge_review",
+        "follow_up_review"
+      ],
+      "properties": {
+        "base_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "expected_path_count": {"type": "integer", "minimum": 1},
+        "expected_paths_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "coverage_policy": {"const": "union-covers-final-diff"},
+        "linear_history_required": {"const": true},
+        "initial_review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "start_sha",
+            "end_sha",
+            "diff_mode",
+            "expected_commit_count",
+            "expected_path_count",
+            "expected_paths_sha256",
+            "review_record"
+          ],
+          "properties": {
+            "start_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "end_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "diff_mode": {"const": "three-dot"},
+            "expected_commit_count": {"type": "integer", "minimum": 1},
+            "expected_path_count": {"type": "integer", "minimum": 1},
+            "expected_paths_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "review_record": {"type": "string", "minLength": 1}
+          }
+        },
+        "bridge_review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "start_sha",
+            "end_sha",
+            "diff_mode",
+            "expected_commit_count",
+            "expected_path_count",
+            "expected_paths_sha256",
+            "allowed_paths",
+            "review_record"
+          ],
+          "properties": {
+            "start_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "end_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "diff_mode": {"const": "two-dot"},
+            "expected_commit_count": {"type": "integer", "minimum": 1},
+            "expected_path_count": {"type": "integer", "minimum": 1},
+            "expected_paths_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "allowed_paths": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {"type": "string", "minLength": 1}
+            },
+            "review_record": {"type": "string", "minLength": 1}
+          }
+        },
+        "follow_up_review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "start_sha",
+            "end_ref",
+            "diff_mode",
+            "review_record"
+          ],
+          "properties": {
+            "start_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "end_ref": {
+              "type": "string",
+              "pattern": "^(HEAD|[0-9a-f]{40})$"
+            },
+            "diff_mode": {"enum": ["worktree", "two-dot"]},
+            "review_record": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "review_slices": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "order",
+          "title",
+          "review_outcome",
+          "depends_on",
+          "paths",
+          "verification",
+          "publication_gate"
+        ],
+        "properties": {
+          "id": {"type": "string", "pattern": "^S[1-9][0-9]*-[a-z0-9-]+$"},
+          "order": {"type": "integer", "minimum": 1},
+          "title": {"type": "string", "minLength": 1},
+          "review_outcome": {"type": "string", "minLength": 1},
+          "depends_on": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^S[1-9][0-9]*-[a-z0-9-]+$"}
+          },
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "verification": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
+              "pattern": "^[^\\r\\n]+$"
+            }
+          },
+          "publication_gate": {"enum": ["LOCAL_REVIEW", "PUBLIC_CI", "MAINTAINER_DECISION"]}
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "github_writes_authorized",
+        "remote_mutations_performed",
+        "next_external_action"
+      ],
+      "properties": {
+        "status": {"const": "LOCAL_PLAN_ONLY"},
+        "github_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false},
+        "next_external_action": {"const": "maintainer direction outside this plan for exact candidate tip and non-force PR update"}
+      }
+    }
+  }
+}

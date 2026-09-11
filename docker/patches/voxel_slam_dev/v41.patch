@@ -1,0 +1,694 @@
+--- a/VoxelSLAM/src/voxelslam.cpp
++++ b/VoxelSLAM/src/voxelslam.cpp
+@@ -1,4 +1,5 @@
+ #include "voxelslam.hpp"
++#include <atomic>
+ 
+ using namespace std;
+ 
+@@ -783,12 +784,20 @@
+ 
+   vector<vector<ScanPose*>*> multimap_scanPoses;
+   vector<vector<Keyframe*>*> multimap_keyframes;
+-  volatile int gba_flag = 0;
++  atomic<int> gba_flag{0};
++  atomic<bool> gba_cancel_requested{false};
++  atomic<bool> gba_producer_done{false};
+   int gba_size = 0;
+   vector<int> cnct_map;
+   mutex mtx_keyframe;
+   PGO_Edges gba_edges1, gba_edges2;
+   bool is_finish = false;
++  bool gba_runtime_diagnostic_enabled = false;
++  bool gba_runtime_guard_enabled = false;
++  bool gba_runtime_config_valid = true;
++  double gba_backend_deadline_seconds = 0.0;
++  double gba_max_rss_mib = 0.0;
++  double gba_backend_started_wall_sec = 0.0;
+ 
+   vector<string> sessionNames;
+   string bagname, savepath;
+@@ -814,6 +823,22 @@
+     n.param<vector<double>>("General/extrinsic_tran", vecT, vector<double>());
+     n.param<vector<double>>("General/extrinsic_rota", vecR, vector<double>());
+     n.param<int>("General/is_save_map", is_save_map, 0);
++    n.param<bool>("GBA/runtime_diagnostic_enable",
++                  gba_runtime_diagnostic_enabled, false);
++    n.param<bool>("GBA/runtime_guard_enable",
++                  gba_runtime_guard_enabled, false);
++    n.param<double>("GBA/backend_deadline_seconds",
++                    gba_backend_deadline_seconds, 0.0);
++    n.param<double>("GBA/max_rss_mib", gba_max_rss_mib, 0.0);
++    gba_runtime_config_valid = !gba_runtime_guard_enabled ||
++        (std::isfinite(gba_backend_deadline_seconds) &&
++         gba_backend_deadline_seconds > 0.0 &&
++         std::isfinite(gba_max_rss_mib) && gba_max_rss_mib > 0.0);
++    if(!gba_runtime_config_valid)
++    {
++      printf("V41_GBA stage=invalid_runtime_guard_config\n");
++      fflush(stdout);
++    }
+ 
+     sub_imu = n.subscribe(imu_topic, 80000, imu_handler);
+     if(feat.lidar_type == LIVOX)
+@@ -2174,12 +2199,192 @@
+     
+   }
+ 
++  void read_gba_memory_kb(long &rss_kb, long &hwm_kb)
++  {
++    rss_kb = -1; hwm_kb = -1;
++    ifstream status("/proc/self/status");
++    string line;
++    while(getline(status, line))
++    {
++      string label;
++      long value = -1;
++      string unit;
++      stringstream fields(line);
++      fields >> label >> value >> unit;
++      if(label == "VmRSS:") rss_kb = value;
++      else if(label == "VmHWM:") hwm_kb = value;
++    }
++  }
++
++  void trace_gba_stage(const char *stage, size_t primary = 0,
++                       size_t secondary = 0)
++  {
++    if(!gba_runtime_diagnostic_enabled)
++      return;
++    long rss_kb = -1, hwm_kb = -1;
++    read_gba_memory_kb(rss_kb, hwm_kb);
++    const double now = ros::WallTime::now().toSec();
++    const double elapsed = gba_backend_started_wall_sec > 0.0 ?
++        now - gba_backend_started_wall_sec : 0.0;
++    printf("V41_GBA stage=%s elapsed_sec=%.6f rss_kb=%ld hwm_kb=%ld "
++           "primary=%zu secondary=%zu cancel=%d\n", stage, elapsed,
++           rss_kb, hwm_kb, primary, secondary,
++           gba_cancel_requested.load() ? 1 : 0);
++    fflush(stdout);
++  }
++
++  void request_gba_cancel(const char *reason, size_t primary = 0,
++                          size_t secondary = 0)
++  {
++    bool expected = false;
++    if(gba_cancel_requested.compare_exchange_strong(expected, true))
++    {
++      if(gba_runtime_diagnostic_enabled)
++        trace_gba_stage(reason, primary, secondary);
++      else
++      {
++        printf("V41_GBA stage=%s cancel=1\n", reason);
++        fflush(stdout);
++      }
++    }
++  }
++
++  bool gba_should_cancel(const char *stage, size_t primary = 0,
++                         size_t secondary = 0)
++  {
++    if(gba_cancel_requested.load())
++      return true;
++    if(!ros::ok())
++    {
++      request_gba_cancel("cancel_ros_shutdown", primary, secondary);
++      return true;
++    }
++    if(!gba_runtime_guard_enabled)
++      return false;
++
++    long rss_kb = -1, hwm_kb = -1;
++    read_gba_memory_kb(rss_kb, hwm_kb);
++    const double max_rss_kb = gba_max_rss_mib * 1024.0;
++    if(hwm_kb >= 0 && hwm_kb > max_rss_kb)
++    {
++      request_gba_cancel("cancel_rss_limit", primary, secondary);
++      return true;
++    }
++    if(gba_backend_started_wall_sec > 0.0 &&
++       ros::WallTime::now().toSec() - gba_backend_started_wall_sec >
++           gba_backend_deadline_seconds)
++    {
++      request_gba_cancel("cancel_backend_deadline", primary, secondary);
++      return true;
++    }
++    (void)stage;
++    return false;
++  }
++
++  // Build the no-loop GBA graph in the source-scan id namespace. HBA edges
++  // use Keyframe::id, which is already the corresponding scan index; all
++  // scans must therefore be initialized and connected before top-down HBA.
++  bool build_no_loop_gba_graph(
++      gtsam::Values &initial, gtsam::NonlinearFactorGraph &graph,
++      vector<int> &ids, vector<int> &stepsizes, int map_id)
++  {
++    initial.clear(); graph = gtsam::NonlinearFactorGraph();
++    ids.clear(); stepsizes.clear();
++    if(map_id < 0 || map_id >= multimap_scanPoses.size() ||
++       multimap_scanPoses[map_id] == nullptr ||
++       multimap_scanPoses[map_id]->empty())
++    {
++      printf("v40 GBA graph rejected: empty or invalid scan map %d\n", map_id);
++      return false;
++    }
++
++    vector<ScanPose*> &scans = *multimap_scanPoses[map_id];
++    ids.push_back(map_id);
++    stepsizes.push_back(0);
++    stepsizes.push_back(scans.size());
++    for(int i=0; i<scans.size(); i++)
++    {
++      IMUST &xc = scans[i]->x;
++      gtsam::Pose3 pose3(gtsam::Rot3(xc.R), gtsam::Point3(xc.p));
++      initial.insert(i, pose3);
++      if(i > 0)
++      {
++        gtsam::Vector samv6(6);
++        samv6 = scans[i-1]->v6;
++        for(int axis=0; axis<6; axis++)
++        {
++          if(!std::isfinite(samv6[axis]) || samv6[axis] <= 0.0)
++          {
++            printf("v40 GBA graph rejected: invalid odometry variance "
++                   "scan=%d axis=%d value=%g\n", i-1, axis, samv6[axis]);
++            initial.clear(); graph = gtsam::NonlinearFactorGraph();
++            ids.clear(); stepsizes.clear();
++            return false;
++          }
++        }
++        gtsam::noiseModel::Diagonal::shared_ptr v6_noise =
++            gtsam::noiseModel::Diagonal::Variances(samv6);
++        add_edge(i-1, i, scans[i-1]->x, scans[i]->x, graph, v6_noise);
++      }
++    }
++
++    Eigen::Matrix<double, 6, 1> v6_fixd;
++    v6_fixd << 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9;
++    gtsam::noiseModel::Diagonal::shared_ptr fixd_noise =
++        gtsam::noiseModel::Diagonal::Variances(gtsam::Vector(v6_fixd));
++    IMUST &x0 = scans.front()->x;
++    gtsam::Pose3 pose0(gtsam::Rot3(x0.R), gtsam::Point3(x0.p));
++    graph.addPrior(0, pose0, fixd_noise);
++    printf("v40 full-scan GBA graph: scans=%zu odometry_edges=%zu prior=1\n",
++           scans.size(), scans.size()-1);
++    return true;
++  }
++
++  bool validate_no_loop_gba_keyframes(int map_id)
++  {
++    if(map_id < 0 || map_id >= multimap_scanPoses.size() ||
++       map_id >= multimap_keyframes.size())
++      return false;
++    const int scan_count = multimap_scanPoses[map_id]->size();
++    int previous_id = -1;
++    for(Keyframe *smp: *multimap_keyframes[map_id])
++    {
++      if(smp == nullptr || smp->id <= previous_id ||
++         smp->id < 0 || smp->id >= scan_count)
++      {
++        printf("v40 GBA keyframe contract rejected: previous=%d current=%d "
++               "scan_count=%d\n", previous_id,
++               smp == nullptr ? -1 : smp->id, scan_count);
++        return false;
++      }
++      previous_id = smp->id;
++    }
++    return true;
++  }
++
+   // The main thread of loop clousre
+   // The topDownProcess of HBA is also run here
+   void thd_loop_closure(ros::NodeHandle &n)
+   {
+     n.param<bool>("Loop/enable", loop_backend_enabled, false);
+-    if(!loop_backend_enabled)
++    bool no_loop_gba_enabled = false;
++    n.param<bool>("GBA/enable", no_loop_gba_enabled, false);
++    int no_loop_gba_keyframe_stride = 1;
++    double no_loop_gba_min_keyframe_distance = 5.0;
++    n.param<int>("GBA/keyframe_stride",
++                 no_loop_gba_keyframe_stride, 1);
++    n.param<double>("GBA/min_keyframe_distance",
++                    no_loop_gba_min_keyframe_distance, 5.0);
++    const bool no_loop_gba_config_valid =
++        no_loop_gba_keyframe_stride >= 1 &&
++        std::isfinite(no_loop_gba_min_keyframe_distance) &&
++        no_loop_gba_min_keyframe_distance >= 0.0 &&
++        gba_runtime_config_valid;
++    if(no_loop_gba_enabled && !no_loop_gba_config_valid)
++      printf("v40 GBA disabled: invalid keyframe configuration\n");
++
++    if(!loop_backend_enabled &&
++       (!no_loop_gba_enabled || !no_loop_gba_config_valid))
+     {
+       // Stream locally optimized poses while releasing scan point vectors.
+       // The verified external backend owns loop acceptance for this candidate.
+@@ -2211,6 +2416,139 @@
+       return;
+     }
+ 
++    if(!loop_backend_enabled)
++    {
++      // GBA is independent from loop closure. Keyframe ids remain source scan
++      // ids, while the final graph below keeps every scan as a GTSAM variable.
++      multimap_scanPoses.push_back(scanPoses);
++      multimap_keyframes.push_back(keyframes);
++      const int map_id = multimap_scanPoses.size() - 1;
++      deque<ScanPose*> bl_local;
++      int scan_count = 0;
++      Eigen::Vector3d last_keyframe_position = Eigen::Vector3d::Zero();
++      bool have_last_keyframe = false;
++      trace_gba_stage("frontend_begin");
++
++      while(n.ok())
++      {
++        ScanPose *bl_head = nullptr;
++        mtx_loop.lock();
++        if(!buf_lba2loop.empty())
++        {
++          bl_head = buf_lba2loop.front();
++          buf_lba2loop.pop_front();
++        }
++        mtx_loop.unlock();
++
++        if(bl_head != nullptr)
++        {
++          scanPoses->push_back(bl_head);
++          bl_local.push_back(bl_head);
++          scan_count++;
++          if(scan_count % 10 == 0)
++            gba_should_cancel("frontend_scan", scan_count,
++                              keyframes->size());
++          if((int)bl_local.size() >= win_size)
++          {
++            IMUST xc = bl_local.back()->x;
++            const bool distance_ok = !have_last_keyframe ||
++                (xc.p - last_keyframe_position).norm() >=
++                    no_loop_gba_min_keyframe_distance;
++            if(!gba_cancel_requested.load() && distance_ok &&
++               scan_count % no_loop_gba_keyframe_stride == 0)
++            {
++              PVecPtr pptr(new PVec);
++              for(ScanPose *bl: bl_local)
++              {
++                Eigen::Vector3d delta_p =
++                    xc.R.transpose() * (bl->x.p - xc.p);
++                Eigen::Matrix3d delta_R =
++                    xc.R.transpose() * bl->x.R;
++                if(bl->pvec != nullptr)
++                {
++                  for(pointVar pv: *bl->pvec)
++                  {
++                    pv.pnt = delta_R * pv.pnt + delta_p;
++                    pptr->push_back(pv);
++                  }
++                }
++              }
++              Keyframe *smp = new Keyframe(xc);
++              smp->id = scan_count - 1;
++              smp->jour = 0.0f;
++              down_sampling_pvec(
++                  *pptr, voxel_size / 10, *smp->plptr);
++              mtx_keyframe.lock();
++              keyframes->push_back(smp);
++              mtx_keyframe.unlock();
++              last_keyframe_position = xc.p;
++              have_last_keyframe = true;
++              trace_gba_stage("keyframe_accumulated", scan_count,
++                              keyframes->size());
++              gba_should_cancel("keyframe_accumulated", scan_count,
++                                keyframes->size());
++            }
++            for(int i=0; i<win_size; i++)
++            {
++              bl_local.front()->pvec = nullptr;
++              bl_local.pop_front();
++            }
++          }
++          continue;
++        }
++        if(is_finish)
++          break;
++        sleep(0.01);
++      }
++
++      for(ScanPose *bl: bl_local)
++        bl->pvec = nullptr;
++      bl_local.clear();
++      trace_gba_stage("frontend_complete", scanPoses->size(),
++                      keyframes->size());
++
++      const bool keyframe_contract_valid =
++          validate_no_loop_gba_keyframes(map_id);
++      printf("v40 GBA keyframes: scans=%zu keyframes=%zu valid=%d\n",
++             scanPoses->size(), keyframes->size(),
++             keyframe_contract_valid ? 1 : 0);
++      bool gba_completed = false;
++      if(!gba_cancel_requested.load() && keyframe_contract_valid &&
++         keyframes->size() >= 10)
++      {
++        gtsam::Values initial;
++        gtsam::NonlinearFactorGraph graph;
++        vector<int> ids, stepsizes;
++        trace_gba_stage("graph_build_begin", scanPoses->size(),
++                        keyframes->size());
++        if(build_no_loop_gba_graph(
++               initial, graph, ids, stepsizes, map_id))
++        {
++          trace_gba_stage("graph_build_complete", initial.size(),
++                          graph.size());
++          gba_completed = topDownProcess(initial, graph, ids, stepsizes);
++        }
++      }
++      else
++      {
++        printf("v40 GBA skipped before optimization: keyframe contract\n");
++      }
++
++      gba_producer_done.store(true);
++      trace_gba_stage(gba_completed ? "backend_complete" :
++                      "backend_no_writeback", scanPoses->size(),
++                      keyframes->size());
++
++      if(is_save_map)
++      {
++        FileReaderWriter::instance().save_pose(
++            *scanPoses, bagname, "/alidarState.txt", savepath);
++        trace_gba_stage(gba_completed ? "state_saved_optimized" :
++                        "state_saved_unmodified", scanPoses->size(), 0);
++      }
++      return;
++    }
++
+     pl_kdmap.reset(new pcl::PointCloud<PointType>);
+     vector<STDescManager*> std_managers;
+     PGO_Edges lp_edges;
+@@ -2634,11 +2972,19 @@
+   }
+ 
+   // The top down process of HBA
+-  void topDownProcess(gtsam::Values &initial, gtsam::NonlinearFactorGraph &graph, vector<int> &ids, vector<int> &stepsizes)
++  bool topDownProcess(gtsam::Values &initial, gtsam::NonlinearFactorGraph &graph, vector<int> &ids, vector<int> &stepsizes)
+   {
++    if(gba_cancel_requested.load() || !ros::ok())
++    {
++      trace_gba_stage("topdown_rejected_before_request", initial.size(),
++                      graph.size());
++      return false;
++    }
+     cnct_map = ids;
+     gba_size = multimap_keyframes.back()->size();
+-    gba_flag = 1;
++    gba_backend_started_wall_sec = ros::WallTime::now().toSec();
++    trace_gba_stage("worker_request", gba_size, initial.size());
++    gba_flag.store(1);
+ 
+     pcl::PointCloud<PointType> pl0;
+     pub_pl_func(pl0, pub_pmap);
+@@ -2648,7 +2994,25 @@
+     pub_pl_func(pl0, pub_scan);
+ 
+     double t0 = ros::Time::now().toSec();
+-    while(gba_flag);
++    bool cancel_wait_traced = false;
++    while(gba_flag.load() != 0 && ros::ok())
++    {
++      if(gba_should_cancel("worker_wait", gba_size, initial.size()) &&
++         !cancel_wait_traced)
++      {
++        trace_gba_stage("worker_cancel_wait", gba_size, initial.size());
++        cancel_wait_traced = true;
++      }
++      ros::WallDuration(0.01).sleep();
++    }
++    if(gba_flag.load() != 0 || gba_cancel_requested.load() || !ros::ok())
++    {
++      trace_gba_stage("worker_cancelled_no_writeback", gba_size,
++                      initial.size());
++      return false;
++    }
++    trace_gba_stage("worker_ack", gba_edges1.edges.size(),
++                    gba_edges2.edges.size());
+     
+     for(PGO_Edge &edge: gba_edges1.edges)
+     {
+@@ -2682,15 +3046,30 @@
+       }
+     }
+ 
++    trace_gba_stage("isam_graph_ready", initial.size(), graph.size());
++    if(gba_should_cancel("before_isam", initial.size(), graph.size()))
++    {
++      trace_gba_stage("cancelled_before_isam", initial.size(), graph.size());
++      return false;
++    }
++
+     gtsam::ISAM2Params parameters;
+     parameters.relinearizeThreshold = 0.01;
+     parameters.relinearizeSkip = 1;
+     gtsam::ISAM2 isam(parameters);
++    trace_gba_stage("isam_begin", initial.size(), graph.size());
+     isam.update(graph, initial);
+ 
+     for(int i=0; i<5; i++) isam.update();
+     gtsam::Values results = isam.calculateEstimate();
+     int resultsize = results.size();
++    trace_gba_stage("isam_complete", resultsize, graph.size());
++    if(gba_should_cancel("before_writeback", resultsize, graph.size()))
++    {
++      trace_gba_stage("cancelled_before_writeback", resultsize,
++                      graph.size());
++      return false;
++    }
+ 
+     int idsize = ids.size();
+     for(int ii=0; ii<idsize; ii++)
+@@ -2702,6 +3081,7 @@
+         multimap_scanPoses[tip]->at(ord)->set_state(results.at(j).cast<gtsam::Pose3>());
+       }
+     }
++    trace_gba_stage("writeback_complete", resultsize, 0);
+ 
+     Eigen::Quaterniond qq(multimap_scanPoses[0]->at(0)->x.R);
+ 
+@@ -2720,10 +3100,12 @@
+     ResultOutput::instance().pub_globalmap(multimap_keyframes, ids2, pub_pmap);
+     ids2.clear(); ids2.push_back(ids.back());
+     ResultOutput::instance().pub_globalmap(multimap_keyframes, ids2, pub_cmap);
++    trace_gba_stage("map_publish_complete", keyframes->size(), 0);
++    return true;
+   }
+ 
+   // The bottom up to add edge in HBA
+-  void HBA_add_edge(vector<IMUST> &p_xs, vector<Keyframe*> &p_smps, PGO_Edges &gba_edges, vector<int> &maps, int max_iter, int thread_num, pcl::PointCloud<PointType>::Ptr plptr = nullptr)
++  bool HBA_add_edge(vector<IMUST> &p_xs, vector<Keyframe*> &p_smps, PGO_Edges &gba_edges, vector<int> &maps, int max_iter, int thread_num, pcl::PointCloud<PointType>::Ptr plptr = nullptr)
+   {
+     bool is_display = false;
+     if(plptr == nullptr) is_display = true;
+@@ -2754,6 +3136,14 @@
+     }
+     
+     int wdsize = smps.size();
++    const char *stage_prefix = plptr == nullptr ?
++        "bottom_up_total_begin" : "bottom_up_window_begin";
++    trace_gba_stage(stage_prefix, wdsize, gba_edges.edges.size());
++    if(wdsize < 2 || gba_should_cancel("hba_begin", wdsize, max_iter))
++    {
++      trace_gba_stage("bottom_up_rejected", wdsize, max_iter);
++      return false;
++    }
+     Eigen::MatrixXd hess;
+     vector<double> gba_eigen_value_array_orig = gba_eigen_value_array;
+     double gba_min_eigen_value_orig = gba_min_eigen_value;
+@@ -2762,9 +3152,15 @@
+     int up = 4;
+     int converge_flag = 0;
+     double converge_thre = 0.05;
++    bool cancelled = false;
+ 
+     for(int iterCnt = 0; iterCnt < max_iter; iterCnt++)
+     {
++      if(gba_should_cancel("hba_iteration_begin", wdsize, iterCnt))
++      {
++        cancelled = true;
++        break;
++      }
+       if(converge_flag == 1 || iterCnt == max_iter-1)
+       {
+         // if(plptr == nullptr)
+@@ -2783,11 +3179,24 @@
+ 
+       LidarFactor voxhess(wdsize);
+       OctreeGBA_multi_recut(oct_map, voxhess, thread_num);
++      trace_gba_stage("bottom_up_recut_complete", wdsize,
++                      voxhess.plvec_voxels.size());
++      if(gba_should_cancel("hba_after_recut", wdsize, iterCnt))
++      {
++        cancelled = true;
++        break;
++      }
+ 
+       Lidar_BA_Optimizer opt_lsv;
+       opt_lsv.thd_num = thread_num;
+       vector<double> resis;
+       bool is_converge = opt_lsv.damping_iter(xs, voxhess, &hess, resis, up, is_display);
++      trace_gba_stage("bottom_up_optimizer_complete", wdsize, iterCnt + 1);
++      if(gba_should_cancel("hba_after_optimizer", wdsize, iterCnt))
++      {
++        cancelled = true;
++        break;
++      }
+       if(is_display)
+         printf("%lf\n", fabs(resis[0] - resis[1]) / resis[0]);
+       if((fabs(resis[0] - resis[1]) / resis[0] < converge_thre && is_converge) || (iterCnt == max_iter-2 && converge_flag == 0))
+@@ -2807,6 +3216,12 @@
+     gba_eigen_value_array = gba_eigen_value_array_orig;
+     gba_min_eigen_value = gba_min_eigen_value_orig;
+     gba_voxel_size = gba_voxel_size_orig;
++    if(cancelled)
++    {
++      trace_gba_stage("bottom_up_cancelled_no_edges", wdsize,
++                      gba_edges.edges.size());
++      return false;
++    }
+ 
+     for(int i=0; i<wdsize - 1; i++)
+     for(int j=i+1; j<wdsize; j++)
+@@ -2834,6 +3249,12 @@
+ 
+     if(plptr != nullptr)
+     {
++      if(gba_should_cancel("hba_before_cloud_merge", wdsize, 0))
++      {
++        trace_gba_stage("bottom_up_cancelled_before_cloud_merge", wdsize,
++                        gba_edges.edges.size());
++        return false;
++      }
+       pcl::PointCloud<PointType> pl;
+       IMUST xc = xs[0];
+       for(int i=0; i<wdsize; i++)
+@@ -2885,12 +3306,20 @@
+       // return;
+     }
+ 
++    trace_gba_stage(plptr == nullptr ? "bottom_up_total_complete" :
++                    "bottom_up_window_complete", wdsize,
++                    gba_edges.edges.size());
++    return true;
+   }
+ 
+   // The main thread of bottom up in global mapping
+   void thd_globalmapping(ros::NodeHandle &n)
+   {
+-    if(!loop_backend_enabled)
++    bool configured_loop_enabled = false;
++    bool configured_gba_enabled = false;
++    n.param<bool>("Loop/enable", configured_loop_enabled, false);
++    n.param<bool>("GBA/enable", configured_gba_enabled, false);
++    if(!configured_loop_enabled && !configured_gba_enabled)
+     {
+       while(n.ok() && !is_finish)
+         sleep(0.1);
+@@ -2912,9 +3341,30 @@
+     int wdsize = 10;
+     int mgsize = 5;
+     int thread_num = 5;
++    auto clear_gba_submaps = [&gba_submaps]()
++    {
++      for(Keyframe *smp: gba_submaps)
++        delete smp;
++      gba_submaps.clear();
++    };
+ 
+     while(n.ok())
+     {
++      if(!configured_loop_enabled && configured_gba_enabled &&
++         gba_cancel_requested.load())
++      {
++        clear_gba_submaps();
++        gba_flag.store(0);
++        trace_gba_stage("worker_exit_cancelled", buf_base, 0);
++        break;
++      }
++      if(!configured_loop_enabled && configured_gba_enabled &&
++         gba_producer_done.load() && gba_flag.load() == 0)
++      {
++        clear_gba_submaps();
++        trace_gba_stage("worker_exit_complete", buf_base, 0);
++        break;
++      }
+       if(multimap_keyframes.empty())
+       {
+         sleep(0.1); continue;
+@@ -2926,9 +3376,10 @@
+ 
+       vector<Keyframe*> &smps = *multimap_keyframes[smp_mp];
+       int total_ba = 0;
+-      if(gba_flag == 1 && smp_mp >= cnct_map.back() && gba_size <= buf_base)
++      if(gba_flag.load() == 1 && smp_mp >= cnct_map.back() &&
++         gba_size <= buf_base)
+       {
+-        printf("gba_flag enter: %d\n", gba_flag);
++        printf("gba_flag enter: %d\n", gba_flag.load());
+         total_ba = 1;
+       }
+       else if(smps.size() <= buf_base)
+@@ -2964,7 +3415,16 @@
+ 
+       Keyframe *gba_smp = new Keyframe(smp_local[0]->x0);
+       vector<int> mps{smp_mp};
+-      HBA_add_edge(xs, smp_local, gba_edges1, mps, 1, 2, gba_smp->plptr);
++      const bool window_ok = HBA_add_edge(
++          xs, smp_local, gba_edges1, mps, 1, 2, gba_smp->plptr);
++      if(!window_ok)
++      {
++        delete gba_smp;
++        if(!gba_cancel_requested.load())
++          request_gba_cancel("cancel_bottom_up_window", smp_local.size(),
++                             buf_base);
++        continue;
++      }
+       gba_smp->id = smp_local[0]->id;
+       gba_smp->mp = smp_mp;
+       gba_submaps.push_back(gba_smp);
+@@ -2980,17 +3440,20 @@
+         }
+         mtx_keyframe.unlock();
+         gba_edges2.edges.clear(); gba_edges2.mates.clear();
+-        HBA_add_edge(xs, gba_submaps, gba_edges2, cnct_map, total_max_iter, thread_num);
++        const bool total_ok = HBA_add_edge(
++            xs, gba_submaps, gba_edges2, cnct_map, total_max_iter,
++            thread_num);
++        if(!total_ok && !gba_cancel_requested.load())
++          request_gba_cancel("cancel_bottom_up_total", gba_submaps.size(),
++                             gba_edges2.edges.size());
+ 
+-        if(is_finish)
+-        {
+-          for(int i=0; i<gba_submaps.size(); i++)
+-            delete gba_submaps[i];
+-        }
+-        gba_submaps.clear();
++        clear_gba_submaps();
+ 
+         malloc_trim(0);
+-        gba_flag = 0;
++        gba_flag.store(0);
++        trace_gba_stage(total_ok ? "worker_total_ack" :
++                        "worker_total_cancelled", gba_edges1.edges.size(),
++                        gba_edges2.edges.size());
+       }
+       else if(smp_flag == 1 && multimap_keyframes[smp_mp]->size() <= buf_base)
+       {
+@@ -3005,6 +3468,9 @@
+   
+     }
+ 
++    clear_gba_submaps();
++    gba_flag.store(0);
++
+   }
+ 
+ };

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import math
 import struct
 from collections import deque
@@ -172,7 +173,10 @@ def write_loop_alignment_report(report: dict[str, Any], output_dir: Path) -> dic
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / LOOP_ALIGNMENT_JSON
     markdown_path = output_dir / LOOP_ALIGNMENT_MARKDOWN
-    json_path.write_text(payload_to_json(report) + '\n', encoding='utf-8')
+    json_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + '\n',
+        encoding='utf-8',
+    )
     markdown_path.write_text(render_loop_alignment_markdown(report) + '\n', encoding='utf-8')
     return {'json': json_path, 'markdown': markdown_path}
 

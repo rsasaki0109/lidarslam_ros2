@@ -1,5 +1,3 @@
-"""Tests for selective visual relative-pose constraint extraction."""
-
 # Copyright 2026 Sasaki
 # All rights reserved.
 #
@@ -29,6 +27,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Tests for selective visual relative-pose constraint extraction."""
 
 import importlib.util
 from pathlib import Path

@@ -1,0 +1,264 @@
+--- a/VoxelSLAM/src/voxelslam.cpp
++++ b/VoxelSLAM/src/voxelslam.cpp
+@@ -1,4 +1,7 @@
+ #include "voxelslam.hpp"
++#include <algorithm>
++#include <fstream>
++#include <iomanip>
+ 
+ using namespace std;
+ 
+@@ -780,6 +782,21 @@
+   double weak_axis_speed = 0;
+   double weak_axis_time = 0;
+   deque<pair<double, Eigen::Vector3d>> weak_pose_history;
++  struct VerticalDiagnosticSample
++  {
++    double t;
++    double position;
++    double velocity;
++  };
++  bool vertical_observability_diagnostic_enabled = false;
++  double vertical_observability_diagnostic_window = 8.0;
++  double vertical_observability_diagnostic_gain = 0.5;
++  double vertical_observability_diagnostic_min_innovation = 0.001;
++  double vertical_observability_diagnostic_max_correction = 0.005;
++  double vertical_observability_diagnostic_max_velocity_change = 0.5;
++  unsigned long long vertical_observability_diagnostic_scan_count = 0;
++  ofstream vertical_observability_diagnostic_file;
++  deque<VerticalDiagnosticSample> vertical_diagnostic_history;
+ 
+   vector<vector<ScanPose*>*> multimap_scanPoses;
+   vector<vector<Keyframe*>*> multimap_keyframes;
+@@ -837,6 +854,30 @@
+     n.param<int>("Odometry/archived_scan_stride", archived_scan_stride, 1);
+     n.param<int>("Odometry/point_notime", point_notime, 0);
+     odom_ekf.point_notime = point_notime;
++    n.param<bool>("Odometry/v36_observability_diagnostic_enabled",
++                  vertical_observability_diagnostic_enabled, false);
++    n.param<double>("Odometry/v36_observability_diagnostic_window",
++                    vertical_observability_diagnostic_window, 8.0);
++    n.param<double>("Odometry/v36_observability_diagnostic_gain",
++                    vertical_observability_diagnostic_gain, 0.5);
++    n.param<double>("Odometry/v36_observability_diagnostic_min_innovation",
++                    vertical_observability_diagnostic_min_innovation, 0.001);
++    n.param<double>("Odometry/v36_observability_diagnostic_max_correction",
++                    vertical_observability_diagnostic_max_correction, 0.005);
++    n.param<double>(
++        "Odometry/v36_observability_diagnostic_max_velocity_change",
++        vertical_observability_diagnostic_max_velocity_change, 0.5);
++    if(vertical_observability_diagnostic_window < 3.0)
++      vertical_observability_diagnostic_window = 8.0;
++    if(vertical_observability_diagnostic_gain < 0.0 ||
++       vertical_observability_diagnostic_gain > 1.0)
++      vertical_observability_diagnostic_gain = 0.5;
++    if(vertical_observability_diagnostic_min_innovation < 0.0)
++      vertical_observability_diagnostic_min_innovation = 0.001;
++    if(vertical_observability_diagnostic_max_correction < 0.0)
++      vertical_observability_diagnostic_max_correction = 0.005;
++    if(vertical_observability_diagnostic_max_velocity_change <= 1e-6)
++      vertical_observability_diagnostic_max_velocity_change = 0.5;
+ 
+     feat.blind = feat.blind * feat.blind;
+     odom_ekf.cov_gyr << cov_gyr, cov_gyr, cov_gyr;
+@@ -888,6 +929,25 @@
+       exit(0);
+     }
+ 
++    if(vertical_observability_diagnostic_enabled)
++    {
++      vertical_observability_diagnostic_file.open(
++          savepath + bagname + "/v36_observability.csv");
++      vertical_observability_diagnostic_file << setprecision(17);
++      if(vertical_observability_diagnostic_file.is_open())
++        vertical_observability_diagnostic_file
++            << "scan_index,t,match_num,evalue0,evalue1,evalue2,"
++            << "weak_eigen_x,weak_eigen_y,weak_eigen_z,"
++            << "weak_gravity_alignment,weak_horizontal_norm,"
++            << "weak_velocity_projection_abs,weak_streak_before,"
++            << "weak_bridge_active_before,weak_recovery_streak,"
++            << "position_x,position_y,position_z,velocity_x,velocity_y,"
++            << "velocity_z,gravity_position,gravity_velocity,"
++            << "innovation_count,window_dt,velocity_change,innovation_median,"
++            << "innovation_mad,bias_error_candidate,correction_candidate,"
++            << "residual_candidate_valid,weak_trigger_candidate\n";
++    }
++
+     sws.resize(thread_num);
+     cout << "bagname: " << bagname << endl;
+   }
+@@ -1085,6 +1144,153 @@
+     scan.last_loaded_journey = journey;
+   }
+ 
++  void write_vertical_observability_diagnostic(
++      const Eigen::Vector3d &evalue, const Eigen::Matrix3d &eigenvectors,
++      int match_num, const IMUST &state, bool bridge_active_before)
++  {
++    if(!vertical_observability_diagnostic_enabled ||
++       !vertical_observability_diagnostic_file.is_open() ||
++       state.g.norm() < 1e-6)
++      return;
++
++    const Eigen::Vector3d gravity_axis = state.g.normalized();
++    VerticalDiagnosticSample current;
++    current.t = state.t;
++    current.position = gravity_axis.dot(state.p);
++    current.velocity = gravity_axis.dot(state.v);
++    if(!vertical_diagnostic_history.empty() &&
++       current.t <= vertical_diagnostic_history.back().t)
++      vertical_diagnostic_history.clear();
++    vertical_diagnostic_history.push_back(current);
++    while(!vertical_diagnostic_history.empty() &&
++          vertical_diagnostic_history.front().t <
++              current.t - 2.0 * vertical_observability_diagnostic_window)
++      vertical_diagnostic_history.pop_front();
++
++    vector<double> innovations;
++    double window_dt = 0.0;
++    double velocity_change = 0.0;
++    double median = 0.0;
++    double mad = 0.0;
++    double bias_error = 0.0;
++    double correction = 0.0;
++    bool residual_valid = false;
++    const double window_start =
++        current.t - vertical_observability_diagnostic_window;
++    if(vertical_diagnostic_history.size() >= 10)
++    {
++      innovations.reserve(vertical_diagnostic_history.size());
++      bool have_previous = false;
++      VerticalDiagnosticSample previous;
++      for(const VerticalDiagnosticSample &sample: vertical_diagnostic_history)
++      {
++        if(sample.t < window_start)
++        {
++          previous = sample;
++          have_previous = true;
++          continue;
++        }
++        if(have_previous)
++        {
++          const double dt = sample.t - previous.t;
++          if(dt > 0.01 && dt < 0.5)
++          {
++            const double position_velocity =
++                (sample.position - previous.position) / dt;
++            const double midpoint_velocity =
++                0.5 * (sample.velocity + previous.velocity);
++            innovations.push_back(position_velocity - midpoint_velocity);
++          }
++        }
++        previous = sample;
++        have_previous = true;
++      }
++
++      if(innovations.size() >= 8)
++      {
++        sort(innovations.begin(), innovations.end());
++        const size_t middle = innovations.size() / 2;
++        median = (innovations.size() % 2 == 0) ?
++            0.5 * (innovations[middle - 1] + innovations[middle]) :
++            innovations[middle];
++        vector<double> deviations;
++        deviations.reserve(innovations.size());
++        for(double innovation: innovations)
++          deviations.push_back(fabs(innovation - median));
++        sort(deviations.begin(), deviations.end());
++        const size_t dev_middle = deviations.size() / 2;
++        mad = (deviations.size() % 2 == 0) ?
++            0.5 * (deviations[dev_middle - 1] + deviations[dev_middle]) :
++            deviations[dev_middle];
++
++        VerticalDiagnosticSample anchor = vertical_diagnostic_history.front();
++        for(const VerticalDiagnosticSample &sample: vertical_diagnostic_history)
++        {
++          if(sample.t <= window_start)
++            anchor = sample;
++          else
++            break;
++        }
++        window_dt = current.t - anchor.t;
++        velocity_change = current.velocity - anchor.velocity;
++        if(window_dt >= 0.75 * vertical_observability_diagnostic_window &&
++           fabs(velocity_change) <=
++               vertical_observability_diagnostic_max_velocity_change &&
++           fabs(median) >= vertical_observability_diagnostic_min_innovation)
++        {
++          const double innovation_scale =
++              vertical_observability_diagnostic_min_innovation + 1e-6;
++          const double mad_weight = 1.0 / (1.0 + mad / innovation_scale);
++          const double change_weight =
++              1.0 - min(1.0, fabs(velocity_change) /
++                                 vertical_observability_diagnostic_max_velocity_change);
++          bias_error = 2.0 * median / window_dt;
++          correction = vertical_observability_diagnostic_gain * mad_weight *
++                       change_weight * bias_error;
++          correction = max(-vertical_observability_diagnostic_max_correction,
++                           min(vertical_observability_diagnostic_max_correction,
++                               correction));
++          residual_valid = true;
++        }
++      }
++    }
++
++    const Eigen::Vector3d weakest = eigenvectors.col(0).normalized();
++    const double weak_gravity_alignment =
++        fabs(gravity_axis.dot(weakest));
++    const double weak_horizontal_norm = sqrt(max(
++        0.0, 1.0 - weak_gravity_alignment * weak_gravity_alignment));
++    Eigen::Vector3d weak_horizontal =
++        weakest - gravity_axis * gravity_axis.dot(weakest);
++    double weak_velocity_projection_abs = 0.0;
++    if(weak_horizontal.norm() > 1e-6)
++      weak_velocity_projection_abs =
++          fabs(weak_horizontal.normalized().dot(state.v));
++    const bool weak_trigger_candidate =
++        !bridge_active_before && evalue[0] < 14 && evalue[1] >= 14 &&
++        weak_axis_degenerate_streak + 1 >= 10 &&
++        weak_horizontal_norm >= 0.5;
++
++    vertical_observability_diagnostic_scan_count++;
++    vertical_observability_diagnostic_file
++        << vertical_observability_diagnostic_scan_count << ',' << state.t << ','
++        << match_num << ',' << evalue[0] << ',' << evalue[1] << ',' << evalue[2]
++        << ',' << weakest[0] << ',' << weakest[1] << ',' << weakest[2]
++        << ',' << weak_gravity_alignment << ',' << weak_horizontal_norm << ','
++        << weak_velocity_projection_abs << ',' << weak_axis_degenerate_streak
++        << ',' << (bridge_active_before ? 1 : 0) << ','
++        << weak_axis_recovery_streak << ',' << state.p[0] << ',' << state.p[1]
++        << ',' << state.p[2] << ',' << state.v[0] << ',' << state.v[1] << ','
++        << state.v[2] << ',' << current.position << ',' << current.velocity << ','
++        << innovations.size() << ',' << window_dt << ',' << velocity_change << ','
++        << median << ',' << mad << ',' << bias_error << ',' << correction << ','
++        << (residual_valid ? 1 : 0) << ','
++        << (weak_trigger_candidate ? 1 : 0) << '\n';
++    if(vertical_observability_diagnostic_scan_count <= 3 ||
++       vertical_observability_diagnostic_scan_count % 100 == 0)
++      vertical_observability_diagnostic_file.flush();
++  }
++
+   // The point-to-plane alignment for odometry
+   bool lio_state_estimation(PVecPtr pptr)
+   {
+@@ -1234,6 +1440,11 @@
+     Eigen::Vector3d evalue = saes.eigenvalues();
+     // printf("eva %d: %lf\n", match_num, evalue[0]);
+ 
++    if(vertical_observability_diagnostic_enabled)
++      write_vertical_observability_diagnostic(
++          evalue, saes.eigenvectors(), match_num, x_curr,
++          weak_axis_bridge_active);
++
+     if(weak_axis_bridge_active)
+     {
+       x_curr.p += weak_axis_scan *
+@@ -1652,6 +1863,8 @@
+     weak_axis_speed = 0;
+     weak_axis_time = 0;
+     weak_pose_history.clear();
++    vertical_diagnostic_history.clear();
++    vertical_observability_diagnostic_scan_count = 0;
+     frozen_plane_map.clear();
+     frozen_plane_count = 0;
+     last_map_compaction_journey = 0.0;

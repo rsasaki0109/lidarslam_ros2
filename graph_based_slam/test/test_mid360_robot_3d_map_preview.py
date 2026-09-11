@@ -111,6 +111,7 @@ def _write_fixture_run(run_dir: Path) -> Path:
         encoding='utf-8',
     )
     _write_binary_compressed_xyz_pcd(map_dir / '0_0.pcd', points)
+    _write_binary_compressed_xyz_pcd(run_dir / 'map.pcd', points)
 
     trajectory = run_dir / 'trajectory_tum.txt'
     trajectory.write_text(
@@ -136,6 +137,38 @@ def _write_fixture_run(run_dir: Path) -> Path:
         }),
         encoding='utf-8',
     )
+    (run_dir / 'pose_graph.g2o').write_text(
+        '\n'.join(
+            f'VERTEX_SE3:QUAT {index} {x} 0 0 0 0 0 1'
+            for index, x in enumerate((-3, -1, 1, 3))
+        ) + '\n',
+        encoding='utf-8',
+    )
+    (run_dir / 'loop_edges.csv').write_text(
+        'from,to,fitness,tx,ty,tz,qx,qy,qz,qw\n'
+        '0,3,0.2,6,0,0,0,0,0,1\n',
+        encoding='utf-8',
+    )
+    (run_dir / 'map_projector_info.yaml').write_text(
+        'projector_type: Local\n', encoding='utf-8'
+    )
+    (run_dir / 'map_bundle.yaml').write_text(
+        yaml.safe_dump({
+            'format_version': 1,
+            'frame_id': 'map',
+            'submap_count': 4,
+            'loop_edge_count': 1,
+            'artifacts': {
+                'full_map': 'map.pcd',
+                'pointcloud_map': 'pointcloud_map',
+                'trajectory': 'trajectory_tum.txt',
+                'pose_graph': 'pose_graph.g2o',
+                'loop_edges': 'loop_edges.csv',
+                'projector_info': 'map_projector_info.yaml',
+            },
+        }, sort_keys=False),
+        encoding='utf-8',
+    )
     return trajectory
 
 
@@ -159,6 +192,11 @@ def test_map_preview_exporter_writes_browser_artifacts(tmp_path: Path):
     assert manifest['counts']['html_points'] == 25
     assert manifest['counts']['trajectory_poses'] == 4
     assert manifest['counts']['loop_candidates'] == 1
+    assert manifest['counts']['accepted_loop_edges'] == 1
+    assert manifest['edit']['source']['editable'] is True
+    assert len(manifest['edit']['source']['map_bundle_sha256']) == 64
+    assert len(manifest['edit']['source']['full_map_sha256']) == 64
+    assert len(manifest['edit']['source']['pointcloud_map_sha256']) == 64
     assert (output_dir / MAP_PREVIEW_JSON).is_file()
     assert (output_dir / MAP_PREVIEW_HTML).is_file()
     assert (output_dir / MAP_PREVIEW_PLY).is_file()
@@ -169,9 +207,14 @@ def test_map_preview_exporter_writes_browser_artifacts(tmp_path: Path):
     overlay = json.loads((output_dir / MAP_PREVIEW_OVERLAY_JSON).read_text(encoding='utf-8'))
 
     assert 'element vertex 49' in ply
-    assert 'MID-360 3D Map Preview' in html
+    assert 'lidar_slam 3D Map Review' in html
     assert 'Drag to rotate' in html
+    assert 'Download edit plan' in html
+    assert "type: 'remove_box'" in html
+    assert "type: 'disable_loop_edge'" in html
     assert overlay['loop_candidates'][0]['midpoint'] == [0.0, 0.0, 0.0]
+    assert overlay['accepted_loop_edges'][0]['from'] == 0
+    assert overlay['accepted_loop_edges'][0]['to'] == 3
 
 
 def test_map_preview_cli_exports_json_manifest(tmp_path: Path):

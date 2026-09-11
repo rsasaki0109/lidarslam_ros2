@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/diagnosis-v1.schema.json",
+  "title": "lidarslam_ros2 diagnosis v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "run_dir",
+    "status",
+    "files",
+    "launch_flags",
+    "verify",
+    "projector_type",
+    "problem_hints",
+    "suggested_next_steps"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/diagnosis-v1.schema.json"
+    },
+    "run_dir": {"type": "string"},
+    "status": {
+      "enum": [
+        "success",
+        "map_saved",
+        "verify_failed",
+        "runtime_failed",
+        "incomplete"
+      ]
+    },
+    "files": {"type": "object"},
+    "launch_flags": {"type": "object"},
+    "verify": {"type": "object"},
+    "projector_type": {"type": ["string", "null"]},
+    "bag_preflight": {"type": "object"},
+    "symptom_triage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symptom",
+        "code",
+        "basis",
+        "title",
+        "checks",
+        "next_commands",
+        "avoid"
+      ],
+      "properties": {
+        "symptom": {
+          "enum": [
+            "map-spins-or-spirals",
+            "pose-drifts-or-oscillates",
+            "map-stops-early",
+            "map-is-too-sparse",
+            "map-is-not-visible"
+          ]
+        },
+        "code": {
+          "enum": [
+            "map-spins-or-spirals",
+            "pose-drifts-or-oscillates",
+            "map-stops-early",
+            "map-is-too-sparse",
+            "map-is-not-visible"
+          ]
+        },
+        "basis": {
+          "const": "USER_REPORTED_NOT_AUTOMATICALLY_DIAGNOSED"
+        },
+        "title": {"type": "string", "minLength": 1},
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "next_commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "avoid": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "problem_hints": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "suggested_next_steps": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

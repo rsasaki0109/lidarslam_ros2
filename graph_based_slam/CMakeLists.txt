@@ -27,7 +27,6 @@ find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(rcl_interfaces REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -41,9 +40,6 @@ find_package(lidarslam_msgs REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(ndt_omp_ros2 REQUIRED)
-find_package(lidarslam_plugin_interfaces REQUIRED)
-find_package(lidarslam_registration_loader REQUIRED)
-find_package(lidarslam_default_plugins REQUIRED)
 find_package(PCL REQUIRED)
 find_package(g2o QUIET
   COMPONENTS
@@ -116,11 +112,72 @@ if(OPENMP_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+add_library(graph_slam_config STATIC
+  src/graph_slam_config.cpp
+)
+set_target_properties(graph_slam_config PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(graph_slam_config PRIVATE src)
+ament_target_dependencies(graph_slam_config rclcpp)
+
+add_library(graph_slam_application STATIC
+  src/graph_slam_application.cpp
+)
+set_target_properties(graph_slam_application PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(
+  graph_slam_application PUBLIC include ${EIGEN3_INCLUDE_DIR} ${PCL_INCLUDE_DIRS}
+)
+ament_target_dependencies(graph_slam_application ndt_omp_ros2)
+target_link_libraries(
+  graph_slam_application
+  ${PCL_LIBRARIES}
+  g2o::core
+  g2o::types_slam3d
+  g2o::solver_eigen
+  g2o::stuff
+)
+
+add_library(graph_slam_io_adapters STATIC
+  src/filesystem_io_ports.cpp
+)
+set_target_properties(graph_slam_io_adapters PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_compile_features(graph_slam_io_adapters PRIVATE cxx_std_17)
+target_include_directories(
+  graph_slam_io_adapters PUBLIC include PRIVATE src ${PCL_INCLUDE_DIRS}
+)
+target_link_libraries(graph_slam_io_adapters ${PCL_LIBRARIES})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_pytest REQUIRED)
+  if(DEFINED ENV{ROS_DISTRO} AND "$ENV{ROS_DISTRO}" STREQUAL "humble")
+    # humble ships an older uncrustify binary whose formatting output diverges
+    # from the version used on newer distros (e.g. jazzy) for a handful of
+    # files. Since a single formatting cannot satisfy both uncrustify
+    # versions at once, skip the redundant style check on humble only;
+    # jazzy (and any other supported distro) still enforces it.
+    list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
+  endif()
   ament_lint_auto_find_test_dependencies()
+  ament_add_pytest_test(
+    test_graph_slam_architecture
+    test/test_graph_slam_architecture.py
+    TIMEOUT 60
+  )
+  ament_add_pytest_test(
+    test_bounded_filesystem_exhaustion
+    test/test_bounded_filesystem_exhaustion.py
+    TIMEOUT 120
+  )
+  ament_add_gtest(
+    test_graph_slam_config
+    test/test_graph_slam_config.cpp
+  )
+  if(TARGET test_graph_slam_config)
+    target_include_directories(test_graph_slam_config PRIVATE src)
+    target_link_libraries(test_graph_slam_config graph_slam_config)
+    ament_target_dependencies(test_graph_slam_config rclcpp)
+  endif()
   ament_add_gtest(
     test_gnss_weighting
     test/test_gnss_weighting.cpp
@@ -128,23 +185,6 @@ if(BUILD_TESTING)
   if(TARGET test_gnss_weighting)
     target_include_directories(test_gnss_weighting PRIVATE include)
     ament_target_dependencies(test_gnss_weighting sensor_msgs)
-  endif()
-  ament_add_gtest(
-    test_pointcloud2_conversion
-    test/test_pointcloud2_conversion.cpp
-  )
-  if(TARGET test_pointcloud2_conversion)
-    target_include_directories(test_pointcloud2_conversion PRIVATE include)
-    ament_target_dependencies(test_pointcloud2_conversion sensor_msgs pcl_conversions)
-    target_link_libraries(test_pointcloud2_conversion ${PCL_LIBRARIES})
-  endif()
-  ament_add_gtest(
-    test_target_cloud_cache
-    test/test_target_cloud_cache.cpp
-  )
-  if(TARGET test_target_cloud_cache)
-    target_include_directories(test_target_cloud_cache PRIVATE include ${EIGEN3_INCLUDE_DIR})
-    target_link_libraries(test_target_cloud_cache ${PCL_LIBRARIES})
   endif()
   ament_add_gtest(
     test_gnss_geometry
@@ -211,6 +251,21 @@ if(BUILD_TESTING)
     target_include_directories(test_loop_search_schedule PRIVATE include)
   endif()
   ament_add_gtest(
+    test_serialized_work_drain
+    test/test_serialized_work_drain.cpp
+  )
+  if(TARGET test_serialized_work_drain)
+    target_include_directories(test_serialized_work_drain PRIVATE include)
+  endif()
+  ament_add_gtest(
+    test_graph_state_store
+    test/test_graph_state_store.cpp
+  )
+  if(TARGET test_graph_state_store)
+    target_include_directories(test_graph_state_store PRIVATE include ${EIGEN3_INCLUDE_DIR})
+    ament_target_dependencies(test_graph_state_store lidarslam_msgs)
+  endif()
+  ament_add_gtest(
     test_triangle_descriptor
     test/test_triangle_descriptor.cpp
   )
@@ -270,47 +325,54 @@ if(BUILD_TESTING)
     src/three_d_bbs_loop_verifier.cpp
   )
   if(TARGET test_backend_core)
-    target_include_directories(
-      test_backend_core PRIVATE include ${EIGEN3_INCLUDE_DIR} ${lidarslam_default_plugins_INCLUDE_DIRS}
-    )
-    ament_target_dependencies(
-      test_backend_core ndt_omp_ros2 lidarslam_plugin_interfaces lidarslam_registration_loader
-    )
+    target_include_directories(test_backend_core PRIVATE include ${EIGEN3_INCLUDE_DIR})
+    ament_target_dependencies(test_backend_core ndt_omp_ros2)
     target_link_libraries(
       test_backend_core ${PCL_LIBRARIES} graph_based_slam_3d_bbs_vendor
     )
   endif()
   ament_add_gtest(
-    test_backend_registration_preflight
-    test/test_backend_registration_preflight.cpp
+    test_graph_slam_application
+    test/test_graph_slam_application.cpp
+    src/three_d_bbs_loop_verifier.cpp
   )
-  if(TARGET test_backend_registration_preflight)
+  if(TARGET test_graph_slam_application)
     target_include_directories(
-      test_backend_registration_preflight PRIVATE
-      include ${EIGEN3_INCLUDE_DIR} ${lidarslam_default_plugins_INCLUDE_DIRS}
+      test_graph_slam_application PRIVATE include ${EIGEN3_INCLUDE_DIR}
     )
-    ament_target_dependencies(
-      test_backend_registration_preflight
-      ndt_omp_ros2
-      lidarslam_plugin_interfaces
-      lidarslam_registration_loader
+    ament_target_dependencies(test_graph_slam_application ndt_omp_ros2)
+    target_link_libraries(
+      test_graph_slam_application
+      graph_slam_application
+      ${PCL_LIBRARIES}
+      graph_based_slam_3d_bbs_vendor
     )
-    target_link_libraries(test_backend_registration_preflight ${PCL_LIBRARIES})
   endif()
   ament_add_gtest(
-    test_graph_based_slam_component_preflight
-    test/test_graph_based_slam_component_preflight.cpp
+    test_external_io_ports
+    test/test_external_io_ports.cpp
   )
-  if(TARGET test_graph_based_slam_component_preflight)
+  if(TARGET test_external_io_ports)
     target_include_directories(
-      test_graph_based_slam_component_preflight PRIVATE include ${EIGEN3_INCLUDE_DIR}
+      test_external_io_ports PRIVATE include src ${PCL_INCLUDE_DIRS}
+    )
+    target_compile_features(test_external_io_ports PRIVATE cxx_std_17)
+    target_link_libraries(
+      test_external_io_ports graph_slam_io_adapters ${PCL_LIBRARIES}
+    )
+  endif()
+  ament_add_gtest(
+    test_pointcloud_conversion
+    test/test_pointcloud_conversion.cpp
+  )
+  if(TARGET test_pointcloud_conversion)
+    target_include_directories(
+      test_pointcloud_conversion PRIVATE include ${PCL_INCLUDE_DIRS}
     )
     ament_target_dependencies(
-      test_graph_based_slam_component_preflight rclcpp rcl_interfaces
+      test_pointcloud_conversion sensor_msgs pcl_conversions
     )
-    target_link_libraries(
-      test_graph_based_slam_component_preflight graph_based_slam_component
-    )
+    target_link_libraries(test_pointcloud_conversion ${PCL_LIBRARIES})
   endif()
   ament_add_gtest(
     test_pose_graph_optimization
@@ -411,6 +473,41 @@ if(BUILD_TESTING)
     )
   endif()
   ament_add_gtest(
+    test_radar_ego_velocity
+    test/test_radar_ego_velocity.cpp
+  )
+  if(TARGET test_radar_ego_velocity)
+    target_include_directories(
+      test_radar_ego_velocity PRIVATE ../Thirdparty/rko_lio ${EIGEN3_INCLUDE_DIR}
+    )
+    # radar_ego_velocity.hpp uses std::optional; this package otherwise defaults to C++14.
+    target_compile_features(test_radar_ego_velocity PRIVATE cxx_std_17)
+  endif()
+  ament_add_gtest(
+    test_radar_continuous_fusion
+    test/test_radar_continuous_fusion.cpp
+  )
+  if(TARGET test_radar_continuous_fusion)
+    target_include_directories(
+      test_radar_continuous_fusion PRIVATE ../Thirdparty/rko_lio ${EIGEN3_INCLUDE_DIR}
+    )
+    # radar_ego_velocity.hpp uses std::optional; this package otherwise defaults to C++14
+    # (see test_radar_ego_velocity above).
+    target_compile_features(test_radar_continuous_fusion PRIVATE cxx_std_17)
+  endif()
+  ament_add_gtest(
+    test_intensity_profile
+    test/test_intensity_profile.cpp
+  )
+  if(TARGET test_intensity_profile)
+    target_include_directories(
+      test_intensity_profile PRIVATE ../Thirdparty/rko_lio ${EIGEN3_INCLUDE_DIR}
+    )
+    # intensity_profile.hpp uses std::clamp/structured bindings; this package otherwise
+    # defaults to C++14 (see test_radar_ego_velocity above).
+    target_compile_features(test_intensity_profile PRIVATE cxx_std_17)
+  endif()
+  ament_add_gtest(
     test_odometry_covariance_localizability
     test/test_odometry_covariance_localizability.cpp
   )
@@ -479,33 +576,6 @@ if(BUILD_TESTING)
     )
   endif()
   ament_add_gtest(
-    test_map_thickness_attribution
-    test/test_map_thickness_attribution.cpp
-  )
-  if(TARGET test_map_thickness_attribution)
-    target_include_directories(
-      test_map_thickness_attribution PRIVATE include ${EIGEN3_INCLUDE_DIR}
-    )
-  endif()
-  ament_add_gtest(
-    test_trajectory_revisit_segmentation
-    test/test_trajectory_revisit_segmentation.cpp
-  )
-  if(TARGET test_trajectory_revisit_segmentation)
-    target_include_directories(
-      test_trajectory_revisit_segmentation PRIVATE include ${EIGEN3_INCLUDE_DIR}
-    )
-  endif()
-  ament_add_gtest(
-    test_dense_pose_correction
-    test/test_dense_pose_correction.cpp
-  )
-  if(TARGET test_dense_pose_correction)
-    target_include_directories(
-      test_dense_pose_correction PRIVATE include ${EIGEN3_INCLUDE_DIR}
-    )
-  endif()
-  ament_add_gtest(
     test_registration_determinism
     test/test_registration_determinism.cpp
   )
@@ -534,51 +604,6 @@ if(BUILD_TESTING)
       test_planar_map_filter PRIVATE include ${EIGEN3_INCLUDE_DIR}
     )
   endif()
-  ament_add_gtest(
-    test_planar_map_consolidation
-    test/test_planar_map_consolidation.cpp
-  )
-  if(TARGET test_planar_map_consolidation)
-    target_include_directories(
-      test_planar_map_consolidation PRIVATE include ${EIGEN3_INCLUDE_DIR}
-    )
-  endif()
-  ament_add_gtest(
-    test_probabilistic_surfel_fusion
-    test/test_probabilistic_surfel_fusion.cpp
-  )
-  if(TARGET test_probabilistic_surfel_fusion)
-    target_include_directories(
-      test_probabilistic_surfel_fusion PRIVATE include ${EIGEN3_INCLUDE_DIR}
-    )
-  endif()
-  ament_add_gtest(
-    test_probabilistic_surfel_map
-    test/test_probabilistic_surfel_map.cpp
-  )
-  if(TARGET test_probabilistic_surfel_map)
-    target_include_directories(
-      test_probabilistic_surfel_map PRIVATE include ${EIGEN3_INCLUDE_DIR}
-    )
-  endif()
-  ament_add_gtest(
-    test_ndt_localization_target
-    test/test_ndt_localization_target.cpp
-  )
-  if(TARGET test_ndt_localization_target)
-    target_include_directories(
-      test_ndt_localization_target PRIVATE include ${EIGEN3_INCLUDE_DIR}
-    )
-  endif()
-  ament_add_gtest(
-    test_scan_surface_refiner
-    test/test_scan_surface_refiner.cpp
-  )
-  if(TARGET test_scan_surface_refiner)
-    target_include_directories(
-      test_scan_surface_refiner PRIVATE include ${EIGEN3_INCLUDE_DIR}
-    )
-  endif()
   ament_add_pytest_test(
     test_autoware_map_tools
     test/test_autoware_map_tools.py
@@ -587,6 +612,16 @@ if(BUILD_TESTING)
   ament_add_pytest_test(
     test_map_bundle_verifier
     test/test_map_bundle_verifier.py
+    TIMEOUT 120
+  )
+  ament_add_pytest_test(
+    test_map_edit
+    test/test_map_edit.py
+    TIMEOUT 120
+  )
+  ament_add_pytest_test(
+    test_map_merge
+    test/test_map_merge.py
     TIMEOUT 120
   )
   ament_add_pytest_test(
@@ -600,31 +635,6 @@ if(BUILD_TESTING)
     TIMEOUT 120
   )
   ament_add_pytest_test(
-    test_run_competitive_gt_blind_benchmark
-    test/test_run_competitive_gt_blind_benchmark.py
-    TIMEOUT 120
-  )
-  ament_add_pytest_test(
-    test_competitive_container_recipes
-    test/test_competitive_container_recipes.py
-    TIMEOUT 120
-  )
-  ament_add_pytest_test(
-    test_sample_container_process_rss
-    test/test_sample_container_process_rss.py
-    TIMEOUT 120
-  )
-  ament_add_pytest_test(
-    test_container_memory_evidence
-    test/test_container_memory_evidence.py
-    TIMEOUT 120
-  )
-  ament_add_pytest_test(
-    test_audit_m6a7_v3_evidence
-    test/test_audit_m6a7_v3_evidence.py
-    TIMEOUT 120
-  )
-  ament_add_pytest_test(
     test_fast_livo2_benchmark_runner
     test/test_fast_livo2_benchmark_runner.py
     TIMEOUT 120
@@ -632,11 +642,6 @@ if(BUILD_TESTING)
   ament_add_pytest_test(
     test_glim_benchmark_runner
     test/test_glim_benchmark_runner.py
-    TIMEOUT 120
-  )
-  ament_add_pytest_test(
-    test_ours_competitive_benchmark
-    test/test_ours_competitive_benchmark.py
     TIMEOUT 120
   )
   ament_add_pytest_test(
@@ -813,6 +818,26 @@ if(BUILD_TESTING)
     TIMEOUT 120
   )
   ament_add_pytest_test(
+    test_spatiotemporal_calibration
+    test/test_spatiotemporal_calibration.py
+    TIMEOUT 120
+  )
+  ament_add_pytest_test(
+    test_geometry_aware_fusion
+    test/test_geometry_aware_fusion.py
+    TIMEOUT 120
+  )
+  ament_add_pytest_test(
+    test_attach_dynamic_image_masks
+    test/test_attach_dynamic_image_masks.py
+    TIMEOUT 120
+  )
+  ament_add_pytest_test(
+    test_recolor_pointcloud
+    test/test_recolor_pointcloud.py
+    TIMEOUT 120
+  )
+  ament_add_pytest_test(
     test_heldout_point_colors
     test/test_heldout_point_colors.py
     TIMEOUT 120
@@ -963,6 +988,75 @@ if(BUILD_TESTING)
     TIMEOUT 120
   )
   ament_add_pytest_test(
+    test_newer_college_reference
+    test/test_newer_college_reference.py
+    TIMEOUT 120
+  )
+  set(GRAPH_BASED_SLAM_ADDITIONAL_PYTESTS
+    test_aist_ouster_rgb_map_benchmark
+    test_analyze_colored_point_cloud
+    test_applanix_tf_bridge
+    test_attached_storage
+    test_autoware_dogfood_script
+    test_autoware_map_preflight
+    test_autoware_map_run_diagnosis
+    test_autoware_quickstart_script
+    test_autoware_viewer_scripts
+    test_benchmark_report_modules
+    test_colored_map_appearance
+    test_colored_map_pipeline
+    test_colorize_from_bag
+    test_compare_fast_livo2
+    test_cross_repo_slam_benchmark
+    test_densify_corrected_trajectory
+    test_docker_demo_script
+    test_download_verified_file
+    test_freeze_ntu_viral_holdout_inputs
+    test_freeze_ntu_viral_input_suite
+    test_freeze_rtkslam_holdout_inputs
+    test_frontend_determinism_script
+    test_generate_ntu_viral_csv_reference
+    test_graph_slam_offline_ablation
+    test_mid360_robot_field_session
+    test_mid360_robot_map_runner
+    test_mid360_robot_plan_cli
+    test_mid360_robot_profile_cli
+    test_mid360_robot_public_bag_clip
+    test_mid360_robot_public_bag_segments
+    test_mid360_robot_public_dataset_map_runner
+    test_mid360_robot_public_dataset_report
+    test_mid360_robot_public_datasets
+    test_mid360_robot_public_loop_bag
+    test_mid360_robot_public_loop_candidates
+    test_mid360_robot_public_map_run_diagnosis
+    test_mid360_robot_readiness_cli
+    test_mid360_robot_record_cli
+    test_mid360_robot_runbook_smoke
+    test_mid360_robot_sample_session
+    test_mid360_robot_sample_session_matrix
+    test_normalize_ntu_viral_rosbag
+    test_ntu_viral_download_script
+    test_offline_determinism_script
+    test_ours_competitive_benchmark_runner
+    test_pcd_sequence_to_rosbag2
+    test_plane_patch_warp
+    test_pose_graph_loop_residuals
+    test_prepare_ntu_viral_holdout
+    test_public_suite_gate
+    test_radarless_tunnel_benchmark_tools
+    test_realtime_colored_map_evaluator
+    test_rko_lio_graph_benchmark_script
+    test_rtk_slam_download_script
+    test_run_lidar_slam
+    test_run_ntu_viral_formal_measurements
+    test_runtime_report
+    test_select_rosbag_topic
+    test_slice_rosbag2
+  )
+  foreach(PYTEST_NAME IN LISTS GRAPH_BASED_SLAM_ADDITIONAL_PYTESTS)
+    ament_add_pytest_test(${PYTEST_NAME} test/${PYTEST_NAME}.py TIMEOUT 120)
+  endforeach()
+  ament_add_pytest_test(
     test_benchmark_reporting_tools
     test/test_benchmark_reporting_tools.py
     TIMEOUT 120
@@ -980,6 +1074,46 @@ if(BUILD_TESTING)
   ament_add_pytest_test(
     test_docs_entrypoints
     test/test_docs_entrypoints.py
+    TIMEOUT 120
+  )
+  ament_add_pytest_test(
+    test_default_ci_checks_script
+    test/test_default_ci_checks_script.py
+    TIMEOUT 60
+  )
+  ament_add_pytest_test(
+    test_product_python_tests_script
+    test/test_product_python_tests_script.py
+    TIMEOUT 60
+  )
+  ament_add_pytest_test(
+    test_enwide_benchmark_assets
+    test/test_enwide_benchmark_assets.py
+    TIMEOUT 60
+  )
+  ament_add_pytest_test(
+    test_score_position_only_trajectory
+    test/test_score_position_only_trajectory.py
+    TIMEOUT 60
+  )
+  ament_add_pytest_test(
+    test_summarize_intensity_peak_diagnostics
+    test/test_summarize_intensity_peak_diagnostics.py
+    TIMEOUT 60
+  )
+  ament_add_pytest_test(
+    test_validate_real_data_e2e
+    test/test_validate_real_data_e2e.py
+    TIMEOUT 60
+  )
+  ament_add_pytest_test(
+    test_build_mid360_onboarding_fixture
+    test/test_build_mid360_onboarding_fixture.py
+    TIMEOUT 120
+  )
+  ament_add_pytest_test(
+    test_lidarslam_product_cli
+    test/test_lidarslam_product_cli.py
     TIMEOUT 120
   )
   ament_add_pytest_test(
@@ -1115,14 +1249,17 @@ if(BUILD_TESTING)
   ament_add_pytest_test(
     test_mesh_export
     test/test_mesh_export.py
-    TIMEOUT 120
+    TIMEOUT 300
   )
 endif()
 
 add_library(graph_based_slam_component SHARED
   src/graph_based_slam_component.cpp
+  src/graph_slam_ros_adapter.cpp
+  src/graph_slam_composition.cpp
   src/three_d_bbs_loop_verifier.cpp
 )
+target_compile_features(graph_based_slam_component PRIVATE cxx_std_17)
 
 target_compile_definitions(graph_based_slam_component PRIVATE "GS_GBS_BUILDING_DLL")
 if(GRAPH_BASED_SLAM_HAVE_3D_BBS)
@@ -1133,7 +1270,6 @@ endif()
 ament_target_dependencies(graph_based_slam_component
   rclcpp
   rclcpp_components
-  rcl_interfaces
   tf2_ros
   tf2_eigen
   tf2_geometry_msgs
@@ -1146,19 +1282,12 @@ ament_target_dependencies(graph_based_slam_component
   lidarslam_msgs
   message_filters
   ndt_omp_ros2
-  lidarslam_plugin_interfaces
-  lidarslam_registration_loader
-)
-
-# The live NDT factory includes the adapter implementation in this component
-# translation unit.  Use the exported headers without linking the default
-# plugin DSO: linking it would reintroduce the pclomp template interposition
-# that the host-resident compatibility path is designed to avoid.
-target_include_directories(graph_based_slam_component PRIVATE
-  ${lidarslam_default_plugins_INCLUDE_DIRS}
 )
 
 target_link_libraries(graph_based_slam_component
+  graph_slam_config
+  graph_slam_application
+  graph_slam_io_adapters
   g2o::core
   g2o::types_slam3d
   g2o::solver_eigen
@@ -1177,14 +1306,6 @@ add_executable(planar_map_filter
   src/planar_map_filter_main.cpp
 )
 
-add_executable(planar_map_consolidation
-  src/planar_map_consolidation_main.cpp
-)
-
-add_executable(map_thickness_attribution_report
-  src/map_thickness_attribution_report_main.cpp
-)
-
 target_include_directories(map_quality_report PRIVATE include ${EIGEN3_INCLUDE_DIR})
 
 target_compile_features(map_quality_report PRIVATE cxx_std_17)
@@ -1194,17 +1315,10 @@ target_link_libraries(map_quality_report
 )
 
 target_include_directories(planar_map_filter PRIVATE include ${EIGEN3_INCLUDE_DIR})
-target_include_directories(planar_map_consolidation PRIVATE include ${EIGEN3_INCLUDE_DIR})
-target_include_directories(map_thickness_attribution_report PRIVATE include ${EIGEN3_INCLUDE_DIR})
 
 target_compile_features(planar_map_filter PRIVATE cxx_std_17)
-target_compile_features(planar_map_consolidation PRIVATE cxx_std_17)
-target_compile_features(map_thickness_attribution_report PRIVATE cxx_std_17)
 
 target_link_libraries(planar_map_filter
-  ${PCL_LIBRARIES}
-)
-target_link_libraries(planar_map_consolidation
   ${PCL_LIBRARIES}
 )
 
@@ -1219,38 +1333,7 @@ add_executable(graph_slam_offline_runner
   src/graph_slam_offline_runner.cpp
   src/three_d_bbs_loop_verifier.cpp
 )
-
-add_executable(map_ndt_residual_report
-  src/map_ndt_residual_report_main.cpp
-)
-
-add_executable(ndt_localization_target
-  src/ndt_localization_target_main.cpp
-)
-
-target_include_directories(
-  ndt_localization_target PRIVATE include ${EIGEN3_INCLUDE_DIR}
-)
-
-target_compile_features(ndt_localization_target PRIVATE cxx_std_17)
-
-target_link_libraries(ndt_localization_target
-  ${PCL_LIBRARIES}
-)
-
-ament_target_dependencies(map_ndt_residual_report
-  rclcpp
-  rosbag2_cpp
-  tf2_eigen
-  pcl_conversions
-  nav_msgs
-  sensor_msgs
-  ndt_omp_ros2
-)
-
-target_link_libraries(map_ndt_residual_report
-  ${PCL_LIBRARIES}
-)
+target_compile_features(graph_slam_offline_runner PRIVATE cxx_std_17)
 
 if(GRAPH_BASED_SLAM_HAVE_3D_BBS)
   target_compile_definitions(graph_slam_offline_runner PRIVATE GRAPH_BASED_SLAM_HAVE_3D_BBS)
@@ -1265,18 +1348,11 @@ ament_target_dependencies(graph_slam_offline_runner
   nav_msgs
   sensor_msgs
   ndt_omp_ros2
-  lidarslam_plugin_interfaces
-  lidarslam_registration_loader
-)
-
-# The offline NDT host factory includes the typed adapter implementation in
-# this executable translation unit.  Do not link the default plugin DSO: that
-# would recreate the rejected pclomp/ODR interposition boundary.
-target_include_directories(graph_slam_offline_runner PRIVATE
-  ${lidarslam_default_plugins_INCLUDE_DIRS}
 )
 
 target_link_libraries(graph_slam_offline_runner
+  graph_slam_application
+  graph_slam_io_adapters
   ${PCL_LIBRARIES}
   g2o::core
   g2o::types_slam3d
@@ -1288,6 +1364,21 @@ include_directories(
   include
   ${PCL_INCLUDE_DIRS}
 )
+
+if(BUILD_TESTING)
+  ament_add_gtest(
+    test_graph_slam_composition
+    test/test_graph_slam_composition.cpp
+  )
+  if(TARGET test_graph_slam_composition)
+    target_include_directories(
+      test_graph_slam_composition PRIVATE src include ${EIGEN3_INCLUDE_DIR}
+    )
+    target_link_libraries(test_graph_slam_composition graph_based_slam_component)
+    ament_target_dependencies(test_graph_slam_composition rclcpp)
+  endif()
+endif()
+
 link_directories(
   ${PCL_LIBRARY_DIRS}
 )
@@ -1297,10 +1388,6 @@ rclcpp_components_register_nodes(graph_based_slam_component
   "graphslam::GraphBasedSlamComponent")
 
 ament_export_libraries(graph_based_slam_component)
-ament_export_dependencies(
-  lidarslam_plugin_interfaces
-  lidarslam_registration_loader
-)
 
 install(
   DIRECTORY "include/"
@@ -1322,12 +1409,8 @@ install(TARGETS
 install(TARGETS
   graph_based_slam_node
   graph_slam_offline_runner
-  map_ndt_residual_report
-  ndt_localization_target
   map_quality_report
   planar_map_filter
-  planar_map_consolidation
-  map_thickness_attribution_report
   DESTINATION lib/${PROJECT_NAME}
 )
 

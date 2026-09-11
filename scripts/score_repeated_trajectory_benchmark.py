@@ -63,17 +63,30 @@ def parse_ape(path: Path) -> dict[str, Any]:
     return result
 
 
+def peak_rss_mb(run_report: dict[str, Any]) -> float | None:
+    runtime = run_report.get('runtime') or {}
+    value = runtime.get('peak_rss_mb')
+    if value is None:
+        value = (runtime.get('mapper') or {}).get('peak_rss_mb')
+    return None if value is None else float(value)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--benchmark-dir', type=Path, required=True)
     parser.add_argument('--reference-tum', type=Path, required=True)
     parser.add_argument('--trajectory-relative-path', required=True)
+    parser.add_argument('--common-range-trajectory', type=Path,
+                        action='append', default=[])
     parser.add_argument('--max-time-diff', type=float, default=0.25)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     run_dirs = sorted(path.parent for path in args.benchmark_dir.glob('run_*/run.json'))
     trajectories = [run / args.trajectory_relative_path for run in run_dirs]
-    selected, excluded = select_common_reference(args.reference_tum, trajectories)
+    range_trajectories = trajectories + [
+        path.resolve() for path in args.common_range_trajectory]
+    selected, excluded = select_common_reference(
+        args.reference_tum, range_trajectories)
     common_reference = args.benchmark_dir / 'common_reference.tum'
     common_reference.write_text('\n'.join(selected) + '\n')
     runs = []
@@ -85,16 +98,25 @@ def main() -> int:
             '--out', str(ape_path), '--interpolate',
             '--max-time-diff', str(args.max_time_diff)], check=True)
         run_report = json.loads((run_dir / 'run.json').read_text())
+        completion = run_report['completion']
+        trajectory_info = (run_report.get('scoring_trajectory') or
+                           run_report.get('trajectory') or {})
         runs.append({
             'run': run_dir.name,
             'ape': parse_ape(ape_path),
-            'completion': run_report['completion'],
+            'completion': completion,
+            'trajectory_complete': bool(completion['trajectory_complete']),
+            'process_exit_status': completion.get('process_exit_status'),
+            'trajectory_samples': int(trajectory_info.get('samples', 0)),
             'runtime': run_report['runtime'],
+            'peak_rss_mb': peak_rss_mb(run_report),
         })
     apes = [run['ape']['rmse'] for run in runs]
     valid = all(run['completion']['trajectory_complete'] and
                 run['completion']['process_exit_status'] == 0 and
                 run['ape']['rejected_ref_points'] == 0 for run in runs)
+    rss_values = [run['peak_rss_mb'] for run in runs
+                  if run['peak_rss_mb'] is not None]
     document = {
         'schema_version': 1,
         'valid_repetitions': len(runs) if valid else 0,
@@ -105,12 +127,16 @@ def main() -> int:
             'common_sha256': sha256(common_reference),
             'common_poses': len(selected),
             'excluded_timestamps': excluded,
+            'range_contract_trajectories': [
+                {'path': str(path.resolve()), 'sha256': sha256(path)}
+                for path in range_trajectories],
         },
         'aggregate': {
             'ape_rmse_median_m': statistics.median(apes),
             'ape_rmse_min_m': min(apes),
             'ape_rmse_max_m': max(apes),
             'ape_rmse_population_std_m': statistics.pstdev(apes),
+            'peak_rss_max_mb': max(rss_values) if rss_values else None,
         },
         'runs': runs,
     }

@@ -1,0 +1,78 @@
+# Radar-less long straight tunnel/corridor preset (LiDAR + IMU).
+#
+# Symptom: point-to-point ICP enters a confident zero-motion attractor in a
+# long self-similar tunnel. The pose freezes even though IMU propagation still
+# indicates forward motion.
+#
+# Scope is intentionally narrow:
+#   - long, mostly straight, walking-speed traverses;
+#   - LiDAR + IMU only;
+#   - known maximum platform speed, tuned below.
+#
+# Do not use this as a general driving preset. Translation correction is
+# suspended during sustained yaw while the velocity prior follows orientation;
+# the turn and speed envelopes remain application-specific. For radar-equipped
+# rigs, tunnel_radar.ros.yaml is better validated and does not require a
+# walking-speed cap.
+#
+# Validated on NTNU Fyllingsdalen (~500 m):
+#   plain rko_lio                         102.3 m
+#   intensity-only radar-less preset     153.8 m
+#   this preset                          499.9 m
+#   no yaw gate reached 517.2 m, but failed the fog negative check.
+#
+# Paired negative checks with the applicability gates below:
+#   NTNU fog, HILTI exp07, and MID-360 trajectories are byte-identical
+#   to their default-off controls; HILTI exp07 control APE is 0.208 m.
+#   After the reference stops, this preset moves only 0.011 m over 14 s.
+#
+# Layer this after the sensor config. All feature defaults remain OFF.
+/**:
+  ros__parameters:
+    kinematic_velocity_blend: true
+
+    # Fixed information scales: fresh propagation weight = 9 / (1 + 9) = 0.9.
+    kinematic_blend_icp_information_scale: 1.0
+    kinematic_blend_propagation_information_scale: 9.0
+    kinematic_blend_decay_time_sec: 100.0
+
+    # Only near-exact 3D ICP/propagation agreement refreshes the anchor.
+    kinematic_blend_anchor_agreement_mps: 0.05
+
+    # Robustify both inputs. TODO-USER: set these from the real platform
+    # envelope. The 2.1 m/s pseudo-sensor cap is specific to the ~1.7 m/s
+    # NTNU walk. The 2.5 m/s activation limit tolerates per-scan ICP velocity
+    # noise without allowing driving-speed use of this walking prior.
+    kinematic_blend_max_icp_innovation_mps: 1.0
+    kinematic_blend_max_propagated_speed_mps: 2.1
+    kinematic_blend_max_activation_speed_mps: 2.5
+    kinematic_blend_speed_gate_min_scans: 3
+    kinematic_blend_speed_reenable_delay_sec: 60.0
+    kinematic_blend_min_speed: 0.3
+    # Walking keeps the within-scan acceleration-magnitude variance well above
+    # 0.03 even when tunnel ICP falsely reports zero velocity. A real stationary
+    # interval in the validation bag remains below 0.01.
+    kinematic_blend_min_accel_magnitude_variance: 0.03
+    kinematic_blend_inactivity_gate_min_scans: 5
+
+    # Suspend translation correction after 10 consecutive scan intervals over
+    # the yaw threshold and rotate the retained velocity prior into the new
+    # world direction. Single-scan IMU vibration does not trip the gate.
+    kinematic_blend_max_yaw_rate_rad_s: 0.05
+    kinematic_blend_yaw_gate_min_scans: 10
+
+    # Activate only when the observed ranges resemble an open, long corridor.
+    # Dense near clutter rejects fog and handheld scenes. A 60 s cooldown
+    # prevents intermittent clear scans from repeatedly rearming the prior.
+    kinematic_blend_range_scene_gate: true
+    kinematic_blend_scene_near_range_m: 3.0
+    kinematic_blend_scene_max_near_fraction: 0.5
+    kinematic_blend_scene_far_range_m: 10.0
+    kinematic_blend_scene_min_far_fraction: 0.05
+    kinematic_blend_scene_min_valid_points: 100
+    kinematic_blend_scene_reenable_delay_sec: 60.0
+
+    # Validated arm keeps map insertion enabled. Lower values are experimental:
+    # partial/full suppression did not prevent runaway in the development sweep.
+    kinematic_blend_map_update_max_propagation_weight: 1.0
+    kinematic_blend_map_update_min_fraction: 1.0

@@ -1,4 +1,4 @@
-FROM docker.io/library/ros:jazzy-ros-base@sha256:31daab66eef9139933379fb67159449944f4e2dcf2e22c2d12cc715f29873e0f
+FROM ros:jazzy-ros-base@sha256:31daab66eef9139933379fb67159449944f4e2dcf2e22c2d12cc715f29873e0f
 
 ARG GTSAM_REVISION=2f3e56c0ddbd3a1aa54ed043643b553d26a069f6
 ARG GTSAM_POINTS_REVISION=9d32e7dbecf6015560d84b4901d6b0a6f483ec46
@@ -68,14 +68,6 @@ RUN printf '%s\n' '#!/usr/bin/env bash' 'set -e' \
     'source /opt/glim_ws/install/setup.bash' 'exec "$@"' \
     > /ros_entrypoint.sh \
   && chmod +x /ros_entrypoint.sh
-
-ARG BENCHMARK_CPU_THREADS=8
-
-ENV BENCHMARK_CPU_ONLY=1 \
-    OMP_NUM_THREADS=${BENCHMARK_CPU_THREADS} \
-    OPENBLAS_NUM_THREADS=${BENCHMARK_CPU_THREADS} \
-    MKL_NUM_THREADS=${BENCHMARK_CPU_THREADS} \
-    TBB_NUM_THREADS=${BENCHMARK_CPU_THREADS}
 
 LABEL org.opencontainers.image.source="https://github.com/koide3/glim" \
       benchmark.glim.revision="faa264a1bce1bda406f73457e35511f56cdc2eaa" \

@@ -12,19 +12,16 @@ import subprocess
 import sys
 from typing import Any
 
-_SCRIPT_SOURCE_ROOT = Path(__file__).resolve().parent.parent
-if (
-        (_SCRIPT_SOURCE_ROOT / 'lidarslam_benchmark_tools' / '__init__.py').is_file()
-        and str(_SCRIPT_SOURCE_ROOT) not in sys.path):
-    sys.path.insert(0, str(_SCRIPT_SOURCE_ROOT))
-
 from lidarslam_benchmark_tools.run_fast_livo2_benchmark import (
-    benchmark_machine_fingerprint, parse_time_report, read_int,
+    apply_tum_translation_offset, benchmark_machine_fingerprint,
+    evaluate_map_quality, load_reference_offset, parse_time_report, read_int,
     current_competitive_closure_identity, validate_frozen_input_manifest)
 import yaml
 
 
-ROOT = _SCRIPT_SOURCE_ROOT
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 DEFAULT_PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
 
 
@@ -208,7 +205,13 @@ def run_once(args: argparse.Namespace, output: Path, index: int,
                                    check=False)
     finished = dt.datetime.now(dt.timezone.utc)
     process_time = parse_time_report(run_dir / 'process_time.txt')
-    trajectory = trajectory_info(run_dir / 'dump/traj_lidar.txt')
+    raw_trajectory_path = run_dir / 'dump/traj_lidar.txt'
+    trajectory = trajectory_info(raw_trajectory_path)
+    scoring_path = run_dir / 'trajectory_prism.tum'
+    if trajectory['samples'] > 0:
+        apply_tum_translation_offset(
+            raw_trajectory_path, scoring_path, args.frame_offset)
+    scoring_trajectory = trajectory_info(scoring_path)
     end_gap = (None if trajectory['last_stamp'] is None
                else bag_end - trajectory['last_stamp'])
     processing_rtf = (float(process_time['wall_seconds']) / duration
@@ -223,11 +226,24 @@ def run_once(args: argparse.Namespace, output: Path, index: int,
             consumer = json.loads(consumer_path.read_text(encoding='utf-8'))
         if eof_path.is_file():
             eof_sidecar = json.loads(eof_path.read_text(encoding='utf-8'))
+    map_quality = None
+    if args.save_maps and process_exit == 0:
+        map_path = run_dir / 'map.pcd'
+        exported = subprocess.run([
+            sys.executable, str(ROOT / 'scripts/export_glim_dump_map.py'),
+            '--dump', str(run_dir / 'dump'), '--output', str(map_path)],
+            cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            check=False)
+        if exported.returncode == 0 and map_path.is_file():
+            map_quality = evaluate_map_quality(map_path, run_dir)
     complete = (completed.returncode == 0 and process_exit == 0 and
                 trajectory['samples'] > 0 and end_gap is not None and
+                scoring_trajectory['samples'] == trajectory['samples'] and
                 end_gap <= args.maximum_end_gap_seconds and
                 (phase is None or (consumer and consumer.get('status') == 'pass' and
                                    eof_sidecar and eof_sidecar.get('status') == 'eof')))
+    if args.save_maps and map_quality is None:
+        complete = False
     report = {
         'schema_version': 1, 'system': 'glim_cpu', 'run_index': index,
         'started_at': started.isoformat(), 'finished_at': finished.isoformat(),
@@ -240,6 +256,12 @@ def run_once(args: argparse.Namespace, output: Path, index: int,
         'trajectory': trajectory,
         'consumer_evidence': consumer,
         'consumer_eof_boundary': eof_sidecar,
+        'scoring_trajectory': scoring_trajectory,
+        'trajectory_contract': {
+            'source': 'official_GLIM_dump_traj_lidar',
+            'source_frame': 'lidar', 'target_frame': 'leica_prism',
+            'offset_m': dict(zip('xyz', args.frame_offset)),
+        },
         'runtime': {'bag_duration_seconds': duration,
                     'processing_realtime_factor': processing_rtf,
                     **process_time},
@@ -252,6 +274,8 @@ def run_once(args: argparse.Namespace, output: Path, index: int,
             else f'/data/{args.bag.name}',
         },
     }
+    if map_quality is not None:
+        report['mapping'] = map_quality
     (run_dir / 'run.json').write_text(json.dumps(report, indent=2) + '\n')
     return report
 
@@ -261,9 +285,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--bag', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--profile', type=Path, default=DEFAULT_PROFILE)
+    parser.add_argument(
+        '--config-dir', type=Path,
+        default=ROOT / 'configs/glim/hilti2022_cpu',
+        help='GLIM override directory containing the four benchmark JSON files')
     parser.add_argument('--input-manifest', type=Path)
+    parser.add_argument('--reference-meta', type=Path, required=True)
     parser.add_argument('--image', default='glim-cpu-benchmark:competitive-v1')
     parser.add_argument('--runs', type=int)
+    parser.add_argument('--save-maps', action='store_true')
     parser.add_argument('--maximum-end-gap-seconds', type=float, default=0.25)
     parser.add_argument('--phase-contract', choices=('v1', 'v2'), default='v1')
     parser.add_argument(
@@ -277,6 +307,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     args.bag, args.output = args.bag.resolve(), args.output.resolve()
+    args.config_dir = args.config_dir.resolve()
+    args.reference_meta = args.reference_meta.resolve()
+    if not args.reference_meta.is_file():
+        raise ValueError(f'--reference-meta is not a file: {args.reference_meta}')
+    args.frame_offset = load_reference_offset(args.reference_meta, 'lidar')
     contract = yaml.safe_load(args.profile.read_text())['competitive_slam_profile']
     closure_identity = current_competitive_closure_identity(contract)
     runs = contract['repetitions'] if args.runs is None else args.runs
@@ -287,6 +322,14 @@ def main() -> int:
         phase = contract.get(args.phase_id)
         if not isinstance(phase, dict):
             raise ValueError(f'profile has no GLIM v2 phase: {args.phase_id}')
+    required_configs = {
+        'config.json', 'config_sensors.json', 'config_ros.json',
+        'config_logging.json'}
+    missing_configs = sorted(
+        name for name in required_configs if not (args.config_dir / name).is_file())
+    if missing_configs:
+        raise ValueError(
+            f'--config-dir is missing required files: {missing_configs}')
     image_id, labels = image_labels(args.image)
     rival = contract['rivals']['glim']
     expected_labels = {
@@ -327,8 +370,15 @@ def main() -> int:
         'machine': benchmark_machine_fingerprint(),
         'image_labels': labels, 'bag_path': str(args.bag),
         'bag_sha256': bag_hash, 'input_manifest': manifest,
-        'config_path': str(config_path),
-        'config_sha256': config_hash,
+        'config_path': str(args.config_dir),
+        'config_sha256': sha256_tree(args.config_dir),
+        'phase_config_path': str(config_path),
+        'phase_config_sha256': config_hash,
+        'reference_metadata': {
+            'path': str(args.reference_meta),
+            'sha256': hashlib.sha256(args.reference_meta.read_bytes()).hexdigest()},
+        'trajectory_source_frame': 'lidar',
+        'trajectory_to_prism_offset_m': dict(zip('xyz', args.frame_offset)),
     }
     reports = []
     for index in range(1, runs + 1):
@@ -341,6 +391,7 @@ def main() -> int:
             report['completion']['trajectory_complete'] for report in reports),
         'clean_exits': sum(
             report['completion']['process_exit_status'] == 0 for report in reports),
+        'completed_maps': sum('mapping' in report for report in reports),
         'runs': reports,
     }
     (args.output / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')

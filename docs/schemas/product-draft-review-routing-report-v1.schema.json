@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/product-draft-review-routing-report-v1.schema.json",
+  "title": "lidarslam_ros2 product Draft review routing report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "pull_request",
+    "scope",
+    "status",
+    "exact_head",
+    "worktree_clean",
+    "uncommitted_path_count",
+    "advisory_reviewer_target",
+    "advisory_target_is_merge_gate",
+    "max_parallel_active_lanes",
+    "lane_completion_order_required",
+    "final_decision_role",
+    "lanes",
+    "summary",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/product-draft-review-routing-report-v1.schema.json"
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "pull_request": {"const": 427},
+    "scope": {"const": "role-based-product-draft-review-routing"},
+    "status": {
+      "enum": ["READY_LOCAL_ONLY", "PREPARED_DIRTY_WORKTREE"]
+    },
+    "exact_head": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "worktree_clean": {"type": "boolean"},
+    "uncommitted_path_count": {"type": "integer", "minimum": 0},
+    "advisory_reviewer_target": {"const": 2},
+    "advisory_target_is_merge_gate": {"const": false},
+    "max_parallel_active_lanes": {"const": 2},
+    "lane_completion_order_required": {"const": true},
+    "final_decision_role": {"const": "lead-maintainer"},
+    "lanes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/definitions/lane"}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_count",
+        "slice_count",
+        "path_count",
+        "verification_count",
+        "unassigned_slice_count",
+        "duplicate_slice_count"
+      ],
+      "properties": {
+        "lane_count": {"const": 4},
+        "slice_count": {"const": 7},
+        "path_count": {"type": "integer", "minimum": 1},
+        "verification_count": {"type": "integer", "minimum": 1},
+        "unassigned_slice_count": {"const": 0},
+        "duplicate_slice_count": {"const": 0}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commands_executed",
+        "github_reviewer_requests_authorized",
+        "github_reviews_authorized",
+        "mark_ready_authorized",
+        "merge_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "commands_executed": {"const": false},
+        "github_reviewer_requests_authorized": {"const": false},
+        "github_reviews_authorized": {"const": false},
+        "mark_ready_authorized": {"const": false},
+        "merge_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "READY_LOCAL_ONLY"}}},
+      "then": {
+        "properties": {
+          "worktree_clean": {"const": true},
+          "uncommitted_path_count": {"const": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "PREPARED_DIRTY_WORKTREE"}}
+      },
+      "then": {
+        "properties": {
+          "worktree_clean": {"const": false},
+          "uncommitted_path_count": {"minimum": 1}
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "title",
+        "capability",
+        "slice_ids",
+        "depends_on_lanes",
+        "path_count",
+        "verification_count",
+        "slice_commands"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "R1-runtime-safety",
+            "R2-operator-ux",
+            "R3-distribution",
+            "R4-integration-publication"
+          ]
+        },
+        "order": {"type": "integer", "minimum": 1, "maximum": 4},
+        "title": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 ,&/+\\-]{0,99}$"
+        },
+        "capability": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 ,&/+\\-]{0,159}$"
+        },
+        "slice_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^S[1-7]-[a-z0-9-]+$"}
+        },
+        "depends_on_lanes": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^R[1-4]-[a-z0-9-]+$"}
+        },
+        "path_count": {"type": "integer", "minimum": 1},
+        "verification_count": {"type": "integer", "minimum": 1},
+        "slice_commands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^python3 scripts/check_publication_slice_plan\\.py --slice S[1-7]-[a-z0-9-]+$"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/ros-apt-dependency-readiness-v1.schema.json",
+  "title": "ROS apt dependency readiness v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "dependency_minimums",
+    "remote",
+    "channels",
+    "distros",
+    "checks",
+    "actions"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/ros-apt-dependency-readiness-v1.schema.json"
+    },
+    "status": {
+      "enum": ["IN_PROGRESS", "TESTING_READY", "MAIN_READY", "BLOCKED"]
+    },
+    "dependency_minimums": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ndt-omp-ros2", "rko-lio"],
+      "properties": {
+        "ndt-omp-ros2": {"const": "0.1.0"},
+        "rko-lio": {"const": "0.3.2"}
+      }
+    },
+    "remote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inspected", "errors"],
+      "properties": {
+        "inspected": {"type": "boolean"},
+        "errors": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "channels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["main", "testing"],
+      "properties": {
+        "main": {"$ref": "#/definitions/channel"},
+        "testing": {"$ref": "#/definitions/channel"}
+      }
+    },
+    "distros": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["humble", "jazzy"],
+      "properties": {
+        "humble": {"$ref": "#/definitions/distro"},
+        "jazzy": {"$ref": "#/definitions/distro"}
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/check"}
+    },
+    "actions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "definitions": {
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ready"],
+      "properties": {"ready": {"type": "boolean"}}
+    },
+    "distro": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["main", "testing"],
+      "properties": {
+        "main": {"$ref": "#/definitions/packages"},
+        "testing": {"$ref": "#/definitions/packages"}
+      }
+    },
+    "packages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ndt-omp-ros2", "rko-lio"],
+      "properties": {
+        "ndt-omp-ros2": {"$ref": "#/definitions/package"},
+        "rko-lio": {"$ref": "#/definitions/package"}
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_version", "debian_versions", "ready"],
+      "properties": {
+        "minimum_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "debian_versions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "ready": {"type": "boolean"}
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "detail"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(humble|jazzy)-(main|testing)-(ndt-omp-ros2|rko-lio)$"
+        },
+        "status": {"enum": ["PASS", "FAIL"]},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "MAIN_READY"}}},
+      "then": {
+        "properties": {
+          "channels": {
+            "properties": {
+              "main": {"properties": {"ready": {"const": true}}},
+              "testing": {"properties": {"ready": {"const": true}}}
+            }
+          },
+          "remote": {
+            "properties": {
+              "inspected": {"const": true},
+              "errors": {"maxItems": 0}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "TESTING_READY"}}},
+      "then": {
+        "properties": {
+          "channels": {
+            "properties": {
+              "main": {"properties": {"ready": {"const": false}}},
+              "testing": {"properties": {"ready": {"const": true}}}
+            }
+          },
+          "remote": {
+            "properties": {
+              "inspected": {"const": true},
+              "errors": {"maxItems": 0}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}},
+      "then": {
+        "properties": {
+          "remote": {
+            "anyOf": [
+              {"properties": {"inspected": {"const": false}}},
+              {"properties": {"errors": {"minItems": 1}}}
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

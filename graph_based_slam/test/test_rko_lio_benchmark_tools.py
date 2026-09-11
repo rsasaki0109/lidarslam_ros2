@@ -37,13 +37,18 @@ import math
 from pathlib import Path
 import struct
 import subprocess
+import sys
 
+import jsonschema
+import pytest
 import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_SCRIPT = REPO_ROOT / 'scripts' / 'generate_ntu_viral_tnp01_reference.py'
 WRITE_METRICS_SCRIPT = REPO_ROOT / 'scripts' / 'write_rko_lio_benchmark_metrics.py'
+BENCHMARK_PROVENANCE_SCRIPT = REPO_ROOT / 'scripts' / 'benchmark_provenance.py'
+sys.path.insert(0, str(REPO_ROOT / 'scripts'))
 
 
 def _load_module(path: Path, name: str):
@@ -56,6 +61,42 @@ def _load_module(path: Path, name: str):
 
 
 REFERENCE_MODULE = _load_module(REFERENCE_SCRIPT, 'generate_ntu_viral_tnp01_reference')
+WRITE_METRICS_MODULE = _load_module(
+    WRITE_METRICS_SCRIPT, 'write_rko_lio_benchmark_metrics')
+BENCHMARK_PROVENANCE_MODULE = _load_module(
+    BENCHMARK_PROVENANCE_SCRIPT, 'benchmark_provenance_for_test')
+
+
+def test_git_provenance_explicitly_trusts_only_selected_repo(
+        monkeypatch, tmp_path: Path):
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append((command, kwargs))
+        stdout = 'a' * 40 + '\n' if 'rev-parse' in command else ''
+        return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr='')
+
+    monkeypatch.setattr(BENCHMARK_PROVENANCE_MODULE.subprocess, 'run', fake_run)
+
+    state = BENCHMARK_PROVENANCE_MODULE._git_state(tmp_path)
+
+    expected_prefix = ['git', '-c', f'safe.directory={tmp_path}']
+    assert [call[0][:3] for call in calls] == [
+        expected_prefix, expected_prefix]
+    assert all(call[1]['cwd'] == tmp_path for call in calls)
+    assert state == {'git_commit': 'a' * 40, 'git_dirty': False}
+
+
+def test_git_provenance_rejects_unidentifiable_commit(
+        monkeypatch, tmp_path: Path):
+    def fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(
+            command, 128, stdout='', stderr='dubious ownership')
+
+    monkeypatch.setattr(BENCHMARK_PROVENANCE_MODULE.subprocess, 'run', fake_run)
+
+    with pytest.raises(RuntimeError, match='dubious ownership'):
+        BENCHMARK_PROVENANCE_MODULE._git_state(tmp_path)
 
 
 def _write_binary_xyz_pcd(path, points):
@@ -157,6 +198,17 @@ def test_reference_parser_derives_existing_prism_offset(tmp_path):
     )
 
 
+def test_metrics_writer_prefers_generic_reference_offset():
+    metadata = {
+        'imu_to_reference_translation_m': {'x': 1, 'y': 2, 'z': 3},
+        'imu_to_prism_translation_m': {'x': 9, 'y': 9, 'z': 9},
+    }
+    assert WRITE_METRICS_MODULE._trajectory_offset(metadata, 'imu') == {
+        'x': 1, 'y': 2, 'z': 3}
+    assert WRITE_METRICS_MODULE._infer_reference_kind(
+        'rtk_slam_construction_seq1_gt', {}) == 'ground_truth'
+
+
 def test_write_rko_lio_metrics_generates_compatible_metrics_json(tmp_path):
     """The metrics writer should emit a report-consumable metrics.json."""
     bag_dir = tmp_path / 'bag'
@@ -164,11 +216,17 @@ def test_write_rko_lio_metrics_generates_compatible_metrics_json(tmp_path):
     (bag_dir / 'metadata.yaml').write_text(
         '\n'.join([
             'rosbag2_bagfile_information:',
+            '  storage_identifier: sqlite3',
             '  duration:',
             '    nanoseconds: 2000000000',
+            '  topics_with_message_count:',
+            '    - topic_metadata:',
+            '        name: /os1_cloud_node1/points',
+            '      message_count: 2',
         ]),
         encoding='utf-8',
     )
+    (bag_dir / 'data.db3').write_bytes(b'synthetic bag payload')
     out_dir = tmp_path / 'bench'
     out_dir.mkdir()
     _create_map_bundle(out_dir)
@@ -215,6 +273,11 @@ def test_write_rko_lio_metrics_generates_compatible_metrics_json(tmp_path):
                 'source': 'leica_prism_gt',
                 'topic': '/leica/pose/relative',
                 'source_bag': '/tmp/source_bag',
+                'body_to_prism_translation_m': {
+                    'x': -0.293656,
+                    'y': -0.012288,
+                    'z': -0.273095,
+                },
                 'lidar_to_prism_translation_m': {
                     'x': -0.243656,
                     'y': -0.012288,
@@ -237,8 +300,18 @@ def test_write_rko_lio_metrics_generates_compatible_metrics_json(tmp_path):
             str(reference_tum),
             '--reference-meta',
             str(reference_meta),
+            '--trajectory-source-frame',
+            'body',
             '--wall-sec',
             '1.0',
+            '--completion-reason',
+            'offline_completion_marker',
+            '--completion-end-margin-secs',
+            '0.25',
+            '--runtime-artifact',
+            'test_runtime=/bin/true',
+            '--benchmark-harness',
+            str(WRITE_METRICS_SCRIPT),
         ],
         capture_output=True,
         text=True,
@@ -250,6 +323,10 @@ def test_write_rko_lio_metrics_generates_compatible_metrics_json(tmp_path):
     metrics_path = out_dir / 'metrics.json'
     assert metrics_path.is_file()
     metrics = json.loads(metrics_path.read_text(encoding='utf-8'))
+    schema = json.loads(
+        (REPO_ROOT / 'docs/schemas/benchmark-metrics-v1.schema.json').read_text(
+            encoding='utf-8'))
+    jsonschema.validate(metrics, schema)
 
     assert metrics['reference']['source'] == 'leica_prism_gt'
     assert metrics['lidarslam']['success'] is True
@@ -259,7 +336,48 @@ def test_write_rko_lio_metrics_generates_compatible_metrics_json(tmp_path):
     assert metrics['graph_based_slam']['map_verify']['ok'] is True
     assert metrics.get('pipeline') == 'rko_lio'
     assert metrics['rko_lio']['available'] is True
-    assert metrics['rko_lio']['prism_offset_m']['x'] == -0.243656
+    assert metrics['rko_lio']['trajectory_source_frame'] == 'body'
+    assert metrics['rko_lio']['prism_offset_m']['x'] == -0.293656
+    assert metrics['schema_version'] == 1
+    assert metrics['completion']['reason'] == 'offline_completion_marker'
+    assert metrics['completion']['input_points_messages'] == 2
+    assert metrics['completion']['raw_output_pose_count'] == 2
+    assert metrics['completion']['raw_output_pose_ratio'] == 1.0
+    assert metrics['reference']['kind'] == 'ground_truth'
+    assert metrics['provenance']['input']['bag']['identity_algorithm'] == 'sha256'
+    assert metrics['provenance']['software']['runtime_artifacts'][0][
+        'label'] == 'test_runtime'
+
+    skipped_metrics = out_dir / 'metrics_skip_map.json'
+    skipped = subprocess.run(
+        [
+            'python3',
+            str(WRITE_METRICS_SCRIPT),
+            '--out-dir',
+            str(out_dir),
+            '--bag',
+            str(bag_dir),
+            '--reference-tum',
+            str(reference_tum),
+            '--reference-meta',
+            str(reference_meta),
+            '--trajectory-source-frame',
+            'body',
+            '--metrics-out',
+            str(skipped_metrics),
+            '--skip-map-verify',
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=REPO_ROOT,
+    )
+    assert skipped.returncode == 0, skipped.stderr
+    trajectory_only = json.loads(skipped_metrics.read_text(encoding='utf-8'))
+    graph = trajectory_only['graph_based_slam']
+    assert graph['map_verify'] is None
+    assert graph['pointcloud_map_dir'] == ''
+    assert graph['map_projector_info_path'] == ''
 
 
 def test_write_lo_metrics_sets_scanmatcher_payload(tmp_path):

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "driving_slam_mid360_v1",
+  "dataset": {
+    "id": "driving_slam_mid360",
+    "title": "Driving SLAM Test with Livox MID360",
+    "creator": "Kenji Koide",
+    "citation": "Koide, Kenji. Driving SLAM Test with Livox MID360. Zenodo. DOI: 10.5281/zenodo.14841855",
+    "source_url": "https://zenodo.org/records/14841855",
+    "doi": "10.5281/zenodo.14841855",
+    "download_url": "https://zenodo.org/records/14841855/files/rosbag2_2024_04_16-14_17_01.zip?download=1",
+    "license": {
+      "spdx": "CC-BY-4.0",
+      "name": "Creative Commons Attribution 4.0 International",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "file_id": "rosbag2_2024_04_16",
+    "filename": "rosbag2_2024_04_16-14_17_01.zip",
+    "size_bytes": 517088133,
+    "md5": "0836c50859bb1af591966b69da166186",
+    "sha256": "f8f89eebf2aaf9cc1d465bfa5451bbb599cd92d079b59949104bb4e5cb619bdd"
+  },
+  "input": {
+    "bag_directory": "rosbag2_2024_04_16-14_17_01",
+    "metadata_size_bytes": 5590,
+    "metadata_sha256": "65d66875f49248e38ff14d80e6e749fb50606f6f80bd4be337160e3752691e9a",
+    "storage_identifier": "sqlite3",
+    "storage_files": [
+      {
+        "path": "rosbag2_2024_04_16-14_17_01_0.db3",
+        "size_bytes": 1468932096,
+        "sha256": "3bbd390a97e57af47ad6699baa36eb4c5f39f61b35275505ecaf221c126354f5"
+      }
+    ],
+    "duration_sec": 277.16683667,
+    "duration_tolerance_sec": 0.001,
+    "message_count": 58217,
+    "topics": {
+      "/livox/lidar": {
+        "type": "sensor_msgs/msg/PointCloud2",
+        "message_count": 2772
+      },
+      "/livox/imu": {
+        "type": "sensor_msgs/msg/Imu",
+        "message_count": 55435
+      }
+    }
+  },
+  "execution": {
+    "profile_id": "rko_lio_graph_mid360_preset",
+    "ros_distro": "jazzy",
+    "required_argv_fragments": [
+      "--wait-for-offline-completion",
+      "--skip-viewer",
+      "lidarslam_mid360_rko_graph.yaml",
+      "rko_lio_mid360.yaml"
+    ],
+    "maximum_runtime_sec": 600
+  },
+  "output": {
+    "minimum_raw_poses": 2500,
+    "minimum_corrected_poses": 500,
+    "minimum_pointcloud_tiles": 300,
+    "minimum_pointcloud_bytes": 50000000,
+    "minimum_verify_passes": 8
+  }
+}

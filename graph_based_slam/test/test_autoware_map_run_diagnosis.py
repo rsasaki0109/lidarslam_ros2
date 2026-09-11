@@ -32,10 +32,13 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 import subprocess
 import sys
 
+import jsonschema
+import pytest
 import yaml
 
 
@@ -72,8 +75,30 @@ def test_summary_marks_success_when_map_and_verify_pass_exist(tmp_path: Path):
         encoding='utf-8',
     )
 
-    summary = module.summarize_run(run_dir)
+    bag_dir = tmp_path / 'bag'
+    bag_dir.mkdir()
+    (bag_dir / 'metadata.yaml').write_text(
+        yaml.safe_dump({
+            'rosbag2_bagfile_information': {
+                'duration': {'nanoseconds': 1},
+                'message_count': 0,
+                'topics_with_message_count': [],
+            },
+        }),
+        encoding='utf-8',
+    )
+    summary = module.summarize_run(run_dir, bag_dir)
 
+    schema = json.loads(
+        (
+            REPO_ROOT / 'docs' / 'schemas' / 'diagnosis-v1.schema.json'
+        ).read_text(encoding='utf-8')
+    )
+    jsonschema.Draft7Validator.check_schema(schema)
+    jsonschema.validate(summary, schema)
+    assert summary['bag_preflight']['schema_version'] == 6
+    assert summary['schema_version'] == 1
+    assert summary['schema_uri'].endswith('/schemas/diagnosis-v1.schema.json')
     assert summary['status'] == 'success'
     assert summary['verify']['result'] == 'PASS'
     assert summary['projector_type'] == 'LocalCartesian'
@@ -108,6 +133,159 @@ def test_summary_reports_tf_issue_hints(tmp_path: Path):
     assert any('tail -n 120' in step for step in summary['suggested_next_steps'])
 
 
+def test_summary_reports_map_write_disk_exhaustion(tmp_path: Path):
+    module = _load_module()
+    run_dir = tmp_path / 'run'
+    run_dir.mkdir()
+    (run_dir / 'map_save.log').write_text(
+        'write failed: [Errno 28] No space left on device\n',
+        encoding='utf-8',
+    )
+
+    summary = module.summarize_run(run_dir)
+    hints = '\n'.join(summary['problem_hints'])
+
+    assert summary['status'] == 'runtime_failed'
+    assert 'output filesystem ran out of writable space or quota' in hints
+    assert 'free storage' in hints
+
+
+def test_summary_recognizes_pcl_raw_fallocate_enospc(tmp_path: Path):
+    module = _load_module()
+    run_dir = tmp_path / 'run'
+    run_dir.mkdir()
+    (run_dir / 'slam.launch.log').write_text(
+        (
+            '[pcl::PCDWriter::writeBinaryCompressed] '
+            'raw_fallocate(length=1140644) returned 28. '
+            'errno: 2 strerror: No such file or directory\n'
+            "terminate called after throwing an instance of 'pcl::IOException'\n"
+            'what(): [pcl::PCDWriter::writeBinaryCompressed] '
+            'Error during raw_fallocate ()!\n'
+        ),
+        encoding='utf-8',
+    )
+
+    summary = module.summarize_run(run_dir)
+    hints = '\n'.join(summary['problem_hints'])
+
+    assert summary['status'] == 'runtime_failed'
+    assert 'output filesystem ran out of writable space or quota' in hints
+    assert 'free storage' in hints
+
+
+def test_summary_uses_terminal_manifest_as_runtime_failure_evidence(
+    tmp_path: Path,
+):
+    module = _load_module()
+    run_dir = tmp_path / 'run'
+    run_dir.mkdir()
+    (run_dir / 'run_manifest.json').write_text(
+        json.dumps({
+            'status': 'interrupted',
+            'lifecycle': {
+                'last_error': 'map workflow interrupted by SIGTERM',
+            },
+        }),
+        encoding='utf-8',
+    )
+
+    summary = module.summarize_run(run_dir)
+
+    assert summary['status'] == 'runtime_failed'
+    assert 'map workflow interrupted by SIGTERM' in summary['problem_hints']
+
+
+def test_summary_reports_unreadable_manifest_without_traceback(tmp_path: Path):
+    module = _load_module()
+    run_dir = tmp_path / 'run'
+    run_dir.mkdir()
+    (run_dir / 'run_manifest.json').write_text('{not json', encoding='utf-8')
+
+    summary = module.summarize_run(run_dir)
+
+    assert summary['status'] == 'runtime_failed'
+    assert any(
+        hint.startswith('The run manifest is unreadable:')
+        for hint in summary['problem_hints']
+    )
+
+
+def test_reported_map_symptoms_are_bounded_and_schema_valid(tmp_path: Path):
+    module = _load_module()
+    run_dir = tmp_path / 'run with spaces'
+    bag_dir = tmp_path / 'bag with spaces'
+    run_dir.mkdir()
+    bag_dir.mkdir()
+    (run_dir / 'run_manifest.json').write_text(
+        json.dumps({'input': {'bag_path': str(bag_dir)}}),
+        encoding='utf-8',
+    )
+    schema = json.loads(
+        (
+            REPO_ROOT / 'docs' / 'schemas' / 'diagnosis-v1.schema.json'
+        ).read_text(encoding='utf-8')
+    )
+
+    for symptom in module.SYMPTOM_CHOICES:
+        summary = module.summarize_run(run_dir, symptom=symptom)
+        jsonschema.validate(summary, schema)
+        triage = summary['symptom_triage']
+
+        assert triage['symptom'] == symptom
+        assert triage['code'] == symptom
+        assert triage['basis'] == (
+            'USER_REPORTED_NOT_AUTOMATICALLY_DIAGNOSED'
+        )
+        assert triage['checks']
+        assert triage['avoid']
+        assert summary['suggested_next_steps'] == triage['next_commands']
+        assert all('<' not in command for command in triage['next_commands'])
+        assert all('launch' not in command for command in triage['next_commands'])
+        assert triage['next_commands'][-1].startswith(
+            'lidarslam-map support '
+        )
+        if symptom == 'map-is-not-visible':
+            assert triage['next_commands'][0].startswith(
+                'lidarslam-map view '
+            )
+        else:
+            assert triage['next_commands'][0].startswith(
+                'lidarslam-map doctor '
+            )
+
+
+def test_symptom_triage_does_not_invent_missing_bag_or_root_cause(
+    tmp_path: Path,
+):
+    module = _load_module()
+    run_dir = tmp_path / 'run'
+    run_dir.mkdir()
+
+    summary = module.summarize_run(
+        run_dir,
+        symptom='pose-drifts-or-oscillates',
+    )
+    rendered = module.render_markdown(summary)
+    commands = summary['symptom_triage']['next_commands']
+
+    assert len(commands) == 2
+    assert commands[0].startswith('lidarslam-map inspect ')
+    assert commands[1].startswith('lidarslam-map support ')
+    assert all('/path/to/' not in command for command in commands)
+    assert 'not an automatic root-cause or accuracy diagnosis' in rendered
+    assert 'Do not change graph weights' in rendered
+
+
+def test_symptom_triage_rejects_unknown_internal_value(tmp_path: Path):
+    module = _load_module()
+    run_dir = tmp_path / 'run'
+    run_dir.mkdir()
+
+    with pytest.raises(ValueError, match='unsupported map symptom'):
+        module.summarize_run(run_dir, symptom='guess-the-fix')
+
+
 def test_cli_help_is_user_facing():
     result = subprocess.run(
         [sys.executable, str(SCRIPT_PATH), '--help'],
@@ -121,6 +299,10 @@ def test_cli_help_is_user_facing():
     assert 'not its pointcloud_map/ child' in result.stdout
     assert 'Files this tool checks when present:' in result.stdout
     assert 'diagnose_autoware_map_run.py output/my_map_run --write' in result.stdout
+    assert '--symptom' in result.stdout
+    assert 'map-spins-or-spirals' in result.stdout
+    assert 'this records a user report' in result.stdout
+    assert 'automatic root cause.' in result.stdout
 
 
 def test_cli_rejects_missing_run_dir_without_traceback(tmp_path: Path):

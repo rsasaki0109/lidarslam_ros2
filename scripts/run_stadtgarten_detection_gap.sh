@@ -33,7 +33,7 @@ ITERS="${ITERS:-12000}"
 DETECTOR="${DETECTOR:-yolov8n.pt}"
 
 echo "== [1/4] extract posed images (CompressedImage, undistort) =="
-python3 tools/gaussian_splatting/extract_posed_images.py \
+python3 tools/colored_map/extract_posed_images.py \
   --bag "${BAG}" --traj "${TRAJ}" \
   --camera-topic /camera/image_raw/compressed \
   --intrinsics-yaml configs/gaussian_splatting/rtk_slam_cam0_intrinsics.yaml \
@@ -44,7 +44,7 @@ python3 tools/gaussian_splatting/extract_posed_images.py \
   --out "${OUT_DIR}/gsplat"
 
 echo "== [2/4] LiDAR-primed init cloud =="
-python3 tools/gaussian_splatting/build_lidar_init.py \
+python3 tools/colored_map/build_lidar_init.py \
   --bag "${BAG}" --traj "${TRAJ}" --points-topic /livox/points \
   --start-time "${START}" --end-time "${END}" \
   --voxel 0.05 --min-range 1.5 --max-range 60 --max-points 400000 \

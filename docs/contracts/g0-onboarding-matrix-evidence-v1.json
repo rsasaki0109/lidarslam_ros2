@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-matrix-evidence-index-v1.schema.json",
+  "matrix_id": "g0-humble-jazzy-docker-source",
+  "generated_at": "2026-08-13T09:49:00+09:00",
+  "repository": "rsasaki0109/lidar_slam_ros2",
+  "rows": [
+    {
+      "row_id": "docker-humble",
+      "record_path": "docs/evidence/onboarding/g0-docker-humble-20260810-machine-a.json",
+      "validation_receipt_path": null
+    },
+    {
+      "row_id": "docker-jazzy",
+      "record_path": "docs/evidence/onboarding/g0-docker-jazzy-20260810-machine-a.json",
+      "validation_receipt_path": null
+    },
+    {
+      "row_id": "source-humble",
+      "record_path": "docs/evidence/onboarding/g0-source-humble-20260813-runtime-a.json",
+      "validation_receipt_path": null
+    },
+    {
+      "row_id": "source-jazzy",
+      "record_path": "docs/evidence/onboarding/g0-source-jazzy-20260813-runtime-a.json",
+      "validation_receipt_path": null
+    }
+  ],
+  "authority": {
+    "remote_mutations_performed": false,
+    "missing_rows_count_as_success": false
+  }
+}

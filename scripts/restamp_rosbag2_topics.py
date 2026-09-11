@@ -110,7 +110,7 @@ def main() -> int:
 
     with AnyReader([input_path], default_typestore=typestore) as reader, Writer(
         output_path,
-        version=9,
+        version=8,
     ) as writer:
         input_connections = {conn.topic: conn for conn in reader.connections if conn.topic in all_topics}
         output_connections = {}

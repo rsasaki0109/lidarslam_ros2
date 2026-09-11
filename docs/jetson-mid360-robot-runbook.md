@@ -42,6 +42,14 @@ MID360` bag (`10.5281/zenodo.14841855`). The downloader writes:
 - `datasets/mid360_public/driving_slam_mid360/driving_slam_mid360_profile.yaml`
 - `output/mid360_public/driving_slam_mid360/mid360_robot_recording_check.json`
 
+The recommended archive is pinned by exact size, SHA-256, and legacy MD5.
+Interrupted downloads remain as `.zip.part` and resume with a validated HTTP
+Range response. If the server ignores Range, the downloader restarts safely
+instead of appending duplicate bytes. Existing archives are re-hashed, and ZIP
+members are preflighted before transaction-safe extraction. Use `--force` only
+to restart a bad partial or deliberately replace an existing extraction;
+`--skip-md5` never disables a registered SHA-256 or size check.
+
 Use `--dataset hard_pointcloud_mid360_outdoor_kidnap_a` after the first bag
 passes to exercise more difficult outdoor MID-360 failure cases from the Hard
 Point Cloud Localization Dataset (`10.5281/zenodo.10122133`).

@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/docs-deployment-manifest-v1.schema.json",
+  "title": "lidarslam_ros2 GitHub Pages deployment manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "source_revision",
+    "product_version",
+    "site_url",
+    "workflow",
+    "page"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/docs-deployment-manifest-v1.schema.json"
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "product_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "site_url": {"const": "https://rsasaki0109.github.io/lidar_slam_ros2/"},
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "path", "deployment_ref"],
+      "properties": {
+        "name": {"const": "docs-site"},
+        "path": {"const": ".github/workflows/docs-site.yml"},
+        "deployment_ref": {"const": "refs/heads/develop"}
+      }
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "source_path", "size_bytes", "sha256", "routes"],
+      "properties": {
+        "path": {"const": "getting-started.html"},
+        "source_path": {"const": "docs/getting-started.md"},
+        "size_bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "routes": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["route_id", "fragment"],
+            "properties": {
+              "route_id": {"enum": ["docker-first-map", "source-quickstart"]},
+              "fragment": {
+                "enum": [
+                  "docker-first-map-no-ros-2-workspace",
+                  "1-install-and-build-from-source"
+                ]
+              }
+            }
+          }
+        },
+        "content_markers": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "fixed-demo-output-handoff",
+              "stable-image-report-boundary",
+              "receipt-only-attachment-rule",
+              "source-receipt-helper-fallback",
+              "stable-image-receipt-helper",
+              "immutable-image-identity-check"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

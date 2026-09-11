@@ -1,0 +1,20 @@
+# v41 runtime diagnostic: v40 graph plus fail-closed RSS/deadline guards.
+# Resource limits are global across all three development inputs.
+General:
+  lid_topic: /hesai/pandar
+  imu_topic: /alphasense_driver_ros/imu
+  previous_map: ''
+  save_path: /out/voxel/
+  bagname: oxford_spires_keble_05
+  lidar_type: 2
+  blind: 1.0
+  point_filter_num: 3
+  extrinsic_tran: [-0.0006517086833720872, -0.015510342560109067, 0.08463265780318904]
+  extrinsic_rota: [-0.016638045748656127, -0.9998601056363502, 0.0017159809243347767,
+                   0.9998552572581157, -0.016631813594098377, 0.0035843144224121937,
+                   -0.003555273122162384, 0.0017753685358884294, 0.9999921040186213]
+  is_save_map: 1
+Odometry: {cov_gyr: 0.01, cov_acc: 1.0, rdw_gyr: 0.0001, rdw_acc: 0.0001, down_size: 0.4, beam_err: 0.01, dept_err: 0.01, voxel_size: 2.0, min_eigen_value: 0.01, degrade_bound: 100, point_notime: 0}
+LocalBA: {win_size: 10, max_layer: 1, cov_gyr: 0.01, cov_acc: 1.0, rdw_gyr: 0.0001, rdw_acc: 0.0001, min_ba_point: 1, plane_eigen_value_thre: [4.0, 4.0, 4.0, 4.0], imu_coef: 0.0002, thread_num: 5}
+Loop: {enable: 0, jud_default: 0.5, icp_eigval: 9.0, ratio_drift: 0.01, curr_halt: 10, prev_halt: 10, acsize: 2, mgsize: 2, isHighFly: 0}
+GBA: {enable: true, keyframe_stride: 1, min_keyframe_distance: 5.0, voxel_size: 2.0, min_eigen_value: 0.01, eigen_value_array: [4.0, 4.0, 4.0, 4.0], total_max_iter: 1, runtime_diagnostic_enable: true, runtime_guard_enable: true, backend_deadline_seconds: 30.0, max_rss_mib: 330.0}

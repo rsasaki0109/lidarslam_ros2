@@ -62,7 +62,7 @@ graph_based_slam:
       # Indoor / narrow vertical FOV preset (Newer College math_hard と同種の
       # OS0-32 scene)。tighter edge_3d voxel + 4-point gate を default に。
       # 2026-05-19 ablation で APE -0.039m (過去最大の改善幅) と初の inliers=4
-      # emit に到達した設定。詳細は plan.md §1.2 と
+      # emit に到達した設定。詳細は docs/research/project-plan-archive.md §1.2 と
       # project_triangle_descriptor_stack memory。
       #
       # NDT gate との関係: Newer College では NDT fitness は通る (11.9 < 15)

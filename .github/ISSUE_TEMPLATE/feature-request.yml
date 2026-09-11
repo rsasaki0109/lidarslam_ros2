@@ -1,0 +1,49 @@
+name: Feature request
+description: Propose a product behavior or maintained workflow improvement.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Describe the workflow problem without prescribing an implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What observable product behavior would solve the problem?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Product surface
+      options:
+        - Docker demo
+        - Beginner own-bag workflow
+        - Fixed public quickstart
+        - Packaging or installation
+        - Diagnostics or output bundle
+        - Advanced or research workflow
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and alternatives
+      description: Include examples, failed workarounds, datasets, or comparable tools.
+
+  - type: checkboxes
+    id: compatibility
+    attributes:
+      label: Compatibility
+      options:
+        - label: I considered whether this changes an official command, output, default, or license.
+          required: true

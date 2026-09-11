@@ -1,0 +1,12 @@
+<launch>
+  <rosparam command="load" file="$(find fast_livo)/config/NTU_VIRAL.yaml" />
+  <param name="evo/pose_output_en" value="true" />
+  <param name="evo/seq_name" value="benchmark" />
+  <param name="pcd_save/pcd_save_en" value="true" />
+  <param name="pcd_save/type" value="0" />
+  <param name="pcd_save/interval" value="-1" />
+  <param name="pcd_save/colmap_output_en" value="false" />
+  <node pkg="fast_livo" type="fastlivo_mapping" name="laserMapping" output="screen">
+    <rosparam file="$(find fast_livo)/config/camera_NTU_VIRAL.yaml" />
+  </node>
+</launch>

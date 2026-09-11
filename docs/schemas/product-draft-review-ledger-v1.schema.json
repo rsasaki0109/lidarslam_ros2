@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/product-draft-review-ledger-v1.schema.json",
+  "title": "lidarslam_ros2 anonymous product Draft review ledger v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "pull_request",
+    "scope",
+    "exact_head",
+    "routing_contract_sha256",
+    "events",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/product-draft-review-ledger-v1.schema.json"
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "pull_request": {"const": 427},
+    "scope": {"const": "anonymous-product-draft-review-ledger"},
+    "exact_head": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "routing_contract_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {"$ref": "#/definitions/event"}
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identities_collected",
+        "review_commands_executed_by_tool",
+        "github_reviewer_requests_authorized",
+        "github_reviews_authorized",
+        "mark_ready_authorized",
+        "merge_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "identities_collected": {"const": false},
+        "review_commands_executed_by_tool": {"const": false},
+        "github_reviewer_requests_authorized": {"const": false},
+        "github_reviews_authorized": {"const": false},
+        "mark_ready_authorized": {"const": false},
+        "merge_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "lane_id",
+        "slice_ids",
+        "outcome",
+        "verification_status",
+        "findings"
+      ],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1, "maximum": 100},
+        "lane_id": {
+          "enum": [
+            "R1-runtime-safety",
+            "R2-operator-ux",
+            "R3-distribution",
+            "R4-integration-publication"
+          ]
+        },
+        "slice_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "S1-runtime-safety",
+              "S2-first-map-foundation",
+              "S3-map-lifecycle",
+              "S4-source-onboarding",
+              "S5-distribution-readiness",
+              "S6-product-shell-integration",
+              "S7-publication-control"
+            ]
+          }
+        },
+        "outcome": {"enum": ["PASS", "BLOCKED"]},
+        "verification_status": {"enum": ["PASS", "FAIL"]},
+        "findings": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {"$ref": "#/definitions/finding"}
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"outcome": {"const": "PASS"}}},
+          "then": {
+            "properties": {
+              "verification_status": {"const": "PASS"},
+              "findings": {
+                "items": {
+                  "allOf": [
+                    {"$ref": "#/definitions/finding"},
+                    {"properties": {"severity": {"const": "NOTE"}}}
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {"properties": {"outcome": {"const": "BLOCKED"}}},
+          "then": {
+            "properties": {
+              "findings": {
+                "minItems": 1,
+                "contains": {
+                  "type": "object",
+                  "required": ["severity"],
+                  "properties": {"severity": {"const": "BLOCKER"}}
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "severity",
+        "code",
+        "slice_id",
+        "path",
+        "detail"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^E[0-9]{3}-F[0-9]{2}$"},
+        "severity": {"enum": ["BLOCKER", "NOTE"]},
+        "code": {
+          "enum": [
+            "correctness-risk",
+            "safety-risk",
+            "operator-ux-gap",
+            "documentation-gap",
+            "verification-failure",
+            "distribution-blocker",
+            "publication-boundary",
+            "maintainability-note"
+          ]
+        },
+        "slice_id": {
+          "type": "string",
+          "pattern": "^S[1-7]-[a-z0-9-]+$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._+/-]+$"
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^[^\\r\\n]+$"
+        }
+      }
+    }
+  }
+}

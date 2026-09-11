@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-trial-v1.schema.json",
+  "title": "lidarslam_ros2 onboarding trial record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "trial_id",
+    "captured_at",
+    "documentation_path",
+    "operator_class",
+    "environment",
+    "input",
+    "measurements",
+    "outcome",
+    "evidence",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-trial-v1.schema.json"
+    },
+    "trial_id": {"$ref": "#/definitions/slug"},
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "documentation_path": {
+      "enum": ["docker-first-map", "source-quickstart", "own-bag"]
+    },
+    "operator_class": {"enum": ["maintainer", "external"]},
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clean_start",
+        "ros_distro",
+        "architecture",
+        "os_family",
+        "product_version",
+        "revision"
+      ],
+      "properties": {
+        "clean_start": {"type": "boolean"},
+        "ros_distro": {"enum": ["humble", "jazzy"]},
+        "architecture": {"enum": ["x86_64", "aarch64"]},
+        "os_family": {
+          "enum": ["ubuntu-22.04", "ubuntu-24.04", "other"]
+        },
+        "product_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"
+        },
+        "revision": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value"],
+          "properties": {
+            "kind": {
+              "enum": ["git-commit", "image-digest", "release-tag"]
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            }
+          },
+          "allOf": [
+            {
+              "if": {"properties": {"kind": {"const": "git-commit"}}},
+              "then": {
+                "properties": {
+                  "value": {"pattern": "^[0-9a-f]{40}$"}
+                }
+              }
+            },
+            {
+              "if": {"properties": {"kind": {"const": "image-digest"}}},
+              "then": {
+                "properties": {
+                  "value": {"pattern": "^sha256:[0-9a-f]{64}$"}
+                }
+              }
+            },
+            {
+              "if": {"properties": {"kind": {"const": "release-tag"}}},
+              "then": {
+                "properties": {
+                  "value": {
+                    "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_class", "dataset_id", "download_bytes"],
+      "properties": {
+        "dataset_class": {"enum": ["fixed-public", "own-bag"]},
+        "dataset_id": {"$ref": "#/definitions/slug"},
+        "download_bytes": {"$ref": "#/definitions/nullableBytes"}
+      }
+    },
+    "measurements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflow_download_bytes",
+        "wall_time_sec",
+        "active_operator_time_sec",
+        "command_count",
+        "peak_disk_bytes",
+        "output_bytes"
+      ],
+      "properties": {
+        "workflow_download_bytes": {"$ref": "#/definitions/nullableBytes"},
+        "wall_time_sec": {"$ref": "#/definitions/nullableMetric"},
+        "active_operator_time_sec": {"$ref": "#/definitions/nullableMetric"},
+        "command_count": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "peak_disk_bytes": {"$ref": "#/definitions/nullableBytes"},
+        "output_bytes": {"$ref": "#/definitions/nullableBytes"}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "runner_exit_code",
+        "manifest_status",
+        "diagnosis_status",
+        "verifier_status",
+        "receipt_status",
+        "undocumented_manual_steps",
+        "failure_stage",
+        "finding_codes"
+      ],
+      "properties": {
+        "status": {"enum": ["PASS", "FAIL"]},
+        "runner_exit_code": {"type": ["integer", "null"]},
+        "manifest_status": {
+          "enum": ["succeeded", "failed", "missing"]
+        },
+        "diagnosis_status": {
+          "enum": ["success", "failure", "missing"]
+        },
+        "verifier_status": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+        "receipt_status": {"enum": ["PASS", "FAIL", "NOT_CREATED"]},
+        "undocumented_manual_steps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failure_stage": {
+          "enum": [
+            "none",
+            "install",
+            "download",
+            "preflight",
+            "mapping",
+            "verification",
+            "receipt",
+            "viewer"
+          ]
+        },
+        "finding_codes": {
+          "type": "array",
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/slug"}
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest_sha256", "receipt_sha256"],
+      "properties": {
+        "manifest_sha256": {"$ref": "#/definitions/nullableSha256"},
+        "receipt_sha256": {"$ref": "#/definitions/nullableSha256"},
+        "candidate_image_set": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bundle_sha256",
+            "source_pr",
+            "source_commit",
+            "product_version",
+            "workflow_run_url",
+            "immutable_ref"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bundle_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "source_pr": {"type": "integer", "minimum": 1},
+            "source_commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "product_version": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"
+            },
+            "workflow_run_url": {
+              "type": "string",
+              "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/actions/runs/[1-9][0-9]*$"
+            },
+            "immutable_ref": {
+              "type": "string",
+              "pattern": "^ghcr\\.io/rsasaki0109/lidar_slam_ros2@sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contains_private_paths",
+        "contains_exact_command",
+        "contains_operator_identity",
+        "review_before_sharing"
+      ],
+      "properties": {
+        "contains_private_paths": {"const": false},
+        "contains_exact_command": {"const": false},
+        "contains_operator_identity": {"const": false},
+        "review_before_sharing": {"const": true}
+      }
+    }
+  },
+  "definitions": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "nullableMetric": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "nullableBytes": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "nullableSha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

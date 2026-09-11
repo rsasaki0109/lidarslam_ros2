@@ -139,7 +139,7 @@ def _copy_bags(
     last_time_ns: int | None = None
     bag_first_last: list[dict[str, Any]] = []
 
-    with Writer(output_bag, version=9) as writer:
+    with Writer(output_bag, version=8) as writer:
         output_connections: dict[tuple[str, str], Any] = {}
 
         for bag_index, input_bag in enumerate(input_bags):

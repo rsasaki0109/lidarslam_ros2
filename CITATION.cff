@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use lidarslam_ros2 in published work, please cite the software and the exact release or commit used."
+title: "lidarslam_ros2"
+abstract: "ROS 2 LiDAR SLAM for reproducible point-cloud map authoring and Autoware-compatible map workflows."
+type: software
+authors:
+  - family-names: Sasaki
+    given-names: Ryohei
+version: 0.9.1
+date-released: 2026-08-12
+license: BSD-2-Clause
+repository-code: "https://github.com/rsasaki0109/lidar_slam_ros2"
+url: "https://rsasaki0109.github.io/lidar_slam_ros2/"
+keywords:
+  - ROS 2
+  - LiDAR SLAM
+  - point-cloud mapping
+  - Autoware

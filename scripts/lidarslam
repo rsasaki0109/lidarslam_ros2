@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+LINK_DEPTH=0
+while [[ -L "${SCRIPT_PATH}" ]]; do
+  LINK_DEPTH=$((LINK_DEPTH + 1))
+  if [[ ${LINK_DEPTH} -gt 40 ]]; then
+    echo "error: lidarslam launcher symlink depth exceeds 40" >&2
+    exit 70
+  fi
+  LINK_TARGET=$(readlink "${SCRIPT_PATH}")
+  if [[ "${LINK_TARGET}" == /* ]]; then
+    SCRIPT_PATH="${LINK_TARGET}"
+  else
+    SCRIPT_PATH="$(dirname "${SCRIPT_PATH}")/${LINK_TARGET}"
+  fi
+done
+
+SCRIPT_DIR=$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)
+CLI_PATH="${SCRIPT_DIR}/lidarslam_cli.py"
+SOURCE_LAYOUT=false
+
+if [[ ! -f "${CLI_PATH}" ]]; then
+  for candidate in \
+    "${SCRIPT_DIR}/../share/lidarslam/product/scripts/lidarslam_cli.py" \
+    "${SCRIPT_DIR}/../../share/lidarslam/product/scripts/lidarslam_cli.py"
+  do
+    if [[ -f "${candidate}" ]]; then
+      CLI_PATH="${candidate}"
+      break
+    fi
+  done
+else
+  SOURCE_LAYOUT=true
+fi
+
+if [[ ! -f "${CLI_PATH}" ]]; then
+  echo "error: installed lidarslam product CLI resources were not found" >&2
+  exit 70
+fi
+
+# A direct source or installed launcher should be useful from a fresh terminal.
+# Source only a setup that can be tied to this checkout/install; never scan the
+# user's filesystem or execute an unrelated parent workspace setup.
+SETUP_CANDIDATES=()
+if [[ "${SOURCE_LAYOUT}" == true ]]; then
+  REPO_ROOT=$(cd "${SCRIPT_DIR}/.." && pwd)
+  REPO_PARENT=$(dirname "${REPO_ROOT}")
+  if [[ "$(basename "${REPO_PARENT}")" == "src" ]]; then
+    SETUP_CANDIDATES+=("$(dirname "${REPO_PARENT}")/install/setup.bash")
+  fi
+  SETUP_CANDIDATES+=(
+    "${REPO_ROOT}/install/setup.bash"
+    "${REPO_PARENT}/install/setup.bash"
+  )
+else
+  CLI_DIR=$(cd "$(dirname "${CLI_PATH}")" && pwd)
+  PRODUCT_PREFIX=$(cd "${CLI_DIR}/../../../.." && pwd)
+  SETUP_CANDIDATES+=(
+    "${PRODUCT_PREFIX}/setup.bash"
+    "$(dirname "${PRODUCT_PREFIX}")/setup.bash"
+  )
+fi
+
+for setup_candidate in "${SETUP_CANDIDATES[@]}"; do
+  [[ -f "${setup_candidate}" ]] || continue
+  ACTIVATED_CLI_PATH="${CLI_PATH}"
+  if [[ "${SOURCE_LAYOUT}" == true ]]; then
+    SETUP_ROOT=$(dirname "${setup_candidate}")
+    MERGED_CLI_PATH="${SETUP_ROOT}/share/lidarslam/product/scripts/lidarslam_cli.py"
+    ISOLATED_CLI_PATH="${SETUP_ROOT}/lidarslam/share/lidarslam/product/scripts/lidarslam_cli.py"
+    if [[ -f "${MERGED_CLI_PATH}" ]]; then
+      ACTIVATED_CLI_PATH="${MERGED_CLI_PATH}"
+    elif [[ -f "${ISOLATED_CLI_PATH}" ]]; then
+      ACTIVATED_CLI_PATH="${ISOLATED_CLI_PATH}"
+    else
+      continue
+    fi
+  fi
+
+  set +u
+  if ! source "${setup_candidate}"; then
+    set -u
+    echo "error: failed to activate lidarslam setup: ${setup_candidate}" >&2
+    exit 70
+  fi
+  set -euo pipefail
+  CLI_PATH="${ACTIVATED_CLI_PATH}"
+  break
+done
+
+export LIDARSLAM_CLI_NAME
+LIDARSLAM_CLI_NAME=$(basename "$0")
+export PYTHONDONTWRITEBYTECODE=1
+exec python3 "${CLI_PATH}" "$@"

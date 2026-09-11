@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/release-promotion-v1.schema.json",
+  "title": "lidarslam_ros2 release image promotion report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "mode",
+    "repository",
+    "product_version",
+    "git_commit",
+    "moving_tag_mutated",
+    "images",
+    "created_tags",
+    "reused_tags"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/release-promotion-v1.schema.json"
+    },
+    "status": {"const": "PASS"},
+    "mode": {"enum": ["dry_run", "applied"]},
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "product_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "git_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "moving_tag_mutated": {"const": false},
+    "images": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ros_distro",
+          "tag",
+          "digest",
+          "immutable_ref",
+          "action"
+        ],
+        "properties": {
+          "ros_distro": {"enum": ["humble", "jazzy"]},
+          "tag": {
+            "type": "string",
+            "pattern": "^ghcr\\.io/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+:v[0-9]+\\.[0-9]+\\.[0-9]+-(humble|jazzy)$"
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "immutable_ref": {
+            "type": "string",
+            "pattern": "^ghcr\\.io/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@sha256:[0-9a-f]{64}$"
+          },
+          "action": {"enum": ["create", "reuse"]}
+        }
+      }
+    },
+    "created_tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "reused_tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

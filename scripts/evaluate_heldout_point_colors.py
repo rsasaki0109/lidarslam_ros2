@@ -86,12 +86,22 @@ def exposure_scales(images: list[np.ndarray], limit: float = 1.5) -> np.ndarray:
 
 def score_heldout_view(points: np.ndarray, colors: np.ndarray, seen: np.ndarray,
                        viewmat: np.ndarray, K: np.ndarray, image: np.ndarray,
-                       exposure_scale: float = 1.0) -> tuple[np.ndarray, int]:
-    """Return per-visible-point RGB Euclidean errors and visible count."""
+                       exposure_scale: float = 1.0,
+                       image_margin: int = 0) -> tuple[np.ndarray, int]:
+    """Return per-visible-point RGB Euclidean errors and visible count.
+
+    ``image_margin`` excludes reference pixels within that many pixels of the
+    image border: lens vignetting darkens the border band, so treating those
+    pixels as colour ground truth penalises maps that (correctly) took their
+    colour from views that saw the surface centrally.
+    """
     height, width = image.shape[:2]
     ids, uf, vf = visible_point_samples(points, viewmat, K, width, height)
     visible_count = int(ids.size)
     keep = seen[ids]
+    if image_margin > 0:
+        keep &= ((uf >= image_margin) & (uf < width - image_margin) &
+                 (vf >= image_margin) & (vf < height - image_margin))
     ids, uf, vf = ids[keep], uf[keep], vf[keep]
     if ids.size == 0:
         return np.zeros(0, dtype=np.float32), visible_count
@@ -117,6 +127,9 @@ def main() -> int:
                         help='compare raw camera RGB without per-view exposure gains')
     parser.add_argument('--exposure-scale-limit', type=float, default=1.5,
                         help='maximum exposure gain and reciprocal loss')
+    parser.add_argument('--image-margin', type=int, default=0,
+                        help='ignore reference pixels within this many pixels '
+                             'of the border (lens vignette; 0 keeps all)')
     args = parser.parse_args()
     if args.folds < 2 or not 0 <= args.holdout_fold < args.folds:
         raise SystemExit('--folds must be >= 2 and --holdout-fold must be valid')
@@ -152,7 +165,7 @@ def main() -> int:
     for index in holdout[::args.view_stride]:
         values, visible = score_heldout_view(
             points, colors, seen, viewmats[index], K,
-            images[index], float(scales[index]))
+            images[index], float(scales[index]), args.image_margin)
         errors.append(values)
         visible_total += visible
         per_view.append({'view_index': index, 'visible_points': visible,
@@ -168,6 +181,7 @@ def main() -> int:
         'color_source': ('pointcloud' if args.use_pointcloud_colors else 'train'),
         'normalize_exposure': args.normalize_exposure,
         'exposure_scale_limit': args.exposure_scale_limit,
+        'image_margin': args.image_margin,
         'visible_points': visible_total, 'scored_points': int(combined.size),
         'training_coverage': float(seen.mean()),
         'heldout_scored_fraction': float(combined.size / visible_total),

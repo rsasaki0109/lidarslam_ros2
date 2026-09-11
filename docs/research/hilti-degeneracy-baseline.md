@@ -19,7 +19,7 @@ Two independent things are frozen here:
 
 ## 1. Real-substrate raw-odometry baseline (HILTI 2022)
 
-Source: exp01/exp07 from v0.7 Phase 4 (`plan.md` §2.4, PR #280/#282),
+Source: exp01/exp07 from v0.7 Phase 4 (`docs/research/project-plan-archive.md` §2.4, PR #280/#282),
 reconfirmed here unchanged; exp04 measured 2026-07-05 in this pass (§3).
 Sensor: Hesai PandarXT-32 + Alphasense IMU (handheld Phasma
 platform). License: CC BY-NC-SA 3.0, evaluation-only, not redistributed.
@@ -63,7 +63,7 @@ clears the 100 m `distance_loop_closure` gate, so no loop candidate is
 ever eligible — the pose graph holds only the adjacent-window constraints
 (max edge `|i-j|` = 5), same passthrough behaviour as exp01.
 
-**Methodology note** (carried over from v0.7 Phase 4, `plan.md` §2.4): score
+**Methodology note** (carried over from v0.7 Phase 4, `docs/research/project-plan-archive.md` §2.4): score
 the *dense* RKO-LIO odometry trajectory, not the sparse
 submap/pose-graph-corrected trajectory. HILTI's control points are captured
 while the platform is stationary; a sparse corrected/submap trajectory's
@@ -335,7 +335,7 @@ python3 -m pytest -q lidarslam/test/test_benchmark_summary_profiles.py
 
 (Related: `docs/roadmap/v0.8.md` — the phase-gate discipline this document
 freezes metrics for; `docs/research/map-quality-baseline.md` — the v0.7
-Phase 1 precedent this document's structure follows; `plan.md` §2.4 — the
+Phase 1 precedent this document's structure follows; `docs/research/project-plan-archive.md` §2.4 — the
 original HILTI exp01/exp07 measurement this document reconfirms and
 freezes; `docs/research/map-refinement-clean-room-design.md` — the
 synthetic-fixture and clean-room discipline reused for the corridor/box/

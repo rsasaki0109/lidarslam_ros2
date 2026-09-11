@@ -1,8 +1,8 @@
 # KITTI Odometry LO / small_gicp tuning — 2026-04 アーカイブ
 
-> 2026-04 の追加トラック記録。2026-06-07 の plan.md surgery（v0.4 roadmap §F）で
-> `plan.md` から抽出した歴史的アーカイブ。LO ベースライン整備と small_gicp KITTI
-> スイープのハマりどころ・再現コマンドを保存する。live なステータスは `plan.md` §1.1。
+> 2026-04 の追加トラック記録。2026-06-07 の docs/research/project-plan-archive.md surgery（v0.4 roadmap §F）で
+> `docs/research/project-plan-archive.md` から抽出した歴史的アーカイブ。LO ベースライン整備と small_gicp KITTI
+> スイープのハマりどころ・再現コマンドを保存する。live なステータスは `docs/research/project-plan-archive.md` §1.1。
 
 ### 目的
 - **KITTI Odometry (Velodyne only, IMU なし)** で動く **LiDAR Odometry (LO) モード**を用意し、フロントエンドのパラメータをスイープして APE を詰める。

@@ -968,6 +968,11 @@ python3 "${SCRIPT_DIR}/write_aligned_trajectory_metrics.py" \
   --raw-tum "$RAW_TUM" \
   --graph-log "$LAUNCH_LOG" \
   --lidarslam-param "$GRAPH_PARAM_FILE" \
+  --parameter-file "$GRAPH_PARAM_FILE" \
+  --parameter-file "$RKO_ROS_PARAM_FILE" \
+  --benchmark-harness "${BASH_SOURCE[0]}" \
+  --runtime-artifact "rko_lio_offline_node=$(ros2 pkg prefix rko_lio)/lib/rko_lio/offline_node" \
+  --runtime-artifact "graph_based_slam_node=$(ros2 pkg prefix graph_based_slam)/lib/graph_based_slam/graph_based_slam_node" \
   --points-topic "$LIDAR_TOPIC" \
   --points-frame "$LIDAR_FRAME" \
   --robot-frame "$BASE_FRAME" \

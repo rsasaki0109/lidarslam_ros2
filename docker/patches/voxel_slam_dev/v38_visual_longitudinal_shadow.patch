@@ -1,0 +1,167 @@
+--- a/VoxelSLAM/src/voxelslam.cpp
++++ b/VoxelSLAM/src/voxelslam.cpp
+@@ -1,4 +1,6 @@
+ #include "voxelslam.hpp"
++#include <cmath>
++#include <geometry_msgs/Vector3Stamped.h>
+ 
+ using namespace std;
+ 
+@@ -780,6 +782,23 @@
+   double weak_axis_speed = 0;
+   double weak_axis_time = 0;
+   deque<pair<double, Eigen::Vector3d>> weak_pose_history;
++  struct VisualLongitudinalShadowObservation
++  {
++    double stamp_sec = 0.0;
++    double velocity_mps = 0.0;
++    double confidence = 0.0;
++  } visual_longitudinal_shadow_observation;
++  bool visual_longitudinal_shadow_enabled = false;
++  bool visual_longitudinal_shadow_valid = false;
++  double visual_longitudinal_shadow_max_age_sec = 0.2;
++  double visual_longitudinal_shadow_max_speed_mps = 20.0;
++  string visual_longitudinal_shadow_topic =
++      "/voxel_slam/visual_longitudinal_shadow";
++  double visual_longitudinal_shadow_gain = 0.25;
++  double visual_longitudinal_shadow_max_velocity_change_mps = 0.5;
++  unsigned long long visual_longitudinal_shadow_update_count = 0;
++  unsigned long long visual_longitudinal_shadow_applied_count = 0;
++  ros::Subscriber visual_longitudinal_shadow_subscriber;
+ 
+   vector<vector<ScanPose*>*> multimap_scanPoses;
+   vector<vector<Keyframe*>*> multimap_keyframes;
+@@ -837,6 +856,38 @@
+     n.param<int>("Odometry/archived_scan_stride", archived_scan_stride, 1);
+     n.param<int>("Odometry/point_notime", point_notime, 0);
+     odom_ekf.point_notime = point_notime;
++    n.param<bool>("Odometry/visual_longitudinal_shadow_enabled",
++                  visual_longitudinal_shadow_enabled, false);
++    n.param<double>("Odometry/visual_longitudinal_shadow_max_age_sec",
++                    visual_longitudinal_shadow_max_age_sec, 0.2);
++    n.param<double>("Odometry/visual_longitudinal_shadow_max_speed_mps",
++                    visual_longitudinal_shadow_max_speed_mps, 20.0);
++    n.param<string>("Odometry/visual_longitudinal_shadow_topic",
++                    visual_longitudinal_shadow_topic,
++                    "/voxel_slam/visual_longitudinal_shadow");
++    n.param<double>("Odometry/visual_longitudinal_shadow_gain",
++                    visual_longitudinal_shadow_gain, 0.25);
++    n.param<double>(
++        "Odometry/visual_longitudinal_shadow_max_velocity_change_mps",
++        visual_longitudinal_shadow_max_velocity_change_mps, 0.5);
++    if(!std::isfinite(visual_longitudinal_shadow_max_age_sec) ||
++       visual_longitudinal_shadow_max_age_sec <= 0.0)
++      visual_longitudinal_shadow_max_age_sec = 0.2;
++    if(!std::isfinite(visual_longitudinal_shadow_max_speed_mps) ||
++       visual_longitudinal_shadow_max_speed_mps <= 0.0)
++      visual_longitudinal_shadow_max_speed_mps = 20.0;
++    if(!std::isfinite(visual_longitudinal_shadow_gain) ||
++       visual_longitudinal_shadow_gain < 0.0 ||
++       visual_longitudinal_shadow_gain > 1.0)
++      visual_longitudinal_shadow_gain = 0.25;
++    if(!std::isfinite(
++           visual_longitudinal_shadow_max_velocity_change_mps) ||
++       visual_longitudinal_shadow_max_velocity_change_mps <= 0.0)
++      visual_longitudinal_shadow_max_velocity_change_mps = 0.5;
++    if(visual_longitudinal_shadow_enabled)
++      visual_longitudinal_shadow_subscriber = n.subscribe(
++          visual_longitudinal_shadow_topic, 100,
++          &VOXEL_SLAM::visual_longitudinal_shadow_handler, this);
+ 
+     feat.blind = feat.blind * feat.blind;
+     odom_ekf.cov_gyr << cov_gyr, cov_gyr, cov_gyr;
+@@ -1642,6 +1693,11 @@
+ 
+   void system_reset(deque<sensor_msgs::Imu::Ptr> &imus)
+   {
++    visual_longitudinal_shadow_observation =
++        VisualLongitudinalShadowObservation{};
++    visual_longitudinal_shadow_valid = false;
++    visual_longitudinal_shadow_update_count = 0;
++    visual_longitudinal_shadow_applied_count = 0;
+     weak_axis_bridge_active = false;
+     weak_axis_degenerate_streak = 0;
+     weak_axis_recovery_streak = 0;
+@@ -1682,6 +1738,74 @@
+     ROS_WARN("Reset");
+   }
+ 
++  // Contract boundary only: the future camera/LiDAR estimator may submit a
++  // scalar in m/s with a source timestamp in seconds.  This shadow receiver
++  // is deliberately isolated; acceptance never changes the inertial state or
++  // the existing full visual pose path.
++  bool ingest_visual_longitudinal_shadow(
++      const double stamp_sec, const double velocity_mps,
++      const double confidence, const double now_sec)
++  {
++    visual_longitudinal_shadow_valid = false;
++    if(!visual_longitudinal_shadow_enabled ||
++       !std::isfinite(stamp_sec) || !std::isfinite(velocity_mps) ||
++       !std::isfinite(confidence) || confidence < 0.0 || confidence > 1.0 ||
++       std::abs(velocity_mps) > visual_longitudinal_shadow_max_speed_mps ||
++       !std::isfinite(now_sec) || now_sec < stamp_sec ||
++       now_sec - stamp_sec > visual_longitudinal_shadow_max_age_sec)
++      return false;
++    visual_longitudinal_shadow_observation.stamp_sec = stamp_sec;
++    visual_longitudinal_shadow_observation.velocity_mps = velocity_mps;
++    visual_longitudinal_shadow_observation.confidence = confidence;
++    visual_longitudinal_shadow_valid = true;
++    ++visual_longitudinal_shadow_update_count;
++    return true;
++  }
++
++  void visual_longitudinal_shadow_handler(
++      const geometry_msgs::Vector3Stamped::ConstPtr &message)
++  {
++    if(!message)
++      return;
++    ingest_visual_longitudinal_shadow(
++        message->header.stamp.toSec(), message->vector.x,
++        message->vector.y, ros::Time::now().toSec());
++  }
++
++  void apply_visual_longitudinal_shadow()
++  {
++    if(!visual_longitudinal_shadow_enabled ||
++       !visual_longitudinal_shadow_valid)
++      return;
++    const double now_sec = ros::Time::now().toSec();
++    if(!std::isfinite(now_sec) || !std::isfinite(
++           visual_longitudinal_shadow_observation.stamp_sec) ||
++       now_sec < visual_longitudinal_shadow_observation.stamp_sec ||
++       now_sec - visual_longitudinal_shadow_observation.stamp_sec >
++           visual_longitudinal_shadow_max_age_sec)
++    {
++      visual_longitudinal_shadow_valid = false;
++      return;
++    }
++    if(!weak_axis_bridge_active)
++      return;
++    const double innovation =
++        visual_longitudinal_shadow_observation.velocity_mps - weak_axis_speed;
++    double correction = visual_longitudinal_shadow_gain *
++        visual_longitudinal_shadow_observation.confidence * innovation;
++    correction = std::max(
++        -visual_longitudinal_shadow_max_velocity_change_mps,
++        std::min(visual_longitudinal_shadow_max_velocity_change_mps,
++                 correction));
++    weak_axis_speed += correction;
++    ++visual_longitudinal_shadow_applied_count;
++    if(visual_longitudinal_shadow_applied_count == 1 ||
++       visual_longitudinal_shadow_applied_count % 100 == 0)
++      printf("v38 visual shadow applied: count=%llu correction=%g target=%g\n",
++             visual_longitudinal_shadow_applied_count, correction,
++             visual_longitudinal_shadow_observation.velocity_mps);
++  }
++
+   // After local BA, update the map and marginalize the points of oldest scan
+   // multi means multiple thread
+   void multi_margi(unordered_map<VOXEL_LOC, OctoTree*> &feat_map, double jour, int win_count, vector<IMUST> &xs, LidarFactor &voxopt, vector<SlideWindow*> &sw)
+@@ -1937,6 +2061,7 @@
+         if(odom_ekf.process(x_curr, *pcl_curr, imus) == 0)
+           continue;
+ 
++        apply_visual_longitudinal_shadow();
+         load_nearby_archived_scan(jour);
+ 
+         pcl::PointCloud<PointType> pl_down = *pcl_curr;

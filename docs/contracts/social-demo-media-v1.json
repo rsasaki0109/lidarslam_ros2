@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/social-demo-media-v1.schema.json",
+  "repository": "rsasaki0109/lidar_slam_ros2",
+  "product_version": "0.9.1",
+  "docs_source_path": "docs/getting-started.md",
+  "docs_url_template": "https://github.com/rsasaki0109/lidar_slam_ros2/blob/{source_revision}/docs/getting-started.md",
+  "maximum_duration_seconds": 180,
+  "frame": {
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "slide_seconds": 3.0,
+    "fade_seconds": 0.45
+  },
+  "commands": {
+    "fixed_demo": "lidarslam-map demo",
+    "own_bag": "lidarslam-map start /path/to/rosbag2"
+  },
+  "source_images": [
+    {
+      "path": "lidarslam/images/map.png",
+      "sha256": "152965b33b627730024ec728f1326e154887386c94b247c86d2b7d25699a6b3a"
+    },
+    {
+      "path": "lidarslam/images/path.png",
+      "sha256": "738433942a6e7b8c2c6d450548266b1178f30d33319454b57a86fbc987657010"
+    },
+    {
+      "path": "lidarslam/images/autoware_map_loader_proof.png",
+      "sha256": "a716229498a86bf4b6c23a9c27f5143620373574bdd14c7044e0928a55bd79d9"
+    }
+  ],
+  "slides": [
+    {
+      "id": "promise",
+      "image": "lidarslam/images/map.png",
+      "eyebrow": "lidarslam_ros2 v0.9.1 candidate",
+      "title": "From rosbag2 to a verified Autoware map",
+      "body": [
+        "One guided workflow keeps mapping, verification, and recovery together.",
+        "The result includes pointcloud_map, projector metadata, and Lanelet2."
+      ],
+      "caption": "Turn a rosbag2 recording into a verified Autoware-compatible map bundle with one guided workflow."
+    },
+    {
+      "id": "beginner-path",
+      "image": "lidarslam/images/path.png",
+      "eyebrow": "safe first run",
+      "title": "Check first. Then make a map.",
+      "body": [
+        "lidarslam-map doctor",
+        "lidarslam-map demo",
+        "Stable reason codes point to one safe recovery action."
+      ],
+      "caption": "Use the read-only doctor, then run the fixed demo. Failures return a stable reason and a safe next action."
+    },
+    {
+      "id": "own-bag",
+      "image": "lidarslam/images/autoware_map_loader_proof.png",
+      "eyebrow": "your rosbag2",
+      "title": "Inspect before expensive mapping",
+      "body": [
+        "lidarslam-map start /path/to/rosbag2",
+        "Topics, frames, timing, and calibration are checked before mapping.",
+        "The input stays unchanged and the output keeps its run receipt."
+      ],
+      "caption": "For your own bag, the same command checks topics, frames, timing, and calibration before mapping starts."
+    },
+    {
+      "id": "proof",
+      "image": null,
+      "eyebrow": "trust the result, not the exit code",
+      "title": "Verify before you share",
+      "body": [
+        "Require map_verify: PASS and the matching validation receipt.",
+        "Reopen, compare, support, or resume from the retained session.",
+        "Use the exact-revision guide linked beside this video."
+      ],
+      "caption": "A successful run retains map verify PASS, a matching validation receipt, and exact next commands for review or recovery."
+    }
+  ],
+  "publication_boundary": {
+    "external_publication_authorized": false,
+    "writes_performed": false
+  }
+}

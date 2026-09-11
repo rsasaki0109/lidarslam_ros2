@@ -1,0 +1,431 @@
+name: immutable candidate image
+
+run-name: >-
+  immutable candidate image for PR
+  #${{ github.event.client_payload.pull_request || github.event.pull_request.number || 'contract' }}
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/candidate-image.yml
+      - scripts/validate_candidate_image_request.py
+      - scripts/check_candidate_environment.py
+      - scripts/create_candidate_image_record.py
+      - scripts/verify_candidate_image_set.py
+      - docs/schemas/candidate-image-request-v1.schema.json
+      - docs/schemas/candidate-environment-readiness-v1.schema.json
+      - docs/schemas/candidate-image-v1.schema.json
+      - docs/schemas/candidate-image-set-v1.schema.json
+      - lidarslam/test/test_candidate_image_gate.py
+      - lidarslam/test/test_candidate_environment_readiness.py
+  repository_dispatch:
+    types:
+      - e2-publish-candidate-image
+
+concurrency:
+  group: >-
+    candidate-image-${{
+      github.event.client_payload.source_commit ||
+      github.event.pull_request.head.sha ||
+      github.sha
+    }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  contract:
+    if: github.event_name == 'pull_request'
+    name: candidate gate contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install contract dependencies
+        shell: bash
+        run: python3 -m pip install --upgrade pytest jsonschema
+
+      - name: Verify fail-closed candidate gate
+        shell: bash
+        run: >-
+          python3 -m pytest
+          lidarslam/test/test_candidate_environment_readiness.py
+          lidarslam/test/test_candidate_image_gate.py -q
+
+  authorize:
+    if: github.event_name == 'repository_dispatch'
+    name: authorize immutable candidate request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+    outputs:
+      authorized: ${{ steps.authorize.outputs.authorized }}
+      product_version: ${{ steps.authorize.outputs.product_version }}
+      source_commit: ${{ steps.authorize.outputs.source_commit }}
+      source_pr: ${{ steps.authorize.outputs.source_pr }}
+    steps:
+      # repository_dispatch executes the default-branch workflow. Keep this
+      # checkout explicit so every validator and schema comes from the exact
+      # default-branch commit that received the dispatch, never from a later
+      # develop tip or the candidate commit that will be built later.
+      - name: Check out trusted gate
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Resolve read-only request evidence
+        id: request
+        shell: bash
+        env:
+          APPROVAL: ${{ github.event.client_payload.approval }}
+          EVENT_ACTION: ${{ github.event.action }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRODUCT_VERSION: ${{ github.event.client_payload.product_version }}
+          REPOSITORY: ${{ github.repository }}
+          REQUESTED_BY: ${{ github.actor }}
+          SOURCE_COMMIT: ${{ github.event.client_payload.source_commit }}
+          SOURCE_PR: ${{ github.event.client_payload.pull_request }}
+        run: |
+          if [[ ! "${SOURCE_PR}" =~ ^[1-9][0-9]*$ ]]; then
+            echo "pull_request must be a positive integer" >&2
+            exit 1
+          fi
+          if [[ ! "${SOURCE_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "source_commit must be one lowercase 40-character SHA" >&2
+            exit 1
+          fi
+          if [[ ! "${PRODUCT_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "product_version must be x.y.z" >&2
+            exit 1
+          fi
+          if [[ "${APPROVAL}" != "E2_IMMUTABLE_DIGEST_ONLY" ]]; then
+            echo "explicit immutable-digest E2 approval is missing" >&2
+            exit 1
+          fi
+          if [[ "${GITHUB_REF}" != "refs/heads/develop" ]]; then
+            echo "candidate gate must run from refs/heads/develop" >&2
+            exit 1
+          fi
+          if [[ "${EVENT_ACTION}" != "e2-publish-candidate-image" ]]; then
+            echo "unexpected repository_dispatch action" >&2
+            exit 1
+          fi
+
+          gh api "repos/${REPOSITORY}/pulls/${SOURCE_PR}" \
+            > /tmp/candidate-pull-request.json
+          gh api \
+            "repos/${REPOSITORY}/commits/${SOURCE_COMMIT}/check-runs?filter=latest&per_page=100" \
+            > /tmp/candidate-check-runs.json
+          gh api \
+            "repos/${REPOSITORY}/contents/VERSION?ref=${SOURCE_COMMIT}" \
+            --jq .content | base64 --decode \
+            > /tmp/candidate-version
+          gh api \
+            "repos/${REPOSITORY}/collaborators/${REQUESTED_BY}/permission" \
+            --jq .role_name > /tmp/candidate-actor-role
+          gh api \
+            "repos/${REPOSITORY}/environments/candidate-images" \
+            > /tmp/candidate-environment.json
+          gh api \
+            "repos/${REPOSITORY}/environments/candidate-images/deployment-branch-policies?per_page=100" \
+            > /tmp/candidate-branch-policies.json
+
+      - name: Authorize exact request
+        id: authorize
+        shell: bash
+        env:
+          APPROVAL: ${{ github.event.client_payload.approval }}
+          EVENT_ACTION: ${{ github.event.action }}
+          PRODUCT_VERSION: ${{ github.event.client_payload.product_version }}
+          REPOSITORY: ${{ github.repository }}
+          REQUESTED_BY: ${{ github.actor }}
+          SOURCE_COMMIT: ${{ github.event.client_payload.source_commit }}
+          SOURCE_PR: ${{ github.event.client_payload.pull_request }}
+        run: |
+          python3 -m venv /tmp/candidate-request-venv
+          /tmp/candidate-request-venv/bin/python \
+            -m pip install --quiet jsonschema
+          ACTOR_ROLE="$(cat /tmp/candidate-actor-role)"
+          /tmp/candidate-request-venv/bin/python \
+            scripts/validate_candidate_image_request.py \
+            --event-name "${GITHUB_EVENT_NAME}" \
+            --event-action "${EVENT_ACTION}" \
+            --repository "${REPOSITORY}" \
+            --workflow-branch-ref "${GITHUB_REF}" \
+            --workflow-gate-commit "${GITHUB_SHA}" \
+            --default-branch "${{ github.event.repository.default_branch }}" \
+            --source-pr "${SOURCE_PR}" \
+            --source-commit "${SOURCE_COMMIT}" \
+            --product-version "${PRODUCT_VERSION}" \
+            --candidate-version-file /tmp/candidate-version \
+            --requested-by "${REQUESTED_BY}" \
+            --actor-role "${ACTOR_ROLE}" \
+            --approval "${APPROVAL}" \
+            --pull-request-json /tmp/candidate-pull-request.json \
+            --check-runs-json /tmp/candidate-check-runs.json \
+            --environment-json /tmp/candidate-environment.json \
+            --branch-policies-json /tmp/candidate-branch-policies.json \
+            --output candidate-image-request.json
+          {
+            echo "authorized=true"
+            echo "product_version=${PRODUCT_VERSION}"
+            echo "source_commit=${SOURCE_COMMIT}"
+            echo "source_pr=${SOURCE_PR}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Upload authorized request
+        uses: actions/upload-artifact@v6
+        with:
+          name: candidate-image-request
+          path: candidate-image-request.json
+          retention-days: 30
+          if-no-files-found: error
+
+  publish:
+    if: needs.authorize.outputs.authorized == 'true'
+    name: publish immutable digest (${{ matrix.ros_distro }})
+    needs: authorize
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: candidate-images
+    permissions:
+      artifact-metadata: write
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro:
+          - humble
+          - jazzy
+    steps:
+      - name: Check out trusted evidence tools
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: gate
+          persist-credentials: false
+
+      - name: Check out exact candidate source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.authorize.outputs.source_commit }}
+          path: candidate
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Download authorized request
+        uses: actions/download-artifact@v7
+        with:
+          name: candidate-image-request
+          path: request
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # push-by-digest publishes an addressable manifest without creating a
+      # version, convenience, latest, or release tag. The candidate checkout
+      # is build input only; trusted gate scripts are executed from develop.
+      - name: Build and publish untagged candidate digest
+        id: image
+        uses: docker/build-push-action@v7
+        with:
+          context: candidate
+          build-args: |
+            ROS_DISTRO=${{ matrix.ros_distro }}
+            LIDARSLAM_SOURCE_REVISION=${{ needs.authorize.outputs.source_commit }}
+            LIDARSLAM_SOURCE_DIRTY=false
+          platforms: linux/amd64
+          outputs: |
+            type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          labels: |
+            org.opencontainers.image.title=lidarslam_ros2
+            org.opencontainers.image.description=Installed ROS 2 LiDAR SLAM map-authoring product candidate
+            org.opencontainers.image.licenses=BSD-2-Clause
+            org.opencontainers.image.revision=${{ needs.authorize.outputs.source_commit }}
+            org.opencontainers.image.version=${{ needs.authorize.outputs.product_version }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          sbom: true
+          provenance: mode=max
+          cache-from: type=gha,scope=candidate-${{ matrix.ros_distro }}
+          cache-to: type=gha,mode=max,scope=candidate-${{ matrix.ros_distro }}
+
+      - name: Attest published candidate digest
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Pull and smoke-test exact candidate digest
+        id: smoke
+        shell: bash
+        env:
+          EXPECTED_DIGEST: ${{ steps.image.outputs.digest }}
+          EXPECTED_GIT_COMMIT: ${{ needs.authorize.outputs.source_commit }}
+          EXPECTED_VERSION: ${{ needs.authorize.outputs.product_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          IMAGE_REF="${REGISTRY}/${IMAGE_NAME}@${EXPECTED_DIGEST}"
+          docker pull "${IMAGE_REF}"
+          OBSERVED_VERSION="$(
+            docker run --rm --network none "${IMAGE_REF}" \
+              lidarslam-map --version
+          )"
+          EXPECTED_OUTPUT="lidarslam_ros2 ${EXPECTED_VERSION}"
+          if [[ "${OBSERVED_VERSION}" != "${EXPECTED_OUTPUT}" ]]; then
+            echo "CLI version '${OBSERVED_VERSION}' != '${EXPECTED_OUTPUT}'" >&2
+            exit 1
+          fi
+          docker run --rm --network none "${IMAGE_REF}" \
+            lidarslam-map --help >/tmp/lidarslam-cli-help.txt
+          grep -Fq 'report <output>' /tmp/lidarslam-cli-help.txt
+          docker run --rm --network none "${IMAGE_REF}" \
+            lidarslam-map start --help >/tmp/lidarslam-start-help.txt
+          grep -Fq 'Detect and configure the sensors' \
+            /tmp/lidarslam-start-help.txt
+          grep -Fq -- '--map-output-dir' /tmp/lidarslam-start-help.txt
+          OBSERVED_REVISION="$(
+            docker run --rm --network none "${IMAGE_REF}" python3 -c \
+              'import json, pathlib, subprocess; prefix = pathlib.Path(subprocess.check_output(["ros2", "pkg", "prefix", "lidarslam"], text=True).strip()); print(json.loads((prefix / "share/lidarslam/product/product-build-info.json").read_text())["revision"])'
+          )"
+          OBSERVED_LABEL="$(
+            docker image inspect "${IMAGE_REF}" \
+              --format '{{index .Config.Labels "org.opencontainers.image.revision"}}'
+          )"
+          if [[ "${OBSERVED_REVISION}" != "${EXPECTED_GIT_COMMIT}" ]]; then
+            echo "installed revision does not match exact candidate" >&2
+            exit 1
+          fi
+          if [[ "${OBSERVED_LABEL}" != "${EXPECTED_GIT_COMMIT}" ]]; then
+            echo "OCI revision label does not match exact candidate" >&2
+            exit 1
+          fi
+          SBOM="$(
+            docker buildx imagetools inspect "${IMAGE_REF}" \
+              --format '{{json .SBOM}}'
+          )"
+          PROVENANCE="$(
+            docker buildx imagetools inspect "${IMAGE_REF}" \
+              --format '{{json .Provenance}}'
+          )"
+          if [[ -z "${SBOM}" || "${SBOM}" == "null" ]]; then
+            echo "candidate digest has no BuildKit SBOM" >&2
+            exit 1
+          fi
+          if [[ -z "${PROVENANCE}" || "${PROVENANCE}" == "null" ]]; then
+            echo "candidate digest has no BuildKit provenance" >&2
+            exit 1
+          fi
+          gh attestation verify "oci://${IMAGE_REF}" \
+            -R "${GITHUB_REPOSITORY}"
+          echo "cli_version=${OBSERVED_VERSION}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "## ${{ matrix.ros_distro }} immutable candidate"
+            echo
+            echo "- Source PR: \`#${{ needs.authorize.outputs.source_pr }}\`"
+            echo "- Source commit: \`${EXPECTED_GIT_COMMIT}\`"
+            echo "- Digest: \`${EXPECTED_DIGEST}\`"
+            echo "- Tags created: \`none\`"
+            echo "- Registry retention: \`requires remote audit\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Create candidate-image evidence
+        shell: bash
+        env:
+          CANDIDATE_DIGEST: ${{ steps.image.outputs.digest }}
+          CLI_VERSION: ${{ steps.smoke.outputs.cli_version }}
+        run: |
+          python3 -m venv /tmp/candidate-record-venv
+          /tmp/candidate-record-venv/bin/python \
+            -m pip install --quiet jsonschema
+          /tmp/candidate-record-venv/bin/python \
+            gate/scripts/create_candidate_image_record.py \
+            --request request/candidate-image-request.json \
+            --ros-distro "${{ matrix.ros_distro }}" \
+            --platform linux/amd64 \
+            --digest "${CANDIDATE_DIGEST}" \
+            --cli-version "${CLI_VERSION}" \
+            --workflow-run-url \
+              "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --evidence-retention-days 30 \
+            --output "candidate-image-${{ matrix.ros_distro }}.json"
+
+      - name: Upload candidate-image evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: candidate-image-record-${{ matrix.ros_distro }}
+          path: candidate-image-${{ matrix.ros_distro }}.json
+          retention-days: 30
+          if-no-files-found: error
+
+  verify-set:
+    if: needs.authorize.outputs.authorized == 'true'
+    name: verify immutable candidate pair
+    needs:
+      - authorize
+      - publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out trusted evidence tools
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: gate
+          persist-credentials: false
+
+      - name: Download candidate-image records
+        uses: actions/download-artifact@v7
+        with:
+          pattern: candidate-image-record-*
+          path: records
+          merge-multiple: true
+
+      - name: Verify complete digest-only pair
+        shell: bash
+        run: |
+          python3 -m venv /tmp/candidate-set-venv
+          /tmp/candidate-set-venv/bin/python \
+            -m pip install --quiet jsonschema
+          /tmp/candidate-set-venv/bin/python \
+            gate/scripts/verify_candidate_image_set.py \
+            records/candidate-image-humble.json \
+            records/candidate-image-jazzy.json \
+            --output candidate-image-set.json
+
+      - name: Upload candidate-image set
+        uses: actions/upload-artifact@v6
+        with:
+          name: candidate-image-set
+          path: candidate-image-set.json
+          retention-days: 30
+          if-no-files-found: error

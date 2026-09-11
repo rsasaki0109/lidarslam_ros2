@@ -2,10 +2,21 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-WS_ROOT="${REPO_ROOT}"
-if [[ ! -f "${WS_ROOT}/install/setup.bash" && -f "${REPO_ROOT}/../install/setup.bash" ]]; then
-  WS_ROOT="$(cd "${REPO_ROOT}/.." && pwd)"
+SOURCE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+if [[ -f "${SOURCE_ROOT}/lidarslam/package.xml" ]]; then
+  PACKAGE_SHARE="${SOURCE_ROOT}/lidarslam"
+  WORK_ROOT="${SOURCE_ROOT}"
+  WORKSPACE_SETUP=""
+  if [[ -f "${SOURCE_ROOT}/install/setup.bash" ]]; then
+    WORKSPACE_SETUP="${SOURCE_ROOT}/install/setup.bash"
+  elif [[ -f "${SOURCE_ROOT}/../install/setup.bash" ]]; then
+    WORKSPACE_SETUP="$(cd "${SOURCE_ROOT}/.." && pwd)/install/setup.bash"
+  fi
+else
+  PACKAGE_SHARE="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+  INSTALL_PREFIX="$(cd "${PACKAGE_SHARE}/../.." && pwd)"
+  WORK_ROOT="${PWD}"
+  WORKSPACE_SETUP="${INSTALL_PREFIX}/setup.bash"
 fi
 
 usage() {
@@ -37,6 +48,11 @@ EOF
 die() {
   echo "error: $*" >&2
   exit 1
+}
+
+require_rosbags() {
+  python3 -c 'import rosbags' >/dev/null 2>&1 || die \
+    "the pointcloud_gnss_smoke profile requires the Python package 'rosbags'; see https://github.com/rsasaki0109/lidar_slam_ros2/blob/develop/docs/distribution.md#profile-specific-extras"
 }
 
 timestamp() {
@@ -133,7 +149,7 @@ GNSS_BAG=""
 POINTS_TOPIC=""
 IMU_TOPIC=""
 GNSS_TOPIC=""
-PARAM_FILE="${REPO_ROOT}/lidarslam/param/lidarslam.yaml"
+PARAM_FILE="${PACKAGE_SHARE}/param/lidarslam.yaml"
 SAVE_DIR=""
 RATE="1.0"
 DRAIN_SEC="15"
@@ -181,14 +197,14 @@ if [[ -n "${GNSS_BAG}" ]]; then
 fi
 
 if [[ -z "${SAVE_DIR}" ]]; then
-  SAVE_DIR="${REPO_ROOT}/output/open_data_gnss_smoke_$(timestamp)"
+  SAVE_DIR="${WORK_ROOT}/output/open_data_gnss_smoke_$(timestamp)"
 fi
 mkdir -p "${SAVE_DIR}"
 
 set +u
-if [[ -f "${WS_ROOT}/install/setup.bash" ]]; then
+if [[ -n "${WORKSPACE_SETUP}" && -f "${WORKSPACE_SETUP}" ]]; then
   # shellcheck source=/dev/null
-  source "${WS_ROOT}/install/setup.bash"
+  source "${WORKSPACE_SETUP}"
 elif [[ -n "${ROS_DISTRO:-}" && -f "/opt/ros/${ROS_DISTRO}/setup.bash" ]]; then
   # shellcheck source=/dev/null
   source "/opt/ros/${ROS_DISTRO}/setup.bash"
@@ -196,6 +212,7 @@ fi
 set -u
 
 command -v ros2 >/dev/null 2>&1 || die "ros2 not found"
+require_rosbags
 
 if [[ -z "${POINTS_TOPIC}" ]]; then
   POINTS_TOPIC="$(detect_topic_by_type "${BAG_PATH}" "sensor_msgs/msg/PointCloud2")"
@@ -293,7 +310,7 @@ if ! call_map_save_with_retry "${MAP_SAVE_LOG}"; then
 fi
 
 if [[ "${VERIFY_MAP}" == "true" ]]; then
-  python3 "${REPO_ROOT}/scripts/verify_autoware_map.py" "${SAVE_DIR}" >"${VERIFY_LOG}" 2>&1
+  python3 "${SCRIPT_DIR}/verify_autoware_map.py" "${SAVE_DIR}" >"${VERIFY_LOG}" 2>&1
 fi
 
 if [[ -f "${SAVE_DIR}/map_projector_info.yaml" ]]; then

@@ -9,8 +9,12 @@ on:
       - Dockerfile
       - .dockerignore
       - docker/**
+      - scripts/docker_map_bag.sh
+      - scripts/run_first_map_demo.sh
       - scripts/run_docker_demo.sh
       - .github/workflows/docker.yml
+      - .github/workflows/candidate-image.yml
+      - .github/workflows/release.yml
   workflow_dispatch:
 
 concurrency:
@@ -19,12 +23,21 @@ concurrency:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  build:
-    name: build${{ (github.event_name != 'pull_request') && ' and push' || '' }} (humble)
-    runs-on: ubuntu-22.04
+  verify:
+    if: github.event_name != 'push'
+    name: build (${{ matrix.ros_distro }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro:
+          - humble
+          - jazzy
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -32,27 +45,195 @@ jobs:
           submodules: recursive
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
+
+      - name: Resolve source revision
+        id: source
+        shell: bash
+        run: echo "revision=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve OCI metadata
+        id: image_meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ matrix.ros_distro }}
+            type=raw,value=latest,enable=${{ matrix.ros_distro == 'humble' }}
+          labels: |
+            org.opencontainers.image.title=lidarslam_ros2
+            org.opencontainers.image.description=Installed ROS 2 LiDAR SLAM map-authoring product
+            org.opencontainers.image.licenses=BSD-2-Clause
+
+      # Pull requests and manual dispatches are verification-only. They receive
+      # a contents-read token, load the image into this disposable runner, and
+      # cannot move a GHCR tag. Only the separate develop-push job below has
+      # package and attestation write authority.
+      - name: Build image without publication
+        id: image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          build-args: |
+            ROS_DISTRO=${{ matrix.ros_distro }}
+            LIDARSLAM_SOURCE_REVISION=${{ steps.source.outputs.revision }}
+            LIDARSLAM_SOURCE_DIRTY=false
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ steps.image_meta.outputs.tags }}
+          labels: ${{ steps.image_meta.outputs.labels }}
+          sbom: false
+          provenance: false
+          cache-from: type=gha,scope=convenience-${{ matrix.ros_distro }}
+          cache-to: type=gha,mode=max,scope=convenience-${{ matrix.ros_distro }}
+
+      - name: Smoke-test installed CLI
+        shell: bash
+        env:
+          IMAGE_TAG: ghcr.io/${{ github.repository }}:${{ matrix.ros_distro }}
+        run: |
+          VERSION="$(tr -d '\n' < VERSION)"
+          IMAGE_REF="${IMAGE_TAG}"
+          OBSERVED_VERSION="$(docker run --rm "${IMAGE_REF}" lidarslam-map --version)"
+          if [[ "${OBSERVED_VERSION}" != "lidarslam_ros2 ${VERSION}" ]]; then
+            echo "unexpected CLI version: ${OBSERVED_VERSION}" >&2
+            exit 1
+          fi
+          docker run --rm --network none "${IMAGE_REF}" \
+            lidarslam-map --help >/tmp/lidarslam-cli-help.txt
+          grep -Fq 'report <output>' /tmp/lidarslam-cli-help.txt
+          docker run --rm --network none "${IMAGE_REF}" \
+            lidarslam-map start --help >/tmp/lidarslam-start-help.txt
+          grep -Fq 'Detect and configure the sensors' /tmp/lidarslam-start-help.txt
+          grep -Fq -- '--map-output-dir' /tmp/lidarslam-start-help.txt
+          OBSERVED_REVISION="$(
+            docker run --rm "${IMAGE_REF}" python3 -c \
+              'import json, pathlib, subprocess; prefix = pathlib.Path(subprocess.check_output(["ros2", "pkg", "prefix", "lidarslam"], text=True).strip()); print(json.loads((prefix / "share/lidarslam/product/product-build-info.json").read_text())["revision"])'
+          )"
+          if [[ "${OBSERVED_REVISION}" != "${{ steps.source.outputs.revision }}" ]]; then
+            echo "unexpected installed source revision: ${OBSERVED_REVISION}" >&2
+            exit 1
+          fi
+          {
+            echo "## ${{ matrix.ros_distro }} convenience image"
+            echo
+            echo "- CLI: \`${OBSERVED_VERSION}\`"
+            echo "- Source revision: \`${OBSERVED_REVISION}\`"
+            echo "- Published: \`no\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  publish:
+    if: github.event_name == 'push'
+    name: build and push (${{ matrix.ros_distro }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      artifact-metadata: write
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro:
+          - humble
+          - jazzy
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Resolve source revision
+        id: source
+        shell: bash
+        run: echo "revision=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
       - name: Log in to GitHub Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Pull requests only validate that the image builds; pushes to develop
-      # (and manual dispatches) publish ghcr.io/<repo>:humble + :latest.
-      - name: Build (and push) image
-        uses: docker/build-push-action@v6
+      - name: Resolve OCI metadata
+        id: image_meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ matrix.ros_distro }}
+            type=raw,value=latest,enable=${{ matrix.ros_distro == 'humble' }}
+          labels: |
+            org.opencontainers.image.title=lidarslam_ros2
+            org.opencontainers.image.description=Installed ROS 2 LiDAR SLAM map-authoring product
+            org.opencontainers.image.licenses=BSD-2-Clause
+
+      # This job can run only for the workflow's develop push trigger. Tagged
+      # releases remain isolated in release.yml and manual dispatch never
+      # reaches this package-write boundary.
+      - name: Build and publish moving convenience image
+        id: image
+        uses: docker/build-push-action@v7
         with:
           context: .
           build-args: |
-            ROS_DISTRO=humble
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ghcr.io/${{ github.repository }}:humble
-            ghcr.io/${{ github.repository }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ROS_DISTRO=${{ matrix.ros_distro }}
+            LIDARSLAM_SOURCE_REVISION=${{ steps.source.outputs.revision }}
+            LIDARSLAM_SOURCE_DIRTY=false
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.image_meta.outputs.tags }}
+          labels: ${{ steps.image_meta.outputs.labels }}
+          sbom: true
+          provenance: mode=max
+          cache-from: type=gha,scope=convenience-${{ matrix.ros_distro }}
+          cache-to: type=gha,mode=max,scope=convenience-${{ matrix.ros_distro }}
+
+      - name: Attest published image
+        uses: actions/attest@v4
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Smoke-test published digest
+        shell: bash
+        env:
+          EXPECTED_DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          VERSION="$(tr -d '\n' < VERSION)"
+          IMAGE_REF="ghcr.io/${{ github.repository }}@${EXPECTED_DIGEST}"
+          docker pull "${IMAGE_REF}"
+          OBSERVED_VERSION="$(docker run --rm "${IMAGE_REF}" lidarslam-map --version)"
+          if [[ "${OBSERVED_VERSION}" != "lidarslam_ros2 ${VERSION}" ]]; then
+            echo "unexpected CLI version: ${OBSERVED_VERSION}" >&2
+            exit 1
+          fi
+          docker run --rm --network none "${IMAGE_REF}" \
+            lidarslam-map --help >/tmp/lidarslam-cli-help.txt
+          grep -Fq 'report <output>' /tmp/lidarslam-cli-help.txt
+          docker run --rm --network none "${IMAGE_REF}" \
+            lidarslam-map start --help >/tmp/lidarslam-start-help.txt
+          grep -Fq 'Detect and configure the sensors' /tmp/lidarslam-start-help.txt
+          grep -Fq -- '--map-output-dir' /tmp/lidarslam-start-help.txt
+          OBSERVED_REVISION="$(
+            docker run --rm "${IMAGE_REF}" python3 -c \
+              'import json, pathlib, subprocess; prefix = pathlib.Path(subprocess.check_output(["ros2", "pkg", "prefix", "lidarslam"], text=True).strip()); print(json.loads((prefix / "share/lidarslam/product/product-build-info.json").read_text())["revision"])'
+          )"
+          if [[ "${OBSERVED_REVISION}" != "${{ steps.source.outputs.revision }}" ]]; then
+            echo "unexpected installed source revision: ${OBSERVED_REVISION}" >&2
+            exit 1
+          fi
+          {
+            echo "## ${{ matrix.ros_distro }} convenience image"
+            echo
+            echo "- CLI: \`${OBSERVED_VERSION}\`"
+            echo "- Source revision: \`${OBSERVED_REVISION}\`"
+            echo "- Digest: \`${EXPECTED_DIGEST}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

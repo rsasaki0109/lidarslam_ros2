@@ -52,6 +52,7 @@ def test_write_aligned_trajectory_metrics(tmp_path):
     """The writer should emit cross-validation metrics from TUM trajectories."""
     bag_dir = tmp_path / 'bag'
     bag_dir.mkdir(parents=True, exist_ok=True)
+    (bag_dir / 'data.db3').write_bytes(b'synthetic bag payload')
     (bag_dir / 'metadata.yaml').write_text(
         '\n'.join(
             [
@@ -130,6 +131,8 @@ def test_write_aligned_trajectory_metrics(tmp_path):
             'livox_frame',
             '--wall-sec',
             '0.5',
+            '--runtime-artifact',
+            'true=/bin/true',
         ],
         capture_output=True,
         text=True,
@@ -164,6 +167,7 @@ def test_write_aligned_trajectory_metrics_tracks_rejected_loop_candidates(tmp_pa
     """Rejected duplicate loops should not count as accepted loop closures."""
     bag_dir = tmp_path / 'bag'
     bag_dir.mkdir(parents=True, exist_ok=True)
+    (bag_dir / 'data.db3').write_bytes(b'synthetic bag payload')
     (bag_dir / 'metadata.yaml').write_text(
         '\n'.join(
             [
@@ -230,6 +234,8 @@ def test_write_aligned_trajectory_metrics_tracks_rejected_loop_candidates(tmp_pa
             'cross_validation',
             '--reference-label',
             'GLIM',
+            '--runtime-artifact',
+            'true=/bin/true',
         ],
         capture_output=True,
         text=True,

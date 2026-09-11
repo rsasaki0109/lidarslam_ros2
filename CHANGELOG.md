@@ -1,5 +1,185 @@
 # Changelog
 
+## 0.9.1 - 2026-08-12
+
+A reliability and first-map usability release candidate. It keeps the v0.9.0
+publication immutable while making the supported Docker and source journeys
+more guided, recoverable, and reviewable.
+
+### Highlights
+
+- **One coherent beginner surface** — the no-argument `lidarslam-map` home,
+  bag-optional doctor, guided `start`, Japanese quickstart, and fixed MID-360
+  demo share the same profiles, preflight, verification, and recovery contract.
+- **Crash-safe point-cloud handling** — classic scanmatcher VoxelGrid paths and
+  graph point-cloud conversions fail closed on unsafe dimensions, overflow,
+  invalid leaves, or inconsistent dense clouds while preserving the process and
+  its last valid map.
+- **Recoverable map lifecycle** — atomic outputs, finalization-only resume,
+  session history and comparison, source-preserving edit/merge plans, local 3D
+  preview, and privacy-bounded support/first-map receipts keep provenance and
+  next actions visible.
+- **Fresh-terminal onboarding** — Docker and the exact six-package Humble/Jazzy
+  source route now converge on one verified first-map outcome, with installed
+  resource checks and public-readiness probes.
+- **One-command candidate trial session** — a dedicated observer can start from
+  one exact Actions run URL and retain the authenticated handoff, selected
+  Docker/source execution, and a hash-bound session receipt under one atomic
+  directory. Docker rows bootstrap a content-addressed, recipe-labelled local
+  observer image before timing instead of requiring a copied build command.
+- **Guided trial readiness** — the same session command now checks the exact
+  destination, Ubuntu/ROS row, x86_64 host, measured filesystem, Docker/source
+  runtime, source RX counter, human measurements, and isolation confirmation
+  without network access or writes. Stable findings distinguish a blocked host
+  from runnable non-comparable evidence and print one shell-safe next command.
+- **Release identity hardening** — release-bundle CI checks out the exact PR
+  head, fetches immutable tags, and refuses historical version reuse. Candidate
+  metadata is aligned at 0.9.1 without moving or recreating `v0.9.0`.
+- **Reviewable candidate operations** — the GET-only protected-environment
+  audit and G0 card now provide a status-specific, copy-ready administrator
+  handoff while keeping settings writes, independent approval, and E2 dispatch
+  outside the tool.
+- **Parse-safe GLIM comparison** — restore the Docker timeout branch in
+  `compare_with_glim.sh` and make every tracked shell script pass `bash -n` in
+  the maintained docs/product gate.
+- **Content-verified GLIM fallback** — replace the path/topic-only trajectory
+  cache with a schema-backed identity over bag, effective config, runtime,
+  options, and harness bytes; malformed, modified, legacy, or contradictory
+  entries now fail closed instead of becoming cross-validation evidence.
+- **Exact public-docs identity** — bind the deployed Getting Started bytes,
+  canonical route fragments, product version, and Pages workflow to one source
+  commit, and keep first-time cohorts closed when that manifest is absent,
+  stale, or tampered.
+- **Copy-safe clean-host identity** — derive the source commit and both Docker
+  digests from one validated published-release report, then recheck those exact
+  live identities before a comparable onboarding row can start.
+- **Honest adoption evidence** — onboarding and GLIM usability comparisons are
+  schema-backed, environment-matched, and fail closed when rows are missing;
+  no overall winner is inferred from incomplete evidence.
+
+### Remaining v1.0 gates
+
+- complete the reviewed NDT ownership/rosdistro and main-channel package path;
+- capture complete Humble/Jazzy Docker/source onboarding measurements; and
+- accept three independent first-map validations. The tracked count remains
+  0/3.
+
+## 0.9.0 - 2026-07-30
+
+The stable product-foundation release candidate. It keeps the v0.7 golden
+path and adds fail-closed, machine-readable gates for the remaining v1.0
+distribution, publication, and external-adoption work.
+
+### Highlights
+
+- **Cross-phase v1 readiness audit** — one schema-validated contract reports
+  all ten product gates, verifies evidence paths, release version/tag state,
+  and the independent-user ledger, and refuses to describe incomplete work
+  as ready.
+- **Release-ready binary dependencies** — the official PRBonn RKO-LIO
+  `0.3.2-1` binaries passed the pinned Humble/Jazzy installed golden-path E2E,
+  and the product now requires `rko_lio >= 0.3.2`. The pinned
+  `ndt_omp_ros2 0.1.0` candidate has a read-only preflight that distinguishes
+  local readiness, ready-to-tag, partial publication, and completed
+  Humble/Jazzy rosdistro state.
+- **Package-manager evidence gate** — a manual Humble/Jazzy workflow installs
+  exact ROS apt versions, validates every installed CLI/runtime resource,
+  detects stale paths across main-to-testing upgrades, and runs the pinned
+  real MID-360 map contract. It remains evidence-open until public
+  lidarslam packages exist. The live readiness audit now verifies the exact
+  immutable-tag/main-channel run identity and both named-distro jobs, so a
+  workflow definition or hand-edited gate cannot stand in for execution.
+- **Operationally honest distribution** — docs distinguish ROS testing from
+  the normal main repository, preserve exact dependency and candidate state,
+  and withhold the beginner apt command until main-channel installation
+  evidence passes. A post-publication audit validates the stable release,
+  tag commit, all image/rollback/promotion records, and every archived bundle
+  file hash before publication evidence is accepted.
+- **Pre-tag bundle proof** — main CI builds the curated release bundle twice
+  from the clean candidate commit, reuses the complete publication verifier
+  against both archives, requires byte-identical output, and retains the
+  verified rehearsal artifact before an immutable release tag can be created.
+- **Actionable benchmark blockers** — every blocking release profile carries
+  a tracked remediation command that is printed for `NO_DATA`/`FAIL`. The
+  Newer College row now names the official form-gated Maths-Hard sequence and
+  its ICP-to-survey-map ground truth instead of incorrectly describing it as
+  prism ground truth.
+- **Idempotent publication guidance** — the live `ndt_omp_ros2` release audit
+  now points at the already-generated Humble/Jazzy rosdistro PRs and explicitly
+  forbids recreating the source tag or rerunning Bloom while those PRs remain
+  current.
+- **Complete default pytest coverage** — every Python test module in
+  `graph_based_slam` and `lidarslam` is now registered with CTest, and CI rejects
+  future modules that are added without a matching registration.
+- **Extensible degeneracy research boundary** — the oriented appearance
+  matcher exposes separate intensity/height diagnostics behind default-off
+  adapters. Fog and tunnel holdouts did not justify automatic channel
+  selection, so no experimental policy became a product default.
+
+### Remaining v1.0 gates
+
+- publish `ndt_omp_ros2 0.1.0`, then the four lidarslam packages, into Humble
+  and Jazzy rosdistro;
+- wait for required dependencies and lidarslam packages to reach the normal
+  ROS apt repository, then capture package-manager install/upgrade evidence;
+- publish and verify the first immutable release carrying rollback assets;
+- accept three independent first-map validations. The tracked count remains
+  0/3.
+
+## 0.7.0 - 2026-07-29
+
+The productization release candidate. It turns the research-oriented workspace
+into a documented offline rosbag2-to-Autoware-map product while retaining the
+deterministic and map-quality foundations delivered after v0.6.
+
+### Highlights
+
+- **One installed product CLI** — `lidarslam-map doctor`, `run`, `inspect`,
+  and optional `view` now drive the same source and installed workflow.
+  Machine-readable option contracts, Bash completion, stable exit behavior,
+  preflight-v3, diagnosis-v1, and resumable run-manifest-v2 records are tested
+  on Humble and Jazzy. Path and duration metavars use one consistent
+  vocabulary, completion must exactly match the option contract, and invalid
+  names, values, or combinations consistently exit with status 2. Doctor,
+  runner help, parser choices, completion, and release bundles share one
+  installed maintained-profile registry.
+- **Fail-closed map authoring** — output collision, low free space, real
+  bounded-filesystem exhaustion, timestamp reversal, process termination, and
+  partial-run recovery preserve terminal manifests and actionable diagnosis
+  instead of claiming success.
+- **Reproducible distribution** — clean-prefix fresh/upgrade parity, versioned
+  Humble/Jazzy image automation, SBOM, BuildKit and GitHub provenance,
+  digest-only rollback planning, and immutable two-image release promotion
+  are release-gated.
+- **Real-data operations evidence** — the pinned public MID-360 E2E gate,
+  one-hour and eight-hour named-hardware soaks, periodic resource telemetry,
+  bounded iteration timeouts, and a real 32 MiB ENOSPC gate publish
+  schema-validated evidence.
+- **Independent adoption contract** — a structured first-map issue form,
+  schema-validated public ledger, and strict readiness command reject
+  duplicate reporters, failed runs, and unreviewed evidence while preserving
+  an honest 0/3 status before v1.0. Product runs now emit a privacy-bounded
+  receipt that binds the final manifest, diagnosis, and map-verifier log
+  without publishing geometry or private paths. Receipt parsing accepts the
+  verifier's canonical explanatory `RESULT` line and rejects malformed status
+  lookalikes.
+- **Map-quality and architecture work** — deterministic offline frontend and
+  backend runners, event-driven loop search as the only backend path,
+  map-quality metrics, offline refinement, stronger Graph SLAM ownership
+  boundaries, and opt-in degeneracy/colouring research remain available
+  without expanding the beginner surface.
+
+### Current boundaries
+
+- ROS buildfarm packages are not yet released because `ndt_omp_ros2` remains
+  outside rosdistro. Official RKO-LIO release entries and binaries now exist
+  for Humble and Jazzy, but testing/main versions differ and clean
+  installed-E2E compatibility with the maintained fork remains a release
+  gate.
+- amd64 is the tested image platform; arm64/Jetson remains evaluation tier.
+- This is a prerelease candidate. The v1.0 external-adoption gate still
+  requires three independent users to complete first-map validation.
+
 ## 0.6.0 - 2026-06-12
 
 The deterministic core / ROS shell refactor (roadmap `docs/roadmap/v0.6.md`,

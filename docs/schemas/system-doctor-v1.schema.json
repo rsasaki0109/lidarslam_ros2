@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/system-doctor-v1.schema.json",
+  "title": "lidar_slam_ros2 system doctor report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "mode",
+    "status",
+    "version",
+    "product",
+    "ros",
+    "storage",
+    "findings",
+    "next_action",
+    "commands",
+    "network_accessed",
+    "writes_performed"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {"const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/system-doctor-v1.schema.json"},
+    "mode": {"const": "system"},
+    "status": {"enum": ["ready", "action_required"]},
+    "version": {"type": "string", "minLength": 1},
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layout",
+        "runtime_file_count",
+        "missing_runtime_files",
+        "installed_prefix_detected"
+      ],
+      "properties": {
+        "layout": {"enum": ["source", "installed"]},
+        "runtime_file_count": {"type": "integer", "minimum": 1},
+        "missing_runtime_files": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[^/\\\\]+$"}
+        },
+        "installed_prefix_detected": {"type": "boolean"}
+      }
+    },
+    "ros": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "distro",
+        "supported",
+        "ros2_cli_available",
+        "rosbag2_python_available"
+      ],
+      "properties": {
+        "distro": {"type": ["string", "null"]},
+        "supported": {"type": "boolean"},
+        "ros2_cli_available": {"type": "boolean"},
+        "rosbag2_python_available": {"type": "boolean"}
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available_bytes",
+        "minimum_free_bytes",
+        "additional_bytes_required",
+        "sufficient_for_fixed_demo"
+      ],
+      "properties": {
+        "available_bytes": {"type": "integer", "minimum": 0},
+        "minimum_free_bytes": {"type": "integer", "minimum": 1},
+        "additional_bytes_required": {"type": "integer", "minimum": 0},
+        "sufficient_for_fixed_demo": {"type": "boolean"}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "next_action"],
+        "properties": {
+          "code": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+          "message": {"type": "string", "minLength": 1},
+          "next_action": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "next_action": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "reason", "action"],
+          "properties": {
+            "code": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+            "reason": {"type": "string", "minLength": 1},
+            "action": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system_doctor", "bag_doctor", "fixed_demo", "own_bag"],
+      "properties": {
+        "system_doctor": {"const": "lidarslam-map doctor"},
+        "bag_doctor": {"const": "lidarslam-map doctor /path/to/rosbag2"},
+        "fixed_demo": {"const": "lidarslam-map demo"},
+        "own_bag": {"const": "lidarslam-map start /path/to/rosbag2"}
+      }
+    },
+    "network_accessed": {"const": false},
+    "writes_performed": {"const": false}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "ready"}}},
+      "then": {
+        "properties": {
+          "findings": {"maxItems": 0},
+          "next_action": {"type": "null"}
+        }
+      },
+      "else": {
+        "properties": {
+          "findings": {"minItems": 1},
+          "next_action": {"type": "object"}
+        }
+      }
+    }
+  ]
+}

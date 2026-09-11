@@ -30,31 +30,51 @@
 #ifndef GRAPH_BASED_SLAM__REGISTRATION_FACTORY_HPP_
 #define GRAPH_BASED_SLAM__REGISTRATION_FACTORY_HPP_
 
-// The legacy GICP construction retained only for the explicit offline/live
-// compatibility bridge.  NDT construction belongs to the typed host resolver
-// and must not have a second direct PCL factory path.
+// The loop-closure registration construction shared by the ROS component
+// and the offline deterministic runner, so both verify candidates with
+// byte-identical registration settings (docs/roadmap/v0.6.md, Phase 2).
 
+#include <pcl/memory.h>  // NOLINT(build/include_order)
 #include <pcl/registration/registration.h>  // NOLINT(build/include_order)
 #include <pclomp/gicp_omp.h>  // NOLINT(build/include_order)
+#include <pclomp/ndt_omp.h>  // NOLINT(build/include_order)
+
+#include <string>
 
 #include <pclomp/gicp_omp_impl.hpp>
+#include <pclomp/ndt_omp_impl.hpp>
+#include <pclomp/voxel_grid_covariance_omp_impl.hpp>
 
 namespace graphslam
 {
 namespace backend_core
 {
 
-inline boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>>
-makeLegacyGicpRegistration()
+// Returns nullptr for an unknown method; the caller decides how to fail.
+inline pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr
+makeLoopRegistration(const std::string & method, double ndt_resolution, int ndt_num_threads)
 {
-  boost::shared_ptr<pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>
-  gicp(new pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>());
-  gicp->setMaxCorrespondenceDistance(30);
-  gicp->setMaximumIterations(100);
-  gicp->setTransformationEpsilon(1e-8);
-  gicp->setEuclideanFitnessEpsilon(1e-6);
-  gicp->setRANSACIterations(0);
-  return gicp;
+  if (method == "NDT") {
+    auto ndt = pcl::make_shared<
+      pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
+    ndt->setMaximumIterations(100);
+    ndt->setResolution(ndt_resolution);
+    ndt->setTransformationEpsilon(0.01);
+    ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
+    if (ndt_num_threads > 0) {ndt->setNumThreads(ndt_num_threads);}
+    return ndt;
+  }
+  if (method == "GICP") {
+    auto gicp = pcl::make_shared<
+      pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
+    gicp->setMaxCorrespondenceDistance(30);
+    gicp->setMaximumIterations(100);
+    gicp->setTransformationEpsilon(1e-8);
+    gicp->setEuclideanFitnessEpsilon(1e-6);
+    gicp->setRANSACIterations(0);
+    return gicp;
+  }
+  return nullptr;
 }
 
 }  // namespace backend_core

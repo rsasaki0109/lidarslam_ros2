@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/product-draft-review-routing-v1.schema.json",
+  "title": "lidarslam_ros2 product Draft review routing contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "pull_request",
+    "scope",
+    "policy",
+    "lanes",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/product-draft-review-routing-v1.schema.json"
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "pull_request": {"const": 427},
+    "scope": {"const": "role-based-product-draft-review-routing"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "advisory_reviewer_target",
+        "advisory_target_is_merge_gate",
+        "max_parallel_active_lanes",
+        "lane_completion_order_required",
+        "final_decision_role"
+      ],
+      "properties": {
+        "advisory_reviewer_target": {"const": 2},
+        "advisory_target_is_merge_gate": {"const": false},
+        "max_parallel_active_lanes": {"const": 2},
+        "lane_completion_order_required": {"const": true},
+        "final_decision_role": {"const": "lead-maintainer"}
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/definitions/lane"}
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_reviewer_requests_authorized",
+        "github_reviews_authorized",
+        "mark_ready_authorized",
+        "merge_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "github_reviewer_requests_authorized": {"const": false},
+        "github_reviews_authorized": {"const": false},
+        "mark_ready_authorized": {"const": false},
+        "merge_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "title",
+        "capability",
+        "slice_ids",
+        "depends_on_lanes",
+        "expected_path_count",
+        "expected_verification_count"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "R1-runtime-safety",
+            "R2-operator-ux",
+            "R3-distribution",
+            "R4-integration-publication"
+          ]
+        },
+        "order": {"type": "integer", "minimum": 1, "maximum": 4},
+        "title": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 ,&/+\\-]{0,99}$"
+        },
+        "capability": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 ,&/+\\-]{0,159}$"
+        },
+        "slice_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "S1-runtime-safety",
+              "S2-first-map-foundation",
+              "S3-map-lifecycle",
+              "S4-source-onboarding",
+              "S5-distribution-readiness",
+              "S6-product-shell-integration",
+              "S7-publication-control"
+            ]
+          }
+        },
+        "depends_on_lanes": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "R1-runtime-safety",
+              "R2-operator-ux",
+              "R3-distribution",
+              "R4-integration-publication"
+            ]
+          }
+        },
+        "expected_path_count": {"type": "integer", "minimum": 1},
+        "expected_verification_count": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

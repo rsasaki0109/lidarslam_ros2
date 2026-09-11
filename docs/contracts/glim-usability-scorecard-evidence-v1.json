@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/usability-scorecard-evidence-index-v1.schema.json",
+  "scorecard_id": "stable-release-lidarslam-vs-glim-v1",
+  "generated_at": "2026-08-12T15:00:00+09:00",
+  "repository": "rsasaki0109/lidar_slam_ros2",
+  "preparation_receipt_path": null,
+  "rows": [
+    {
+      "product_id": "lidarslam_ros2",
+      "record_path": null
+    },
+    {
+      "product_id": "glim",
+      "record_path": null
+    }
+  ],
+  "authority": {
+    "remote_mutations_performed": false,
+    "missing_rows_count_as_success": false,
+    "automatic_winner_claim_authorized": false
+  }
+}

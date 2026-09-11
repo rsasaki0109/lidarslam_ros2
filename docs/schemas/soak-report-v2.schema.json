@@ -1,0 +1,205 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/soak-report-v2.schema.json",
+  "title": "lidarslam_ros2 soak report v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "last_error",
+    "active_iteration_id",
+    "profile",
+    "target_duration_sec",
+    "telemetry_interval_sec",
+    "started_at",
+    "completed_at",
+    "hardware_label",
+    "bag_path",
+    "map_profile",
+    "product_cli",
+    "thresholds",
+    "metrics",
+    "checks",
+    "telemetry_samples",
+    "iterations"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {"enum": ["passed", "failed", "interrupted"]}
+        }
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "required": [
+              "target_duration_reached",
+              "all_iterations_succeeded",
+              "peak_rss_within_budget",
+              "output_size_within_budget",
+              "dropped_inputs_within_budget",
+              "free_space_within_budget"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/soak-report-v2.schema.json"
+    },
+    "status": {"enum": ["running", "passed", "failed", "interrupted"]},
+    "last_error": {"type": ["string", "null"]},
+    "active_iteration_id": {
+      "type": ["string", "null"],
+      "pattern": "^iteration-[0-9]{4,}$"
+    },
+    "profile": {"enum": ["one-hour", "eight-hour"]},
+    "target_duration_sec": {"enum": [3600.0, 28800.0]},
+    "telemetry_interval_sec": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 60
+    },
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"},
+    "hardware_label": {"type": "string", "minLength": 1},
+    "bag_path": {"type": "string", "minLength": 1},
+    "map_profile": {"type": ["string", "null"]},
+    "product_cli": {"type": "string", "minLength": 1},
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_peak_rss_mib",
+        "max_output_bytes",
+        "max_dropped_inputs",
+        "minimum_free_space_bytes"
+      ],
+      "properties": {
+        "max_peak_rss_mib": {"type": "number", "exclusiveMinimum": 0},
+        "max_output_bytes": {"type": "integer", "minimum": 1},
+        "max_dropped_inputs": {"type": "integer", "minimum": 0},
+        "minimum_free_space_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wall_time_sec",
+        "iterations_completed",
+        "iterations_failed",
+        "peak_rss_mib",
+        "output_size_bytes",
+        "dropped_inputs_total",
+        "minimum_free_space_bytes"
+      ],
+      "properties": {
+        "wall_time_sec": {"type": "number", "minimum": 0},
+        "iterations_completed": {"type": "integer", "minimum": 0},
+        "iterations_failed": {"type": "integer", "minimum": 0},
+        "peak_rss_mib": {"type": "number", "minimum": 0},
+        "output_size_bytes": {"type": "integer", "minimum": 0},
+        "dropped_inputs_total": {"type": "integer", "minimum": 0},
+        "minimum_free_space_bytes": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target_duration_reached": {"type": "boolean"},
+        "all_iterations_succeeded": {"type": "boolean"},
+        "peak_rss_within_budget": {"type": "boolean"},
+        "output_size_within_budget": {"type": "boolean"},
+        "dropped_inputs_within_budget": {"type": "boolean"},
+        "free_space_within_budget": {"type": "boolean"}
+      }
+    },
+    "telemetry_samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "captured_at",
+          "iteration_id",
+          "iteration_elapsed_sec",
+          "soak_elapsed_sec",
+          "output_size_bytes",
+          "free_space_bytes"
+        ],
+        "properties": {
+          "captured_at": {"type": "string", "format": "date-time"},
+          "iteration_id": {
+            "type": "string",
+            "pattern": "^iteration-[0-9]{4,}$"
+          },
+          "iteration_elapsed_sec": {"type": "number", "minimum": 0},
+          "soak_elapsed_sec": {"type": "number", "minimum": 0},
+          "output_size_bytes": {"type": "integer", "minimum": 0},
+          "free_space_bytes": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "iterations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "started_at",
+          "completed_at",
+          "command",
+          "command_display",
+          "exit_code",
+          "wall_time_sec",
+          "peak_rss_mib",
+          "output_size_bytes",
+          "free_space_bytes",
+          "dropped_input_signatures",
+          "log",
+          "time_report"
+        ],
+        "properties": {
+          "id": {"type": "string", "pattern": "^iteration-[0-9]{4,}$"},
+          "started_at": {"type": "string", "format": "date-time"},
+          "completed_at": {"type": "string", "format": "date-time"},
+          "command": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string"}
+          },
+          "command_display": {"type": "string", "minLength": 1},
+          "exit_code": {"type": "integer"},
+          "wall_time_sec": {"type": "number", "minimum": 0},
+          "peak_rss_mib": {"type": "number", "minimum": 0},
+          "output_size_bytes": {"type": "integer", "minimum": 0},
+          "free_space_bytes": {"type": "integer", "minimum": 0},
+          "dropped_input_signatures": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["message_filter", "scan_drop", "queue_overflow"],
+            "properties": {
+              "message_filter": {"type": "integer", "minimum": 0},
+              "scan_drop": {"type": "integer", "minimum": 0},
+              "queue_overflow": {"type": "integer", "minimum": 0}
+            }
+          },
+          "log": {"type": "string", "minLength": 1},
+          "time_report": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

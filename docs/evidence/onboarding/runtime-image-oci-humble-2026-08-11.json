@@ -1,0 +1,147 @@
+{
+  "archive": {
+    "member_count": 18,
+    "name": "humble-ff92f09.oci.tar",
+    "sha256": "0f65c0fec70c6cbf44487afb4d6caea73e9269ad8d57adf7bffe1bf03f87920b",
+    "size_bytes": 569025024
+  },
+  "gate": {
+    "baseline_compressed_layer_bytes": 1227220038,
+    "baseline_index_digest": "sha256:27934744bc21ee7081619f35e322177345479ed69079cda8e37ee61fbfbdbe53",
+    "baseline_manifest_digest": "sha256:3cbe706a339f01b1a3e022a9b38ca85e15249d67fbb85bc30252281c075bf16c",
+    "baseline_reference": "ghcr.io/rsasaki0109/lidar_slam_ros2:v0.9.0-humble",
+    "ceiling_compressed_layer_bytes": 920415029,
+    "margin_bytes": 351415273,
+    "minimum_reduction_percent": 25.0,
+    "reduction_bytes": 658220282,
+    "reduction_percent": 53.635066,
+    "status": "PASS"
+  },
+  "image": {
+    "compressed_layer_bytes": 568999756,
+    "config_digest": "sha256:bac3c758ad5d093360021bb63bdfb4c3c00eba847a1778adc234255af0b492c7",
+    "labels": {
+      "org.opencontainers.image.description": "Installed ROS 2 LiDAR SLAM map-authoring product",
+      "org.opencontainers.image.licenses": "BSD-2-Clause",
+      "org.opencontainers.image.revision": "ff92f0950fe28e24de63db455c76fefa0039b03f",
+      "org.opencontainers.image.title": "lidarslam_ros2",
+      "org.opencontainers.image.version": "0.9.0"
+    },
+    "layer_count": 12,
+    "layers": [
+      {
+        "compressed_bytes": 29738881,
+        "diff_id": "sha256:10f9108f6cebf96e05cadfab3c188071f3c6d084abe680fd0bc9f61c268e854d",
+        "digest": "sha256:d6834b4a794c03efa2c998853e64969fa8851b11b2ade63292268872a37759d0",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 1,
+        "uncompressed_bytes": 80624640
+      },
+      {
+        "compressed_bytes": 1215842,
+        "diff_id": "sha256:bad0322444c16b1896a429e2fd121443d4d9da7c45d87f27f1c6a3f31607e902",
+        "digest": "sha256:fb3926550422394aa83c1b53c4be73afffcc0634e77ecc34803568f4bcfb1e49",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 2,
+        "uncompressed_bytes": 5802496
+      },
+      {
+        "compressed_bytes": 5949015,
+        "diff_id": "sha256:bf7248ad5b5622fda01fa323673381a67743a8e8c4e8bd763c0b8fdc54b05b3e",
+        "digest": "sha256:8e6e86c051c759741cbd80e7077c162999229780c2ae693a10ad1f8c326e6030",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 3,
+        "uncompressed_bytes": 14260736
+      },
+      {
+        "compressed_bytes": 97419,
+        "diff_id": "sha256:7549b680d0a6eedfbb78c2ea195c4b1c399b8c6fc82734ea996903c97c38fd5f",
+        "digest": "sha256:82bf407a2bc1d9446d2f6d8bf6e29a55b8f3e51499596bf7905019454c7559ac",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 4,
+        "uncompressed_bytes": 529408
+      },
+      {
+        "compressed_bytes": 104868087,
+        "diff_id": "sha256:d802292886c7ffce57ddab20d4a9541970abfd0938b95e6bafd9573727c09c1a",
+        "digest": "sha256:64c461099d7262bb399f4ac8ed23d2e95bd3c865b4b05e60663d699b7e704686",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 5,
+        "uncompressed_bytes": 347492352
+      },
+      {
+        "compressed_bytes": 197,
+        "diff_id": "sha256:86801391c5097abd01c9ecad0439ff94e753c5c45cc2122b9310b60c8f24ea5b",
+        "digest": "sha256:74b648fd5c44b4fa950ce7c35a3e1cfc7e250180224e3019b9696f6c3b8ed660",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 6,
+        "uncompressed_bytes": 2048
+      },
+      {
+        "compressed_bytes": 102,
+        "diff_id": "sha256:9743c987ffecc673ec18e948a1b26dd2dc0b249a5641e4906e5bdf92ab5594e4",
+        "digest": "sha256:b2e615fa20ff9d877034f5cc44b96385b8cb9520b7e735f1ea183b857bb37d48",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 7,
+        "uncompressed_bytes": 1536
+      },
+      {
+        "compressed_bytes": 977,
+        "diff_id": "sha256:46f5fd790b24795657558c116eb4e522178425c2988eb450d7ee7c05acdbd1b6",
+        "digest": "sha256:f59ab678b21b6cf91a075aa6df48fa5286601490e9e653ee4e3f4d178c6ebb92",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 8,
+        "uncompressed_bytes": 5120
+      },
+      {
+        "compressed_bytes": 325701683,
+        "diff_id": "sha256:b681093b6733010afb73f757373937980e116fa35a97ffd6a7c2aedc991438eb",
+        "digest": "sha256:86a8cce155fa2e6f1b45211b2d49a9f9714ac63cc4cd72d9f01e35ffdd80e353",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 9,
+        "uncompressed_bytes": 1128858624
+      },
+      {
+        "compressed_bytes": 101427036,
+        "diff_id": "sha256:dd311142611d893c0b3fd9d1901c4125714519f946b70e546041d6f131f9fd51",
+        "digest": "sha256:9626baab089596b8e802c83f9c633ec2ba6a82990887a1d60dc1d0a84187d629",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 10,
+        "uncompressed_bytes": 438366208
+      },
+      {
+        "compressed_bytes": 485,
+        "diff_id": "sha256:2074801d71fb7198d7e24986ea555b7dce629716d0f3893a26f3f0ec98025745",
+        "digest": "sha256:f4f93db85e9158bcb24aa5083b10f50c8af21a1aa0b39b6765aae529c8414af4",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 11,
+        "uncompressed_bytes": 3584
+      },
+      {
+        "compressed_bytes": 32,
+        "diff_id": "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+        "digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+        "media_type": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "position": 12,
+        "uncompressed_bytes": 1024
+      }
+    ],
+    "manifest_digest": "sha256:8118d035c4b4ced92057a661db5983f9f43afc4837766b672c54539b61d5e990",
+    "uncompressed_layer_bytes": 2015947776
+  },
+  "platform": {
+    "architecture": "amd64",
+    "os": "linux"
+  },
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/oci-image-measurement-v1.schema.json",
+  "schema_version": 1,
+  "status": "PASS",
+  "verification": {
+    "all_layers_gzip": true,
+    "descriptors_verified": 14,
+    "diff_ids_verified": 12,
+    "safe_archive_members": 18,
+    "status": "PASS",
+    "unreferenced_blobs": 0
+  }
+}

@@ -266,6 +266,38 @@ TEST(PointColorizer, AveragesRepeatedObservations)
   EXPECT_EQ(out[2], 40);
 }
 
+TEST(PointColorizer, ImageMarginSkipsBorderBand)
+{
+  using graphslam::point_colorizer::insideImageMargin;
+  CameraIntrinsics intr;
+  intr.fx = intr.fy = 100.0f;
+  intr.cx = intr.cy = 50.0f;
+  intr.width = intr.height = 100;
+  // Centre passes any sane margin; a point 4 px from the border fails a
+  // 10 px margin but passes with the margin disabled.
+  EXPECT_TRUE(insideImageMargin(intr, 50.0f, 50.0f, 10));
+  EXPECT_FALSE(insideImageMargin(intr, 95.0f, 50.0f, 10));
+  EXPECT_FALSE(insideImageMargin(intr, 50.0f, 4.0f, 10));
+  EXPECT_TRUE(insideImageMargin(intr, 95.0f, 50.0f, 0));
+  EXPECT_TRUE(insideImageMargin(intr, 95.0f, 50.0f, -3));
+  // Boundary is inclusive at exactly `margin` pixels from the border.
+  EXPECT_TRUE(insideImageMargin(intr, 10.0f, 89.0f, 10));
+}
+
+TEST(PointColorizer, ConfirmedRequiresMinimumSamples)
+{
+  PointColor pc;
+  const float grey[3] = {100.0f, 100.0f, 100.0f};
+  EXPECT_FALSE(pc.confirmed(1));
+  pc.add(grey, 5.0f);
+  EXPECT_TRUE(pc.confirmed(1));
+  EXPECT_TRUE(pc.confirmed(0));  // degrades to seen()
+  EXPECT_FALSE(pc.confirmed(3));
+  pc.add(grey, 5.0f);
+  pc.add(grey, 5.0f);
+  EXPECT_TRUE(pc.confirmed(3));
+}
+
 TEST(PointColorizer, NearObservationDominatesFarOne)
 {
   PointColor pc;

@@ -110,7 +110,8 @@ def evaluate(ours: dict[str, Any], rival: dict[str, Any],
         checks[name] = {'pass': bool(passed), 'evidence': evidence}
 
     identity_fields = ('sequence', 'track', 'input_manifest_sha256',
-                       'reference_sha256', 'calibration_sha256', 'machine_id')
+                       'reference_sha256', 'evaluation_reference_sha256',
+                       'calibration_sha256', 'machine_id')
     identity = {field: (ours.get(field), rival.get(field))
                 for field in identity_fields}
     check('identical_evaluation_contract', all(a == b and a not in (None, '')

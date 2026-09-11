@@ -20,13 +20,16 @@ RUN apt-get update -qq && \
       ros-jazzy-autoware-system-msgs \
       ros-jazzy-autoware-utils-geometry \
       ros-jazzy-autoware-utils-math \
+      ros-jazzy-autoware-utils-rclcpp \
       ros-jazzy-autoware-vehicle-msgs \
       ros-jazzy-geographic-msgs \
       ros-jazzy-lanelet2-io \
       ros-jazzy-pcl-conversions \
       ros-jazzy-rclpy-message-converter \
       ros-jazzy-ros-testing \
+      ros-jazzy-diagnostic-updater \
       libgeographiclib-dev \
+      libgoogle-glog-dev \
       libpcl-dev \
       librange-v3-dev && \
     rm -rf /var/lib/apt/lists/*

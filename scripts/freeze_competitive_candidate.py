@@ -28,10 +28,16 @@ def main() -> int:
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--profile', type=Path, required=True)
     parser.add_argument('--rko-param', type=Path, required=True)
+    parser.add_argument('--rko-lio-param', type=Path)
+    parser.add_argument('--rko-liv-param', type=Path)
     parser.add_argument('--lidarslam-param', type=Path, required=True)
     args = parser.parse_args()
     for name in ('output', 'profile', 'rko_param', 'lidarslam_param'):
         setattr(args, name, getattr(args, name).resolve())
+    args.rko_lio_param = (args.rko_param if args.rko_lio_param is None
+                          else args.rko_lio_param.resolve())
+    args.rko_liv_param = (args.rko_param if args.rko_liv_param is None
+                          else args.rko_liv_param.resolve())
 
     params = yaml.safe_load(args.lidarslam_param.read_text())
     graph = params['graph_based_slam']['ros__parameters']
@@ -43,6 +49,10 @@ def main() -> int:
         'source_tree': source_tree_digest(ROOT),
         'benchmark_profile': file_record(args.profile),
         'rko_param': file_record(args.rko_param),
+        'rko_params_by_track': {
+            'glim_cpu_lidar_imu': file_record(args.rko_lio_param),
+            'fast_livo2_lidar_imu_visual': file_record(args.rko_liv_param),
+        },
         'lidarslam_param': file_record(args.lidarslam_param),
         'map_refinement': {
             key: graph[key] for key in (
@@ -52,6 +62,15 @@ def main() -> int:
                 'planar_map_filter_max_small_eigenvalue_ratio',
                 'planar_map_filter_min_middle_eigenvalue_ratio',
                 'planar_map_filter_min_retained_ratio')},
+        'loop_safety': {
+            key: graph[key] for key in (
+                'loop_search_query_stride',
+                'loop_max_translation_delta',
+                'loop_max_rotation_delta_deg',
+                'loop_min_overlap_ratio',
+                'loop_min_overlap_ratio_large_correction',
+                'loop_overlap_large_correction_translation_m',
+                'loop_overlap_max_distance_m')},
         'excluded_capabilities': [
             'saved_map_loading', 'localization_mode', 'relocalization'],
     }

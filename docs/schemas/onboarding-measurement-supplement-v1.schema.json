@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-measurement-supplement-v1.schema.json",
+  "title": "lidar_slam_ros2 onboarding measurement supplement v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "supplement_id",
+    "captured_at",
+    "trial_id",
+    "base_record_sha256",
+    "measurements",
+    "measurement_sources",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-measurement-supplement-v1.schema.json"
+    },
+    "supplement_id": {"$ref": "#/definitions/slug"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "trial_id": {"$ref": "#/definitions/slug"},
+    "base_record_sha256": {"$ref": "#/definitions/sha256"},
+    "measurements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_download_bytes",
+        "workflow_download_bytes",
+        "wall_time_sec",
+        "active_operator_time_sec",
+        "command_count",
+        "peak_disk_bytes",
+        "output_bytes"
+      ],
+      "properties": {
+        "input_download_bytes": {"$ref": "#/definitions/nullableBytes"},
+        "workflow_download_bytes": {"$ref": "#/definitions/nullableBytes"},
+        "wall_time_sec": {"$ref": "#/definitions/nullableMetric"},
+        "active_operator_time_sec": {"$ref": "#/definitions/nullableMetric"},
+        "command_count": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "peak_disk_bytes": {"$ref": "#/definitions/nullableBytes"},
+        "output_bytes": {"$ref": "#/definitions/nullableBytes"}
+      }
+    },
+    "measurement_sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_download_bytes",
+        "workflow_download_bytes",
+        "wall_time_sec",
+        "active_operator_time_sec",
+        "command_count",
+        "peak_disk_bytes",
+        "output_bytes"
+      ],
+      "properties": {
+        "input_download_bytes": {"$ref": "#/definitions/source"},
+        "workflow_download_bytes": {"$ref": "#/definitions/source"},
+        "wall_time_sec": {"$ref": "#/definitions/source"},
+        "active_operator_time_sec": {"$ref": "#/definitions/source"},
+        "command_count": {"$ref": "#/definitions/source"},
+        "peak_disk_bytes": {"$ref": "#/definitions/source"},
+        "output_bytes": {"$ref": "#/definitions/source"}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contains_private_paths",
+        "contains_exact_command",
+        "contains_operator_identity",
+        "review_before_sharing"
+      ],
+      "properties": {
+        "contains_private_paths": {"const": false},
+        "contains_exact_command": {"const": false},
+        "contains_operator_identity": {"const": false},
+        "review_before_sharing": {"const": true}
+      }
+    }
+  },
+  "definitions": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableMetric": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "nullableBytes": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "source": {
+      "enum": [
+        "not-supplemented",
+        "operator-observation",
+        "observer-log",
+        "dedicated-filesystem-sampler"
+      ]
+    }
+  }
+}

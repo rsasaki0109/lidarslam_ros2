@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/benchmark-metrics-v1.schema.json",
+  "title": "lidarslam_ros2 benchmark metrics v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "bag_path",
+    "reference",
+    "lidarslam",
+    "evo",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/benchmark-metrics-v1.schema.json"
+    },
+    "bag_path": {"type": "string"},
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason",
+        "end_margin_sec",
+        "input_points_messages",
+        "raw_output_pose_count",
+        "raw_output_pose_ratio"
+      ],
+      "properties": {
+        "reason": {
+          "type": ["string", "null"],
+          "enum": [
+            "offline_result_dump",
+            "offline_completion_marker",
+            "trajectory_near_bag_end",
+            null
+          ]
+        },
+        "end_margin_sec": {"type": ["number", "null"], "minimum": 0},
+        "input_points_messages": {"type": ["integer", "null"], "minimum": 0},
+        "raw_output_pose_count": {"type": "integer", "minimum": 0},
+        "raw_output_pose_ratio": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "reference": {"type": "object"},
+    "lidarslam": {"type": "object"},
+    "evo": {"type": "object"},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "software"],
+      "properties": {
+        "input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bag", "reference_trajectory"],
+          "properties": {
+            "bag": {
+              "type": "object",
+              "required": ["metadata", "storage_files", "identity_algorithm"],
+              "properties": {
+                "metadata": {"$ref": "#/definitions/fileIdentity"},
+                "storage_files": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {"$ref": "#/definitions/fileIdentity"}
+                },
+                "identity_algorithm": {"const": "sha256"}
+              }
+            },
+            "reference_trajectory": {"$ref": "#/definitions/fileIdentity"}
+          }
+        },
+        "software": {
+          "type": "object",
+          "required": [
+            "git_commit",
+            "git_dirty",
+            "parameter_files",
+            "runtime_artifacts",
+            "benchmark_harness",
+            "metrics_writer"
+          ],
+          "properties": {
+            "git_commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "git_dirty": {"type": "boolean"},
+            "parameter_files": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/definitions/fileIdentity"}
+            },
+            "runtime_artifacts": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "allOf": [
+                  {"$ref": "#/definitions/fileIdentity"},
+                  {
+                    "type": "object",
+                    "required": ["label"],
+                    "properties": {
+                      "label": {"type": "string", "minLength": 1}
+                    }
+                  }
+                ]
+              }
+            },
+            "benchmark_harness": {"$ref": "#/definitions/fileIdentity"},
+            "metrics_writer": {"$ref": "#/definitions/fileIdentity"}
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "fileIdentity": {
+      "type": "object",
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

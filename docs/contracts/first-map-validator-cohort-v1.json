@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-validator-cohort-v1.schema.json",
+  "cohort_id": "g1-first-map-cohort-2026-08",
+  "repository": "rsasaki0109/lidar_slam_ros2",
+  "status": "WAITING_FOR_PUBLIC_GATES",
+  "launch_gates": {
+    "public_revision": "dec8ec286953aea42cbcb2f7de70a41042f24e62",
+    "public_revision_resolvable": true,
+    "comparable_docker_row": false,
+    "comparable_source_row": false,
+    "canonical_documentation_path": "source-quickstart",
+    "canonical_documentation_url": "https://rsasaki0109.github.io/lidar_slam_ros2/getting-started.html#1-install-and-build-from-source",
+    "canonical_documentation_provenance": {
+      "manifest_url": "https://rsasaki0109.github.io/lidar_slam_ros2/docs-deployment-v1.json",
+      "source_revision": "dec8ec286953aea42cbcb2f7de70a41042f24e62",
+      "page_sha256": "e675e4a97353b110934ec014e5cfe085a2b364adf5de4447fda994a4bdd2413a"
+    },
+    "canonical_runtime_ref": "dec8ec286953aea42cbcb2f7de70a41042f24e62",
+    "copy_ready_handoff_public": false,
+    "tracking_issue_url": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/422"
+  },
+  "capacity": {
+    "accepted_target": 3,
+    "initial_attempt_cap": 5,
+    "hard_attempt_cap": 10,
+    "max_concurrent_attempts": 2,
+    "assessment_attempt_count": 10,
+    "minimum_completion_rate": 0.8,
+    "maximum_median_active_operator_minutes": 10
+  },
+  "independence": {
+    "maintainers_excluded": true,
+    "live_step_by_step_help_forbidden": true,
+    "public_documentation_only": true,
+    "failed_attempts_retained": true,
+    "post_attempt_support_public": true,
+    "rerun_after_product_fix_allowed": true
+  },
+  "service_levels": {
+    "acknowledgement_business_days": 2,
+    "evidence_review_business_days": 5,
+    "supported_p0_disposition_days": 7,
+    "supported_p1_disposition_days": 14,
+    "operational_signal_max_age_hours": 48
+  },
+  "stop_conditions": [
+    "completion-below-80-percent-at-attempt-10",
+    "failed-release-gate",
+    "median-active-time-above-10-minutes-at-attempt-10",
+    "privacy-or-safety-incident",
+    "public-source-or-documentation-drift",
+    "supported-p0-open",
+    "two-attempts-share-one-blocker",
+    "two-unreviewed-receipts"
+  ],
+  "privacy": {
+    "voluntary_public_reports": true,
+    "product_telemetry": false,
+    "identities_written_to_repository": false,
+    "raw_receipts_written_to_repository": false,
+    "map_or_bag_upload_requested": false
+  },
+  "authority": {
+    "community_posts_authorized": false,
+    "github_writes_authorized": false,
+    "remote_mutations_performed": false
+  }
+}

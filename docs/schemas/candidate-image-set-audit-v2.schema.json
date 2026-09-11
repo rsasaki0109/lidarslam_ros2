@@ -1,0 +1,289 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-image-set-audit-v2.schema.json",
+  "title": "lidarslam_ros2 candidate-image evidence-bundle audit v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "candidate_set_sha256",
+    "candidate_bundle_sha256",
+    "repository",
+    "source_pr",
+    "source_commit",
+    "product_version",
+    "workflow_run_url",
+    "workflow_branch_ref",
+    "workflow_gate_commit",
+    "requested_by",
+    "retained_evidence",
+    "workflow",
+    "artifacts",
+    "images",
+    "findings",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-image-set-audit-v2.schema.json"
+    },
+    "status": {
+      "enum": [
+        "LOCAL_CONTRACT_PASS",
+        "REMOTE_AUDIT_PASS",
+        "REMOTE_AUDIT_FAIL"
+      ]
+    },
+    "candidate_set_sha256": {"$ref": "#/definitions/sha256"},
+    "candidate_bundle_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "source_pr": {"type": "integer", "minimum": 1},
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "product_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "workflow_run_url": {
+      "type": "string",
+      "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/actions/runs/[1-9][0-9]*$"
+    },
+    "workflow_branch_ref": {"const": "refs/heads/develop"},
+    "workflow_gate_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "requested_by": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$"
+    },
+    "retained_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "files"],
+      "properties": {
+        "status": {"enum": ["SET_ONLY_PASS", "FOUR_FILE_PASS"]},
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/retainedFile"}
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "SET_ONLY_PASS"}}},
+          "then": {"properties": {"files": {"maxItems": 1}}}
+        },
+        {
+          "if": {"properties": {"status": {"const": "FOUR_FILE_PASS"}}},
+          "then": {"properties": {"files": {"minItems": 4}}}
+        }
+      ]
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "run_id",
+        "event",
+        "conclusion",
+        "head_branch",
+        "head_sha",
+        "path"
+      ],
+      "properties": {
+        "status": {"enum": ["NOT_CHECKED", "PASS", "FAIL"]},
+        "run_id": {"type": "integer", "minimum": 1},
+        "event": {"type": ["string", "null"]},
+        "conclusion": {"type": ["string", "null"]},
+        "head_branch": {"type": ["string", "null"]},
+        "head_sha": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "path": {"type": ["string", "null"]}
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "required_names", "expires_at"],
+      "properties": {
+        "status": {"enum": ["NOT_CHECKED", "PASS", "FAIL"]},
+        "required_names": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/artifactName"}
+        },
+        "expires_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        }
+      }
+    },
+    "images": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ros_distro",
+          "digest",
+          "immutable_ref",
+          "registry_status",
+          "attestation_status"
+        ],
+        "properties": {
+          "ros_distro": {"enum": ["humble", "jazzy"]},
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "immutable_ref": {
+            "type": "string",
+            "pattern": "^ghcr\\.io/rsasaki0109/lidar_slam_ros2@sha256:[0-9a-f]{64}$"
+          },
+          "registry_status": {"enum": ["NOT_CHECKED", "PASS", "FAIL"]},
+          "attestation_status": {"enum": ["NOT_CHECKED", "PASS", "FAIL"]}
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*$"
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_reads_performed",
+        "temporary_artifact_copies_used",
+        "github_writes_authorized",
+        "registry_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "network_reads_performed": {"type": "boolean"},
+        "temporary_artifact_copies_used": {"type": "boolean"},
+        "github_writes_authorized": {"const": false},
+        "registry_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "retained_evidence": {
+            "properties": {"status": {"const": "SET_ONLY_PASS"}}
+          }
+        }
+      },
+      "then": {
+        "properties": {"candidate_bundle_sha256": {"const": null}}
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "retained_evidence": {
+            "properties": {"status": {"const": "FOUR_FILE_PASS"}}
+          }
+        }
+      },
+      "then": {
+        "properties": {"candidate_bundle_sha256": {"type": "string"}}
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "REMOTE_AUDIT_PASS"}}},
+      "then": {
+        "properties": {
+          "retained_evidence": {
+            "properties": {
+              "status": {"const": "FOUR_FILE_PASS"},
+              "files": {
+                "items": {
+                  "properties": {
+                    "remote_content_status": {"const": "PASS"}
+                  }
+                }
+              }
+            }
+          },
+          "workflow": {"properties": {"status": {"const": "PASS"}}},
+          "artifacts": {"properties": {"status": {"const": "PASS"}}},
+          "images": {
+            "items": {
+              "properties": {
+                "registry_status": {"const": "PASS"},
+                "attestation_status": {"const": "PASS"}
+              }
+            }
+          },
+          "findings": {"maxItems": 0}
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifactName": {
+      "enum": [
+        "candidate-image-request",
+        "candidate-image-record-humble",
+        "candidate-image-record-jazzy",
+        "candidate-image-set"
+      ]
+    },
+    "filename": {
+      "enum": [
+        "candidate-image-request.json",
+        "candidate-image-humble.json",
+        "candidate-image-jazzy.json",
+        "candidate-image-set.json"
+      ]
+    },
+    "retainedFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_name",
+        "filename",
+        "sha256",
+        "remote_content_status"
+      ],
+      "properties": {
+        "artifact_name": {"$ref": "#/definitions/artifactName"},
+        "filename": {"$ref": "#/definitions/filename"},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "remote_content_status": {
+          "enum": ["NOT_CHECKED", "PASS", "FAIL"]
+        }
+      }
+    }
+  }
+}

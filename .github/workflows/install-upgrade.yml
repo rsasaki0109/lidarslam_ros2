@@ -1,0 +1,135 @@
+name: install upgrade
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - lidarslam/**
+      - scripts/check_install_upgrade.py
+      - scripts/check_installed_product_cli.py
+      - docs/schemas/install-upgrade-v1.schema.json
+      - .github/workflows/install-upgrade.yml
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - lidarslam/**
+      - scripts/check_install_upgrade.py
+      - scripts/check_installed_product_cli.py
+      - docs/schemas/install-upgrade-v1.schema.json
+      - .github/workflows/install-upgrade.yml
+  schedule:
+    - cron: '23 19 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: install-upgrade-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  source-prefix:
+    name: ${{ matrix.ros_distro }} v0.6.0 to candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ros_distro: humble
+            image: ghcr.io/rsasaki0109/lidar_slam_ros2@sha256:9db1a467c99d69bd3a6d8d7a71e6555874f2a0e1e6f7d062ab2297dd7828c061
+          - ros_distro: jazzy
+            image: ghcr.io/rsasaki0109/lidar_slam_ros2@sha256:7b27bdc109c25a7881a884128a91708c2a3e431e776c02b066ec7e33d04b0f1c
+    container:
+      image: ${{ matrix.image }}
+
+    steps:
+      - name: Check out full release history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Run in-place and fresh-prefix comparison
+        shell: bash
+        run: |
+          source "/opt/ros/${{ matrix.ros_distro }}/setup.bash"
+          source /lidarslam_ws/install/setup.bash
+          python3 scripts/check_install_upgrade.py \
+            --baseline-ref v0.6.0 \
+            --evidence-dir "output/install-upgrade/${{ matrix.ros_distro }}" \
+            --hardware-label \
+              "github-hosted-amd64-${{ matrix.ros_distro }}-container"
+
+      - name: Validate evidence schema and unit contract
+        if: always()
+        shell: bash
+        run: |
+          report="output/install-upgrade/${{ matrix.ros_distro }}/install_upgrade_report.json"
+          if [[ ! -f "${report}" ]]; then
+            echo "install upgrade report is missing" >&2
+            exit 1
+          fi
+          python3 - "${report}" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          import jsonschema
+
+          report = json.loads(Path(sys.argv[1]).read_text())
+          schema = json.loads(
+              Path('docs/schemas/install-upgrade-v1.schema.json').read_text()
+          )
+          jsonschema.validate(report, schema)
+          if report['status'] != 'passed':
+              raise SystemExit('install upgrade report did not pass')
+          print('install upgrade evidence: PASS')
+          PY
+          python3 -m pytest -q -p no:cacheprovider \
+            lidarslam/test/test_install_upgrade_contract.py
+
+      - name: Publish evidence summary
+        if: always()
+        shell: bash
+        run: |
+          report="output/install-upgrade/${{ matrix.ros_distro }}/install_upgrade_report.json"
+          if [[ -f "${report}" ]]; then
+            python3 - "${report}" >> "${GITHUB_STEP_SUMMARY}" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+
+          report = json.loads(Path(sys.argv[1]).read_text())
+          print(f"## Install upgrade — {report['ros_distro']}")
+          print()
+          print(f"- Status: `{report['status']}`")
+          print(
+              '- Baseline: '
+              f"`{report['baseline']['reference']}` / "
+              f"`{report['baseline']['commit']}`"
+          )
+          print(f"- Candidate: `{report['candidate']['commit']}`")
+          print(
+              '- Package-owned files: '
+              f"`{report['snapshots']['upgraded_file_count']}` upgraded / "
+              f"`{report['snapshots']['fresh_file_count']}` fresh"
+          )
+          print()
+          for check in report['checks']:
+              marker = 'PASS' if check['passed'] else 'FAIL'
+              print(f"- {marker}: `{check['id']}` — {check['observed']}")
+          PY
+          fi
+
+      - name: Upload install upgrade evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: install-upgrade-${{ matrix.ros_distro }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            docs/schemas/install-upgrade-v1.schema.json
+            output/install-upgrade/${{ matrix.ros_distro }}/

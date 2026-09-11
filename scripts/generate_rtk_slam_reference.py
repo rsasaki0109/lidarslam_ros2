@@ -8,9 +8,10 @@ ground truth as sparse geodetic-total-station checkpoints in a CSV with the
 columns ``point_id,easting,northing,height,env,timestamp``. This converts that
 CSV into a sparse TUM trajectory (one pose per checkpoint, identity
 orientation) that ``write_aligned_trajectory_metrics.py`` scores exactly like
-the NTU VIRAL / Newer College prism references: each checkpoint is
-timestamp-matched to the estimate and the matched set is SE(3)-aligned
-(Umeyama) before the per-point RMSE. That SE(3)-aligned checkpoint RMSE is the
+the NTU VIRAL prism and Newer College ICP-to-survey-map references: each
+checkpoint is timestamp-matched to the estimate and the matched set is
+SE(3)-aligned (Umeyama) before the per-point RMSE. That SE(3)-aligned
+checkpoint RMSE is the
 v0.5 gate metric (``ape_rmse_gt_m``); the dataset's zero-alignment absolute
 RMSE needs a GNSS-anchored estimate, which a LiDAR-inertial config does not
 produce, so it is out of scope here.
@@ -32,6 +33,11 @@ from pathlib import Path
 
 REQUIRED_COLUMNS = ('point_id', 'easting', 'northing', 'height', 'env', 'timestamp')
 _NUMERIC_REQUIRED = ('easting', 'northing', 'height', 'timestamp')
+
+# Official RTK-SLAM calibration: the public evaluation expects trajectory
+# positions at the robot base center, while RKO-LIO's identity-extrinsic
+# benchmark preset reports the IMU origin.
+IMU_TO_REFERENCE_TRANSLATION_M = (-0.073, -0.023, -0.172)
 
 
 def parse_checkpoints(text: str) -> list[dict]:
@@ -124,13 +130,22 @@ def build_reference(csv_path: Path, sequence: str) -> tuple[list[str], dict]:
         ),
         'sequence': sequence,
         'frame': 'local_enu_from_utm',
+        'reference_point_frame': 'base_center',
+        'imu_to_reference_translation_m': dict(
+            zip('xyz', IMU_TO_REFERENCE_TRANSLATION_M)
+        ),
+        'reference_translation_source': (
+            'RTK-SLAM calib/calib.yaml reference_offsets.base_center'
+        ),
         'units': 'meters',
+        'max_time_diff_sec': 2.0,
         'local_origin_utm': origin,
         'checkpoint_count': len(local),
         'env_breakdown': env_breakdown(local),
         'metric_note': (
             'Score with write_aligned_trajectory_metrics.py; the SE(3)-aligned '
-            'checkpoint RMSE is the v0.5 gate metric (ape_rmse_gt_m).'
+            'checkpoint RMSE is the v0.5 gate metric (ape_rmse_gt_m). '
+            'Use max_time_diff_sec for sparse checkpoint association.'
         ),
     }
     return tum_lines, meta

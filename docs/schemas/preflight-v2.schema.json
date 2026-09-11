@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/preflight-v2.schema.json",
+  "title": "lidarslam_ros2 preflight v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "summary",
+    "recommendations",
+    "recommended_profile_id",
+    "beginner_commands",
+    "advisory",
+    "missing_requirements"
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/preflight-v2.schema.json"
+    },
+    "summary": {
+      "type": "object",
+      "required": ["bag_path", "topics", "capabilities", "pointcloud_inspection"],
+      "properties": {
+        "pointcloud_inspection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "topic",
+            "fields",
+            "rko_lio_compatible",
+            "timestamp_field",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": ["not_applicable", "unavailable", "error", "empty", "inspected"]
+            },
+            "topic": {"type": ["string", "null"]},
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "datatype", "count"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "datatype": {"type": "integer"},
+                  "count": {"type": "integer", "minimum": 0}
+                }
+              }
+            },
+            "rko_lio_compatible": {"type": ["boolean", "null"]},
+            "timestamp_field": {"type": ["string", "null"]},
+            "reason": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "recommendations": {"type": "array", "items": {"type": "object"}},
+    "recommended_profile_id": {"type": ["string", "null"]},
+    "beginner_commands": {"type": "array", "items": {"type": "object"}},
+    "advisory": {"type": "array"},
+    "missing_requirements": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

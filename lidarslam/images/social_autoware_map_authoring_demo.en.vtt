@@ -1,0 +1,13 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.550
+Turn a rosbag2 recording into a verified Autoware-compatible map bundle with one guided workflow.
+
+00:00:02.550 --> 00:00:05.100
+Use the read-only doctor, then run the fixed demo. Failures return a stable reason and a safe next action.
+
+00:00:05.100 --> 00:00:07.650
+For your own bag, the same command checks topics, frames, timing, and calibration before mapping starts.
+
+00:00:07.650 --> 00:00:10.667
+A successful run retains map verify PASS, a matching validation receipt, and exact next commands for review or recovery.

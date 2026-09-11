@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-trial-preparation-v1.schema.json",
+  "title": "lidarslam_ros2 candidate trial preparation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "prepared_at",
+    "repository",
+    "workflow_run_url",
+    "run_id",
+    "source_pr",
+    "source_commit",
+    "product_version",
+    "candidate_bundle_sha256",
+    "candidate_set_sha256",
+    "artifact_expires_at",
+    "audit_status",
+    "observer_packet_status",
+    "artifacts",
+    "outputs",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-trial-preparation-v1.schema.json"
+    },
+    "status": {"const": "READY_FOR_OBSERVER"},
+    "prepared_at": {"type": "string", "format": "date-time"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "workflow_run_url": {
+      "type": "string",
+      "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/actions/runs/[1-9][0-9]*$"
+    },
+    "run_id": {"type": "integer", "minimum": 1},
+    "source_pr": {"type": "integer", "minimum": 1},
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "product_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "candidate_bundle_sha256": {"$ref": "#/definitions/sha256"},
+    "candidate_set_sha256": {"$ref": "#/definitions/sha256"},
+    "artifact_expires_at": {"type": "string", "format": "date-time"},
+    "audit_status": {"const": "REMOTE_AUDIT_PASS"},
+    "observer_packet_status": {"const": "READY_FOR_READ_ONLY_PREFLIGHT"},
+    "artifacts": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/artifact"},
+      "allOf": [
+        {"contains": {"properties": {"artifact_name": {"const": "candidate-image-request"}}}},
+        {"contains": {"properties": {"artifact_name": {"const": "candidate-image-record-humble"}}}},
+        {"contains": {"properties": {"artifact_name": {"const": "candidate-image-record-jazzy"}}}},
+        {"contains": {"properties": {"artifact_name": {"const": "candidate-image-set"}}}}
+      ]
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifacts_directory",
+        "audit_json",
+        "observer_packet_json",
+        "observer_packet_markdown"
+      ],
+      "properties": {
+        "artifacts_directory": {"const": "artifacts"},
+        "audit_json": {"const": "candidate-audit.json"},
+        "observer_packet_json": {"const": "observer-packet.json"},
+        "observer_packet_markdown": {"const": "observer-packet.md"}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_reads_performed",
+        "local_files_written",
+        "atomic_output_publication",
+        "trial_executed",
+        "github_writes_authorized",
+        "registry_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "network_reads_performed": {"const": true},
+        "local_files_written": {"const": true},
+        "atomic_output_publication": {"const": true},
+        "trial_executed": {"const": false},
+        "github_writes_authorized": {"const": false},
+        "registry_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifactName": {
+      "enum": [
+        "candidate-image-request",
+        "candidate-image-record-humble",
+        "candidate-image-record-jazzy",
+        "candidate-image-set"
+      ]
+    },
+    "filename": {
+      "enum": [
+        "candidate-image-request.json",
+        "candidate-image-humble.json",
+        "candidate-image-jazzy.json",
+        "candidate-image-set.json"
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_name",
+        "filename",
+        "sha256",
+        "remote_content_status"
+      ],
+      "properties": {
+        "artifact_name": {"$ref": "#/definitions/artifactName"},
+        "filename": {"$ref": "#/definitions/filename"},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "remote_content_status": {"const": "PASS"}
+      }
+    }
+  }
+}

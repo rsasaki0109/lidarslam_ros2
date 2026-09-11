@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-verification-package-v1.schema.json",
+  "title": "lidarslam_ros2 first-map verification package audit v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "scope",
+    "status",
+    "checks",
+    "finding_codes",
+    "detail",
+    "network_requested",
+    "writes_performed"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-verification-package-v1.schema.json"
+    },
+    "scope": {"const": "local-first-map-verification-package"},
+    "status": {"enum": ["READY", "NOT_READY"]},
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_files_present",
+        "docker_source_documentation",
+        "receipt_handoff_contract",
+        "runtime_handoff_contract",
+        "docs_marker_contract",
+        "package_audit_documentation",
+        "ci_gate_contract",
+        "release_bundle_contract"
+      ],
+      "properties": {
+        "required_files_present": {"type": "boolean"},
+        "docker_source_documentation": {"type": "boolean"},
+        "receipt_handoff_contract": {"type": "boolean"},
+        "runtime_handoff_contract": {"type": "boolean"},
+        "docs_marker_contract": {"type": "boolean"},
+        "package_audit_documentation": {"type": "boolean"},
+        "ci_gate_contract": {"type": "boolean"},
+        "release_bundle_contract": {"type": "boolean"}
+      }
+    },
+    "finding_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "required-file-contract-mismatch",
+          "docker-source-documentation-mismatch",
+          "receipt-handoff-contract-mismatch",
+          "runtime-handoff-contract-mismatch",
+          "docs-marker-contract-mismatch",
+          "package-audit-documentation-mismatch",
+          "ci-gate-contract-mismatch",
+          "release-bundle-contract-mismatch"
+        ]
+      }
+    },
+    "detail": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "network_requested": {"const": false},
+    "writes_performed": {"const": false}
+  }
+}

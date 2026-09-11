@@ -11,3 +11,12 @@ colored_map_quality_profile:
     heldout_rgb_median_max: 40.0
     heldout_rgb_inlier_20_min: 0.30
     heldout_scored_fraction_min: 0.95
+    # Appearance battery (2026-07-18). Calibrated on the exp04 recolor A/B
+    # (public_validation/hilti_exp04_colored_map_recolor_20260718): the
+    # 7/12-era colours score coverage 0.768 / rough_median 2.83 /
+    # rough_p90 18.5 (all three violate), the current colorizer + margin 40
+    # scores 0.998 / 2.05 / 12.3. No appearance_chroma_retention_min on
+    # this rig: the alphasense views are mono, so retention is null.
+    appearance_coverage_min: 0.95
+    appearance_roughness_median_max: 2.5
+    appearance_roughness_p90_max: 15.0

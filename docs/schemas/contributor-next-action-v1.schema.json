@@ -1,0 +1,467 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/contributor-next-action-v1.schema.json",
+  "title": "lidar_slam_ros2 live contributor next-action report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "repository",
+    "local_queue_status",
+    "local_publication_status",
+    "open_issue_count",
+    "open_pull_request_count",
+    "publication_gates",
+    "local_task_publication_gate",
+    "published_good_first_issues",
+    "eligible_good_first_issues",
+    "blocked_good_first_issues",
+    "published_queue_tasks",
+    "unpublished_ready_task_ids",
+    "potential_pull_duplicates",
+    "contributor_next",
+    "maintainer_next",
+    "maintainer_publication_handoff",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/contributor-next-action-v1.schema.json"
+    },
+    "status": {
+      "enum": [
+        "PUBLISHED_QUEUE_TASK_AVAILABLE",
+        "PUBLISHED_GOOD_FIRST_ISSUE_AVAILABLE",
+        "PUBLISHED_GOOD_FIRST_ISSUES_BLOCKED",
+        "MAINTAINER_PUBLICATION_REQUIRED"
+      ]
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "local_queue_status": {
+      "enum": ["QUEUE_READY_LOCAL_ONLY", "QUEUE_STALE_LOCAL_ONLY"]
+    },
+    "local_publication_status": {"const": "PREPARED_NOT_PUBLISHED"},
+    "open_issue_count": {"type": "integer", "minimum": 0},
+    "open_pull_request_count": {"type": "integer", "minimum": 0},
+    "publication_gates": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {"$ref": "#/definitions/publicationGate"}
+    },
+    "local_task_publication_gate": {
+      "$ref": "#/definitions/localTaskPublicationGate"
+    },
+    "published_good_first_issues": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/publicIssue"}
+    },
+    "eligible_good_first_issues": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/publicIssue"}
+    },
+    "blocked_good_first_issues": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/blockedIssue"}
+    },
+    "published_queue_tasks": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/publishedQueueTask"}
+    },
+    "unpublished_ready_task_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/taskId"}
+    },
+    "potential_pull_duplicates": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/potentialPullDuplicate"}
+    },
+    "contributor_next": {"$ref": "#/definitions/contributorNext"},
+    "maintainer_next": {"$ref": "#/definitions/maintainerNext"},
+    "maintainer_publication_handoff": {
+      "$ref": "#/definitions/maintainerPublicationHandoff"
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_requests",
+        "github_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "github_requests": {"const": "GET_ONLY"},
+        "github_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "taskId": {
+      "enum": ["starter-C5", "starter-C6", "starter-C7", "starter-C8", "starter-C9"]
+    },
+    "githubUrl": {
+      "type": "string",
+      "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/"
+    },
+    "publicIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "title", "url"],
+      "properties": {
+        "number": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1, "maxLength": 300},
+        "url": {"$ref": "#/definitions/githubUrl"}
+      }
+    },
+    "publicationGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "eligible",
+        "blocking_reasons",
+        "check_command",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "id": {"const": "first-map-validator-cohort-v1"},
+        "status": {"type": "string", "minLength": 1, "maxLength": 100},
+        "eligible": {"type": "boolean"},
+        "blocking_reasons": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "check_command": {
+          "const": [
+            "python3",
+            "scripts/first_map_validator_cohort.py",
+            "--json"
+          ]
+        },
+        "remote_mutations_performed": {"const": false}
+      }
+    },
+    "localTaskPublicationGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "eligible",
+        "pull_request_number",
+        "pull_request_url",
+        "pull_request_state",
+        "is_draft",
+        "merged",
+        "head_sha",
+        "target_branch",
+        "public_queue_path",
+        "public_queue_status",
+        "expected_queue_sha256",
+        "observed_queue_sha256",
+        "blocking_reasons",
+        "recheck_command",
+        "github_requests",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "id": {"const": "product-draft-public-queue-v1"},
+        "status": {
+          "enum": [
+            "READY",
+            "WAITING_FOR_PRODUCT_MERGE",
+            "PRODUCT_PR_CLOSED_UNMERGED",
+            "PUBLIC_QUEUE_ABSENT",
+            "PUBLIC_QUEUE_DRIFT"
+          ]
+        },
+        "eligible": {"type": "boolean"},
+        "pull_request_number": {"const": 427},
+        "pull_request_url": {
+          "const": "https://github.com/rsasaki0109/lidar_slam_ros2/pull/427"
+        },
+        "pull_request_state": {"enum": ["OPEN", "CLOSED"]},
+        "is_draft": {"type": "boolean"},
+        "merged": {"type": "boolean"},
+        "head_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "target_branch": {"const": "develop"},
+        "public_queue_path": {
+          "const": "docs/contracts/contributor-starter-queue-v1.json"
+        },
+        "public_queue_status": {"enum": ["ABSENT", "MATCH", "DRIFT"]},
+        "expected_queue_sha256": {"$ref": "#/definitions/sha256"},
+        "observed_queue_sha256": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/definitions/sha256"}
+          ]
+        },
+        "blocking_reasons": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "product_pr_not_merged",
+              "public_queue_absent",
+              "public_queue_drift"
+            ]
+          }
+        },
+        "recheck_command": {
+          "const": [
+            "python3",
+            "scripts/contributor_starter_queue.py",
+            "--next",
+            "--json"
+          ]
+        },
+        "github_requests": {"const": "GET_ONLY"},
+        "remote_mutations_performed": {"const": false}
+      }
+    },
+    "blockedIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "title", "url", "gate"],
+      "properties": {
+        "number": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1, "maxLength": 300},
+        "url": {"$ref": "#/definitions/githubUrl"},
+        "gate": {"$ref": "#/definitions/publicationGate"}
+      }
+    },
+    "publishedQueueTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "number", "title", "url"],
+      "properties": {
+        "task_id": {"$ref": "#/definitions/taskId"},
+        "number": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1, "maxLength": 300},
+        "url": {"$ref": "#/definitions/githubUrl"}
+      }
+    },
+    "potentialPullDuplicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "pull_requests"],
+      "properties": {
+        "task_id": {"$ref": "#/definitions/taskId"},
+        "pull_requests": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/definitions/publicIssue"}
+        }
+      }
+    },
+    "contributorNext": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "task_id", "issue_number", "url"],
+          "properties": {
+            "action": {"const": "REVIEW_PUBLISHED_QUEUE_TASK"},
+            "task_id": {"$ref": "#/definitions/taskId"},
+            "issue_number": {"type": "integer", "minimum": 1},
+            "url": {"$ref": "#/definitions/githubUrl"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "issue_number", "url"],
+          "properties": {
+            "action": {"const": "REVIEW_PUBLISHED_GOOD_FIRST_ISSUE"},
+            "issue_number": {"type": "integer", "minimum": 1},
+            "url": {"$ref": "#/definitions/githubUrl"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "url"],
+          "properties": {
+            "action": {"enum": ["WAIT_FOR_READY_PUBLISHED_STARTER", "WAIT_FOR_PUBLISHED_STARTER"]},
+            "url": {"$ref": "#/definitions/githubUrl"}
+          }
+        }
+      ]
+    },
+    "maintainerNext": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action",
+            "issue_number",
+            "gate_id",
+            "gate_status",
+            "review_command"
+          ],
+          "properties": {
+            "action": {"const": "REVIEW_BLOCKED_PUBLISHED_STARTER"},
+            "issue_number": {"type": "integer", "minimum": 1},
+            "gate_id": {"const": "first-map-validator-cohort-v1"},
+            "gate_status": {"type": "string", "minLength": 1, "maxLength": 100},
+            "review_command": {
+              "const": [
+                "python3",
+                "scripts/first_map_validator_cohort.py",
+                "--json"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action"],
+          "properties": {
+            "action": {"const": "REVIEW_POTENTIAL_PULL_DUPLICATE"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action",
+            "task_id",
+            "gate_status",
+            "preview_command",
+            "recheck_command"
+          ],
+          "properties": {
+            "action": {"const": "PREPARE_LOCAL_TASK_FOR_POST_MERGE"},
+            "task_id": {"$ref": "#/definitions/taskId"},
+            "gate_status": {
+              "enum": [
+                "WAITING_FOR_PRODUCT_MERGE",
+                "PRODUCT_PR_CLOSED_UNMERGED",
+                "PUBLIC_QUEUE_ABSENT",
+                "PUBLIC_QUEUE_DRIFT"
+              ]
+            },
+            "preview_command": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {"type": "string", "minLength": 1, "maxLength": 200}
+            },
+            "recheck_command": {
+              "const": [
+                "python3",
+                "scripts/contributor_starter_queue.py",
+                "--next",
+                "--json"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "task_id", "preview_command"],
+          "properties": {
+            "action": {"const": "REVIEW_AND_PUBLISH_LOCAL_TASK"},
+            "task_id": {"$ref": "#/definitions/taskId"},
+            "preview_command": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {"type": "string", "minLength": 1, "maxLength": 200}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action"],
+          "properties": {
+            "action": {"const": "REVIEW_QUEUE_STATE"}
+          }
+        }
+      ]
+    },
+    "maintainerPublicationHandoff": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "task_id",
+            "repository",
+            "title",
+            "labels",
+            "issue_body",
+            "issue_body_sha256",
+            "task_sha256",
+            "queue_sha256",
+            "live_duplicate_count",
+            "publication_gate_status",
+            "public_base_ready",
+            "external_write_required",
+            "maintainer_confirmation_required",
+            "issue_creation_authorized",
+            "writes_performed"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "PREPARE_LOCAL_TASK_FOR_POST_MERGE",
+                "REVIEW_LOCAL_TASK_FOR_SEPARATE_PUBLICATION"
+              ]
+            },
+            "task_id": {"$ref": "#/definitions/taskId"},
+            "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+            "title": {"type": "string", "minLength": 1, "maxLength": 300},
+            "labels": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {"type": "string", "minLength": 1, "maxLength": 50}
+            },
+            "issue_body": {"type": "string", "minLength": 1, "maxLength": 20000},
+            "issue_body_sha256": {"$ref": "#/definitions/sha256"},
+            "task_sha256": {"$ref": "#/definitions/sha256"},
+            "queue_sha256": {"$ref": "#/definitions/sha256"},
+            "live_duplicate_count": {"const": 0},
+            "publication_gate_status": {
+              "enum": [
+                "READY",
+                "WAITING_FOR_PRODUCT_MERGE",
+                "PRODUCT_PR_CLOSED_UNMERGED",
+                "PUBLIC_QUEUE_ABSENT",
+                "PUBLIC_QUEUE_DRIFT"
+              ]
+            },
+            "public_base_ready": {"type": "boolean"},
+            "external_write_required": {"const": true},
+            "maintainer_confirmation_required": {"const": true},
+            "issue_creation_authorized": {"const": false},
+            "writes_performed": {"const": false}
+          }
+        }
+      ]
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

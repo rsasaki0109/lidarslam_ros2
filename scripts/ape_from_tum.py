@@ -97,7 +97,7 @@ def interpolate_association(
     estimated time range the nearest endpoint is used only when it is
     within max_edge_diff.
 
-    Caveat (see scripts/write_aligned_trajectory_metrics.py and plan.md
+    Caveat (see scripts/write_aligned_trajectory_metrics.py and docs/research/project-plan-archive.md
     Sec. 2.4): this mode is appropriate when `est` is dense (e.g. raw
     per-scan odometry), so the bracketing samples are always close in time
     to the reference. If `est` itself is sparse (e.g. a submap-rate
@@ -270,7 +270,7 @@ def main() -> int:
         "sparse estimated trajectory (e.g. a submap-rate corrected "
         "trajectory) -- the interpolation brackets can span many seconds "
         "and fabricate a position that is off by several metres if the "
-        "true path is not a straight line between them (see plan.md Sec. "
+        "true path is not a straight line between them (see docs/research/project-plan-archive.md Sec. "
         "2.4). Use --sparse-match instead. Mutually exclusive with "
         "--sparse-match.",
     )

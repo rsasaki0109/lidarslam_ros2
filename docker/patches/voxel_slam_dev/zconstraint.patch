@@ -1,0 +1,59 @@
+--- a/VoxelSLAM/src/voxelslam.cpp
++++ b/VoxelSLAM/src/voxelslam.cpp
+@@ -771,6 +771,7 @@
+   int archived_scan_stride = 1;
+   bool loop_backend_enabled = false;
+   bool weak_axis_bridge_active = false;
++  bool z_constraint_enabled = false;
+   int weak_axis_degenerate_streak = 0;
+   int weak_axis_recovery_streak = 0;
+   Eigen::Vector3d weak_axis_body = Eigen::Vector3d::Zero();
+@@ -836,6 +837,7 @@
+                     map_retention_distance, 25.0);
+     n.param<int>("Odometry/archived_scan_stride", archived_scan_stride, 1);
+     n.param<int>("Odometry/point_notime", point_notime, 0);
++    n.param<bool>("Odometry/z_constraint_enabled", z_constraint_enabled, false);
+     odom_ekf.point_notime = point_notime;
+ 
+     feat.blind = feat.blind * feat.blind;
+@@ -1210,6 +1212,40 @@
+       Eigen::Vector3d rot_add = solution.block<3, 1>(0, 0);
+       Eigen::Vector3d tra_add = solution.block<3, 1>(3, 0);
+ 
++      // Vertical-velocity soft constraint for open, weakly z-constrained
++      // sections (e.g. wide plazas with sparse close geometry). When the
++      // scan-matching information matrix barely constrains the gravity-axis
++      // translation, the raw estimate inherits IMU integration, which drifts
++      // vertically under sparse observation. Blend the gravity-axis velocity
++      // back toward the propagated (pre-update) IMU velocity so the height
++      // profile stays attached to the inertial solution.
++      if(!weak_axis_bridge_active && z_constraint_enabled)
++      {
++        if(iterCount == num_max_iter - 1 || flg_EKF_converged)
++        {
++          const double hth_zz = HTH(5, 5);
++          const double z_weight_low = 1.0e-3;
++          static int z_debug_count = 0;
++          if(z_debug_count < 5 || (z_debug_count % 2000) == 0)
++            printf("zconst: hth_zz=%.4e alpha=%.4f\n", hth_zz,
++                   (hth_zz < z_weight_low) ?
++                   (1.0 < (z_weight_low - hth_zz)/z_weight_low ?
++                    1.0 : (z_weight_low - hth_zz)/z_weight_low) : 0.0);
++          z_debug_count++;
++          if(hth_zz < z_weight_low)
++          {
++            const Eigen::Vector3d grav = x_curr.g.normalized();
++            const double z_vel_prop = grav.dot(x_prop.v);
++            const double z_vel_curr = grav.dot(x_curr.v);
++            double alpha = (1.0 < (z_weight_low - hth_zz) / z_weight_low) ?
++                1.0 : (z_weight_low - hth_zz) / z_weight_low;
++            alpha = alpha * alpha * 0.5;
++            if(alpha > 0.0)
++              x_curr.v += grav * (alpha * (z_vel_prop - z_vel_curr));
++          }
++        }
++      }
++
+       EKF_stop_flg = false;
+       flg_EKF_converged = false;
+ 

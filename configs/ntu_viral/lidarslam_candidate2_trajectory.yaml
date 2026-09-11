@@ -1,0 +1,33 @@
+# Candidate2 trajectory/loop-safety profile for an unused NTU-VIRAL holdout.
+#
+# This intentionally excludes the frozen dirty-tree planar map-export filter.
+# It is suitable for trajectory completeness, APE, runtime, and loop-edge
+# safety evidence, but not for Candidate2's map-geometry promotion gate.
+graph_based_slam:
+  ros__parameters:
+    registration_method: "NDT"
+    ndt_resolution: 1.0
+    ndt_num_threads: 2
+    voxel_leaf_size: 0.1
+    threshold_loop_closure_score: 0.7
+    distance_loop_closure: 100.0
+    range_of_searching_loop_closure: 20.0
+    search_submap_num: 2
+    loop_search_query_stride: 1
+    max_loop_candidate_count: 3
+    loop_edge_dedup_index_window: 8
+    loop_max_translation_delta: 0.5
+    loop_max_rotation_delta_deg: 2.0
+    loop_min_overlap_ratio: 0.76
+    loop_min_overlap_ratio_large_correction: 0.0
+    loop_overlap_large_correction_translation_m: 0.0
+    loop_overlap_max_distance_m: 0.5
+    num_adjacent_pose_cnstraints: 5
+    use_save_map_in_loop: true
+    cloud_subscriber_qos_reliable: true
+    odom_cloud_sync_use_exact_time: true
+    odom_cloud_sync_queue_size: 256
+    adjacent_edge_info_weight: 1000.0
+    use_gnss: false
+    use_dynamic_object_filter: false
+    debug_flag: true

@@ -1,0 +1,1834 @@
+{
+  "schema_version": 1,
+  "contract_id": "lidarslam-map-v1",
+  "product_command": "lidarslam-map",
+  "help_modes": {
+    "normal": {
+      "option": "--help",
+      "description": "routine stable operator options",
+      "excludes": {
+        "stability": [
+          "deprecated"
+        ],
+        "tiers": [
+          "viewer-runtime"
+        ]
+      }
+    },
+    "all": {
+      "option": "--help-all",
+      "description": "complete advanced and deprecated option inventory"
+    }
+  },
+  "exit_codes": {
+    "0": "command completed successfully",
+    "2": "invalid usage, input, profile, or output path",
+    "70": "internal or tooling error prevented command startup",
+    "other_nonzero": "delegated workflow or viewer failure"
+  },
+  "environment_activation_contract": {
+    "direct_launchers": [
+      "absolute installed lidarslam-map path",
+      "repo-local ./scripts/lidarslam after a matching workspace build"
+    ],
+    "behavior": "activate the nearest aggregate setup.bash tied to the selected installed product or source checkout before delegating",
+    "matching_rules": [
+      "derive an installed prefix from the selected curated lidarslam_cli.py resource",
+      "for a source checkout require the candidate install tree to contain and delegate to the curated installed lidarslam_cli.py resource",
+      "never search arbitrary filesystem locations or source an unrelated parent workspace"
+    ],
+    "shell_rule": "activation affects only the launcher process and its children; it does not modify the caller's shell",
+    "normal_path_rule": "the short lidarslam-map name still follows normal PATH activation or package-manager installation"
+  },
+  "interactive_home_contract": {
+    "trigger": "no command on a terminal with interactive stdin and stdout",
+    "routes": [
+      "demo",
+      "start",
+      "sessions",
+      "doctor",
+      "help"
+    ],
+    "non_interactive_behavior": "preserve stderr help and usage exit code 2",
+    "safety_rules": [
+      "route only to existing beginner workflows and never add a second implementation",
+      "show the exact copy-ready delegated command before execution",
+      "require an explicit yes before the demo can download or write",
+      "retain the start command sensor and calibration review before mapping",
+      "run the doctor route without confirmation because it uses no network and writes no files",
+      "cancel, EOF, or unrecognized confirmation starts no delegated command"
+    ]
+  },
+  "system_doctor_contract": {
+    "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/system-doctor-v1.schema.json",
+    "public_evidence_schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/public-doctor-evidence-v1.schema.json",
+    "command": "doctor",
+    "system_mode": "omit rosbag2_dir to check product files, installed-prefix activation, supported ROS, rosbag2_py, and fixed-demo storage",
+    "bag_mode": "provide rosbag2_dir to retain the existing topic, field, timestamp, and maintained-profile preflight",
+    "statuses": [
+      "ready",
+      "action_required"
+    ],
+    "finding_fields": [
+      "code",
+      "message",
+      "next_action"
+    ],
+    "safety_rules": [
+      "system mode uses no network and writes no files",
+      "JSON omits checkout, install-prefix, home, and demo-directory paths",
+      "storage reports exact additional bytes required and a placeholder-free retry command",
+      "bag mode delegates to the existing preflight implementation",
+      "--public-json requires a bag and emits only type/count/check/profile/finding-code evidence without bag paths, topic or frame names, local commands, raw data, raw logs, or free-text messages",
+      "--public-json emits the same path-free schema with bag-preflight-input-error when the local input cannot be read",
+      "every human bag report warns that the full report remains local and displays one shell-safe --public-json command for the exact input",
+      "a ready human bag report reached through the product CLI displays one shell-safe exact-input start command and hides lower-level mapping alternatives",
+      "a human bag report with findings reached through the product CLI withholds start and displays the exact-input doctor retry after the first finding",
+      "the product human bag card is bounded to status, bag duration and count, input types without topic or frame names, selected profile, check statuses, the first finding and remaining finding codes, and one next action",
+      "the product human bag card displays one shell-safe exact-input --json command for complete private local detail while direct preflight use retains the expert human report",
+      "system-only storage options fail closed when a bag is provided"
+    ]
+  },
+  "map_quality_symptom_triage_contract": {
+    "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/diagnosis-v1.schema.json",
+    "command": "inspect",
+    "option": "--symptom",
+    "symptoms": [
+      "map-spins-or-spirals",
+      "pose-drifts-or-oscillates",
+      "map-stops-early",
+      "map-is-too-sparse",
+      "map-is-not-visible"
+    ],
+    "basis": "USER_REPORTED_NOT_AUTOMATICALLY_DIAGNOSED",
+    "safety_rules": [
+      "extend the existing retained-run inspector instead of adding another doctor or tuning surface",
+      "return ordered checks and shell-safe product commands without editing parameters or launching mapping",
+      "check sensor, timestamp, calibration, and TF contracts before registration or loop-closure tuning",
+      "never convert a reported visual symptom into a root-cause, vendor-support, or accuracy claim",
+      "never overwrite the retained session and never upload a support bundle"
+    ]
+  },
+  "first_map_demo_plan_contract": {
+    "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-demo-plan-v1.schema.json",
+    "command": "demo",
+    "statuses": [
+      "ready",
+      "resume_ready",
+      "already_verified",
+      "not_ready"
+    ],
+    "dataset_rules": [
+      "use the fixed checksum-pinned Driving SLAM Test with Livox MID360 dataset",
+      "retain Zenodo DOI 10.5281/zenodo.14841855 and CC-BY-4.0 attribution",
+      "delegate mapping to run_first_map_demo.sh and the maintained rko_lio_graph_mid360_preset lifecycle"
+    ],
+    "safety_rules": [
+      "dry-run writes nothing and performs no network request",
+      "reject cache/output overlap, exact symlink targets, and unverified existing output",
+      "check the configured free-space floor before any download or map process",
+      "low-storage findings report exact additional bytes and preserve a copy-ready retry command",
+      "treat cache presence as unverified and re-hash the registered archive and extracted bag files before mapping",
+      "offer --resume only for schema-valid terminal post-processing stages and never restart mapping through resume",
+      "reuse an existing output only after rebuilding and matching its schema-valid receipt-bound PASS evidence",
+      "a zero delegated exit without complete verified evidence is failure"
+    ],
+    "viewer_rule": "viewer failure never replaces a verified map result",
+    "json_rule": "--json requires --dry-run and is read-only"
+  },
+  "sensor_setup_rejection_contract": {
+    "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/sensor-setup-rejection-v1.schema.json",
+    "commands": ["start", "setup"],
+    "exit_code": 2,
+    "status": "not_ready",
+    "files_written": false,
+    "reason_codes": [
+      "no-maintained-profile",
+      "profile-incompatible"
+    ],
+    "finding_fields": ["code", "message", "next_action"],
+    "operator_rule": "key on stable codes; display messages and next actions"
+  },
+  "sensor_setup_review_contract": {
+    "commands": ["start", "setup"],
+    "status": "review_required",
+    "safety_rules": [
+      "live interactive start renders one calibration review then asks one fail-closed confirmation without presenting a second --yes command",
+      "non-interactive start, setup, and dry-run retain the exact reviewed rerun command",
+      "decline, EOF, or unreviewed calibration starts no mapping"
+    ]
+  },
+  "sensor_setup_ready_contract": {
+    "commands": ["start", "setup"],
+    "statuses": ["ready", "dry_run"],
+    "display_rules": [
+      "confirmed live start skips the repeated setup review and proceeds directly to its map start and progress card",
+      "setup and dry-run retain the complete selected input, calibration, and map command review",
+      "the compact live handoff does not alter sensor_setup.json, session index, progress, or recovery contracts"
+    ]
+  },
+  "map_session_recovery_contract": {
+    "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-recovery-v1.schema.json",
+    "command": "start",
+    "status": "action_required",
+    "artifact": "map_session_recovery.json",
+    "browser_artifact": "session.html",
+    "browser_behavior": "render action_required in the common session page; open for start --viewer browser and retain without opening for --viewer none",
+    "browser_rules": [
+      "self-contained HTML with no network resources",
+      "escape bag paths, diagnosis text, evidence paths, and commands",
+      "an HTML write failure must not suppress session.json or the JSON recovery contract",
+      "opening failure must not replace the delegated map exit code"
+    ],
+    "reason_codes": [
+      "ambiguous-output-state",
+      "run-manifest-unreadable",
+      "workflow-state-uncertain",
+      "postprocessing-incomplete",
+      "storage-exhausted",
+      "workflow-interrupted",
+      "ros-parameters-invalid",
+      "tf-messages-invalid",
+      "tf-tree-disconnected",
+      "map-save-failed",
+      "ros-node-died",
+      "gnss-constraints-missing",
+      "map-verification-failed",
+      "runner-start-failed",
+      "map-output-incomplete",
+      "workflow-failed"
+    ],
+    "finding_fields": ["code", "message", "next_action"],
+    "safety_rules": [
+      "preserve setup and run evidence",
+      "resume terminal post-processing only when manifest-v2 proves it is safe",
+      "retry the pinned setup only into a fresh output directory",
+      "one Ctrl-C makes the stable CLI wait for the start helper, signals the complete isolated delegated process group, waits up to 20 seconds for cleanup and terminal evidence before requesting termination, waits 10 more seconds before a forced group reap, and then renders the same one-action recovery handoff without a Python traceback, false timeout label, or recent-launch-log dump"
+    ],
+    "terminal_rules": [
+      "render the first reason, any remaining stable finding codes, exactly one next_command, and one retained detail path",
+      "do not repeat per-finding actions, retry alternatives, or inspect alternatives in the default terminal card",
+      "retain every finding, action, retry, inspect command, and evidence path in map_session_recovery.json and the derived session handoff"
+    ],
+    "operator_rule": "run next_command first; key automation on reason.code"
+  },
+  "map_session_index_contract": {
+    "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-index-v1.schema.json",
+    "command": "start",
+    "artifact": "session.json",
+    "browser_artifact": "session.html",
+    "statuses": ["running", "verified", "unverified", "action_required"],
+    "status_rules": [
+      "running has no runner exit code, reports the durable lifecycle stage, and refreshes session.html automatically",
+      "verified requires --verification required and result PASS",
+      "unverified requires --verification off and is never worded as verified",
+      "action_required retains the detailed map_session_recovery.json source"
+    ],
+    "progress_rules": [
+      "durable lifecycle stage changes update session.json and session.html and print the new stage",
+      "an unchanged live stage prints at most one terminal heartbeat every 30 seconds with its label and monotonic elapsed time but performs no session artifact write",
+      "heartbeats report neither percentage nor ETA and do not claim that the delegated workflow made forward progress"
+    ],
+    "action_rule": "for terminal statuses, actions[0] is the recommended copy-ready next action",
+    "quality_rules": [
+      "summarize workflow, map output, Autoware verification, and evidence integrity without inventing a numeric score",
+      "bind terminal PASS to a schema-valid first_map_validation_receipt.json containing all seven required check ids",
+      "render verification-off as not_verified rather than fail",
+      "render missing, malformed, or semantically incomplete quality receipts as unavailable",
+      "retain source check ids in each derived quality card"
+    ],
+    "viewer_rules": [
+      "start opens the running session.html before launching the map runner when a desktop browser is available",
+      "running session.html refreshes every 2 seconds and is atomically regenerated only when the durable lifecycle stage changes",
+      "after map completion, browser preview generation uses view --viewer browser --no-open and the same session.html links the result",
+      "viewer failure remains separate from map status",
+      "session artifact generation and browser opening never overwrite source or map evidence"
+    ],
+    "terminal_rules": [
+      "a successful start renders one VERIFIED or UNVERIFIED completion card instead of separate completion and summary blocks",
+      "the completion card contains map output, verification, viewer, session index, session page, evidence paths, and exactly one recommended Next command",
+      "viewer failure makes the single Next action the view retry, adds one warning, and does not change verified map status",
+      "session-index generation failure retains a completed fallback card with the map output and one view command"
+    ]
+  },
+  "map_session_catalog_contract": {
+    "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-catalog-v1.schema.json",
+    "command": "sessions",
+    "browser_artifact": "sessions.html",
+    "scan_rules": [
+      "scan direct child bundles only",
+      "never follow bundle, session.json, session.html, or output report symlinks",
+      "accept only schema-valid map-session-index-v1 session.json files no larger than 2 MiB",
+      "sort valid sessions newest first and cap displayed entries at 200",
+      "report invalid candidates as a count without exposing their contents"
+    ],
+    "json_rule": "--json is read-only and neither writes nor opens sessions.html",
+    "browser_rules": [
+      "self-contained HTML with no network resources",
+      "escape profile labels, paths, summaries, quality text, and commands",
+      "link only to a regular non-symlink session.html inside each scanned bundle",
+      "catalog write or browser-open failure never changes valid session evidence"
+    ]
+  },
+  "map_session_comparison_contract": {
+    "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-session-comparison-v1.schema.json",
+    "command": "compare",
+    "row_count": 14,
+    "evidence_rules": [
+      "compare readiness only from schema-valid session.json evidence",
+      "compare setup only from a schema-valid sensor_setup.json whose session, bag, output, profile, and current parameter snapshots still match",
+      "represent missing, stale, malformed, or identity-mismatched evidence as unavailable instead of inferring a value",
+      "compare recorded artifact names without treating current files as retained proof"
+    ],
+    "decision_rules": [
+      "do not calculate a numeric score",
+      "do not select or imply a winner",
+      "report every row as same, different, or unavailable"
+    ],
+    "json_rule": "--json is read-only and neither writes nor opens comparison HTML",
+    "browser_rules": [
+      "self-contained HTML with no network resources",
+      "escape session names, profile labels, paths, and recorded values",
+      "link only to regular non-symlink session.html files inside the compared bundles",
+      "refuse to replace symlinks or files not generated by this comparison command",
+      "browser-open failure never changes a successful comparison result"
+    ]
+  },
+  "support_bundle_contract": {
+    "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/support-bundle-v1.schema.json",
+    "first_map_handoff_schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-handoff-v1.schema.json",
+    "command": "support",
+    "first_map_command": "report",
+    "legacy_first_map_command": "support --first-map",
+    "archive_members": [
+      "README.txt",
+      "issue-body.md",
+      "support-report.json"
+    ],
+    "privacy_rules": [
+      "exclude map geometry, raw sensor data, raw logs, and parameter-file contents",
+      "redact exact local paths and credential-like command values",
+      "project only bounded status, identity hashes, sensor setup, calibration, and artifact state",
+      "mark every bundle review_before_sharing and require a human review before public attachment",
+      "project a reported visual symptom only as one fixed code plus USER_REPORTED_NOT_AUTOMATICALLY_DIAGNOSED; exclude its title, checks, commands, and free text"
+    ],
+    "evidence_rules": [
+      "require a bounded schema-valid session.json bound to the selected non-symlink bundle",
+      "use sensor_setup.json only while its session, bag, output, profile, and parameter snapshot identities still match",
+      "never follow artifact or setup symlinks and never read recorded artifacts outside the session evidence roots",
+      "reject a malformed, unknown, mismatched, or automatically attributed reported-symptom claim as invalid diagnosis evidence",
+      "report missing, malformed, stale, oversized, or unavailable evidence without inference"
+    ],
+    "json_rule": "--json is read-only and writes no ZIP",
+    "first_map_handoff_rules": [
+      "report is the read-only first-map command; support --first-map remains a compatible spelling, --output remains forbidden, and --json selects the schema-valid local-only structured handoff",
+      "require a verified session, runner exit zero, required verification PASS, and receipt-bound quality PASS",
+      "revalidate the regular in-session receipt and its manifest, diagnosis, and verification-log hashes before showing a handoff",
+      "print the copy-ready PASS result, exact source commit or product-version fallback, safe environment hints, verification summary, reviewed JSON receipt path, canonical issue-form URL, and the remaining operator-supplied fields; retain the readable receipt path in structured output when available; the handoff itself is never the public attachment",
+      "never upload, open the issue form, or claim an accepted independent validation"
+    ],
+    "write_rules": [
+      "write a new ZIP atomically",
+      "refuse symlink, non-ZIP, missing-parent, or existing output targets",
+      "never upload, open an issue, or mutate remote state"
+    ]
+  },
+  "value_options": {
+    "demo": {
+      "--data-dir": {
+        "default": "<work_dir>/datasets/mid360_public",
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--output-dir": {
+        "default": "<work_dir>/output/mid360_demo",
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--output": {
+        "default": null,
+        "kind": "file",
+        "value_name": "<plan-file>"
+      },
+      "--viewer": {
+        "choices": [
+          "browser",
+          "none"
+        ],
+        "default": "browser",
+        "kind": "enum",
+        "value_name": "{browser,none}"
+      },
+      "--min-free-space-gib": {
+        "constraints": {
+          "finite": true,
+          "exclusive_minimum": 0
+        },
+        "default": 8,
+        "kind": "number",
+        "unit": "GiB",
+        "value_name": "<GiB>"
+      }
+    },
+    "start": {
+      "--profile": {
+        "choices": [
+          "rko_lio_graph_public_path",
+          "rko_lio_graph_mid360_preset",
+          "pointcloud_gnss_smoke",
+          "packet_applanix_smoke"
+        ],
+        "default": "doctor_recommendation",
+        "kind": "enum",
+        "value_name": "<id>"
+      },
+      "--output-dir": {
+        "default": "output/lidarslam_<bag>_<timestamp>",
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--map-output-dir": {
+        "default": "<bundle>/map",
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--lidar-to-base": {
+        "default": null,
+        "kind": "transform",
+        "value_name": "<qx,qy,qz,qw,x,y,z>"
+      },
+      "--imu-to-base": {
+        "default": null,
+        "kind": "transform",
+        "value_name": "<qx,qy,qz,qw,x,y,z>"
+      },
+      "--base-frame": {
+        "default": "base_link",
+        "kind": "frame",
+        "value_name": "<frame>"
+      },
+      "--lidar-frame": {
+        "default": "bag_header_or_lidar",
+        "kind": "frame",
+        "value_name": "<frame>"
+      },
+      "--imu-frame": {
+        "default": "bag_header_or_imu",
+        "kind": "frame",
+        "value_name": "<frame>"
+      },
+      "--viewer": {
+        "choices": [
+          "none",
+          "browser",
+          "autoware",
+          "foxglove"
+        ],
+        "default": "browser",
+        "kind": "enum",
+        "value_name": "{none,browser,autoware,foxglove}"
+      },
+      "--min-free-space-gib": {
+        "constraints": {
+          "finite": true,
+          "exclusive_minimum": 0
+        },
+        "default": 5,
+        "kind": "number",
+        "unit": "GiB",
+        "value_name": "<GiB>"
+      },
+      "--verification": {
+        "choices": [
+          "required",
+          "off"
+        ],
+        "default": "required",
+        "kind": "enum",
+        "value_name": "{required,off}"
+      }
+    },
+    "sessions": {
+      "--status": {
+        "choices": [
+          "all",
+          "running",
+          "verified",
+          "unverified",
+          "action_required"
+        ],
+        "default": "all",
+        "kind": "enum",
+        "value_name": "{all,running,verified,unverified,action_required}"
+      },
+      "--limit": {
+        "constraints": {
+          "minimum": 1,
+          "maximum": 200
+        },
+        "default": 20,
+        "kind": "integer",
+        "value_name": "<count>"
+      },
+      "--viewer": {
+        "choices": [
+          "browser",
+          "none"
+        ],
+        "default": "browser",
+        "kind": "enum",
+        "value_name": "{browser,none}"
+      }
+    },
+    "compare": {
+      "--output": {
+        "default": "comparison-<left>-vs-<right>.html",
+        "kind": "file",
+        "value_name": "<file>"
+      },
+      "--viewer": {
+        "choices": [
+          "browser",
+          "none"
+        ],
+        "default": "browser",
+        "kind": "enum",
+        "value_name": "{browser,none}"
+      }
+    },
+    "report": {},
+    "support": {
+      "--output": {
+        "default": "lidarslam-support-<status>-<timestamp>.zip",
+        "kind": "file",
+        "value_name": "<file>"
+      }
+    },
+    "doctor": {
+      "--demo-dir": {
+        "default": "current_directory",
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--min-free-space-gib": {
+        "constraints": {
+          "exclusive_minimum": 0
+        },
+        "default": 8,
+        "kind": "number",
+        "unit": "GiB",
+        "value_name": "<GiB>"
+      }
+    },
+    "setup": {
+      "--profile": {
+        "choices": [
+          "rko_lio_graph_public_path",
+          "rko_lio_graph_mid360_preset",
+          "pointcloud_gnss_smoke",
+          "packet_applanix_smoke"
+        ],
+        "default": "doctor_recommendation",
+        "kind": "enum",
+        "value_name": "<id>"
+      },
+      "--output-dir": {
+        "default": "output/sensor_setup_<bag>",
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--map-output-dir": {
+        "default": "<bundle>/map",
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--lidar-to-base": {
+        "default": null,
+        "kind": "transform",
+        "value_name": "<qx,qy,qz,qw,x,y,z>"
+      },
+      "--imu-to-base": {
+        "default": null,
+        "kind": "transform",
+        "value_name": "<qx,qy,qz,qw,x,y,z>"
+      },
+      "--base-frame": {
+        "default": "base_link",
+        "kind": "frame",
+        "value_name": "<frame>"
+      },
+      "--lidar-frame": {
+        "default": "bag_header_or_lidar",
+        "kind": "frame",
+        "value_name": "<frame>"
+      },
+      "--imu-frame": {
+        "default": "bag_header_or_imu",
+        "kind": "frame",
+        "value_name": "<frame>"
+      }
+    },
+    "run": {
+      "--profile": {
+        "choices": [
+          "rko_lio_graph_public_path",
+          "rko_lio_graph_mid360_preset",
+          "pointcloud_gnss_smoke",
+          "packet_applanix_smoke"
+        ],
+        "default": "doctor_recommendation",
+        "kind": "enum",
+        "value_name": "<id>"
+      },
+      "--output-dir": {
+        "default": "generated_timestamped_output_dir",
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--lidarslam-param": {
+        "default": "selected_profile",
+        "kind": "file",
+        "value_name": "<file>"
+      },
+      "--rko-param": {
+        "default": "selected_profile",
+        "kind": "file",
+        "value_name": "<file>"
+      },
+      "--base-frame": {
+        "default": "base_link",
+        "kind": "frame",
+        "value_name": "<frame>"
+      },
+      "--lidar-frame": {
+        "default": null,
+        "kind": "frame",
+        "value_name": "<frame>"
+      },
+      "--imu-frame": {
+        "default": null,
+        "kind": "frame",
+        "value_name": "<frame>"
+      },
+      "--min-free-space-gib": {
+        "constraints": {
+          "finite": true,
+          "exclusive_minimum": 0
+        },
+        "default": 5,
+        "kind": "number",
+        "unit": "GiB",
+        "value_name": "<GiB>"
+      },
+      "--viewer": {
+        "choices": [
+          "none",
+          "browser",
+          "autoware",
+          "foxglove"
+        ],
+        "default": "none",
+        "kind": "enum",
+        "value_name": "{none,browser,autoware,foxglove}"
+      },
+      "--autoware-core-dir": {
+        "default": null,
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--work-dir": {
+        "default": null,
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--viewer-run-dir": {
+        "default": null,
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--auto-exit-secs": {
+        "constraints": {
+          "exclusive_minimum": 0
+        },
+        "default": null,
+        "kind": "integer",
+        "unit": "seconds",
+        "value_name": "<seconds>"
+      },
+      "--verification": {
+        "choices": [
+          "required",
+          "off"
+        ],
+        "default": "required",
+        "kind": "enum",
+        "value_name": "{required,off}"
+      }
+    },
+    "inspect": {
+      "--bag": {
+        "default": null,
+        "kind": "directory",
+        "value_name": "<rosbag2_dir>"
+      },
+      "--symptom": {
+        "choices": [
+          "map-spins-or-spirals",
+          "pose-drifts-or-oscillates",
+          "map-stops-early",
+          "map-is-too-sparse",
+          "map-is-not-visible"
+        ],
+        "default": null,
+        "kind": "enum",
+        "value_name": "{map-spins-or-spirals,pose-drifts-or-oscillates,map-stops-early,map-is-too-sparse,map-is-not-visible}"
+      }
+    },
+    "view": {
+      "--viewer": {
+        "choices": [
+          "browser",
+          "autoware",
+          "foxglove"
+        ],
+        "default": "browser",
+        "kind": "enum",
+        "value_name": "{browser,autoware,foxglove}"
+      },
+      "--preview-dir": {
+        "default": "<output_dir>/preview",
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--autoware-core-dir": {
+        "default": null,
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--work-dir": {
+        "default": null,
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--runtime-dir": {
+        "default": null,
+        "kind": "directory",
+        "value_name": "<dir>"
+      },
+      "--auto-exit-secs": {
+        "constraints": {
+          "exclusive_minimum": 0
+        },
+        "default": null,
+        "kind": "integer",
+        "unit": "seconds",
+        "value_name": "<seconds>"
+      }
+    },
+    "edit": {
+      "--plan": {
+        "default": null,
+        "kind": "file",
+        "required": true,
+        "value_name": "<json>"
+      },
+      "--output-dir": {
+        "default": null,
+        "kind": "directory",
+        "required": true,
+        "value_name": "<dir>"
+      },
+      "--backend-input": {
+        "default": null,
+        "kind": "directory",
+        "value_name": "<rosbag2_dir>"
+      },
+      "--params": {
+        "default": null,
+        "kind": "file",
+        "value_name": "<yaml>"
+      },
+      "--setup": {
+        "default": null,
+        "kind": "file",
+        "value_name": "<setup.bash>"
+      }
+    },
+    "merge": {
+      "--output-dir": {
+        "default": null,
+        "kind": "directory",
+        "required": true,
+        "value_name": "<dir>"
+      },
+      "--merge-voxel-size": {
+        "constraints": {"exclusive_minimum": 0},
+        "default": 0.2,
+        "kind": "number",
+        "unit": "m",
+        "value_name": "<m>"
+      },
+      "--alignment-voxel-size": {
+        "constraints": {"exclusive_minimum": 0},
+        "default": 0.5,
+        "kind": "number",
+        "unit": "m",
+        "value_name": "<m>"
+      },
+      "--max-alignment-points": {
+        "constraints": {"exclusive_minimum": 0},
+        "default": 12000,
+        "kind": "integer",
+        "value_name": "<count>"
+      },
+      "--max-median-error": {
+        "constraints": {"exclusive_minimum": 0},
+        "default": 1.0,
+        "kind": "number",
+        "unit": "m",
+        "value_name": "<m>"
+      },
+      "--max-p90-error": {
+        "constraints": {"exclusive_minimum": 0},
+        "default": 2.5,
+        "kind": "number",
+        "unit": "m",
+        "value_name": "<m>"
+      },
+      "--min-overlap": {
+        "constraints": {"exclusive_minimum": 0, "maximum": 1},
+        "default": 0.15,
+        "kind": "number",
+        "value_name": "<ratio>"
+      },
+      "--initial-transform": {
+        "default": null,
+        "kind": "transform",
+        "value_name": "<index:tx,ty,tz,yaw_deg>"
+      }
+    },
+    "migrate-manifest": {
+      "--output": {
+        "default": null,
+        "kind": "file",
+        "required": true,
+        "value_name": "<file>"
+      },
+      "--verification": {
+        "choices": [
+          "required",
+          "off"
+        ],
+        "default": null,
+        "kind": "enum",
+        "required": true,
+        "value_name": "{required,off}"
+      }
+    },
+    "rollback-plan": {}
+  },
+  "deprecation_policy": {
+    "minimum_compatibility_window": "one minor release",
+    "removal_status": "not_scheduled",
+    "warning_channel": "stderr",
+    "warning_count_per_invocation": 1
+  },
+  "global_options": [
+    {
+      "names": [
+        "-h",
+        "--help"
+      ],
+      "stability": "stable",
+      "tier": "core"
+    },
+    {
+      "names": [
+        "--help-all"
+      ],
+      "stability": "stable",
+      "tier": "help"
+    },
+    {
+      "names": [
+        "--version"
+      ],
+      "stability": "stable",
+      "tier": "core"
+    }
+  ],
+  "commands": {
+    "demo": {
+      "positional": {
+        "kind": "directory",
+        "name": "work_dir",
+        "optional": true,
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": ["-h", "--help"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--help-all"],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": ["--data-dir"],
+          "stability": "stable",
+          "tier": "storage"
+        },
+        {
+          "names": ["--output-dir"],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": ["--output"],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": ["--viewer"],
+          "stability": "stable",
+          "tier": "post-processing"
+        },
+        {
+          "names": ["--min-free-space-gib"],
+          "stability": "stable",
+          "tier": "storage"
+        },
+        {
+          "names": ["--dry-run"],
+          "stability": "stable",
+          "tier": "safety"
+        },
+        {
+          "names": ["--resume"],
+          "stability": "stable",
+          "tier": "recovery"
+        },
+        {
+          "names": ["--json"],
+          "stability": "stable",
+          "tier": "automation"
+        }
+      ]
+    },
+    "start": {
+      "positional": {
+        "kind": "directory",
+        "must_contain": [
+          "metadata.yaml"
+        ],
+        "name": "rosbag2_dir",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": ["-h", "--help"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--help-all"],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": ["--profile"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--output-dir"],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": ["--map-output-dir"],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": ["--accept-profile-extrinsics"],
+          "stability": "stable",
+          "tier": "calibration"
+        },
+        {
+          "names": ["--lidar-to-base"],
+          "stability": "stable",
+          "tier": "calibration"
+        },
+        {
+          "names": ["--imu-to-base"],
+          "stability": "stable",
+          "tier": "calibration"
+        },
+        {
+          "names": ["--base-frame"],
+          "stability": "stable",
+          "tier": "frames"
+        },
+        {
+          "names": ["--lidar-frame"],
+          "stability": "stable",
+          "tier": "frames"
+        },
+        {
+          "names": ["--imu-frame"],
+          "stability": "stable",
+          "tier": "frames"
+        },
+        {
+          "names": ["--json"],
+          "stability": "stable",
+          "tier": "automation"
+        },
+        {
+          "names": ["--yes"],
+          "stability": "stable",
+          "tier": "confirmation"
+        },
+        {
+          "names": ["--dry-run"],
+          "stability": "stable",
+          "tier": "safety"
+        },
+        {
+          "names": ["--editable"],
+          "stability": "stable",
+          "tier": "map-lifecycle"
+        },
+        {
+          "names": ["--viewer"],
+          "stability": "stable",
+          "tier": "post-processing"
+        },
+        {
+          "names": ["--min-free-space-gib"],
+          "stability": "stable",
+          "tier": "storage"
+        },
+        {
+          "names": ["--verification"],
+          "stability": "stable",
+          "tier": "verification"
+        }
+      ]
+    },
+    "sessions": {
+      "positional": {
+        "kind": "directory",
+        "name": "sessions_root",
+        "optional": true,
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": ["-h", "--help"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--help-all"],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": ["--status"],
+          "stability": "stable",
+          "tier": "history"
+        },
+        {
+          "names": ["--limit"],
+          "stability": "stable",
+          "tier": "history"
+        },
+        {
+          "names": ["--viewer"],
+          "stability": "stable",
+          "tier": "post-processing"
+        },
+        {
+          "names": ["--json"],
+          "stability": "stable",
+          "tier": "automation"
+        }
+      ]
+    },
+    "compare": {
+      "positional": {
+        "count": 2,
+        "kind": "directory",
+        "must_contain": [
+          "session.json"
+        ],
+        "name": "left_session",
+        "names": [
+          "left_session",
+          "right_session"
+        ],
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": ["-h", "--help"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--help-all"],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": ["--output"],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": ["--viewer"],
+          "stability": "stable",
+          "tier": "post-processing"
+        },
+        {
+          "names": ["--json"],
+          "stability": "stable",
+          "tier": "automation"
+        }
+      ]
+    },
+    "report": {
+      "positional": {
+        "kind": "directory",
+        "accepted_evidence": [
+          "session.json",
+          "first_map_validation_receipt.json"
+        ],
+        "name": "session_bundle_or_demo_output",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": ["-h", "--help"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--help-all"],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": ["--json"],
+          "stability": "stable",
+          "tier": "automation"
+        }
+      ]
+    },
+    "support": {
+      "positional": {
+        "kind": "directory",
+        "must_contain": [
+          "session.json"
+        ],
+        "name": "session_bundle",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": ["-h", "--help"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--help-all"],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": ["--output"],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": ["--json"],
+          "stability": "stable",
+          "tier": "automation"
+        },
+        {
+          "names": ["--first-map"],
+          "stability": "stable",
+          "tier": "post-processing"
+        }
+      ]
+    },
+    "doctor": {
+      "positional": {
+        "kind": "directory",
+        "must_contain": [
+          "metadata.yaml"
+        ],
+        "name": "rosbag2_dir",
+        "optional": true,
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": [
+            "-h",
+            "--help"
+          ],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": [
+            "--help-all"
+          ],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": [
+            "--json"
+          ],
+          "stability": "stable",
+          "tier": "automation"
+        },
+        {
+          "names": [
+            "--public-json"
+          ],
+          "stability": "stable",
+          "tier": "support"
+        },
+        {
+          "names": [
+            "--demo-dir"
+          ],
+          "stability": "stable",
+          "tier": "storage"
+        },
+        {
+          "names": [
+            "--min-free-space-gib"
+          ],
+          "stability": "stable",
+          "tier": "storage"
+        }
+      ]
+    },
+    "setup": {
+      "positional": {
+        "kind": "directory",
+        "must_contain": [
+          "metadata.yaml"
+        ],
+        "name": "rosbag2_dir",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": ["-h", "--help"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--help-all"],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": ["--profile"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--output-dir"],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": ["--map-output-dir"],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": ["--accept-profile-extrinsics"],
+          "stability": "stable",
+          "tier": "calibration"
+        },
+        {
+          "names": ["--lidar-to-base"],
+          "stability": "stable",
+          "tier": "calibration"
+        },
+        {
+          "names": ["--imu-to-base"],
+          "stability": "stable",
+          "tier": "calibration"
+        },
+        {
+          "names": ["--base-frame"],
+          "stability": "stable",
+          "tier": "frames"
+        },
+        {
+          "names": ["--lidar-frame"],
+          "stability": "stable",
+          "tier": "frames"
+        },
+        {
+          "names": ["--imu-frame"],
+          "stability": "stable",
+          "tier": "frames"
+        },
+        {
+          "names": ["--json"],
+          "stability": "stable",
+          "tier": "automation"
+        }
+      ]
+    },
+    "run": {
+      "positional": {
+        "kind": "directory",
+        "must_contain": [
+          "metadata.yaml"
+        ],
+        "name": "rosbag2_dir",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": [
+            "-h",
+            "--help"
+          ],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": [
+            "--help-all"
+          ],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": [
+            "--profile"
+          ],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": [
+            "--output-dir"
+          ],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--lidarslam-param"],
+          "stability": "stable",
+          "tier": "sensor-setup"
+        },
+        {
+          "names": ["--rko-param"],
+          "stability": "stable",
+          "tier": "sensor-setup"
+        },
+        {
+          "names": ["--base-frame"],
+          "stability": "stable",
+          "tier": "sensor-setup"
+        },
+        {
+          "names": ["--lidar-frame"],
+          "stability": "stable",
+          "tier": "sensor-setup"
+        },
+        {
+          "names": ["--imu-frame"],
+          "stability": "stable",
+          "tier": "sensor-setup"
+        },
+        {
+          "names": [
+            "--min-free-space-gib"
+          ],
+          "stability": "stable",
+          "tier": "lifecycle"
+        },
+        {
+          "names": [
+            "--dry-run"
+          ],
+          "stability": "stable",
+          "tier": "lifecycle"
+        },
+        {
+          "names": [
+            "--editable"
+          ],
+          "stability": "stable",
+          "tier": "lifecycle"
+        },
+        {
+          "names": [
+            "--resume"
+          ],
+          "stability": "stable",
+          "tier": "lifecycle"
+        },
+        {
+          "names": [
+            "--guided"
+          ],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": [
+            "--yes"
+          ],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": [
+            "--viewer"
+          ],
+          "replacement": "view --viewer",
+          "stability": "deprecated",
+          "tier": "viewer"
+        },
+        {
+          "names": [
+            "--autoware-core-dir"
+          ],
+          "replacement": "view --autoware-core-dir",
+          "stability": "deprecated",
+          "tier": "advanced-viewer"
+        },
+        {
+          "names": [
+            "--work-dir"
+          ],
+          "replacement": "view --work-dir",
+          "stability": "deprecated",
+          "tier": "advanced-viewer"
+        },
+        {
+          "names": [
+            "--viewer-run-dir"
+          ],
+          "replacement": "view --runtime-dir",
+          "stability": "deprecated",
+          "tier": "advanced-viewer"
+        },
+        {
+          "names": [
+            "--viewer-rebuild"
+          ],
+          "replacement": "view --rebuild",
+          "stability": "deprecated",
+          "tier": "advanced-viewer"
+        },
+        {
+          "names": [
+            "--auto-exit-secs"
+          ],
+          "replacement": "view --auto-exit-secs",
+          "stability": "deprecated",
+          "tier": "advanced-viewer"
+        },
+        {
+          "names": [
+            "--verification"
+          ],
+          "stability": "stable",
+          "tier": "verification"
+        },
+        {
+          "names": [
+            "--no-verify-map"
+          ],
+          "replacement": "--verification off",
+          "stability": "deprecated",
+          "tier": "break-glass"
+        }
+      ]
+    },
+    "inspect": {
+      "positional": {
+        "kind": "directory",
+        "name": "output_dir",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": [
+            "-h",
+            "--help"
+          ],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": [
+            "--help-all"
+          ],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": [
+            "--bag"
+          ],
+          "stability": "stable",
+          "tier": "context"
+        },
+        {
+          "names": [
+            "--symptom"
+          ],
+          "stability": "stable",
+          "tier": "diagnosis"
+        },
+        {
+          "names": [
+            "--json"
+          ],
+          "stability": "stable",
+          "tier": "automation"
+        },
+        {
+          "names": [
+            "--write"
+          ],
+          "stability": "stable",
+          "tier": "output"
+        }
+      ]
+    },
+    "view": {
+      "positional": {
+        "kind": "directory",
+        "must_contain": [
+          "pointcloud_map/pointcloud_map_metadata.yaml",
+          "map_projector_info.yaml"
+        ],
+        "name": "output_dir",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": [
+            "-h",
+            "--help"
+          ],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": [
+            "--help-all"
+          ],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": [
+            "--viewer"
+          ],
+          "stability": "stable",
+          "tier": "viewer"
+        },
+        {
+          "names": [
+            "--no-open"
+          ],
+          "stability": "stable",
+          "tier": "viewer"
+        },
+        {
+          "names": [
+            "--preview-dir"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        },
+        {
+          "names": [
+            "--autoware-core-dir"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        },
+        {
+          "names": [
+            "--work-dir"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        },
+        {
+          "names": [
+            "--runtime-dir"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        },
+        {
+          "names": [
+            "--rebuild"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        },
+        {
+          "names": [
+            "--auto-exit-secs"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        }
+      ]
+    },
+    "edit": {
+      "positional": {
+        "kind": "directory",
+        "must_contain": [
+          "map_bundle.yaml"
+        ],
+        "name": "output_dir",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": [
+            "-h",
+            "--help"
+          ],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": [
+            "--help-all"
+          ],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": [
+            "--plan"
+          ],
+          "stability": "stable",
+          "tier": "map-edit"
+        },
+        {
+          "names": [
+            "--output-dir"
+          ],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": [
+            "--dry-run"
+          ],
+          "stability": "stable",
+          "tier": "safety"
+        },
+        {
+          "names": [
+            "--backend-input"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        },
+        {
+          "names": [
+            "--params"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        },
+        {
+          "names": [
+            "--setup"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        },
+        {
+          "names": [
+            "--json"
+          ],
+          "stability": "stable",
+          "tier": "viewer-runtime"
+        }
+      ]
+    },
+    "merge": {
+      "positional": {
+        "kind": "directory",
+        "must_contain": [
+          "map_bundle.yaml"
+        ],
+        "name": "map_outputs",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": ["-h", "--help"],
+          "stability": "stable",
+          "tier": "core"
+        },
+        {
+          "names": ["--help-all"],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": ["--output-dir"],
+          "stability": "stable",
+          "tier": "output"
+        },
+        {
+          "names": ["--merge-voxel-size"],
+          "stability": "stable",
+          "tier": "map-merge"
+        },
+        {
+          "names": ["--alignment-voxel-size"],
+          "stability": "stable",
+          "tier": "map-merge"
+        },
+        {
+          "names": ["--max-alignment-points"],
+          "stability": "stable",
+          "tier": "map-merge"
+        },
+        {
+          "names": ["--max-median-error"],
+          "stability": "stable",
+          "tier": "map-merge"
+        },
+        {
+          "names": ["--max-p90-error"],
+          "stability": "stable",
+          "tier": "map-merge"
+        },
+        {
+          "names": ["--min-overlap"],
+          "stability": "stable",
+          "tier": "map-merge"
+        },
+        {
+          "names": ["--initial-transform"],
+          "stability": "stable",
+          "tier": "map-merge"
+        },
+        {
+          "names": ["--dry-run"],
+          "stability": "stable",
+          "tier": "safety"
+        },
+        {
+          "names": ["--json"],
+          "stability": "stable",
+          "tier": "automation"
+        }
+      ]
+    },
+    "migrate-manifest": {
+      "positional": {
+        "kind": "directory",
+        "must_contain": [
+          "run_manifest.json"
+        ],
+        "name": "output_dir",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": [
+            "-h",
+            "--help"
+          ],
+          "stability": "stable",
+          "tier": "recovery"
+        },
+        {
+          "names": [
+            "--help-all"
+          ],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": [
+            "--output"
+          ],
+          "stability": "stable",
+          "tier": "recovery"
+        },
+        {
+          "names": [
+            "--verification"
+          ],
+          "stability": "stable",
+          "tier": "recovery"
+        },
+        {
+          "names": [
+            "--json"
+          ],
+          "stability": "stable",
+          "tier": "automation"
+        }
+      ]
+    },
+    "rollback-plan": {
+      "positional": {
+        "format": "release-image-v1",
+        "kind": "file",
+        "name": "release_image_record",
+        "stability": "stable"
+      },
+      "options": [
+        {
+          "names": [
+            "-h",
+            "--help"
+          ],
+          "stability": "stable",
+          "tier": "recovery"
+        },
+        {
+          "names": [
+            "--help-all"
+          ],
+          "stability": "stable",
+          "tier": "help"
+        },
+        {
+          "names": [
+            "--json"
+          ],
+          "stability": "stable",
+          "tier": "automation"
+        }
+      ]
+    }
+  }
+}

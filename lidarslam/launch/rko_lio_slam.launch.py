@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import shlex
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -73,6 +74,10 @@ def create_rko_offline_node(context, *args, **kwargs):
         'initialization_phase': LaunchConfiguration('initialization_phase'),
         'skip_to_time': LaunchConfiguration('skip_to_time'),
         'publish_deskewed_scan': True,
+        # The upstream-integrated rko_lio defaults to "rko_lio/odom"; the
+        # graph backend below (and the record_backend_input tooling) expect
+        # the fork's historical "/rko_lio/odometry".
+        'odom_topic': '/rko_lio/odometry',
         'dump_results': LaunchConfiguration('dump_results'),
         'results_dir': LaunchConfiguration('results_dir'),
         'run_name': LaunchConfiguration('run_name'),
@@ -107,6 +112,54 @@ def create_rko_offline_node(context, *args, **kwargs):
     }
     if benchmark_parameters:
         parameters.append(benchmark_parameters)
+    prefix = []
+    wait_for_subscribers = _parse_bool_arg(
+        LaunchConfiguration('wait_for_output_subscribers').perform(context)
+    )
+    if wait_for_subscribers:
+        barrier_script = os.path.join(
+            get_package_share_directory('lidarslam'),
+            'product',
+            'scripts',
+            'wait_for_offline_output_subscribers.sh',
+        )
+        min_odom_subscribers = int(
+            LaunchConfiguration('min_odom_subscribers').perform(context)
+        )
+        min_deskewed_subscribers = int(
+            LaunchConfiguration('min_deskewed_scan_subscribers').perform(context)
+        )
+        subscriber_wait_timeout_ms = round(
+            1000.0 * float(
+                LaunchConfiguration('subscriber_wait_timeout_sec').perform(context)
+            )
+        )
+        subscriber_settle_polls = int(
+            LaunchConfiguration('subscriber_settle_polls').perform(context)
+        )
+        parameters[0].update({
+            'offline.wait_for_output_subscribers': True,
+            'offline.min_odom_subscribers': min_odom_subscribers,
+            'offline.min_deskewed_subscribers': min_deskewed_subscribers,
+            'offline.subscriber_wait_timeout_ms': subscriber_wait_timeout_ms,
+            'offline.subscriber_settle_polls': subscriber_settle_polls,
+        })
+        prefix = shlex.join([
+            barrier_script,
+            '--odom-topic',
+            '/rko_lio/odometry',
+            '--deskewed-topic',
+            '/rko_lio/frame',
+            '--min-odom',
+            str(min_odom_subscribers),
+            '--min-deskewed',
+            str(min_deskewed_subscribers),
+            '--timeout-secs',
+            LaunchConfiguration('subscriber_wait_timeout_sec').perform(context),
+            '--settle-polls',
+            str(subscriber_settle_polls),
+            '--',
+        ])
 
     return [
         Node(
@@ -114,6 +167,7 @@ def create_rko_offline_node(context, *args, **kwargs):
             executable='offline_node',
             name='rko_lio_offline_node',
             parameters=parameters,
+            prefix=prefix,
             output='screen',
             emulate_tty=True,
         ),
@@ -295,6 +349,34 @@ def generate_launch_description():
             'skip_to_time',
             default_value='0.0',
             description='Skip to this timestamp in the bag (seconds).',
+        ),
+        DeclareLaunchArgument(
+            'wait_for_output_subscribers',
+            default_value='false',
+            description='Wait for required output subscribers before reading the bag.',
+        ),
+        DeclareLaunchArgument(
+            'min_odom_subscribers',
+            default_value='1',
+            description='Required odometry subscriber count for the offline start barrier.',
+        ),
+        DeclareLaunchArgument(
+            'min_deskewed_scan_subscribers',
+            default_value='1',
+            description='Required deskewed-scan subscriber count for the offline start barrier.',
+        ),
+        DeclareLaunchArgument(
+            'subscriber_wait_timeout_sec',
+            default_value='30.0',
+            description='Fail if offline output subscribers are not ready by this timeout.',
+        ),
+        DeclareLaunchArgument(
+            'subscriber_settle_polls',
+            default_value='3',
+            description=(
+                'Consecutive subscriber-ready polls required before bag '
+                'processing starts.'
+            ),
         ),
         DeclareLaunchArgument(
             'dump_results',

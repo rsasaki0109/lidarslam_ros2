@@ -1,0 +1,20 @@
+# v37 development screen: causal gravity-axis accelerometer-bias update.
+# This is exposed development/regression data, not blind evidence.
+General:
+  lid_topic: /velodyne/lidar/points
+  imu_topic: /novatel/imu
+  previous_map: ''
+  save_path: /out/voxel/
+  bagname: navinst_indoor02
+  lidar_type: 2
+  blind: 1.0
+  point_filter_num: 3
+  extrinsic_tran: [0.0, 0.0, 0.21941]
+  extrinsic_rota: [0.0, -1.0, 0.0,
+                   1.0, 0.0, 0.0,
+                   0.0, 0.0, 1.0]
+  is_save_map: 1
+Odometry: {cov_gyr: 0.01, cov_acc: 1.0, rdw_gyr: 0.0001, rdw_acc: 0.0001, down_size: 0.4, beam_err: 0.01, dept_err: 0.01, voxel_size: 2.0, min_eigen_value: 0.01, degrade_bound: 100, point_notime: 0, vertical_accel_bias_enabled: true, vertical_accel_bias_quarantine_enabled: true, vertical_accel_bias_window: 8.0, vertical_accel_bias_gain: 0.5, vertical_accel_bias_min_innovation: 0.001, vertical_accel_bias_max_correction: 0.005, vertical_accel_bias_max_velocity_change: 0.5}
+LocalBA: {win_size: 10, max_layer: 1, cov_gyr: 0.01, cov_acc: 1.0, rdw_gyr: 0.0001, rdw_acc: 0.0001, min_ba_point: 1, plane_eigen_value_thre: [4.0, 4.0, 4.0, 4.0], imu_coef: 0.0002, thread_num: 5}
+Loop: {enable: 0, jud_default: 0.5, icp_eigval: 9.0, ratio_drift: 0.01, curr_halt: 10, prev_halt: 10, acsize: 2, mgsize: 2, isHighFly: 0}
+GBA: {voxel_size: 2.0, min_eigen_value: 0.01, eigen_value_array: [4.0, 4.0, 4.0, 4.0], total_max_iter: 6}

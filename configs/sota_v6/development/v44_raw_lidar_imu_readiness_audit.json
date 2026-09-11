@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "contract_id": "v44a-raw-lidar-imu-readiness-20260810",
+  "rationale": "Report-only, ground-truth-independent architecture gate. Exact canonical LiDAR and IMU streams must have deterministic scan-start timing, finite inertial measurements, bounded gaps, and sufficient IMU bracketing before a fixed-lag shadow estimator may be designed. Point time is proven by its uint32 non-negative offset schema and the exact sealed normalization digest; a physical return at offset zero is not required. Message orientation and covariance are inventoried but are never assumed to be universally available.",
+  "frames": {
+    "world": "map",
+    "estimator_body": "base_link",
+    "source_frame_policy": "exact_manifest_binding"
+  },
+  "messages": {
+    "lidar_type": "sensor_msgs/msg/PointCloud2",
+    "imu_type": "sensor_msgs/msg/Imu",
+    "lidar_timestamp_source": "header.stamp",
+    "imu_timestamp_source": "header.stamp",
+    "point_time_semantics": "uint32_nanoseconds_from_scan_start",
+    "angular_velocity_unit": "rad_per_second",
+    "linear_acceleration_unit": "metres_per_second_squared",
+    "required_lidar_fields": [
+      {"name": "x", "offset": 0, "datatype": 7, "count": 1},
+      {"name": "y", "offset": 4, "datatype": 7, "count": 1},
+      {"name": "z", "offset": 8, "datatype": 7, "count": 1},
+      {"name": "intensity", "offset": 16, "datatype": 7, "count": 1},
+      {"name": "t", "offset": 20, "datatype": 6, "count": 1},
+      {"name": "reflectivity", "offset": 24, "datatype": 4, "count": 1},
+      {"name": "ring", "offset": 26, "datatype": 2, "count": 1},
+      {"name": "ambient", "offset": 28, "datatype": 4, "count": 1},
+      {"name": "range", "offset": 32, "datatype": 6, "count": 1}
+    ],
+    "lidar_height": 1,
+    "lidar_point_step_bytes": 48,
+    "lidar_little_endian": true
+  },
+  "timing": {
+    "minimum_stream_duration_sec": 30.0,
+    "minimum_lidar_rate_hz": 5.0,
+    "maximum_lidar_rate_hz": 20.0,
+    "minimum_imu_rate_hz": 50.0,
+    "maximum_imu_rate_hz": 1000.0,
+    "maximum_lidar_gap_ns": 500000000,
+    "maximum_imu_gap_ns": 50000000,
+    "minimum_scan_time_span_ns": 50000000,
+    "maximum_scan_time_span_ns": 200000000,
+    "minimum_point_time_offset_ns": 0,
+    "require_exact_normalization_timing_digest": true,
+    "minimum_fully_bracketed_lidar_fraction": 0.999,
+    "maximum_unbracketed_prefix_scans": 2,
+    "maximum_unbracketed_interior_scans": 0,
+    "maximum_unbracketed_suffix_scans": 2,
+    "maximum_imu_boundary_bracket_distance_ns": 20000000,
+    "minimum_imu_samples_per_fully_bracketed_scan": 5
+  },
+  "imu": {
+    "minimum_message_count": 1000,
+    "minimum_finite_measurement_fraction": 1.0,
+    "maximum_angular_velocity_norm_rad_s": 20.0,
+    "maximum_linear_acceleration_norm_m_s2": 100.0,
+    "minimum_median_linear_acceleration_norm_m_s2": 5.0,
+    "maximum_median_linear_acceleration_norm_m_s2": 20.0,
+    "minimum_angular_velocity_axis_dynamic_range_rad_s": 0.001,
+    "minimum_linear_acceleration_axis_dynamic_range_m_s2": 0.01,
+    "orientation_norm_tolerance": 0.05,
+    "covariance_symmetry_tolerance": 1e-09,
+    "covariance_negative_eigenvalue_tolerance": 1e-12,
+    "unknown_orientation_covariance_sentinel": -1.0
+  },
+  "startup_classifier": {
+    "window_sec": 2.0,
+    "minimum_imu_samples": 100,
+    "maximum_gyro_rms_rad_s": 0.15,
+    "gravity_magnitude_m_s2": 9.80665,
+    "maximum_gravity_magnitude_error_m_s2": 1.5,
+    "maximum_acceleration_residual_rms_m_s2": 1.0
+  },
+  "memory": {
+    "maximum_message_bytes": 8388608,
+    "maximum_stored_timestamps": 1000000,
+    "maximum_rss_mib": 128.0
+  },
+  "decision": {
+    "required_repetitions": 2,
+    "require_every_sequence_ready": true,
+    "published_trajectory_or_map_writes_allowed": false,
+    "accuracy_or_reference_map_inputs_allowed": false
+  }
+}

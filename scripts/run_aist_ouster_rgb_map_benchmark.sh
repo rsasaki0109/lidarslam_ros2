@@ -89,7 +89,7 @@ bash "${SCRIPT_DIR}/run_frontend_determinism_check.sh" \
 
 echo "[2/6] posed RGB images + rigid-scan coloured map"
 /usr/bin/time -v -o "${MAP_DIR}/process_time.txt" \
-  python3 "${REPO_ROOT}/tools/gaussian_splatting/colored_map_pipeline.py" \
+  python3 "${REPO_ROOT}/tools/colored_map/colored_map_pipeline.py" \
   "${BAG}" "${TRAJECTORY}" "${MAP_DIR}" \
   --extrinsic "${EXTRINSIC}" \
   --points-topic /points --camera-topic /image --camera-info-topic /camera_info \

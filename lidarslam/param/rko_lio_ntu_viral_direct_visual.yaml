@@ -1,0 +1,71 @@
+# Pre-registered NTU-VIRAL LiDAR-IMU-visual profile.
+# Camera geometry is shared dataset calibration, not holdout-result tuning.
+extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+extrinsic_lidar2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, -0.05, 0.0, 0.055]
+# body/base_link <- left camera optical frame. Derived from the official
+# FAST-LIVO2 camera_T_lidar (Rcl/Pcl) and body_T_lidar calibration.
+extrinsic_cam2base_quat_xyzw_xyz: [0.50158807, 0.49175768, 0.49725142, 0.50923945, 0.00552938, -0.12431338, 0.01614686]
+
+lidar_timestamps.offset_seconds: 0.0
+initialization_phase: true
+deskew: true
+voxel_size: 0.35
+icp_keypoint_voxel_multiplier: 1.5
+max_points_per_voxel: 20
+min_range: 1.0
+max_range: 100.0
+max_correspondence_distance: 0.5
+double_downsample: true
+enable_kidnap_relocalization: false
+reset_on_registration_failure: false
+relocalize_after_scan_gap: false
+
+selective_visual_fusion: true
+direct_visual_frontend: true
+direct_visual_require_previous_weak_direction: false
+visual_image_topic: /left/image_raw
+visual_camera_time_offset_sec: 0.0
+# Canonical NTU-VIRAL has a stable ~68 ms phase between each Ouster scan end
+# and the preceding 10 Hz image. Keep the true timestamps and predict between
+# them with IMU instead of shifting either sensor clock.
+visual_max_image_lidar_delta_sec: 0.08
+visual_keyframe_interval_sec: 0.08
+visual_camera_width: 752
+visual_camera_height: 480
+visual_camera_fx: 425.0258563372763
+visual_camera_fy: 426.7976260903337
+visual_camera_cx: 386.015186655088
+visual_camera_cy: 241.913033674344
+visual_camera_distortion_model: plumb_bob
+# ROS/OpenCV radtan order: [k1, k2, p1, p2].
+visual_camera_distortion: [-0.288105327549552, 0.074578284234601, 0.0007784489598138802, -0.0002277853975035461]
+
+# Algorithmic gates are frozen from the pre-holdout HILTI direct-visual profile.
+direct_visual_max_features: 240
+direct_visual_grid_cell_size: 16
+direct_visual_patch_radius: 1
+direct_visual_max_iterations: 8
+direct_visual_min_gradient: 12.0
+direct_visual_huber_delta: 12.0
+direct_visual_occlusion_tolerance_m: 0.35
+direct_visual_min_residuals: 180
+direct_visual_min_inlier_ratio: 0.55
+direct_visual_max_rmse: 20.0
+direct_visual_max_initial_rmse: 70.0
+direct_visual_max_translation_correction_m: 0.08
+direct_visual_max_rotation_correction_rad: 0.05
+
+visual_prior_max_time_offset_sec: 0.08
+visual_min_tracks: 20
+visual_min_inliers: 15
+visual_min_inlier_ratio: 0.55
+visual_max_rotation_error_deg: 3.0
+visual_min_translation_cosine: 0.5
+visual_min_baseline_m: 0.03
+visual_max_baseline_m: 2.0
+visual_weak_information_ratio: 1.0e-2
+visual_relative_information_weight: 0.5
+visual_min_directional_information_ratio: 1.0e-3
+visual_max_weak_directions: 2
+visual_max_translation_update_m: 0.03
+visual_max_rotation_update_rad: 0.01

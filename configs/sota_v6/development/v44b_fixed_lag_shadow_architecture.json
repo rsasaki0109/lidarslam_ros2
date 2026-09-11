@@ -1,0 +1,433 @@
+{
+  "schema_version": 1,
+  "contract_id": "v44b-fixed-lag-shadow-architecture-20260810",
+  "stage": "architecture_definition_only",
+  "rationale": "One global, local, causal, fixed-lag LiDAR/IMU architecture that estimates inertial bias through explicit preintegration, represents weak LiDAR directions as uncertainty, supports dynamic startup without message orientation, and cannot mutate the v17 primary path. This contract authorizes synthetic contract work only; it is not an estimator implementation or an accuracy claim.",
+  "prerequisite": {
+    "readiness_contract_path": "configs/sota_v6/development/v44_raw_lidar_imu_readiness_audit.json",
+    "readiness_contract_sha256": "a71d9271d200e86537cb6f8b25e21662ffe120258e749e6dff17a77e6d1a162b",
+    "source_binding_path": "configs/sota_v6/development/v44_raw_lidar_imu_sources_20260810.json",
+    "source_binding_sha256": "002cc82fcd86a70fb774e1e3f576b41cbe86b849eabcfc6406e98cb26232ff1d",
+    "readiness_aggregate_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44a_raw_lidar_imu_readiness_20260810/aggregate.json",
+    "readiness_aggregate_sha256": "532b62ad534cb533c1ecfaa735a844f68dfb38a0a4c5184ef598ab98f3b959fb",
+    "required_readiness_contract_id": "v44a-raw-lidar-imu-readiness-20260810",
+    "required_readiness_decision": "AUTHORIZE_V44_FIXED_LAG_ARCHITECTURE_DEFINITION"
+  },
+  "governance": {
+    "configuration_policy": "one_global_algorithm_contract",
+    "dataset_identity_available_to_algorithm": false,
+    "sequence_specific_algorithm_parameters_allowed": false,
+    "calibrated_sensor_extrinsics_are_source_bindings_not_algorithm_branches": true,
+    "allowed_inputs": [
+      "exact_bound_pointcloud2_stream",
+      "exact_bound_imu_stream",
+      "sealed_lidar_to_body_extrinsic",
+      "sealed_imu_to_body_extrinsic",
+      "v44a_readiness_metadata"
+    ],
+    "forbidden_inputs": [
+      "dataset_identity",
+      "ground_truth_trajectory",
+      "accuracy_metric",
+      "reference_map",
+      "camera",
+      "gnss",
+      "wheel_odometry",
+      "external_pose",
+      "message_orientation",
+      "message_covariance_as_noise_source",
+      "v17_estimator_state"
+    ],
+    "forbidden_outputs_or_feedback": [
+      "ros_trajectory_publication",
+      "ros_map_publication",
+      "primary_state_writeback",
+      "primary_map_writeback",
+      "primary_bias_writeback",
+      "loop_edge_writeback",
+      "global_pose_graph_writeback"
+    ],
+    "retired_mechanisms_forbidden": [
+      "direct_vertical_velocity_correction",
+      "direct_accelerometer_bias_correction",
+      "hard_weak_axis_velocity_freeze",
+      "velocity_magnitude_observability_gate",
+      "history_threshold_bias_gate",
+      "producer_frozen_axis_projection",
+      "wall_clock_measurement_age",
+      "repeated_measurement_consumption",
+      "visual_velocity_feedback",
+      "loop_closure",
+      "global_map_correction"
+    ]
+  },
+  "frames": {
+    "transform_notation": "T_destination_source",
+    "world_frame": "map",
+    "body_frame": "base_link",
+    "world_handedness": "right_handed",
+    "world_vertical_axis": "+z_up",
+    "pose_state": "T_WB_maps_body_coordinates_into_world",
+    "lidar_extrinsic": "T_BL_maps_lidar_coordinates_into_body",
+    "imu_extrinsic": "T_BI_maps_imu_coordinates_into_body",
+    "imu_to_body_policy": "exact_source_binding_identity",
+    "lidar_to_body_policy": "exact_source_binding_fixed_not_estimated",
+    "gravity_after_bootstrap_m_s2": [0.0, 0.0, -9.80665],
+    "rotation_storage": "unit_quaternion_hamilton_xyzw",
+    "rotation_increment": "right_multiplicative_SO3",
+    "point_transform_equation": "p_W = R_WB * (R_BL * p_L + t_BL) + p_WB"
+  },
+  "timing": {
+    "clock_representation": "signed_int64_nanoseconds",
+    "lidar_header_semantics": "scan_start",
+    "point_timestamp_equation": "t_point_ns = lidar_header_stamp_ns + uint32_t_ns",
+    "state_timestamp_equation": "t_k_ns = lidar_header_stamp_ns + maximum_uint32_t_ns_in_scan",
+    "state_timestamp_semantics": "scan_end",
+    "optimization_trigger": "first_imu_message_strictly_after_scan_end",
+    "event_order": [
+      "timestamp_ns",
+      "imu_before_lidar_at_equal_timestamp",
+      "source_message_index"
+    ],
+    "consume_each_message_exactly_once": true,
+    "wall_clock_used_for_estimator_time": false,
+    "online_timestamp_offset_estimation_allowed": false,
+    "boundary_interpolation": "linear_measurement_interpolation",
+    "imu_integration_rule": "midpoint_on_SO3",
+    "maximum_imu_gap_ns": 50000000,
+    "maximum_imu_boundary_bracket_distance_ns": 20000000,
+    "minimum_imu_samples_per_scan": 5,
+    "maximum_dropped_unbracketed_prefix_scans": 2,
+    "maximum_dropped_unbracketed_suffix_scans": 2,
+    "out_of_order_policy": "terminal_fail_closed",
+    "duplicate_timestamp_policy": "stable_index_order_without_duplicate_consumption",
+    "missing_scan_boundary_policy": "drop_bounded_prefix_before_first_state_then_terminal_fail_closed",
+    "end_of_stream_suffix_policy": "drop_bounded_suffix_and_report_count"
+  },
+  "state_model": {
+    "knot_semantics": "one_state_at_each_accepted_lidar_scan_end",
+    "knot_variables": [
+      {
+        "name": "R_WB",
+        "storage": "unit_quaternion_xyzw",
+        "manifold": "SO3",
+        "local_dof": 3,
+        "unit": "radian"
+      },
+      {
+        "name": "p_WB",
+        "storage": "float64_xyz",
+        "manifold": "R3",
+        "local_dof": 3,
+        "unit": "metre"
+      },
+      {
+        "name": "v_WB",
+        "storage": "float64_xyz",
+        "manifold": "R3",
+        "local_dof": 3,
+        "unit": "metre_per_second"
+      },
+      {
+        "name": "b_g",
+        "storage": "float64_xyz",
+        "manifold": "R3",
+        "local_dof": 3,
+        "unit": "radian_per_second"
+      },
+      {
+        "name": "b_a",
+        "storage": "float64_xyz",
+        "manifold": "R3",
+        "local_dof": 3,
+        "unit": "metre_per_second_squared"
+      }
+    ],
+    "local_dof_per_knot": 15,
+    "bootstrap_global_variables": [
+      {
+        "name": "gravity_direction_W",
+        "manifold": "S2",
+        "local_dof": 2,
+        "magnitude_m_s2": 9.80665
+      }
+    ],
+    "streaming_global_parameters": [
+      "fixed_gravity_W",
+      "fixed_T_BL",
+      "fixed_T_BI",
+      "fixed_zero_time_offset"
+    ],
+    "online_extrinsic_calibration_allowed": false,
+    "online_time_offset_calibration_allowed": false,
+    "online_scale_state_allowed": false,
+    "auxiliary_weak_axis_state_allowed": false,
+    "direct_state_component_overwrite_allowed": false
+  },
+  "initialization": {
+    "mode": "dynamic_joint_lidar_imu_bootstrap_for_every_sequence",
+    "minimum_window_sec": 2.0,
+    "maximum_window_sec": 5.0,
+    "minimum_lidar_scans": 10,
+    "minimum_imu_messages": 100,
+    "gravity_seed": "normalized_robust_acceleration_mean_seed_only",
+    "gravity_seed_is_measurement_factor": false,
+    "orientation_message_used": false,
+    "stationary_assumption_used": false,
+    "zero_velocity_factor_allowed": false,
+    "zero_angular_rate_factor_allowed": false,
+    "zero_velocity_seed_is_constraint": false,
+    "initial_velocity_seed": "two_scan_lidar_translation_over_sensor_time_or_zero_seed",
+    "initial_gyro_bias_seed_rad_s": [0.0, 0.0, 0.0],
+    "initial_accel_bias_seed_m_s2": [0.0, 0.0, 0.0],
+    "jointly_optimized_variables": [
+      "all_bootstrap_knot_states",
+      "gravity_direction_W",
+      "gyro_bias",
+      "accelerometer_bias"
+    ],
+    "gauge_constraints": [
+      "first_position_is_world_origin",
+      "first_pose_yaw_is_zero"
+    ],
+    "completion_policy": "first_deterministic_update_after_minima_or_fail_at_maximum_window",
+    "completion_requirements": [
+      "finite_state",
+      "finite_cost",
+      "gravity_magnitude_exact",
+      "nonempty_lidar_observable_subspace",
+      "positive_semidefinite_preintegration_covariance"
+    ],
+    "post_bootstrap_rebase": "rotate_world_deterministically_so_gravity_is_negative_z_and_first_yaw_is_zero"
+  },
+  "noise_model": {
+    "policy": "one_explicit_continuous_time_model_for_all_sources",
+    "message_covariance_policy": "inventory_only_ignored_by_estimator",
+    "gyroscope_white_noise_density_rad_s_sqrt_hz": 0.01,
+    "accelerometer_white_noise_density_m_s2_sqrt_hz": 1.0,
+    "gyroscope_bias_random_walk_density_rad_s2_sqrt_hz": 0.0001,
+    "accelerometer_bias_random_walk_density_m_s3_sqrt_hz": 0.0001,
+    "bootstrap_prior_std": {
+      "velocity_m_s": 5.0,
+      "gyro_bias_rad_s": 0.05,
+      "accel_bias_m_s2": 1.0,
+      "gravity_direction_deg": 30.0
+    },
+    "lidar_point_to_plane_sigma_m": 0.05,
+    "lidar_huber_delta_sigma": 1.345,
+    "covariance_symmetrization": "0.5_times_P_plus_P_transpose",
+    "covariance_negative_eigenvalue_tolerance": 1e-12,
+    "covariance_eigenvalue_floor": 1e-12
+  },
+  "preintegration": {
+    "method": "bias_linearized_midpoint_Forster_SO3",
+    "preintegrated_terms": [
+      "DeltaR_ij",
+      "DeltaV_ij",
+      "DeltaP_ij",
+      "covariance_9x9"
+    ],
+    "required_bias_jacobians": [
+      "J_R_bg",
+      "J_v_bg",
+      "J_v_ba",
+      "J_p_bg",
+      "J_p_ba"
+    ],
+    "rotation_residual": "r_R = Log((DeltaR_ij * Exp(J_R_bg * delta_bg_i))^-1 * R_WB_i^T * R_WB_j)",
+    "velocity_residual": "r_v = R_WB_i^T * (v_WB_j - v_WB_i - g_W * dt) - (DeltaV_ij + J_v_bg * delta_bg_i + J_v_ba * delta_ba_i)",
+    "position_residual": "r_p = R_WB_i^T * (p_WB_j - p_WB_i - v_WB_i * dt - 0.5 * g_W * dt^2) - (DeltaP_ij + J_p_bg * delta_bg_i + J_p_ba * delta_ba_i)",
+    "gyro_bias_random_walk_residual": "r_bg = b_g_j - b_g_i",
+    "accel_bias_random_walk_residual": "r_ba = b_a_j - b_a_i",
+    "imu_residual_dimension": 9,
+    "bias_random_walk_residual_dimension": 6,
+    "bias_relinearization": "first_order_jacobian_correction_then_reintegrate_when_threshold_crossed",
+    "bias_reintegration_threshold": {
+      "gyro_rad_s": 0.01,
+      "accel_m_s2": 0.1
+    },
+    "covariance_propagation_precision": "float64",
+    "integration_interval": "previous_scan_end_exclusive_to_current_scan_end_inclusive",
+    "maximum_single_step_ns": 50000000,
+    "gap_violation_policy": "terminal_fail_closed_without_state_output"
+  },
+  "lidar_factor": {
+    "type": "causal_active_window_binary_point_to_plane",
+    "intensity_used": false,
+    "minimum_range_m": 1.0,
+    "maximum_range_m": 50.0,
+    "voxel_size_m": 0.5,
+    "maximum_selected_points_per_scan": 12000,
+    "maximum_source_keyframes_per_scan": 8,
+    "maximum_active_surfels": 200000,
+    "minimum_correspondences": 128,
+    "maximum_correspondence_distance_m": 1.0,
+    "source_selection": "most_recent_older_active_knots_then_timestamp_order",
+    "voxel_representative": "lowest_point_timestamp_then_ring_then_source_index",
+    "surfel_storage_frame": "source_knot_body_frame_at_scan_end",
+    "deskew_target": "current_scan_end_body_frame",
+    "deskew_equation": "p_B_at_end = T_WB(t_end)^-1 * T_WB(t_point) * T_BL * p_L",
+    "residual": "r_l = n_B_s^T * R_WB_s^T * ((R_WB_k * p_B_k + p_WB_k) - (R_WB_s * mu_B_s + p_WB_s))",
+    "connected_variables": [
+      "current_R_WB_p_WB",
+      "source_R_WB_p_WB"
+    ],
+    "loss": "Huber_on_whitened_residual",
+    "factor_lifetime": "only_while_current_and_source_knots_are_active",
+    "global_or_persistent_map_allowed": false,
+    "loop_candidate_search_allowed": false,
+    "failed_correspondence_policy": "omit_lidar_factor_and_retain_inertial_uncertainty"
+  },
+  "observability": {
+    "policy": "project_each_whitened_lidar_factor_onto_its_numerically_observable_pose_subspace",
+    "decomposition": "deterministic_SVD",
+    "factor_observability_coordinates": "six_dof_current_from_source_relative_pose",
+    "pose_coordinate_order": [
+      "rotation_xyz",
+      "translation_xyz"
+    ],
+    "rotation_characteristic_length_m_per_rad": 1.0,
+    "translation_scale": 1.0,
+    "minimum_whitened_singular_value": 1.0,
+    "maximum_retained_condition_number": 1000000.0,
+    "retained_mode_rule": "sigma >= max(1.0, sigma_max / 1000000.0)",
+    "unobservable_mode_behavior": "remove_measurement_information_preserve_process_uncertainty_and_report_nullspace",
+    "bias_update_source": "joint_lag_normal_equations_through_preintegration_only",
+    "direct_bias_or_velocity_update_allowed": false,
+    "hard_axis_freeze_allowed": false,
+    "velocity_magnitude_gate_allowed": false,
+    "dataset_condition_gate_allowed": false,
+    "full_lag_bias_information_diagnostic": "Schur_complement_information_after_pose_velocity_elimination",
+    "full_lag_nullspace_policy": "zero_increment_in_unretained_modes_and_explicit_nullspace_diagnostic"
+  },
+  "optimizer": {
+    "type": "deterministic_square_root_fixed_lag_Gauss_Newton",
+    "lag_duration_sec": 3.0,
+    "maximum_active_knots": 64,
+    "minimum_active_knots_after_bootstrap": 2,
+    "update_trigger": "each_accepted_lidar_scan",
+    "maximum_iterations_per_update": 4,
+    "iteration_policy": "fixed_count_unless_exact_zero_increment",
+    "linearization": "all_active_nonlinear_factors_each_iteration",
+    "linear_solver": "streaming_Householder_QR_then_rank_revealing_SVD_of_R",
+    "factor_order": [
+      "gauge",
+      "marginal_prior",
+      "imu_preintegration",
+      "bias_random_walk",
+      "lidar_point_to_plane"
+    ],
+    "variable_order": "timestamp_then_R_p_v_b_g_b_a",
+    "thread_count": 1,
+    "wall_clock_stopping_allowed": false,
+    "line_search_step_scales": [
+      1.0,
+      0.5,
+      0.25,
+      0.125
+    ],
+    "accepted_step_rule": "first_finite_nonincreasing_total_whitened_cost",
+    "no_accepted_step_policy": "terminal_fail_closed",
+    "SO3_normalization_after_update": true,
+    "nonfinite_linear_system_policy": "terminal_fail_closed"
+  },
+  "marginalization": {
+    "trigger": "oldest_knot_exceeds_lag_or_active_knot_capacity",
+    "strategy": "square_root_QR_separator_prior",
+    "linearization_policy": "first_estimate_Jacobians_for_marginal_prior",
+    "marginalize_order": "oldest_timestamp_first",
+    "retain_separator_variables": true,
+    "maximum_prior_dimension": 960,
+    "rank_policy": "same_observability_condition_bound_as_optimizer",
+    "gauge_policy": "preserve_bootstrap_origin_and_yaw_gauge_in_prior",
+    "source_surfel_policy": "remove_surfels_when_source_knot_is_marginalized",
+    "prior_reset_allowed": false,
+    "ad_hoc_covariance_inflation_allowed": false,
+    "marginalization_diagnostics_required": [
+      "marginalized_knot_id",
+      "prior_rank",
+      "dropped_singular_values",
+      "separator_dimension",
+      "prior_payload_sha256"
+    ]
+  },
+  "resource_bounds": {
+    "maximum_rss_mib": 330.0,
+    "maximum_processing_rtf": 0.85,
+    "maximum_input_message_bytes": 8388608,
+    "maximum_active_state_dimension": 960,
+    "maximum_active_lidar_correspondences": 768000,
+    "maximum_materialized_jacobian_rows": 4096,
+    "streaming_linearization_block_rows": 2048,
+    "maximum_dense_solver_bytes": 16777216,
+    "maximum_diagnostic_output_bytes": 268435456,
+    "check_rss_after_each_scan": true,
+    "capacity_violation_policy": "terminal_fail_closed_before_allocation_or_write"
+  },
+  "diagnostics": {
+    "format": "canonical_JSONL_plus_binary_state_payload_hash",
+    "ros_publishers_allowed": false,
+    "primary_output_paths_allowed": false,
+    "one_record_per": "accepted_or_rejected_lidar_scan",
+    "required_record_fields": [
+      "scan_index",
+      "scan_start_ns",
+      "scan_end_ns",
+      "status",
+      "active_knot_count",
+      "imu_sample_count",
+      "maximum_imu_gap_ns",
+      "lidar_correspondence_count",
+      "lidar_observable_rank",
+      "lidar_singular_values",
+      "state_R_WB_xyzw",
+      "state_p_WB_m",
+      "state_v_WB_m_s",
+      "state_b_g_rad_s",
+      "state_b_a_m_s2",
+      "gravity_W_m_s2",
+      "solver_iterations",
+      "whitened_cost",
+      "marginal_prior_rank",
+      "nullspace_dimension",
+      "rss_mib"
+    ],
+    "state_payload_order": "little_endian_int64_timestamp_then_float64_R_p_v_b_g_b_a_gravity_then_int64_counters",
+    "state_payload_digest": "sha256",
+    "deterministic_repetitions_required": 2,
+    "protected_v17_input_output_hashes_before_after_required": true,
+    "terminal_record_required_on_failure": true
+  },
+  "stage3_synthetic_contracts": [
+    "SO3_preintegration_direction",
+    "constant_motion_zero_residual",
+    "gravity_sign_and_rebase",
+    "gyro_bias_Jacobian_finite_difference",
+    "accelerometer_bias_Jacobians_finite_difference",
+    "preintegration_covariance_PSD_and_dt_scaling",
+    "scan_boundary_interpolation",
+    "timestamp_gap_fail_closed",
+    "point_deskew_direction",
+    "lidar_to_body_extrinsic_direction",
+    "binary_point_to_plane_Jacobians_finite_difference",
+    "observable_subspace_rotation_invariance",
+    "weak_axis_information_removal_without_state_clamp",
+    "dynamic_startup_without_orientation_or_zero_velocity_prior",
+    "stationary_startup_uses_same_architecture",
+    "square_root_marginalization_equivalence",
+    "FEJ_prior_consistency_and_gauge_preservation",
+    "fixed_lag_capacity_and_deterministic_eviction",
+    "deterministic_factor_order_and_state_payload_hash",
+    "duplicate_out_of_order_memory_and_protected_output_fail_closed"
+  ],
+  "decision": {
+    "required_validation_repetitions": 2,
+    "minimum_stage3_synthetic_contracts": 20,
+    "on_pass": "AUTHORIZE_V44_STAGE3_SYNTHETIC_CONTRACT_IMPLEMENTATION",
+    "on_fail": "REJECT_V44B_ARCHITECTURE_CONTRACT",
+    "fixed_lag_shadow_estimator_implementation_authorized": false,
+    "raw_shadow_replay_authorized": false,
+    "accuracy_or_reference_map_inputs_authorized": false,
+    "primary_trajectory_or_map_mutation_authorized": false
+  }
+}

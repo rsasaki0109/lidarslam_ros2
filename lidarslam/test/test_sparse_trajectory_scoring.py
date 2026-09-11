@@ -30,7 +30,7 @@
 """
 Regression tests for the sparse (submap-rate) trajectory scoring mode.
 
-Background (plan.md Sec. 2.4, HILTI 2022 exp01): pose graph optimization was
+Background (docs/research/project-plan-archive.md Sec. 2.4, HILTI 2022 exp01): pose graph optimization was
 a verified no-op (corrected == raw odometry, 0.000 m diff) yet the sparse
 "corrected" submap trajectory (median 1.2 s / max 19.9 s pose spacing) scored
 an APE of 0.891 m against mm-level total-station control points, versus

@@ -1,0 +1,227 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/public-doctor-evidence-v1.schema.json",
+  "title": "Public doctor evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "mode",
+    "status",
+    "input",
+    "checks",
+    "recommended_profile_id",
+    "compatible_profile_ids",
+    "finding_codes",
+    "first_action_code",
+    "privacy",
+    "network_accessed",
+    "writes_performed"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/public-doctor-evidence-v1.schema.json"
+    },
+    "mode": {"const": "bag_public_evidence"},
+    "status": {
+      "enum": ["ready", "action_required", "unsupported", "input_error"]
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "duration_sec",
+        "message_count",
+        "capabilities",
+        "topic_type_counts"
+      ],
+      "properties": {
+        "duration_sec": {"type": ["number", "null"], "minimum": 0},
+        "message_count": {"type": "integer", "minimum": 0},
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "has_applanix_gsof49",
+            "has_applanix_gsof50",
+            "has_imu",
+            "has_navsatfix",
+            "has_odometry",
+            "has_pointcloud2",
+            "has_tf",
+            "has_velodyne_scan",
+            "has_velocity_report"
+          ],
+          "properties": {
+            "has_applanix_gsof49": {"type": "boolean"},
+            "has_applanix_gsof50": {"type": "boolean"},
+            "has_imu": {"type": "boolean"},
+            "has_navsatfix": {"type": "boolean"},
+            "has_odometry": {"type": "boolean"},
+            "has_pointcloud2": {"type": "boolean"},
+            "has_tf": {"type": "boolean"},
+            "has_velodyne_scan": {"type": "boolean"},
+            "has_velocity_report": {"type": "boolean"}
+          }
+        },
+        "topic_type_counts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["msg_type", "topic_count", "message_count"],
+            "properties": {
+              "msg_type": {"type": "string", "minLength": 1},
+              "topic_count": {"type": "integer", "minimum": 1},
+              "message_count": {"type": "integer", "minimum": 0}
+            }
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pointcloud",
+        "timestamp_order",
+        "odometry_tf",
+        "odometry_tf_timing"
+      ],
+      "properties": {
+        "pointcloud": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "field_names",
+            "rko_lio_compatible",
+            "timestamp_field"
+          ],
+          "properties": {
+            "status": {
+              "enum": ["not_applicable", "unavailable", "error", "empty", "inspected"]
+            },
+            "field_names": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"type": "string", "minLength": 1}
+            },
+            "rko_lio_compatible": {"type": ["boolean", "null"]},
+            "timestamp_field": {"type": ["string", "null"]}
+          }
+        },
+        "timestamp_order": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "topic_type_count",
+            "records_scanned",
+            "reversal_count",
+            "invalid_stamp_count"
+          ],
+          "properties": {
+            "status": {
+              "enum": ["not_applicable", "unavailable", "error", "failed", "sampled", "passed"]
+            },
+            "topic_type_count": {"type": "integer", "minimum": 0},
+            "records_scanned": {"type": "integer", "minimum": 0},
+            "reversal_count": {"type": "integer", "minimum": 0},
+            "invalid_stamp_count": {"type": "integer", "minimum": 0}
+          }
+        },
+        "odometry_tf": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "records_scanned",
+            "tf_records_scanned",
+            "readable",
+            "invalid_frame_count",
+            "invalid_transform_count",
+            "path_edge_count",
+            "dynamic_path"
+          ],
+          "properties": {
+            "status": {
+              "enum": ["not_applicable", "unavailable", "error", "failed", "sampled", "passed"]
+            },
+            "records_scanned": {"type": "integer", "minimum": 0},
+            "tf_records_scanned": {"type": "integer", "minimum": 0},
+            "readable": {"type": "boolean"},
+            "invalid_frame_count": {"type": "integer", "minimum": 0},
+            "invalid_transform_count": {"type": "integer", "minimum": 0},
+            "path_edge_count": {"type": "integer", "minimum": 0},
+            "dynamic_path": {"type": ["boolean", "null"]}
+          }
+        },
+        "odometry_tf_timing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "pointcloud_records_scanned",
+            "tf_records_scanned",
+            "invalid_pointcloud_stamp_count",
+            "invalid_transform_stamp_count",
+            "clouds_before_all_dynamic_tf",
+            "future_extrapolation_count",
+            "max_future_gap_ns"
+          ],
+          "properties": {
+            "status": {
+              "enum": ["not_applicable", "unavailable", "error", "failed", "sampled", "passed"]
+            },
+            "pointcloud_records_scanned": {"type": "integer", "minimum": 0},
+            "tf_records_scanned": {"type": "integer", "minimum": 0},
+            "invalid_pointcloud_stamp_count": {"type": "integer", "minimum": 0},
+            "invalid_transform_stamp_count": {"type": "integer", "minimum": 0},
+            "clouds_before_all_dynamic_tf": {"type": "integer", "minimum": 0},
+            "future_extrapolation_count": {"type": "integer", "minimum": 0},
+            "max_future_gap_ns": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    },
+    "recommended_profile_id": {"type": ["string", "null"]},
+    "compatible_profile_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "finding_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "first_action_code": {"type": ["string", "null"]},
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bag_path_included",
+        "topic_or_frame_names_included",
+        "local_commands_included",
+        "raw_sensor_data_included",
+        "raw_logs_included",
+        "free_text_messages_included",
+        "review_before_sharing"
+      ],
+      "properties": {
+        "bag_path_included": {"const": false},
+        "topic_or_frame_names_included": {"const": false},
+        "local_commands_included": {"const": false},
+        "raw_sensor_data_included": {"const": false},
+        "raw_logs_included": {"const": false},
+        "free_text_messages_included": {"const": false},
+        "review_before_sharing": {"const": true}
+      }
+    },
+    "network_accessed": {"const": false},
+    "writes_performed": {"const": false}
+  }
+}

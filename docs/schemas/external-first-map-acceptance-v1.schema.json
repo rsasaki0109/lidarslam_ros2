@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/external-first-map-acceptance-v1.schema.json",
+  "title": "lidarslam_ros2 external first-map acceptance report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "validation_id",
+    "current_accepted_validations",
+    "proposed_accepted_validations",
+    "remaining_validations",
+    "ledger_sha256",
+    "proposed_ledger_sha256",
+    "receipt_manifest_sha256",
+    "proposal_written_to"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/external-first-map-acceptance-v1.schema.json"
+    },
+    "status": {"const": "READY_TO_PROPOSE"},
+    "validation_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"
+    },
+    "current_accepted_validations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "proposed_accepted_validations": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "remaining_validations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ledger_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "proposed_ledger_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "receipt_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "proposal_written_to": {
+      "type": ["string", "null"],
+      "minLength": 1
+    }
+  }
+}

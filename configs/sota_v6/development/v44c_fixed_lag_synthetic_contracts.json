@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "contract_id": "v44c-fixed-lag-synthetic-contracts-20260810",
+  "stage": "synthetic_numerical_validation_only",
+  "rationale": "Deterministic, ground-truth-free numerical oracles for every v44b Stage-3 contract. No raw sensor stream, estimator runtime, trajectory, map, accuracy metric, or reference input is accepted.",
+  "prerequisite": {
+    "architecture_contract_path": "configs/sota_v6/development/v44b_fixed_lag_shadow_architecture.json",
+    "architecture_contract_sha256": "74a80cca0e3dc7de9a10950d50c4fea7518dfe3d4fed8c5e1aeec77c3efee8e7",
+    "architecture_aggregate_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44b_fixed_lag_architecture_20260810/aggregate.json",
+    "architecture_aggregate_sha256": "9bc723886d3faa067de979e203eb9e49d534b2252fb733e05f08de386fb64407",
+    "required_architecture_contract_id": "v44b-fixed-lag-shadow-architecture-20260810",
+    "required_architecture_decision": "AUTHORIZE_V44_STAGE3_SYNTHETIC_CONTRACT_IMPLEMENTATION",
+    "required_architecture_aggregate_payload_sha256": "7794446259eb915e967294e3c515495b23abef57a19398cc2f1beac8b8ec6d52"
+  },
+  "numeric_policy": {
+    "floating_point": "IEEE754_float64",
+    "integer_time": "signed_int64_nanoseconds",
+    "random_seed": 4403001,
+    "finite_difference_epsilon": 1e-06,
+    "SO3_absolute_tolerance": 1e-10,
+    "zero_residual_absolute_tolerance": 1e-09,
+    "Jacobian_absolute_tolerance": 2e-05,
+    "covariance_negative_eigenvalue_tolerance": 1e-12,
+    "marginalization_absolute_tolerance": 1e-09,
+    "deterministic_serialization": "little_endian_int64_and_float64_then_sha256",
+    "nonfinite_policy": "terminal_fail_closed"
+  },
+  "cases": [
+    {
+      "id": "SO3_preintegration_direction",
+      "angular_rate_rad_s": [0.0, 0.0, 0.4],
+      "duration_sec": 1.0,
+      "sample_period_sec": 0.01,
+      "probe_vector": [1.0, 0.0, 0.0],
+      "expected_rotation_axis": "+z"
+    },
+    {
+      "id": "constant_motion_zero_residual",
+      "duration_sec": 1.0,
+      "sample_period_sec": 0.02,
+      "velocity_W_m_s": [1.0, -0.2, 0.1],
+      "gravity_W_m_s2": [0.0, 0.0, -9.80665]
+    },
+    {
+      "id": "gravity_sign_and_rebase",
+      "gravity_estimate_W_m_s2": [0.4, -0.3, -9.793896],
+      "target_gravity_W_m_s2": [0.0, 0.0, -9.80665]
+    },
+    {
+      "id": "gyro_bias_Jacobian_finite_difference",
+      "duration_sec": 0.5,
+      "sample_period_sec": 0.01,
+      "bias_delta_rad_s": [0.0001, -0.0002, 0.00015],
+      "prediction_tolerance": 2e-07
+    },
+    {
+      "id": "accelerometer_bias_Jacobians_finite_difference",
+      "duration_sec": 0.5,
+      "sample_period_sec": 0.01,
+      "bias_delta_m_s2": [0.001, -0.002, 0.0015],
+      "velocity_prediction_tolerance": 2e-09,
+      "position_prediction_tolerance": 2e-09
+    },
+    {
+      "id": "preintegration_covariance_PSD_and_dt_scaling",
+      "short_duration_sec": 0.5,
+      "long_duration_sec": 1.0,
+      "sample_period_sec": 0.01,
+      "minimum_trace_ratio": 1.5,
+      "maximum_trace_ratio": 10.0
+    },
+    {
+      "id": "scan_boundary_interpolation",
+      "sample_times_ns": [0, 10000000, 20000000, 30000000, 40000000, 50000000],
+      "start_ns": 5000000,
+      "end_ns": 45000000,
+      "linear_vector_slope_per_second": [2.0, -1.0, 0.5]
+    },
+    {
+      "id": "timestamp_gap_fail_closed",
+      "sample_times_ns": [0, 10000000, 20000000, 80000000, 90000000, 100000000],
+      "maximum_gap_ns": 50000000,
+      "minimum_samples": 5
+    },
+    {
+      "id": "point_deskew_direction",
+      "scan_duration_sec": 0.1,
+      "body_velocity_W_m_s": [1.0, 0.0, 0.0],
+      "point_L_at_scan_start_m": [5.0, 0.0, 0.0],
+      "expected_point_B_at_scan_end_m": [4.9, 0.0, 0.0]
+    },
+    {
+      "id": "lidar_to_body_extrinsic_direction",
+      "rotation_z_deg": 90.0,
+      "translation_BL_m": [1.0, 0.0, 0.0],
+      "point_L_m": [1.0, 0.0, 0.0],
+      "expected_point_B_m": [1.0, 1.0, 0.0]
+    },
+    {
+      "id": "binary_point_to_plane_Jacobians_finite_difference",
+      "source_rotation_vector_rad": [0.1, -0.05, 0.02],
+      "source_translation_W_m": [0.3, -0.2, 0.1],
+      "current_rotation_vector_rad": [-0.03, 0.08, 0.04],
+      "current_translation_W_m": [1.1, 0.4, -0.2],
+      "point_current_B_m": [2.0, -0.5, 0.7],
+      "surfel_mean_source_B_m": [2.4, 0.1, 0.3],
+      "surfel_normal_source_B": [0.2, -0.3, 0.9327379053]
+    },
+    {
+      "id": "observable_subspace_rotation_invariance",
+      "singular_values": [12.0, 8.0, 5.0, 3.0, 2.0, 1.5],
+      "coordinate_rotation_seed_offset": 12
+    },
+    {
+      "id": "weak_axis_information_removal_without_state_clamp",
+      "singular_values": [10.0, 8.0, 6.0, 4.0, 2.0, 0.1],
+      "minimum_retained_singular_value": 1.0,
+      "expected_rank": 5,
+      "weak_process_increment": 0.75
+    },
+    {
+      "id": "dynamic_startup_without_orientation_or_zero_velocity_prior",
+      "duration_sec": 2.0,
+      "lidar_sample_period_sec": 0.1,
+      "initial_velocity_W_m_s": [1.2, -0.3, 0.2],
+      "constant_acceleration_W_m_s2": [0.5, 0.1, 0.0],
+      "gravity_W_m_s2": [0.0, 0.0, -9.80665]
+    },
+    {
+      "id": "stationary_startup_uses_same_architecture",
+      "duration_sec": 2.0,
+      "lidar_sample_period_sec": 0.1,
+      "initial_velocity_W_m_s": [0.0, 0.0, 0.0],
+      "constant_acceleration_W_m_s2": [0.0, 0.0, 0.0],
+      "gravity_W_m_s2": [0.0, 0.0, -9.80665]
+    },
+    {
+      "id": "square_root_marginalization_equivalence",
+      "rows": 24,
+      "marginal_dimension": 3,
+      "retained_dimension": 5,
+      "matrix_seed_offset": 16
+    },
+    {
+      "id": "FEJ_prior_consistency_and_gauge_preservation",
+      "relative_chain_state_count": 3,
+      "marginalize_state_count": 1,
+      "gauge_vector": [1.0, 1.0]
+    },
+    {
+      "id": "fixed_lag_capacity_and_deterministic_eviction",
+      "lidar_rate_hz": 20.0,
+      "duration_sec": 4.0,
+      "lag_duration_sec": 3.0,
+      "maximum_active_knots": 64,
+      "expected_final_active_knots": 61,
+      "expected_evicted_knots": 20
+    },
+    {
+      "id": "deterministic_factor_order_and_state_payload_hash",
+      "factor_shuffle_seed_offsets": [19, 20],
+      "state_timestamp_ns": 1234567890123456789,
+      "state_values": [
+        0.0, 0.0, 0.0, 1.0,
+        1.0, 2.0, 3.0,
+        0.5, -0.2, 0.1,
+        0.01, -0.02, 0.03,
+        0.1, -0.1, 0.2,
+        0.0, 0.0, -9.80665
+      ],
+      "state_counters": [7, 4, 128, 5]
+    },
+    {
+      "id": "duplicate_out_of_order_memory_and_protected_output_fail_closed",
+      "maximum_reserved_bytes": 1024,
+      "overflow_request_bytes": 2048,
+      "maximum_input_message_bytes": 8388608,
+      "protected_payload": "v17-protected-synthetic-payload",
+      "event_type_order": ["imu", "lidar"]
+    }
+  ],
+  "resource_bounds": {
+    "maximum_rss_mib": 128.0,
+    "maximum_case_matrix_dimension": 64,
+    "maximum_case_payload_bytes": 16777216,
+    "maximum_report_bytes": 8388608,
+    "capacity_violation_policy": "terminal_fail_closed_before_allocation_or_write"
+  },
+  "decision": {
+    "required_validation_repetitions": 2,
+    "required_passing_contracts": 20,
+    "on_pass": "AUTHORIZE_V44_STAGE4_REPORT_ONLY_SHADOW_IMPLEMENTATION",
+    "on_fail": "REJECT_V44C_SYNTHETIC_NUMERICAL_CONTRACTS",
+    "report_only_shadow_estimator_implementation_authorized_on_pass": true,
+    "raw_shadow_replay_authorized_on_pass": false,
+    "accuracy_or_reference_map_inputs_authorized_on_pass": false,
+    "primary_trajectory_or_map_mutation_authorized_on_pass": false
+  }
+}

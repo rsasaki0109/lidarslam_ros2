@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/v1-readiness-report-v1.schema.json",
+  "title": "lidarslam_ros2 v1 readiness report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "product_version",
+    "target_version",
+    "minimum_release_candidate_version",
+    "summary",
+    "release",
+    "publication_audits",
+    "external_first_map",
+    "gates"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/v1-readiness-report-v1.schema.json"
+    },
+    "status": {
+      "enum": [
+        "READY",
+        "NOT_READY"
+      ]
+    },
+    "product_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "target_version": {
+      "const": "1.0.0"
+    },
+    "minimum_release_candidate_version": {
+      "const": "0.9.0"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total",
+        "complete",
+        "incomplete"
+      ],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 10
+        },
+        "complete": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "incomplete": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_tag",
+        "minimum_version_met",
+        "tag_present"
+      ],
+      "properties": {
+        "expected_tag": {
+          "type": "string"
+        },
+        "minimum_version_met": {
+          "type": "boolean"
+        },
+        "tag_present": {
+          "type": "boolean"
+        }
+      }
+    },
+    "publication_audits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inspected",
+        "ndt_omp_ros2_status",
+        "package_manager_release_status",
+        "lidarslam_release_status"
+      ],
+      "properties": {
+        "inspected": {
+          "type": "boolean"
+        },
+        "ndt_omp_ros2_status": {
+          "enum": [
+            null,
+            "LOCAL_READY",
+            "READY_TO_TAG",
+            "IN_PROGRESS",
+            "REVIEW_REQUIRED",
+            "RELEASED",
+            "BLOCKED"
+          ]
+        },
+        "package_manager_release_status": {
+          "enum": [
+            null,
+            "SOURCE_REF_MISSING",
+            "NOT_RUN",
+            "RUNNING",
+            "FAILED",
+            "READY",
+            "BLOCKED"
+          ]
+        },
+        "lidarslam_release_status": {
+          "enum": [
+            null,
+            "NOT_PUBLISHED",
+            "IN_PROGRESS",
+            "PUBLISHED",
+            "BLOCKED"
+          ]
+        }
+      }
+    },
+    "external_first_map": {
+      "type": "object"
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "status",
+          "evidence",
+          "blockers",
+          "detail"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "COMPLETE",
+              "INCOMPLETE"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

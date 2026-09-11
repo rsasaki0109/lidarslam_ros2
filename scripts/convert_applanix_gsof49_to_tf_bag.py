@@ -294,7 +294,7 @@ def main() -> int:
 
     with AnyReader([input_path], default_typestore=typestore) as reader, Writer(
         output_path,
-        version=9,
+        version=8,
     ) as writer:
         connections = {conn.topic: conn for conn in reader.connections}
         if args.topic not in connections:

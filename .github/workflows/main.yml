@@ -24,20 +24,47 @@ jobs:
   docs-and-release-metadata:
     name: docs and release metadata
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          repository: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
 
       - name: Install Python test dependency
         shell: bash
         run: |
           python3 -m pip install --upgrade pytest jsonschema
 
+      - name: Initialize NDT release candidate
+        shell: bash
+        run: |
+          git submodule update --init Thirdparty/ndt_omp_ros2
+
       - name: Validate docs entrypoints
         shell: bash
         run: |
           python3 -m pytest graph_based_slam/test/test_docs_entrypoints.py -q
+          python3 -m pytest lidarslam/test/test_v1_readiness.py -q
+          python3 -m pytest lidarslam/test/test_ndt_omp_release_readiness.py -q
+          python3 -m pytest lidarslam/test/test_canonical_ndt_convergence.py -q
+          python3 -m pytest lidarslam/test/test_package_manager_install.py -q
+          python3 -m pytest lidarslam/test/test_published_release.py -q
+          python3 -m pytest lidarslam/test/test_release_channel.py -q
+          python3 -m pytest lidarslam/test/test_external_first_map_acceptance.py -q
+          python3 -m pytest lidarslam/test/test_check_g0_readiness.py -q
+          python3 scripts/check_ndt_omp_release_readiness.py --offline
+          python3 scripts/check_canonical_ndt_convergence.py --json
+          python3 scripts/check_external_first_map_readiness.py --json
+          python3 scripts/check_first_map_verification_package.py --json
+          python3 scripts/check_v1_readiness.py --json
+          # G0 is intentionally allowed to report HOLD here; this command
+          # verifies that the read-only dashboard remains schema-valid and
+          # fail-closed on every public candidate.
+          python3 scripts/check_g0_readiness.py --json
 
       - name: Verify generated competitive claim publication boundary
         shell: bash
@@ -53,10 +80,10 @@ jobs:
           bash -n scripts/run_autoware_quickstart.sh
           bash -n scripts/download_ntu_viral_tnp01.sh
           bash -n scripts/run_default_ci_checks.sh
-          bash -n scripts/run_registration_plugin_consumer_check.sh
-          bash -n scripts/run_registration_plugin_template_check.sh
+          bash -n scripts/run_product_python_tests.sh
           bash -n scripts/run_release_readiness_checks.sh
           bash -n scripts/run_rko_lio_graph_autoware_dogfood.sh
+          bash -n scripts/run_first_map_demo.sh
           bash -n scripts/run_docker_demo.sh
           bash -n docker/entrypoint.sh
           bash -n scripts/run_graph_slam_pointcloud_map_in_autoware.sh
@@ -123,7 +150,9 @@ jobs:
       - name: Smoke-test MID-360 robot runbook
         shell: bash
         run: |
-          python3 -m pip install --upgrade pyyaml
+          python3 -m pip install --upgrade pyyaml rosbags
+          python3 -m pytest \
+            graph_based_slam/test/test_autoware_map_preflight.py -q
           bash scripts/smoke_mid360_robot_runbook.sh
 
   default-workflow:
@@ -131,6 +160,7 @@ jobs:
     needs: docs-and-release-metadata
     runs-on: ${{ matrix.runs_on }}
     container: ${{ matrix.container }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -147,12 +177,33 @@ jobs:
         shell: bash
         run: |
           apt-get update
-          apt-get install -y git python3-rosdep python3-colcon-common-extensions
+          apt-get install -y \
+            git \
+            iproute2 \
+            python3-colcon-common-extensions \
+            python3-pip \
+            python3-rosdep
+
+      - name: Install Python test dependencies
+        shell: bash
+        run: |
+          pip_args=(--upgrade "rosbags==0.11.0")
+          if python3 -m pip install --help | grep -q -- '--break-system-packages'; then
+            pip_args+=(--break-system-packages)
+          fi
+          python3 -m pip install "${pip_args[@]}"
 
       - name: Check out repository
         uses: actions/checkout@v6
         with:
+          repository: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
           submodules: recursive
+
+      - name: Trust the container checkout
+        shell: bash
+        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Audit current registration plugin matrix
         shell: bash
@@ -178,7 +229,17 @@ jobs:
           if [[ ! -e /etc/ros/rosdep/sources.list.d/20-default.list ]]; then
             rosdep init
           fi
-          rosdep update --rosdistro "${{ matrix.ros_distro }}"
+          for attempt in 1 2 3; do
+            if rosdep update --rosdistro "${{ matrix.ros_distro }}"; then
+              break
+            fi
+            if [[ "${attempt}" == 3 ]]; then
+              echo "rosdep update failed after ${attempt} attempts" >&2
+              exit 1
+            fi
+            echo "rosdep update failed (attempt ${attempt}/3); retrying" >&2
+            sleep $((attempt * 10))
+          done
 
       - name: Install default workflow dependencies
         shell: bash
@@ -186,10 +247,6 @@ jobs:
           source "/opt/ros/${{ matrix.ros_distro }}/setup.bash"
           rosdep install -r -y \
             --from-paths \
-              lidarslam_plugin_interfaces \
-              lidarslam_default_plugins \
-              lidarslam_fake_registration_plugins \
-              lidarslam_registration_loader \
               lidarslam \
               lidarslam_msgs \
               scanmatcher \
@@ -199,22 +256,11 @@ jobs:
             --ignore-src \
             --rosdistro "${{ matrix.ros_distro }}"
 
-      - name: Verify clean external registration consumer
-        shell: bash
-        run: |
-          ROS_DISTRO="${{ matrix.ros_distro }}" \
-            bash scripts/run_registration_plugin_consumer_check.sh
-
-      - name: Verify external registration plugin template
-        shell: bash
-        run: |
-          ROS_DISTRO="${{ matrix.ros_distro }}" \
-            bash scripts/run_registration_plugin_template_check.sh
-
       - name: Build and test default workflow
         shell: bash
         run: |
           source "/opt/ros/${{ matrix.ros_distro }}/setup.bash"
+          export PYTHONPATH="${GITHUB_WORKSPACE}:${PYTHONPATH:-}"
           bash scripts/run_default_ci_checks.sh
 
       - name: Publish test results
@@ -226,7 +272,11 @@ jobs:
             # shellcheck source=/dev/null
             source install/setup.bash
           fi
-          colcon test-result --verbose
+          if [[ -d build ]]; then
+            colcon test-result --verbose
+          else
+            echo 'No build directory; test results are unavailable after an earlier failure.'
+          fi
 
   registration-plugin-release-matrix:
     name: registration plugin release ${{ matrix.ros_distro }} / ${{ matrix.dependency_leg }}
@@ -426,10 +476,34 @@ jobs:
       - docs-and-release-metadata
       - default-workflow
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          repository: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Verify exact candidate and immutable tags
+        shell: bash
+        run: |
+          EXPECTED_SHA="${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
+          git fetch --force "https://github.com/${GITHUB_REPOSITORY}.git" \
+            '+refs/tags/*:refs/tags/*'
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
+          test "$(git rev-parse 'refs/tags/v0.9.0^{commit}')" = \
+            "0df0c4a86df9f68a894c83f8342e4107c3d23b0f"
+
+      - name: Rehearse deterministic release bundle
+        shell: bash
+        run: |
+          python3 -m pip install --upgrade jsonschema
+          VERSION="$(tr -d '\n' < VERSION)"
+          python3 scripts/check_release_bundle_reproducibility.py \
+            "output/ci_release_bundle/lidarslam_ros2_v${VERSION}_release_bundle.tar.gz"
 
       - name: Generate synthetic benchmark fixture
         shell: bash
@@ -453,6 +527,7 @@ jobs:
         with:
           name: release-readiness
           path: |
+            output/ci_release_bundle
             output/ci_release_readiness/benchmark_summary.md
             output/ci_release_readiness/benchmark_summary.csv
             output/ci_release_readiness/benchmark_report.html

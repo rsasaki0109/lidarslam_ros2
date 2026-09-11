@@ -146,6 +146,23 @@ inline bool projectPoint(
          v >= 0.0f && v <= static_cast<float>(intr.height - 1);
 }
 
+// True when (u, v) sits at least `margin` pixels inside every image border.
+// Lens vignetting darkens the border band in a way per-frame exposure gains
+// cannot repair, so colour sampling can skip it while the z-buffer (occlusion
+// geometry, valid to the border) still uses the full frame — the streaming
+// counterpart of the offline `image_margin` option. `margin <= 0` keeps the
+// full frame.
+inline bool insideImageMargin(
+  const CameraIntrinsics & intr, float u, float v, int margin)
+{
+  if (margin <= 0) {
+    return true;
+  }
+  const float m = static_cast<float>(margin);
+  return u >= m && u <= static_cast<float>(intr.width - 1) - m &&
+         v >= m && v <= static_cast<float>(intr.height - 1) - m;
+}
+
 // Nearest-pixel colour sample into `rgb` (3 elements). Coordinates are clamped
 // to the image, so callers may pass any in-bounds (u, v).
 inline void sampleNearest(
@@ -261,6 +278,15 @@ struct PointColor
   }
 
   bool seen() const {return count > 0;}
+
+  // Colour backed by at least `min_count` accumulated observations. Colours
+  // confirmed only once or twice are usually occlusion-fringe or specular
+  // one-offs that pepper flat surfaces; consumers can require more before
+  // trusting the mean (min_count <= 1 degrades to `seen`).
+  bool confirmed(std::uint16_t min_count) const
+  {
+    return count >= std::max<std::uint16_t>(min_count, 1);
+  }
 
   // Rounded [0,255] mean colour into `out` (3 elements). Undefined if unseen.
   void mean(std::uint8_t out[3]) const

@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/sensor-setup-rejection-v1.schema.json",
+  "title": "lidarslam_ros2 sensor setup rejection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "bag_path",
+    "reason",
+    "detected",
+    "findings",
+    "next_command",
+    "files_written"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/sensor-setup-rejection-v1.schema.json"
+    },
+    "status": {"const": "not_ready"},
+    "bag_path": {"type": "string", "minLength": 1},
+    "reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "enum": ["no-maintained-profile", "profile-incompatible"]
+        },
+        "message": {"type": "string", "minLength": 1}
+      }
+    },
+    "detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["topics", "pointcloud_check", "timestamp_check"],
+      "properties": {
+        "topics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pointcloud2",
+            "imu",
+            "navsatfix",
+            "velodyne_scan",
+            "applanix_gsof49",
+            "applanix_gsof50"
+          ],
+          "properties": {
+            "pointcloud2": {"$ref": "#/definitions/topic_names"},
+            "imu": {"$ref": "#/definitions/topic_names"},
+            "navsatfix": {"$ref": "#/definitions/topic_names"},
+            "velodyne_scan": {"$ref": "#/definitions/topic_names"},
+            "applanix_gsof49": {"$ref": "#/definitions/topic_names"},
+            "applanix_gsof50": {"$ref": "#/definitions/topic_names"}
+          }
+        },
+        "pointcloud_check": {"type": "string", "minLength": 1},
+        "timestamp_check": {"type": "string", "minLength": 1}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/finding"}
+    },
+    "next_command": {"type": "string", "minLength": 1},
+    "files_written": {"const": false}
+  },
+  "definitions": {
+    "topic_names": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "next_action"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "message": {"type": "string", "minLength": 1},
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

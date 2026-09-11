@@ -51,7 +51,7 @@ publish timing jitter run-to-run, so the searchLoop tick fires against
 different `latest_idx` values each run. Single-run claims sample one
 realization of that timing.
 
-(PR #183 retracted the 2026-05-18 "APE improvement" claim from plan.md §1.2.)
+(PR #183 retracted the 2026-05-18 "APE improvement" claim from docs/research/project-plan-archive.md §1.2.)
 
 ## Why triangle accept = 0 still costs APE on MID-360 (PR #184)
 

@@ -97,7 +97,7 @@ def _corrupt_pointcloud_stamps(bag: Path, jump_sec: float) -> None:
     jump_ns = int(jump_sec * 1_000_000_000)
     with AnyReader([bag], default_typestore=typestore) as reader, Writer(
         tmp_bag,
-        version=9,
+        version=8,
     ) as writer:
         output_connections: dict[str, object] = {}
         for conn in reader.connections:

@@ -1,0 +1,88 @@
+name: Bug report
+description: Report a reproducible defect in a maintained product path.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read SUPPORT.md first. Do not report security vulnerabilities here.
+        Keep ordinary `doctor --json` output local because it contains the bag
+        path and local commands. Use `--public-json` for this public issue.
+        If the failure happened before a session was created, keep the doctor
+        finding codes; do not invent a support ZIP.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release tag, commit SHA, or container digest.
+      placeholder: v0.9.0 or an exact commit
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: ROS distribution, Ubuntu version, architecture, and install method.
+      placeholder: Jazzy / Ubuntu 24.04 / amd64 / source
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Redacted command shape
+      description: Keep the executable, options, and non-private values, but replace credentials, private paths, host or user names, and precise locations with the literal REDACTED placeholder.
+      placeholder: lidarslam-map start REDACTED --viewer none
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: preflight
+    attributes:
+      label: Public doctor evidence
+      description: Run `lidarslam-map doctor <bag> --public-json`, review it, and paste the complete JSON. Even an unreadable input returns path-free `bag-preflight-input-error` evidence. This mode omits bag paths, topic or frame names, local commands, raw data, raw logs, and free-text messages; do not substitute ordinary `--json` output.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and observed behavior
+      description: Explain what should have happened and what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Privacy-first support ZIP and diagnostics
+      description: >-
+        If a session exists, run `lidarslam-map support <session_bundle>`,
+        review the three files, then drag the ZIP here. If no session was
+        created, state that clearly, attach no file, and name the first public
+        doctor `first_action_code` or `finding_codes` value. Do not paste raw
+        doctor output, terminal history, or logs.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: I used the complete reviewed `--public-json` evidence and replaced credentials, private paths, host or user names, and precise locations in the command or other manual text with the literal REDACTED placeholder.
+          required: true
+        - label: I either reviewed every file in the one attached support ZIP, or no session and ZIP existed and I attached no file.
+          required: true
+        - label: I attached no rosbag, map or trajectory geometry, raw log, raw sensor data, parameter file, terminal history, or private-site image.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

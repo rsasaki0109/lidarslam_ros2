@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "contract_id": "v42-streaming-external-pose-graph-20260810",
+  "rationale": "Report-only, ground-truth-independent screen. A loop must be unique in descriptor space and one rigid correction must independently explain a five-submap sequence. The rejected v17 8 m backend edge set is a fail-closed challenge set, never a tuning label.",
+  "frames": {
+    "world": "map",
+    "body": "base_link"
+  },
+  "anchor": {
+    "minimum_translation_m": 1.5
+  },
+  "candidate": {
+    "minimum_travel_separation_m": 100.0,
+    "search_radius_m": 20.0,
+    "episode_gap_anchors": 8,
+    "query_stride": 1,
+    "maximum_episodes_per_query": 8,
+    "minimum_sequence_descriptor_similarity": 0.78,
+    "minimum_sequence_descriptor_margin": 0.08,
+    "maximum_geometry_verifications": 256
+  },
+  "submap": {
+    "anchor_radius": 1,
+    "minimum_range_m": 1.0,
+    "maximum_range_m": 50.0,
+    "voxel_size_m": 0.5,
+    "maximum_raw_points": 100000,
+    "maximum_points": 6000,
+    "maximum_submap_bytes": 8388608,
+    "chunk_cache_entries": 3,
+    "maximum_chunk_cache_bytes": 33554432
+  },
+  "descriptor": {
+    "rings": 20,
+    "sectors": 60,
+    "maximum_radius_m": 50.0,
+    "minimum_height_m": -3.0,
+    "maximum_height_m": 5.0
+  },
+  "registration": {
+    "maximum_iterations": 15,
+    "maximum_correspondence_m": 1.0,
+    "trim_fraction": 0.8,
+    "minimum_correspondences": 200,
+    "minimum_correspondence_ratio": 0.25,
+    "convergence_translation_m": 0.001,
+    "convergence_rotation_deg": 0.05,
+    "maximum_correction_translation_m": 1.0,
+    "maximum_correction_rotation_deg": 5.0,
+    "overlap_distance_m": 0.5,
+    "minimum_pair_mutual_overlap": 0.55,
+    "maximum_support_rmse_m": 0.35,
+    "maximum_support_p90_m": 0.6
+  },
+  "sequence": {
+    "offsets": [-6, -3, 0, 3, 6],
+    "minimum_center_mutual_overlap": 0.6,
+    "minimum_sequence_mutual_overlap": 0.55,
+    "maximum_global_correction_translation_spread_m": 0.5,
+    "maximum_global_correction_rotation_spread_deg": 2.0
+  },
+  "deduplication": {
+    "index_window": 8
+  },
+  "constraint": {
+    "translation_variance_m2": 0.09,
+    "rotation_variance_rad2": 0.0012184696791468343,
+    "maximum_covariance_condition": 1000000.0
+  },
+  "memory": {
+    "maximum_rss_mib": 256.0
+  },
+  "decision": {
+    "required_repetitions": 2,
+    "maximum_legacy_challenge_survivors": 0,
+    "minimum_total_new_verified_constraints": 2,
+    "require_new_constraint_per_applicable_sequence": true
+  }
+}

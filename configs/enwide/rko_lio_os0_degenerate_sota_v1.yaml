@@ -1,0 +1,57 @@
+# RKO-LIO preregistered ENWIDE configuration for the Ouster OS0-128.
+#
+# One identical parameter set is used for every ENWIDE sequence. The sensor
+# transform is derived from the official os_enwide.json:
+#   T_sensor_imu   = I, [ 0.006253, -0.011775, 0.007645] m
+#   T_sensor_lidar = Rz(pi), [0, 0, 0.036170] m
+# Therefore T_imu_lidar = Rz(pi), [-0.006253, 0.011775, 0.028525] m.
+# The base trajectory is the IMU origin.
+extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+extrinsic_lidar2base_quat_xyzw_xyz: [0.0, 0.0, 1.0, 0.0, -0.006253, 0.011775, 0.028525]
+
+# Ouster ROS clouds carry relative uint32 nanoseconds in field "t". RKO-LIO
+# detects the unit automatically and anchors it to the PointCloud2 header.
+lidar_timestamps.offset_seconds: 0.0
+lidar_timestamps.force_absolute: false
+lidar_timestamps.force_relative: true
+
+initialization_phase: true
+deskew: true
+voxel_size: 0.25
+icp_keypoint_voxel_multiplier: 1.5
+max_points_per_voxel: 20
+min_range: 0.7
+max_range: 100.0
+max_correspondence_distance: 0.5
+double_downsample: true
+
+# Geometry-only weak-direction handling.
+degeneracy_aware_solve: true
+degeneracy_well_conditioned_ratio: 1.5e-5
+degeneracy_multiplicity_relative_gap: 1.0e-8
+degeneracy_prior_weight: 0.25
+degeneracy_persistence_gate: true
+degeneracy_persistence_min_scans: 3
+degeneracy_persistence_tracking_ratio: 1.5e-5
+degeneracy_persistence_min_absolute_cosine: 0.98
+degeneracy_persistence_min_translation_fraction: 0.99
+degeneracy_multiscan_observability_gate: true
+degeneracy_observability_window_scans: 10
+degeneracy_observability_min_scans: 5
+degeneracy_observability_max_directional_ratio: 1.0e-5
+
+# Complementary LiDAR reflectivity constraint. This is only allowed to activate
+# after persistent geometric degeneracy has been confirmed.
+intensity_constraint: true
+intensity_bin_size_m: 0.25
+intensity_profile_half_length_m: 30.0
+intensity_max_shift_m: 1.5
+intensity_min_correlation: 0.6
+intensity_min_filled_bins: 40
+
+# The benchmark track forbids external velocity and recovery-map inputs.
+radar_velocity_fusion: false
+radar_velocity_continuous_fusion: false
+enable_kidnap_relocalization: false
+reset_on_registration_failure: false
+relocalize_after_scan_gap: false

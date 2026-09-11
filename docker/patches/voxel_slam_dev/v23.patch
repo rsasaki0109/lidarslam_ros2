@@ -1,0 +1,50 @@
+--- a/VoxelSLAM/src/voxelslam.cpp
++++ b/VoxelSLAM/src/voxelslam.cpp
+@@ -771,6 +771,7 @@
+   int archived_scan_stride = 1;
+   bool loop_backend_enabled = false;
+   bool weak_axis_bridge_active = false;
++  bool z_constraint_enabled = false;
+   int weak_axis_degenerate_streak = 0;
+   int weak_axis_recovery_streak = 0;
+   Eigen::Vector3d weak_axis_body = Eigen::Vector3d::Zero();
+@@ -836,6 +837,7 @@
+                     map_retention_distance, 25.0);
+     n.param<int>("Odometry/archived_scan_stride", archived_scan_stride, 1);
+     n.param<int>("Odometry/point_notime", point_notime, 0);
++    n.param<bool>("Odometry/z_constraint_enabled", z_constraint_enabled, false);
+     odom_ekf.point_notime = point_notime;
+ 
+     feat.blind = feat.blind * feat.blind;
+@@ -1210,6 +1212,31 @@
+       Eigen::Vector3d rot_add = solution.block<3, 1>(0, 0);
+       Eigen::Vector3d tra_add = solution.block<3, 1>(3, 0);
+ 
++      // Vertical-velocity anti-drift soft constraint (v23).
++      // Open sections (wide plazas, sparse close geometry) let the scan
++      // matcher over-correct the gravity-axis velocity, integrating a small
++      // mm/s vertical bias into height. When the velocity correction's
++      // gravity-axis component is large, blend it back toward the propagated
++      // (pre-update) IMU vertical velocity so height stays attached to the
++      // inertial solution. Unlike v22, this does not rely on the z
++      // information weight, which stays large even in the drifting windows.
++      if(!weak_axis_bridge_active && z_constraint_enabled)
++      {
++        const Eigen::Vector3d grav = x_curr.g.normalized();
++        const double dvz = grav.dot(solution.block<3, 1>(6, 0));
++        const double dvz_max = 0.03;
++        if(dvz > dvz_max)
++        {
++          const double over = dvz - dvz_max;
++          x_curr.v -= grav * over;
++        }
++        else if(dvz < -dvz_max)
++        {
++          const double over = -dvz - dvz_max;
++          x_curr.v -= grav * (-over);
++        }
++      }
++
+       EKF_stop_flg = false;
+       flg_EKF_converged = false;
+ 

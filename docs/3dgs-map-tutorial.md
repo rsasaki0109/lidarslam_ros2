@@ -56,7 +56,7 @@ bash scripts/compare_with_glim.sh --bag <bag> --skip-glim \
 各画像の `world <- camera` を解決して Nerfstudio `transforms.json` と画像を書き出す。
 
 ```bash
-python3 tools/gaussian_splatting/extract_posed_images.py \
+python3 tools/colored_map/extract_posed_images.py \
   --bag <bag> --traj <run>/lidarslam/traj_map_*.tum \
   --camera-topic /image --camera-info-topic /camera_info \
   --extrinsic configs/gaussian_splatting/<lidar_camera_extrinsic>.yaml \
@@ -80,7 +80,7 @@ bag のスキャンを SLAM 軌跡で world 系に蓄積した点群を Gaussian
 （COLMAP SfM 不要でメートル単位の幾何事前が入る）。
 
 ```bash
-python3 tools/gaussian_splatting/build_lidar_init.py \
+python3 tools/colored_map/build_lidar_init.py \
   --bag <bag> --traj <run>/lidarslam/traj_map_*.tum \
   --points-topic /livox/points --voxel 0.05 --max-points 200000 \
   --out <run>/gsplat/lidar_init.ply
@@ -187,9 +187,15 @@ python3 tools/gaussian_splatting/render_path.py \
 - リポジトリ内の成果物例: `lidarslam/images/map_flythrough_rtkslam.webp` / `.mp4`
   （RTK-SLAM construction_seq1。カメラ画像を投影した実色の SLAM 点群地図+推定軌跡を、
   60m 周回全体を等速で進むサードパーソン追従カメラで描画。
-  `build_lidar_init.py --color-transforms --color-robust --min-neighbors 4` で
-  オクルージョン考慮・露出正規化・中央値ロバストの色付き点群(孤立ノイズ点除去込み)を作り、
-  `tools/gaussian_splatting/render_map_flythrough.py --color-mode rgb` で再現。
+  `build_lidar_init.py --color-transforms --color-robust --min-neighbors 8
+  --color-image-margin 140 --color-min-samples 3` で
+  オクルージョン考慮・露出正規化・medoid ロバストの色付き点群を作り
+  (`--color-image-margin` がレンズビネットの暗い縁を色サンプルから除外、
+  `--color-min-samples` が観測回数の少ない低信頼色を破棄、Livox `offset_time`
+  由来のスキャン内デスキューも適用)、
+  `tools/colored_map/render_map_flythrough.py --color-mode rgb --scale 0.375
+  --point-size 0.02 --device cpu` で再現。`--device cpu` は CUDA 無しで動く
+  numpy スプラッタ (`render_path.render_frames_cpu`)。
   3DGS は学習視点クラスタから ~0.4m 離れると崩壊し俯瞰ではコンフェッティ状になるため
   「地図の中を移動する」絵は点群側で作る — 経緯と知見は
   `docs/research/3dgs-trajectory-flythrough-notes.md`）、

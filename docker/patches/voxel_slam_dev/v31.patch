@@ -1,0 +1,37 @@
+--- a/VoxelSLAM/src/voxelslam.cpp
++++ b/VoxelSLAM/src/voxelslam.cpp
+@@ -771,6 +771,7 @@
+   int archived_scan_stride = 1;
+   bool loop_backend_enabled = false;
+   bool weak_axis_bridge_active = false;
++  bool z_constraint_enabled = false;
+   int weak_axis_degenerate_streak = 0;
+   int weak_axis_recovery_streak = 0;
+   Eigen::Vector3d weak_axis_body = Eigen::Vector3d::Zero();
+@@ -836,6 +837,7 @@
+                     map_retention_distance, 25.0);
+     n.param<int>("Odometry/archived_scan_stride", archived_scan_stride, 1);
+     n.param<int>("Odometry/point_notime", point_notime, 0);
++    n.param<bool>("Odometry/z_constraint_enabled", z_constraint_enabled, false);
+     odom_ekf.point_notime = point_notime;
+ 
+     feat.blind = feat.blind * feat.blind;
+@@ -1167,6 +1169,18 @@
+           double R_inv = 1.0 / (0.0005 + sigma_d);
+           double resi = pp.normal.dot(wld - pp.center);
+ 
++          // Horizontal-plane z-constraint emphasis (v31). Open sections
++          // (wide plazas, sparse close geometry) under-weight the vertical
++          // direction because most planes are near-vertical. Ground and
++          // ceiling planes always carry a large normal z; boost their
++          // contribution to keep the estimator attached to the true height.
++          if(z_constraint_enabled)
++          {
++            const double nz = fabs(pp.normal[2]);
++            if(nz > 0.7)
++              R_inv *= 2.0;
++          }
++
+           Eigen::Matrix<double, 6, 1> jac;
+           jac.head(3) = phat * x_curr.R.transpose() * pp.normal;
+           jac.tail(3) = pp.normal;

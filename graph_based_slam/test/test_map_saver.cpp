@@ -238,15 +238,6 @@ TEST(MapSaverBundle, ManifestNamesEveryRequiredArtifactDeterministically)
   manifest.planar_map_filter_max_small_eigenvalue_ratio = 0.24;
   manifest.planar_map_filter_min_middle_eigenvalue_ratio = 0.0;
   manifest.planar_map_filter_min_retained_ratio = 0.9;
-  manifest.planar_map_consolidation = true;
-  manifest.planar_map_consolidation_voxel_size = 0.3;
-  manifest.planar_map_consolidation_min_neighbors = 12;
-  manifest.planar_map_consolidation_max_small_eigenvalue_ratio = 0.05;
-  manifest.planar_map_consolidation_min_middle_eigenvalue_ratio = 0.05;
-  manifest.planar_map_consolidation_max_plane_distance_m = 0.1;
-  manifest.planar_map_consolidation_projection_gain = 0.5;
-  manifest.planar_map_consolidation_max_displacement_m = 0.02;
-  manifest.planar_map_consolidation_min_supported_ratio = 0.1;
   EXPECT_EQ(
     map_saver::bundleManifestYaml(manifest),
     "format_version: 1\n"
@@ -263,15 +254,6 @@ TEST(MapSaverBundle, ManifestNamesEveryRequiredArtifactDeterministically)
     "planar_map_filter_max_small_eigenvalue_ratio: 0.23999999999999999\n"
     "planar_map_filter_min_middle_eigenvalue_ratio: 0\n"
     "planar_map_filter_min_retained_ratio: 0.90000000000000002\n"
-    "planar_map_consolidation: true\n"
-    "planar_map_consolidation_voxel_size_m: 0.29999999999999999\n"
-    "planar_map_consolidation_min_neighbors: 12\n"
-    "planar_map_consolidation_max_small_eigenvalue_ratio: 0.050000000000000003\n"
-    "planar_map_consolidation_min_middle_eigenvalue_ratio: 0.050000000000000003\n"
-    "planar_map_consolidation_max_plane_distance_m: 0.10000000000000001\n"
-    "planar_map_consolidation_projection_gain: 0.5\n"
-    "planar_map_consolidation_max_displacement_m: 0.02\n"
-    "planar_map_consolidation_min_supported_ratio: 0.10000000000000001\n"
     "artifacts:\n"
     "  full_map: map.pcd\n"
     "  pointcloud_map: pointcloud_map\n"

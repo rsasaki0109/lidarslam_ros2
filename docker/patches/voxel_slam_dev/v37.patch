@@ -1,0 +1,275 @@
+--- a/VoxelSLAM/src/voxelslam.cpp
++++ b/VoxelSLAM/src/voxelslam.cpp
+@@ -1,4 +1,5 @@
+ #include "voxelslam.hpp"
++#include <algorithm>
+ 
+ using namespace std;
+ 
+@@ -780,6 +781,25 @@
+   double weak_axis_speed = 0;
+   double weak_axis_time = 0;
+   deque<pair<double, Eigen::Vector3d>> weak_pose_history;
++  struct VerticalBiasSample
++  {
++    double t;
++    double position;
++    double velocity;
++  };
++  bool vertical_accel_bias_enabled = false;
++  double vertical_accel_bias_window = 8.0;
++  double vertical_accel_bias_gain = 0.5;
++  double vertical_accel_bias_min_innovation = 0.001;
++  double vertical_accel_bias_max_correction = 0.005;
++  double vertical_accel_bias_max_velocity_change = 0.5;
++  double vertical_accel_bias_last_update = -1e9;
++  bool vertical_accel_bias_quarantine_enabled = false;
++  bool vertical_accel_bias_quarantine_active = false;
++  int vertical_accel_bias_quarantine_streak = 0;
++  unsigned long long vertical_accel_bias_quarantine_update_count = 0;
++  double vertical_accel_bias_quarantine_shadow = 0.0;
++  deque<VerticalBiasSample> vertical_bias_history;
+ 
+   vector<vector<ScanPose*>*> multimap_scanPoses;
+   vector<vector<Keyframe*>*> multimap_keyframes;
+@@ -837,6 +857,30 @@
+     n.param<int>("Odometry/archived_scan_stride", archived_scan_stride, 1);
+     n.param<int>("Odometry/point_notime", point_notime, 0);
+     odom_ekf.point_notime = point_notime;
++    n.param<bool>("Odometry/vertical_accel_bias_enabled",
++                  vertical_accel_bias_enabled, false);
++    n.param<bool>("Odometry/vertical_accel_bias_quarantine_enabled",
++                  vertical_accel_bias_quarantine_enabled, false);
++    n.param<double>("Odometry/vertical_accel_bias_window",
++                    vertical_accel_bias_window, 8.0);
++    n.param<double>("Odometry/vertical_accel_bias_gain",
++                    vertical_accel_bias_gain, 0.5);
++    n.param<double>("Odometry/vertical_accel_bias_min_innovation",
++                    vertical_accel_bias_min_innovation, 0.001);
++    n.param<double>("Odometry/vertical_accel_bias_max_correction",
++                    vertical_accel_bias_max_correction, 0.005);
++    n.param<double>("Odometry/vertical_accel_bias_max_velocity_change",
++                    vertical_accel_bias_max_velocity_change, 0.5);
++    if(vertical_accel_bias_window < 3.0)
++      vertical_accel_bias_window = 3.0;
++    if(vertical_accel_bias_gain < 0.0 || vertical_accel_bias_gain > 1.0)
++      vertical_accel_bias_gain = 0.5;
++    if(vertical_accel_bias_min_innovation < 0.0)
++      vertical_accel_bias_min_innovation = 0.001;
++    if(vertical_accel_bias_max_correction < 0.0)
++      vertical_accel_bias_max_correction = 0.005;
++    if(vertical_accel_bias_max_velocity_change <= 1e-6)
++      vertical_accel_bias_max_velocity_change = 0.5;
+ 
+     feat.blind = feat.blind * feat.blind;
+     odom_ekf.cov_gyr << cov_gyr, cov_gyr, cov_gyr;
+@@ -1085,6 +1129,175 @@
+     scan.last_loaded_journey = journey;
+   }
+ 
++  bool update_vertical_accel_bias_quarantine(
++      const Eigen::Vector3d &evalue, const Eigen::Matrix3d &eigenvectors)
++  {
++    if(!vertical_accel_bias_enabled ||
++       !vertical_accel_bias_quarantine_enabled ||
++       x_curr.g.norm() < 1e-6)
++      return vertical_accel_bias_quarantine_active;
++
++    // Fixed, global onset rule frozen from the v36 diagnostic screen. It
++    // detects a horizontal weak direction carrying substantial speed before
++    // the existing absolute-eigenvalue bridge threshold is reached.
++    const double eigen_ratio_threshold = 0.2;
++    const double horizontal_norm_threshold = 0.9;
++    const double velocity_projection_threshold = 3.0;
++    const int required_streak = 5;
++    const Eigen::Vector3d gravity_axis = x_curr.g.normalized();
++    const Eigen::Vector3d weakest = eigenvectors.col(0).normalized();
++    const double gravity_alignment = fabs(gravity_axis.dot(weakest));
++    const double horizontal_norm = sqrt(max(
++        0.0, 1.0 - gravity_alignment * gravity_alignment));
++    Eigen::Vector3d weak_horizontal =
++        weakest - gravity_axis * gravity_axis.dot(weakest);
++    double velocity_projection = 0.0;
++    if(weak_horizontal.norm() > 1e-6)
++      velocity_projection =
++          fabs(weak_horizontal.normalized().dot(x_curr.v));
++    const double eigen_ratio = evalue[0] / max(evalue[1], 1e-9);
++    const bool signal =
++        eigen_ratio < eigen_ratio_threshold &&
++        horizontal_norm >= horizontal_norm_threshold &&
++        velocity_projection >= velocity_projection_threshold;
++    if(signal)
++      vertical_accel_bias_quarantine_streak++;
++    else
++      vertical_accel_bias_quarantine_streak = 0;
++    if(!vertical_accel_bias_quarantine_active &&
++       vertical_accel_bias_quarantine_streak >= required_streak)
++    {
++      vertical_accel_bias_quarantine_active = true;
++      printf("v37 vertical ba quarantine: ratio=%g horizontal=%g "
++             "velocity=%g streak=%d\n",
++             eigen_ratio, horizontal_norm, velocity_projection,
++             vertical_accel_bias_quarantine_streak);
++    }
++    return vertical_accel_bias_quarantine_active;
++  }
++
++  void update_vertical_accel_bias(bool quarantine_active)
++  {
++    if(!vertical_accel_bias_enabled || x_curr.g.norm() < 1e-6)
++      return;
++
++    const Eigen::Vector3d gravity_axis = x_curr.g.normalized();
++    VerticalBiasSample current;
++    current.t = x_curr.t;
++    current.position = gravity_axis.dot(x_curr.p);
++    current.velocity = gravity_axis.dot(x_curr.v);
++
++    if(!vertical_bias_history.empty() &&
++       current.t <= vertical_bias_history.back().t)
++      vertical_bias_history.clear();
++    vertical_bias_history.push_back(current);
++    while(!vertical_bias_history.empty() &&
++          vertical_bias_history.front().t <
++              current.t - 2.0 * vertical_accel_bias_window)
++      vertical_bias_history.pop_front();
++
++    if(vertical_bias_history.size() < 10 ||
++       current.t - vertical_accel_bias_last_update < 0.5)
++      return;
++
++    const double window_start = current.t - vertical_accel_bias_window;
++    vector<double> innovations;
++    innovations.reserve(vertical_bias_history.size());
++    bool have_previous = false;
++    VerticalBiasSample previous;
++    for(const VerticalBiasSample &sample: vertical_bias_history)
++    {
++      if(sample.t < window_start)
++      {
++        previous = sample;
++        have_previous = true;
++        continue;
++      }
++      if(have_previous)
++      {
++        const double dt = sample.t - previous.t;
++        if(dt > 0.01 && dt < 0.5)
++        {
++          const double position_velocity =
++              (sample.position - previous.position) / dt;
++          const double midpoint_velocity =
++              0.5 * (sample.velocity + previous.velocity);
++          innovations.push_back(position_velocity - midpoint_velocity);
++        }
++      }
++      previous = sample;
++      have_previous = true;
++    }
++
++    if(innovations.size() < 8)
++      return;
++    sort(innovations.begin(), innovations.end());
++    const size_t middle = innovations.size() / 2;
++    const double median = (innovations.size() % 2 == 0) ?
++        0.5 * (innovations[middle - 1] + innovations[middle]) :
++        innovations[middle];
++    vector<double> deviations;
++    deviations.reserve(innovations.size());
++    for(double innovation: innovations)
++      deviations.push_back(fabs(innovation - median));
++    sort(deviations.begin(), deviations.end());
++    const size_t dev_middle = deviations.size() / 2;
++    const double mad = (deviations.size() % 2 == 0) ?
++        0.5 * (deviations[dev_middle - 1] + deviations[dev_middle]) :
++        deviations[dev_middle];
++
++    VerticalBiasSample anchor = vertical_bias_history.front();
++    for(const VerticalBiasSample &sample: vertical_bias_history)
++    {
++      if(sample.t <= window_start)
++        anchor = sample;
++      else
++        break;
++    }
++    const double window_dt = current.t - anchor.t;
++    const double velocity_change = current.velocity - anchor.velocity;
++    if(window_dt < 0.75 * vertical_accel_bias_window ||
++       fabs(velocity_change) > vertical_accel_bias_max_velocity_change ||
++       fabs(median) < vertical_accel_bias_min_innovation)
++      return;
++
++    // For a constant accelerometer-bias error, the velocity innovation grows
++    // linearly across the window. Twice its median divided by the window
++    // duration estimates the bias error in m/s^2. Update the actual IMU bias
++    // state, rather than applying a one-scan velocity correction.
++    const double innovation_scale =
++        vertical_accel_bias_min_innovation + 1e-6;
++    const double mad_weight = 1.0 / (1.0 + mad / innovation_scale);
++    const double change_weight =
++        1.0 - min(1.0, fabs(velocity_change) /
++                          vertical_accel_bias_max_velocity_change);
++    const double bias_error = 2.0 * median / window_dt;
++    double correction = vertical_accel_bias_gain * mad_weight *
++                        change_weight * bias_error;
++    correction = max(-vertical_accel_bias_max_correction,
++                     min(vertical_accel_bias_max_correction, correction));
++    vertical_accel_bias_last_update = current.t;
++    if(quarantine_active)
++    {
++      // Keep the candidate in an isolated scalar shadow. It is deliberately
++      // not fed into x_curr.ba, the shared EKF inertial state.
++      vertical_accel_bias_quarantine_shadow += correction;
++      vertical_accel_bias_quarantine_update_count++;
++      if(vertical_accel_bias_quarantine_update_count <= 3 ||
++         vertical_accel_bias_quarantine_update_count % 100 == 0)
++        printf("v37 vertical ba quarantined: count=%llu correction=%g "
++               "shadow=%g\n",
++               vertical_accel_bias_quarantine_update_count, correction,
++               vertical_accel_bias_quarantine_shadow);
++    }
++    else
++    {
++      const Eigen::Vector3d gravity_body =
++          x_curr.R.transpose() * gravity_axis;
++      x_curr.ba -= gravity_body * correction;
++    }
++  }
++
+   // The point-to-plane alignment for odometry
+   bool lio_state_estimation(PVecPtr pptr)
+   {
+@@ -1232,6 +1445,10 @@
+ 
+     Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> saes(nnt);
+     Eigen::Vector3d evalue = saes.eigenvalues();
++    bool quarantine_active = vertical_accel_bias_quarantine_active;
++    if(vertical_accel_bias_enabled)
++      quarantine_active = update_vertical_accel_bias_quarantine(
++          evalue, saes.eigenvectors());
+     // printf("eva %d: %lf\n", match_num, evalue[0]);
+ 
+     if(weak_axis_bridge_active)
+@@ -1256,6 +1473,9 @@
+       return evalue[1] >= 14;
+     }
+ 
++    if(vertical_accel_bias_enabled)
++      update_vertical_accel_bias(quarantine_active);
++
+     if(evalue[0] < 14 && evalue[1] >= 14)
+       weak_axis_degenerate_streak++;
+     else
+@@ -1652,6 +1872,12 @@
+     weak_axis_speed = 0;
+     weak_axis_time = 0;
+     weak_pose_history.clear();
++    vertical_bias_history.clear();
++    vertical_accel_bias_last_update = -1e9;
++    vertical_accel_bias_quarantine_active = false;
++    vertical_accel_bias_quarantine_streak = 0;
++    vertical_accel_bias_quarantine_update_count = 0;
++    vertical_accel_bias_quarantine_shadow = 0.0;
+     frozen_plane_map.clear();
+     frozen_plane_count = 0;
+     last_map_compaction_journey = 0.0;

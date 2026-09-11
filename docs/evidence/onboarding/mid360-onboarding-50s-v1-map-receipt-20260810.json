@@ -1,0 +1,76 @@
+{
+  "checks": [
+    {
+      "id": "manifest_succeeded",
+      "observed": "succeeded",
+      "passed": true
+    },
+    {
+      "id": "lifecycle_complete",
+      "observed": "complete",
+      "passed": true
+    },
+    {
+      "id": "runner_exit_zero",
+      "observed": "0",
+      "passed": true
+    },
+    {
+      "id": "diagnosis_success",
+      "observed": "success",
+      "passed": true
+    },
+    {
+      "id": "autoware_verification_pass",
+      "observed": "PASS",
+      "passed": true
+    },
+    {
+      "id": "diagnosis_bound_to_manifest",
+      "observed": "matched",
+      "passed": true
+    },
+    {
+      "id": "verify_log_bound_to_manifest",
+      "observed": "matched",
+      "passed": true
+    }
+  ],
+  "evidence": {
+    "diagnosis": {
+      "available": true,
+      "filename": "autoware_map_diagnosis.json",
+      "sha256": "890b3be607d0b2f88b03a10e8bba410cc8963ea9e431b5dd96896cdf154efdd5"
+    },
+    "manifest": {
+      "filename": "run_manifest.json",
+      "sha256": "3875f246c2379cdec36bffefea365417cd92564678a7526e6f46359f8153aa17"
+    },
+    "verify_log": {
+      "available": true,
+      "filename": "verify_autoware_map.log",
+      "sha256": "63053526d4a3686219461a2c2c7277890940bf8522d44dfd6f2d82748de1dfea"
+    }
+  },
+  "run": {
+    "git_commit": "0f91452c505e03fc810c79a0b6e602101ffefce7",
+    "product_version": "0.9.0",
+    "profile_id": "rko_lio_graph_mid360_preset",
+    "run_id": "2c1a1a68-ae5b-4bfc-ad27-c2268ff203da"
+  },
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-validation-receipt-v1.schema.json",
+  "schema_version": 1,
+  "shareability": {
+    "contains_exact_command": false,
+    "contains_map_geometry": false,
+    "contains_private_paths": false,
+    "review_before_sharing": true
+  },
+  "status": "PASS",
+  "verification": {
+    "autoware_status": "PASS",
+    "diagnosis_status": "success",
+    "manifest_sha256": "3875f246c2379cdec36bffefea365417cd92564678a7526e6f46359f8153aa17",
+    "manifest_status": "succeeded"
+  }
+}

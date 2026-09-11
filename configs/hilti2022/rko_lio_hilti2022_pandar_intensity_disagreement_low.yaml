@@ -1,0 +1,43 @@
+# RKO-LIO config for HILTI 2022 handheld (Phasma) platform, exp07 long
+# corridor A/B test of the intensity_disagreement_gate (radar-less
+# scan-to-scan reflectivity cross-correlation degeneracy correction).
+#
+# Base sensor config is identical to rko_lio_hilti2022_pandar.yaml (see that
+# file for extrinsic provenance). This variant additionally enables ONLY
+# intensity_disagreement_gate -- NOT intensity_constraint. Per
+# Thirdparty/rko_lio/rko_lio/core/lio.cpp (~line 964), the two features are
+# independent: intensity_disagreement_gate does its own intensity extraction
+# and does not require intensity_constraint to be enabled (that gating is
+# only for the separate persistence-confirmed profile-prior feature). Testing
+# the gate alone isolates its effect for this A/B test.
+#
+# exp07's PandarXT-32 PointCloud2 has no "reflectivity" field; only a
+# float32 "intensity" field (verified via sqlite3/CDR field dump of
+# /hesai/pandar). point_cloud2_to_intensity() falls back to "intensity"
+# (float32) in this case.
+extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+extrinsic_lidar2base_quat_xyzw_xyz: [0.7071068, -0.7071068, 0.0, 0.0, -0.001, -0.00855, 0.055]
+initialization_phase: true
+# PandarXT-32 clouds carry per-point float64 absolute 'timestamp' fields.
+deskew: true
+voxel_size: 0.25
+min_range: 0.7
+max_range: 100.0
+double_downsample: true
+# Competition scope is SLAM-only. Keep all saved/global-map recovery paths
+# explicitly disabled rather than relying on upstream defaults.
+enable_kidnap_relocalization: false
+reset_on_registration_failure: false
+relocalize_after_scan_gap: false
+
+# --- intensity_disagreement_gate (radar-less degeneracy correction) ---
+intensity_constraint: false
+intensity_disagreement_gate: true
+intensity_bin_size_m: 0.25
+intensity_profile_half_length_m: 30.0
+intensity_max_shift_m: 1.5
+intensity_min_correlation: 0.6
+intensity_min_filled_bins: 40
+intensity_disagreement_min_mps: 0.05
+intensity_disagreement_min_scans: 3
+intensity_disagreement_weight: 1.0

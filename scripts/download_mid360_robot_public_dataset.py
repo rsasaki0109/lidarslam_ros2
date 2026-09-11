@@ -13,6 +13,7 @@ from typing import Any
 from lidarslam_benchmark_tools.mid360_robot_public_datasets import (
     PublicDatasetIntake,
     PublicDatasetIntakeOptions,
+    payload_to_json,
     public_dataset_payload,
     public_dataset_registry,
     render_public_dataset_intake_markdown,
@@ -21,8 +22,15 @@ from lidarslam_benchmark_tools.mid360_robot_public_datasets import (
 from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DATASET_ROOT = REPO_ROOT / 'datasets' / 'mid360_public'
+SCRIPT_DIR = Path(__file__).resolve().parent
+PRODUCT_ROOT = SCRIPT_DIR.parent
+SOURCE_LAYOUT = (
+    (PRODUCT_ROOT / 'Dockerfile').is_file()
+    and (PRODUCT_ROOT / 'lidarslam' / 'package.xml').is_file()
+)
+DEFAULT_WORK_ROOT = PRODUCT_ROOT if SOURCE_LAYOUT else Path.cwd()
+DEFAULT_DATASET_ROOT = DEFAULT_WORK_ROOT / 'datasets' / 'mid360_public'
+RECORDING_CHECK_SCRIPT = SCRIPT_DIR / 'check_mid360_robot_recording.py'
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,9 +56,23 @@ def parse_args() -> argparse.Namespace:
         help='Output directory for the generated recording check command.',
     )
     parser.add_argument('--dry-run', action='store_true', help='Write a plan without downloading.')
-    parser.add_argument('--force', action='store_true', help='Overwrite existing archive/extract dir.')
+    parser.add_argument(
+        '--force',
+        action='store_true',
+        help=(
+            'Restart partial work and atomically replace an existing '
+            'archive/extract directory.'
+        ),
+    )
     parser.add_argument('--no-extract', action='store_true', help='Download only; do not extract zip.')
-    parser.add_argument('--skip-md5', action='store_true', help='Skip MD5 verification.')
+    parser.add_argument(
+        '--skip-md5',
+        action='store_true',
+        help=(
+            'Skip legacy MD5 verification; registered SHA-256 and size '
+            'checks remain mandatory.'
+        ),
+    )
     parser.add_argument(
         '--check',
         action='store_true',
@@ -81,7 +103,7 @@ def main() -> int:
         verify_md5=not args.skip_md5,
     )
     try:
-        report = PublicDatasetIntake(REPO_ROOT).run(options)
+        report = PublicDatasetIntake(PRODUCT_ROOT).run(options)
         if args.check:
             report = _run_recording_check(report)
             _write_updated_report(report)
@@ -101,6 +123,22 @@ def main() -> int:
 
 
 def _run_recording_check(report: dict[str, Any]) -> dict[str, Any]:
+    if not RECORDING_CHECK_SCRIPT.is_file():
+        updated = dict(report)
+        updated['status'] = 'FAIL'
+        updated['recording_check'] = {
+            'returncode': 127,
+            'stdout': '',
+            'stderr': (
+                '--check is unavailable in this curated runtime; use a source '
+                'checkout or run the installed lidarslam-map preflight.'
+            ),
+            'report': {},
+        }
+        messages = list(updated.get('messages') or [])
+        messages.append(updated['recording_check']['stderr'])
+        updated['messages'] = messages
+        return updated
     if not report.get('selected_bag_path'):
         updated = dict(report)
         updated['status'] = 'FAIL'
@@ -114,7 +152,7 @@ def _run_recording_check(report: dict[str, Any]) -> dict[str, Any]:
 
     command = [
         sys.executable,
-        str(REPO_ROOT / 'scripts' / 'check_mid360_robot_recording.py'),
+        str(RECORDING_CHECK_SCRIPT),
         '--bag',
         report['selected_bag_path'],
         '--robot-profile',
@@ -128,7 +166,7 @@ def _run_recording_check(report: dict[str, Any]) -> dict[str, Any]:
         check=False,
         capture_output=True,
         text=True,
-        cwd=REPO_ROOT,
+        cwd=PRODUCT_ROOT,
     )
     check_report: dict[str, Any] = {}
     if result.stdout.strip():

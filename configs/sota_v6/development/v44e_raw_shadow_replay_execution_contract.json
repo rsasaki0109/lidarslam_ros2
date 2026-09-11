@@ -1,0 +1,403 @@
+{
+  "schema_version": 1,
+  "contract_id": "v44e-raw-shadow-replay-execution-20260810",
+  "stage": "raw_shadow_replay_execution_contract_and_read_only_adapter",
+  "rationale": "Define and statically prove the only route by which the isolated v44 fixed-lag core may consume the three exact v44a canonical LiDAR/IMU bags. The adapter restores deterministic header-time order through a bounded receive-time watermark, supplies only immutable sensor records and fixed source calibration to the core, checks RSS and processing RTF after every completed scan, hashes retained v17 state and map artifacts before and after execution, and writes only bounded diagnostic evidence. This static gate does not open a bag or execute a replay.",
+  "prerequisites": {
+    "v44d_contract": {
+      "label": "v44d source-audit contract",
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v6/development/v44d_fixed_lag_shadow_source_audit.json",
+      "sha256": "462d34fb984a45f4a15a5482d2d0e9f61e45c68491e2ddefa9a7fdaa3348df5e",
+      "bytes": 11793,
+      "required_contract_id": "v44d-fixed-lag-shadow-source-audit-20260810"
+    },
+    "v44d_aggregate": {
+      "label": "v44d source-audit aggregate",
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44d_fixed_lag_shadow_source_audit_20260810/aggregate.json",
+      "sha256": "b2494f42b07d9fd844f14112da5b6df6fd050007326018967f9f794b0cb5e997",
+      "bytes": 1781,
+      "required_payload_sha256": "2344a9e9b31861fff44c1b457199a2863615a2c06834a6a9c39a710fc53b97b2",
+      "required_decision": "AUTHORIZE_V44_STAGE4_RAW_SHADOW_REPLAY_CONTRACT_DEFINITION"
+    },
+    "v44a_contract": {
+      "label": "v44a raw-readiness contract",
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v6/development/v44_raw_lidar_imu_readiness_audit.json",
+      "sha256": "a71d9271d200e86537cb6f8b25e21662ffe120258e749e6dff17a77e6d1a162b",
+      "bytes": 3813,
+      "required_contract_id": "v44a-raw-lidar-imu-readiness-20260810"
+    },
+    "v44a_source_manifest": {
+      "label": "v44a exact raw source manifest",
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v6/development/v44_raw_lidar_imu_sources_20260810.json",
+      "sha256": "002cc82fcd86a70fb774e1e3f576b41cbe86b849eabcfc6406e98cb26232ff1d",
+      "bytes": 3970,
+      "required_source_set_id": "sota-v6-v44-exact-raw-lidar-imu-20260810"
+    },
+    "v44a_aggregate": {
+      "label": "v44a raw-readiness aggregate",
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44a_raw_lidar_imu_readiness_20260810/aggregate.json",
+      "sha256": "532b62ad534cb533c1ecfaa735a844f68dfb38a0a4c5184ef598ab98f3b959fb",
+      "bytes": 4996,
+      "required_payload_sha256": "57c14d126beeacc741471864bc6828869e2f7f3980edfba2b3e62f93c5b437c0"
+    },
+    "architecture": {
+      "label": "v44b fixed-lag architecture",
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v6/development/v44b_fixed_lag_shadow_architecture.json",
+      "sha256": "74a80cca0e3dc7de9a10950d50c4fea7518dfe3d4fed8c5e1aeec77c3efee8e7",
+      "bytes": 17611,
+      "required_contract_id": "v44b-fixed-lag-shadow-architecture-20260810"
+    }
+  },
+  "estimator_core": {
+    "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/scripts/v44_fixed_lag_shadow_estimator.py",
+    "sha256": "c353cce1cde17e45ea1244871da8a7077f10b28055f8c8cdfae49a5bddaf8ee9",
+    "bytes": 108847,
+    "kind": "isolated_in_memory_shadow_core"
+  },
+  "adapter": {
+    "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/scripts/v44_raw_shadow_replay_adapter.py",
+    "sha256": "6fbf16d811a5bcf26c2cac9190f0557844cd3596cf7704cfdc016c7080ddf0ee",
+    "maximum_source_bytes": 65536,
+    "allowed_import_roots": [
+      "__future__",
+      "argparse",
+      "dataclasses",
+      "hashlib",
+      "heapq",
+      "importlib",
+      "json",
+      "math",
+      "numpy",
+      "pathlib",
+      "resource",
+      "rosbags",
+      "sys",
+      "time",
+      "typing"
+    ]
+  },
+  "static_auditor": {
+    "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/scripts/audit_v44e_raw_shadow_replay_contract.py",
+    "sha256": "8fa736d6c59b17eb3364c50cad0a9ec88cf01ffe867864e9558387db37909389"
+  },
+  "authority": {
+    "raw_shadow_replay": true,
+    "accuracy_or_reference_map_inputs": false,
+    "primary_trajectory_or_map_mutation": false,
+    "primary_bias_writeback": false,
+    "ros_publication": false,
+    "loop_or_global_correction": false,
+    "diagnostic_evidence_output_only": true
+  },
+  "source_binding": {
+    "source_set_id": "sota-v6-v44-exact-raw-lidar-imu-20260810",
+    "required_sequence_count": 3,
+    "sequences": [
+      {
+        "sequence_id": "navinst_indoor02",
+        "bag": {
+          "path": "/media/sasaki/aiueo/benchmarks/quarantine/opencode_inputs_20260810/navinst_canonical_ros1.bag",
+          "bytes": 2349637247,
+          "sha256": "b8afd9649a310669dcc39737a8f3e1d40f00adfa619ff61afda712c2924fc8ff"
+        },
+        "lidar_topic": "/velodyne/lidar/points",
+        "lidar_frame": "velodyne_lidar_link",
+        "imu_topic": "/novatel/imu",
+        "imu_frame": "novatel_imu_link",
+        "base_frame": "novatel_imu_link",
+        "expected_lidar_messages": 3489,
+        "expected_lidar_points": 89292327,
+        "expected_imu_messages": 43999,
+        "serialized_stream_sha256": {
+          "lidar": "b07c7924433d4b0420e111a9233bc40c24a31844779d5344e81b6d7825ea752e",
+          "imu": "7dd89eba20455e7b2e49c1212796bf57319104d0ede6948da725fd5ad93c00df"
+        },
+        "maximum_receive_minus_header_ns": 3573549,
+        "readiness_report": {
+          "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44a_raw_lidar_imu_readiness_20260810/navinst_indoor02/run_01.json",
+          "sha256": "a0d5c9e7a720e014d1c0443525529cf7dcd9c1bfefa42b3b1646d8bedaa62285",
+          "bytes": 11856
+        },
+        "calibration": {
+          "sensor_adapter_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v5/sensors/navinst_indoor02_lidar_imu.yaml",
+          "sensor_adapter_sha256": "3c647070fba498520a0e892c1c4d3a8114fedf90a3e874973d175062ab0f2636",
+          "body_from_lidar": {
+            "rotation": [
+              [2.220446049250313e-16, -1.0, 0.0],
+              [1.0, 2.220446049250313e-16, 0.0],
+              [0.0, 0.0, 1.0]
+            ],
+            "translation_m": [0.0, 0.0, 0.21941]
+          },
+          "body_from_imu": "identity"
+        },
+        "protected_v17_run_manifest": {
+          "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_navinst_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/run.json",
+          "sha256": "1444877e074a27ad0b8a755efa59bb455eba8b918ac7a45632be295aee1376c0",
+          "bytes": 4541
+        },
+        "protected_v17_artifacts": [
+          {
+            "name": "v17_state",
+            "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_navinst_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/trajectory.tum",
+            "sha256": "81054c8c81af58b6c0e47d85e5f942676addfea2f9a1084e5d9023772a49d64e",
+            "bytes": 456782
+          },
+          {
+            "name": "v17_map",
+            "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_navinst_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/pcd/voxel_global.pcd",
+            "sha256": "be95206f6e1c86c2e09e81467f5056a625bb62dd486b267de0d58fd0dae4f00f",
+            "bytes": 187635058
+          }
+        ]
+      },
+      {
+        "sequence_id": "oxford_spires_keble_05",
+        "bag": {
+          "path": "/media/sasaki/aiueo/benchmarks/quarantine/opencode_inputs_20260810/oxford_canonical_ros1.bag",
+          "bytes": 6839129436,
+          "sha256": "8e7660e600f1f52758e0301f861a2174500ef38f60df5ac9f9d7198df9c54217"
+        },
+        "lidar_topic": "/hesai/pandar",
+        "lidar_frame": "pandar",
+        "imu_topic": "/alphasense_driver_ros/imu",
+        "imu_frame": "imu_sensor_frame",
+        "base_frame": "imu_sensor_frame",
+        "expected_lidar_messages": 5834,
+        "expected_lidar_points": 345360040,
+        "expected_imu_messages": 232128,
+        "serialized_stream_sha256": {
+          "lidar": "f484ac8f08fbfa2550718652a5a4a9575feda86156cb9f7d330293ead399cc59",
+          "imu": "7838c6a0196fdd8880cd617ffc405493fbff50db0f46d95f9562e0f71b6ac6af"
+        },
+        "maximum_receive_minus_header_ns": 135957579,
+        "readiness_report": {
+          "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44a_raw_lidar_imu_readiness_20260810/oxford_spires_keble_05/run_01.json",
+          "sha256": "afcb3412914da2eba2dab619e587d84028fe1de941653dcb5853ded39ff44614",
+          "bytes": 11957
+        },
+        "calibration": {
+          "sensor_adapter_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v5/sensors/oxford_spires_keble_05_lidar_imu.yaml",
+          "sensor_adapter_sha256": "15f61e12bbc1ff2d74a090debed73630a716520c3af309424662f50580841477",
+          "body_from_lidar": {
+            "rotation": [
+              [-0.01663804574865635, -0.9998601056363502, 0.0017159809243347767],
+              [0.9998552572581157, -0.0166318135940986, 0.0035843144224121937],
+              [-0.003555273122162384, 0.0017753685358884294, 0.999992104018621]
+            ],
+            "translation_m": [-0.0006517086833720872, -0.015510342560109067, 0.08463265780318904]
+          },
+          "body_from_imu": "identity"
+        },
+        "protected_v17_run_manifest": {
+          "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_oxford_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/run.json",
+          "sha256": "1a3d226452aa91c9b08da3084e3eaba2f3502e7f51eb82b408e37adeed82fee6",
+          "bytes": 4578
+        },
+        "protected_v17_artifacts": [
+          {
+            "name": "v17_state",
+            "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_oxford_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/trajectory.tum",
+            "sha256": "adc379611dd2b41e1165289f1132387381a60851830fae2b0b84c37043abec7b",
+            "bytes": 749806
+          },
+          {
+            "name": "v17_map",
+            "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_oxford_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/pcd/voxel_global.pcd",
+            "sha256": "2d0889336140638d3b6c87f2e4d0cf26dfe4b951d8a1ec8c7138032b55b9e4b4",
+            "bytes": 494416674
+          }
+        ]
+      },
+      {
+        "sequence_id": "urbannav_hk_tunnel_1",
+        "bag": {
+          "path": "/media/sasaki/aiueo/benchmarks/quarantine/opencode_inputs_20260810/urbannav_canonical_ros1.bag",
+          "bytes": 6091193677,
+          "sha256": "95524232d9a4c2781d919a9dc1c16f6037cd88dd4d4d40bf9958ab0a219297a1"
+        },
+        "lidar_topic": "/velodyne_points",
+        "lidar_frame": "velodyne",
+        "imu_topic": "/imu/data",
+        "imu_frame": "/imu",
+        "base_frame": "imu",
+        "expected_lidar_messages": 3982,
+        "expected_lidar_points": 246291863,
+        "expected_imu_messages": 159459,
+        "serialized_stream_sha256": {
+          "lidar": "f303f4414c785b599c1f43b786e7c5f4d61a593baa643fe27293d64f91f7fd82",
+          "imu": "613cd1fa1a047736e1b552e4bd9aa661df615e0910e23ee9f1b51401629b1a46"
+        },
+        "maximum_receive_minus_header_ns": 136013359,
+        "readiness_report": {
+          "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44a_raw_lidar_imu_readiness_20260810/urbannav_hk_tunnel_1/run_01.json",
+          "sha256": "97db83b11ec00a3d730f0aff315ea3245f708dc6b0337c360c5d3b37fb52da89",
+          "bytes": 11883
+        },
+        "calibration": {
+          "sensor_adapter_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v5/sensors/urbannav_hk_tunnel_1_lidar_imu.yaml",
+          "sensor_adapter_sha256": "97db6ce14ea90d4a5f21efcbed473c71f47154f1aab1a52f8ea2ac4b6da31c5d",
+          "body_from_lidar": {
+            "rotation": [
+              [1.0, 0.0, 0.0],
+              [0.0, 1.0, 0.0],
+              [0.0, 0.0, 1.0]
+            ],
+            "translation_m": [0.0, 0.0, 0.28]
+          },
+          "body_from_imu": "identity"
+        },
+        "protected_v17_run_manifest": {
+          "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_urbannav_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/run.json",
+          "sha256": "ebd093ad2f33880b56f78aef4b2eff64d92f1d81b70ce1d29325cd871eff6cda",
+          "bytes": 4557
+        },
+        "protected_v17_artifacts": [
+          {
+            "name": "v17_state",
+            "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_urbannav_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/trajectory.tum",
+            "sha256": "15c15de341180eec01af5bd181aebfd9a87f5529d04220b5c1d63d2aa7e2bfd0",
+            "bytes": 508034
+          },
+          {
+            "name": "v17_map",
+            "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_urbannav_voxel_repo_v17_no_loop_rate1p2_runs03/run_01/pcd/voxel_global.pcd",
+            "sha256": "87caad9810f5794bf6396954b337aaf794291a2445fdd16117a758e20c78cbe7",
+            "bytes": 283387586
+          }
+        ]
+      }
+    ]
+  },
+  "messages": {
+    "lidar_type": "sensor_msgs/msg/PointCloud2",
+    "imu_type": "sensor_msgs/msg/Imu",
+    "lidar_timestamp_source": "header.stamp",
+    "imu_timestamp_source": "header.stamp",
+    "point_time_semantics": "uint32_nanoseconds_from_scan_start",
+    "required_lidar_fields": [
+      {"name": "x", "offset": 0, "datatype": 7, "count": 1},
+      {"name": "y", "offset": 4, "datatype": 7, "count": 1},
+      {"name": "z", "offset": 8, "datatype": 7, "count": 1},
+      {"name": "intensity", "offset": 16, "datatype": 7, "count": 1},
+      {"name": "t", "offset": 20, "datatype": 6, "count": 1},
+      {"name": "reflectivity", "offset": 24, "datatype": 4, "count": 1},
+      {"name": "ring", "offset": 26, "datatype": 2, "count": 1},
+      {"name": "ambient", "offset": 28, "datatype": 4, "count": 1},
+      {"name": "range", "offset": 32, "datatype": 6, "count": 1}
+    ],
+    "lidar_height": 1,
+    "lidar_point_step_bytes": 48,
+    "lidar_little_endian": true,
+    "maximum_message_bytes": 8388608,
+    "orientation_consumed": false,
+    "message_covariance_consumed": false
+  },
+  "reorder_buffer": {
+    "policy": "receive_time_watermark_then_header_stamp_kind_and_source_index",
+    "watermark_rule": "emit_only_header_stamp_strictly_less_than_receive_stamp_minus_exact_maximum_receive_delay",
+    "kind_order": ["imu", "lidar"],
+    "maximum_buffered_messages": 128,
+    "maximum_buffered_serialized_bytes": 33554432,
+    "terminal_on_capacity_or_delay_violation": true
+  },
+  "runtime_resources": {
+    "maximum_rss_mib": 330.0,
+    "maximum_processing_rtf": 0.85,
+    "maximum_input_message_bytes": 8388608,
+    "check_after_every_scan": true,
+    "processing_rtf_definition": "cumulative_adapter_and_core_wall_seconds_divided_by_sensor_seconds_since_first_seen_header",
+    "capacity_violation_policy": "terminal_fail_closed"
+  },
+  "output": {
+    "evidence_root": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44e_raw_shadow_replay_contract_20260810",
+    "layout": "raw_replay/sequence_id/run_NN",
+    "filenames": ["diagnostics.jsonl", "run.json"],
+    "maximum_bytes_per_run": 268435456,
+    "overwrite_allowed": false,
+    "ros_publication_allowed": false,
+    "primary_output_paths_allowed": false
+  },
+  "authorization": {
+    "required_aggregate_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44e_raw_shadow_replay_contract_20260810/aggregate.json",
+    "required_aggregate_audit": "v44e_raw_shadow_replay_contract_static_aggregate",
+    "required_decision": "AUTHORIZE_V44_STAGE4_RAW_SHADOW_REPLAY_EXECUTION",
+    "adapter_and_contract_hashes_must_match": true,
+    "source_reports_revalidated_at_runtime": true
+  },
+  "execution": {
+    "required_contract_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v6/development/v44e_raw_shadow_replay_execution_contract.json",
+    "raw_bag_open_allowed_only_after_authorization": true,
+    "required_sequence_count": 3,
+    "required_repetitions_per_sequence": 2,
+    "require_every_message_exactly_once": true,
+    "require_complete_valid_shadow_result": true,
+    "require_identical_state_payload_across_repetitions": true,
+    "require_protected_v17_hashes_unchanged": true,
+    "accuracy_scoring_after_runtime_pass_allowed": false
+  },
+  "required_static_checks": [
+    "v44d_contract_hash_id_and_boundary",
+    "v44d_aggregate_hash_payload_and_decision",
+    "v44a_contract_manifest_and_aggregate_bound",
+    "architecture_and_estimator_core_bound",
+    "three_source_records_exactly_match_manifest",
+    "three_bag_paths_sizes_and_hashes_explicit",
+    "readiness_reports_bind_stream_digests_and_delays",
+    "sensor_adapters_and_extrinsics_exact",
+    "protected_v17_state_and_map_artifacts_exact",
+    "adapter_hash_path_and_size",
+    "adapter_python_ast_parse",
+    "adapter_imports_are_allowlisted",
+    "rosbags_import_is_lazy",
+    "no_ros_network_or_subprocess_surface",
+    "cli_has_only_contract_sequence_and_repetition",
+    "no_user_selected_bag_or_output_path",
+    "authorization_aggregate_required_before_bag_open",
+    "authority_is_report_only_and_fail_closed",
+    "required_adapter_symbols_present",
+    "canonical_lidar_and_imu_decoder_present",
+    "orientation_and_covariance_are_not_consumed",
+    "bounded_header_time_reorder_present",
+    "per_scan_rss_and_rtf_enforcement_present",
+    "protected_hashes_compared_before_and_after",
+    "exclusive_bounded_evidence_writer_present",
+    "core_receives_no_dataset_identity",
+    "accuracy_reference_ros_and_primary_routes_closed",
+    "static_gate_does_not_open_raw_bags",
+    "synthetic_adapter_probes_pass"
+  ],
+  "smoke_probe": {
+    "synthetic_only": true,
+    "required_probe_ids": [
+      "imu_decode_exact",
+      "pointcloud_decode_exact",
+      "pointcloud_schema_rejection",
+      "message_capacity_rejection",
+      "header_time_watermark_order",
+      "reorder_capacity_rejection",
+      "extrinsic_decode_exact",
+      "authorization_fail_closed",
+      "protected_identity_fail_closed",
+      "bounded_exclusive_writer"
+    ]
+  },
+  "audit_resources": {
+    "maximum_rss_mib": 330.0,
+    "maximum_incremental_rss_mib": 96.0,
+    "maximum_ast_nodes": 20000,
+    "maximum_report_bytes": 8388608
+  },
+  "decision": {
+    "required_static_repetitions": 2,
+    "required_static_check_count": 29,
+    "required_smoke_probe_count": 10,
+    "on_pass": "AUTHORIZE_V44_STAGE4_RAW_SHADOW_REPLAY_EXECUTION",
+    "on_fail": "REJECT_V44E_RAW_SHADOW_REPLAY_BOUNDARY",
+    "raw_shadow_replay_execution_authorized_on_pass": true,
+    "raw_replay_executed_by_static_gate": false,
+    "accuracy_or_reference_map_inputs_authorized_on_pass": false,
+    "primary_trajectory_or_map_mutation_authorized_on_pass": false,
+    "ros_publication_authorized_on_pass": false
+  }
+}

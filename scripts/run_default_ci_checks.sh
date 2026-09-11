@@ -119,7 +119,9 @@ echo "==> Build targets: ${BUILD_TARGETS[*]}"
 if ! colcon build \
   --event-handlers console_direct+ \
   --packages-up-to "${BUILD_TARGETS[@]}" \
-  --cmake-args -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"; then
+  --cmake-args \
+    -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" \
+    -DRKO_LIO_FETCH_CONTENT_DEPS=ON; then
   echo "error: colcon build failed for default workflow packages" >&2
   exit 1
 fi
@@ -130,6 +132,29 @@ if [[ -f "${REPO_ROOT}/install/setup.bash" ]]; then
   source "${REPO_ROOT}/install/setup.bash"
   set -u
 fi
+
+echo "==> Validating clean-prefix product CLI install"
+CLI_INSTALL_TEST_ROOT=$(mktemp -d)
+if ! colcon build \
+  --base-paths "${REPO_ROOT}/lidarslam" \
+  --build-base "${CLI_INSTALL_TEST_ROOT}/build" \
+  --install-base "${CLI_INSTALL_TEST_ROOT}/prefix" \
+  --merge-install \
+  --event-handlers console_direct+ \
+  --cmake-args -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"; then
+  echo "error: clean-prefix lidarslam install build failed" >&2
+  exit 1
+fi
+if ! python3 "${REPO_ROOT}/scripts/check_installed_product_cli.py" \
+  --prefix "${CLI_INSTALL_TEST_ROOT}/prefix" \
+  --expected-source-revision "$(
+    git -c "safe.directory=${REPO_ROOT}" \
+      -C "${REPO_ROOT}" rev-parse HEAD
+  )"; then
+  echo "error: clean-prefix product CLI validation failed" >&2
+  exit 1
+fi
+rm -rf -- "${CLI_INSTALL_TEST_ROOT}"
 
 if [[ "${BUILD_ONLY}" == "true" ]]; then
   echo "==> Build-only mode completed"

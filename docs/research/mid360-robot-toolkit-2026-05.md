@@ -1,10 +1,10 @@
 # MID-360 robot toolkit chain — 2026-05 アーカイブ
 
 > 操作員向け session pipeline (PR #168-#177, inside-out 10 PR) の構築記録。
-> 2026-06-07 の plan.md surgery（v0.4 roadmap §F）で `plan.md` §10 から抽出した
+> 2026-06-07 の docs/research/project-plan-archive.md surgery（v0.4 roadmap §F）で `docs/research/project-plan-archive.md` §10 から抽出した
 > 歴史的アーカイブ。foundation / analyzer / dashboard / record / readiness /
 > public-RKO / session / bundle layer の詳細、ament lint の罠、重要ファイル、
-> 3DGS QA candidate を保存する。live なステータスは `plan.md` §10 と
+> 3DGS QA candidate を保存する。live なステータスは `docs/research/project-plan-archive.md` §10 と
 > memory `project_mid360_robot_toolkit_stack`。
 
 ### 10.1 何を作ったか

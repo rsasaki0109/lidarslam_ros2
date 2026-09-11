@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-validator-cohort-v1.schema.json",
+  "title": "lidarslam_ros2 independent first-map validator cohort v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "cohort_id",
+    "repository",
+    "status",
+    "launch_gates",
+    "capacity",
+    "independence",
+    "service_levels",
+    "stop_conditions",
+    "privacy",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-validator-cohort-v1.schema.json"
+    },
+    "cohort_id": {"const": "g1-first-map-cohort-2026-08"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "status": {
+      "enum": ["WAITING_FOR_PUBLIC_GATES", "COPY_READY_NOT_AUTHORIZED"]
+    },
+    "launch_gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "public_revision",
+        "public_revision_resolvable",
+        "comparable_docker_row",
+        "comparable_source_row",
+        "canonical_documentation_path",
+        "canonical_documentation_url",
+        "canonical_documentation_provenance",
+        "canonical_runtime_ref",
+        "copy_ready_handoff_public",
+        "tracking_issue_url"
+      ],
+      "properties": {
+        "public_revision": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "public_revision_resolvable": {"type": "boolean"},
+        "comparable_docker_row": {"type": "boolean"},
+        "comparable_source_row": {"type": "boolean"},
+        "canonical_documentation_path": {
+          "type": ["string", "null"],
+          "enum": ["docker-first-map", "source-quickstart", null]
+        },
+        "canonical_documentation_url": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "pattern": "^https://rsasaki0109\\.github\\.io/lidar_slam_ros2/"
+        },
+        "canonical_documentation_provenance": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "manifest_url",
+                "source_revision",
+                "page_sha256"
+              ],
+              "properties": {
+                "manifest_url": {
+                  "const": "https://rsasaki0109.github.io/lidar_slam_ros2/docs-deployment-v1.json"
+                },
+                "source_revision": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{40}$"
+                },
+                "page_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            }
+          ]
+        },
+        "canonical_runtime_ref": {
+          "type": ["string", "null"],
+          "pattern": "^(?:[0-9a-f]{40}|ghcr\\.io/[^\\s@]+@sha256:[0-9a-f]{64})$"
+        },
+        "copy_ready_handoff_public": {"type": "boolean"},
+        "tracking_issue_url": {
+          "const": "https://github.com/rsasaki0109/lidar_slam_ros2/issues/422"
+        }
+      }
+    },
+    "capacity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted_target",
+        "initial_attempt_cap",
+        "hard_attempt_cap",
+        "max_concurrent_attempts",
+        "assessment_attempt_count",
+        "minimum_completion_rate",
+        "maximum_median_active_operator_minutes"
+      ],
+      "properties": {
+        "accepted_target": {"const": 3},
+        "initial_attempt_cap": {"const": 5},
+        "hard_attempt_cap": {"const": 10},
+        "max_concurrent_attempts": {"const": 2},
+        "assessment_attempt_count": {"const": 10},
+        "minimum_completion_rate": {"const": 0.8},
+        "maximum_median_active_operator_minutes": {"const": 10}
+      }
+    },
+    "independence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maintainers_excluded",
+        "live_step_by_step_help_forbidden",
+        "public_documentation_only",
+        "failed_attempts_retained",
+        "post_attempt_support_public",
+        "rerun_after_product_fix_allowed"
+      ],
+      "properties": {
+        "maintainers_excluded": {"const": true},
+        "live_step_by_step_help_forbidden": {"const": true},
+        "public_documentation_only": {"const": true},
+        "failed_attempts_retained": {"const": true},
+        "post_attempt_support_public": {"const": true},
+        "rerun_after_product_fix_allowed": {"const": true}
+      }
+    },
+    "service_levels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acknowledgement_business_days",
+        "evidence_review_business_days",
+        "supported_p0_disposition_days",
+        "supported_p1_disposition_days",
+        "operational_signal_max_age_hours"
+      ],
+      "properties": {
+        "acknowledgement_business_days": {"const": 2},
+        "evidence_review_business_days": {"const": 5},
+        "supported_p0_disposition_days": {"const": 7},
+        "supported_p1_disposition_days": {"const": 14},
+        "operational_signal_max_age_hours": {"const": 48}
+      }
+    },
+    "stop_conditions": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "public-source-or-documentation-drift",
+          "supported-p0-open",
+          "failed-release-gate",
+          "two-unreviewed-receipts",
+          "two-attempts-share-one-blocker",
+          "privacy-or-safety-incident",
+          "completion-below-80-percent-at-attempt-10",
+          "median-active-time-above-10-minutes-at-attempt-10"
+        ]
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "voluntary_public_reports",
+        "product_telemetry",
+        "identities_written_to_repository",
+        "raw_receipts_written_to_repository",
+        "map_or_bag_upload_requested"
+      ],
+      "properties": {
+        "voluntary_public_reports": {"const": true},
+        "product_telemetry": {"const": false},
+        "identities_written_to_repository": {"const": false},
+        "raw_receipts_written_to_repository": {"const": false},
+        "map_or_bag_upload_requested": {"const": false}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "community_posts_authorized",
+        "github_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "community_posts_authorized": {"const": false},
+        "github_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  }
+}

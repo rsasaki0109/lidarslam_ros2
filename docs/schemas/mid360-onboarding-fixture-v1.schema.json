@@ -1,0 +1,358 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/mid360-onboarding-fixture-v1.schema.json",
+  "title": "lidar_slam_ros2 MID-360 onboarding fixture manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "fixture_id",
+    "role",
+    "source",
+    "clip",
+    "generation",
+    "artifact",
+    "publication"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/mid360-onboarding-fixture-v1.schema.json"
+    },
+    "status": {"const": "BUILT"},
+    "fixture_id": {"$ref": "#/definitions/slug"},
+    "role": {"const": "onboarding"},
+    "source": {"$ref": "#/definitions/source"},
+    "clip": {"$ref": "#/definitions/clip"},
+    "generation": {"$ref": "#/definitions/generation"},
+    "artifact": {"$ref": "#/definitions/artifact"},
+    "publication": {"$ref": "#/definitions/publication"}
+  },
+  "definitions": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "md5": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!.*//)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$"
+    },
+    "fileIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "size_bytes", "sha256"],
+      "properties": {
+        "filename": {"$ref": "#/definitions/relativePath"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "storageFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/definitions/relativePath"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "sourceTopic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "message_count"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+        "type": {"type": "string", "minLength": 3, "maxLength": 200},
+        "message_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "selectedTopic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "message_count"],
+      "properties": {
+        "name": {"enum": ["/livox/imu", "/livox/lidar"]},
+        "type": {
+          "enum": [
+            "sensor_msgs/msg/Imu",
+            "sensor_msgs/msg/PointCloud2"
+          ]
+        },
+        "message_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "bagIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory_name",
+        "metadata",
+        "storage_identifier",
+        "storage_files",
+        "starting_time_ns",
+        "duration_ns",
+        "message_count",
+        "topics"
+      ],
+      "properties": {
+        "directory_name": {"$ref": "#/definitions/relativePath"},
+        "metadata": {"$ref": "#/definitions/fileIdentity"},
+        "storage_identifier": {"const": "sqlite3"},
+        "storage_files": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/storageFile"}
+        },
+        "starting_time_ns": {"type": "integer", "minimum": 0},
+        "duration_ns": {"type": "integer", "minimum": 1},
+        "message_count": {"type": "integer", "minimum": 2},
+        "topics": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/sourceTopic"}
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_id",
+        "title",
+        "creator",
+        "citation",
+        "source_url",
+        "doi",
+        "download_url",
+        "license_spdx",
+        "license_name",
+        "license_url",
+        "archive",
+        "bag"
+      ],
+      "properties": {
+        "dataset_id": {"$ref": "#/definitions/slug"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 200},
+        "creator": {"type": "string", "minLength": 1, "maxLength": 120},
+        "citation": {"type": "string", "minLength": 1, "maxLength": 400},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "doi": {"type": "string", "pattern": "^10\\.[0-9]{4,9}/[-._;()/:A-Za-z0-9]+$"},
+        "download_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "license_spdx": {"const": "CC-BY-4.0"},
+        "license_name": {"const": "Creative Commons Attribution 4.0 International"},
+        "license_url": {"const": "https://creativecommons.org/licenses/by/4.0/"},
+        "archive": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["filename", "size_bytes", "md5", "sha256"],
+          "properties": {
+            "filename": {"$ref": "#/definitions/relativePath"},
+            "size_bytes": {"type": "integer", "minimum": 1},
+            "md5": {"$ref": "#/definitions/md5"},
+            "sha256": {"$ref": "#/definitions/sha256"}
+          }
+        },
+        "bag": {"$ref": "#/definitions/bagIdentity"}
+      }
+    },
+    "clipBagIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory_name",
+        "metadata",
+        "storage_identifier",
+        "storage_files"
+      ],
+      "properties": {
+        "directory_name": {"const": "bag"},
+        "metadata": {"$ref": "#/definitions/fileIdentity"},
+        "storage_identifier": {"const": "sqlite3"},
+        "storage_files": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/storageFile"}
+        }
+      }
+    },
+    "clip": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_offset_ns",
+        "requested_duration_ns",
+        "actual_duration_ns",
+        "first_message_timestamp_ns",
+        "raw_message_copy",
+        "topics",
+        "message_count",
+        "bag"
+      ],
+      "properties": {
+        "start_offset_ns": {"type": "integer", "minimum": 0},
+        "requested_duration_ns": {"type": "integer", "minimum": 1},
+        "actual_duration_ns": {"type": "integer", "minimum": 1},
+        "first_message_timestamp_ns": {"type": "integer", "minimum": 0},
+        "raw_message_copy": {"const": true},
+        "topics": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/selectedTopic"}
+        },
+        "message_count": {"type": "integer", "minimum": 2},
+        "bag": {"$ref": "#/definitions/clipBagIdentity"}
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git_commit", "git_dirty"],
+      "properties": {
+        "git_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "git_dirty": {"type": "boolean"}
+      }
+    },
+    "repoFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/definitions/relativePath"},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "tool",
+        "slicer",
+        "source_contract",
+        "toolchain",
+        "archive_recipe"
+      ],
+      "properties": {
+        "revision": {"$ref": "#/definitions/revision"},
+        "tool": {"$ref": "#/definitions/repoFile"},
+        "slicer": {"$ref": "#/definitions/repoFile"},
+        "source_contract": {"$ref": "#/definitions/repoFile"},
+        "toolchain": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "python_version",
+            "rosbags_version",
+            "sqlite_version",
+            "zlib_version",
+            "zlib_runtime_version"
+          ],
+          "properties": {
+            "python_version": {"type": "string", "minLength": 1},
+            "rosbags_version": {"type": "string", "minLength": 1},
+            "sqlite_version": {"type": "string", "minLength": 1},
+            "zlib_version": {"type": "string", "minLength": 1},
+            "zlib_runtime_version": {"type": "string", "minLength": 1}
+          }
+        },
+        "archive_recipe": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "compression",
+            "compression_level",
+            "member_timestamp",
+            "member_mode",
+            "sorted_members"
+          ],
+          "properties": {
+            "compression": {"const": "deflate"},
+            "compression_level": {"const": 9},
+            "member_timestamp": {"const": "1980-01-01T00:00:00Z"},
+            "member_mode": {"const": "0644"},
+            "sorted_members": {"const": true}
+          }
+        }
+      }
+    },
+    "archiveMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/definitions/relativePath"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "format",
+        "size_bytes",
+        "sha256",
+        "max_size_bytes",
+        "size_gate_pass",
+        "archive_root",
+        "members"
+      ],
+      "properties": {
+        "filename": {"$ref": "#/definitions/relativePath"},
+        "format": {"const": "zip"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "max_size_bytes": {"type": "integer", "minimum": 1},
+        "size_gate_pass": {"const": true},
+        "archive_root": {"$ref": "#/definitions/slug"},
+        "members": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/archiveMember"}
+        }
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "onboarding_only",
+        "replaces_full_real_data_gate",
+        "contains_map_geometry",
+        "track_archive_in_git",
+        "review_before_publishing",
+        "map_validation_status",
+        "attribution_member"
+      ],
+      "properties": {
+        "onboarding_only": {"const": true},
+        "replaces_full_real_data_gate": {"const": false},
+        "contains_map_geometry": {"const": true},
+        "track_archive_in_git": {"const": false},
+        "review_before_publishing": {"const": true},
+        "map_validation_status": {"const": "NOT_RUN"},
+        "attribution_member": {"$ref": "#/definitions/relativePath"}
+      }
+    }
+  }
+}

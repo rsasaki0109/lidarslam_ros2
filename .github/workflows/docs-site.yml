@@ -9,6 +9,12 @@ on:
       - 'mkdocs.yml'
       - '.github/workflows/docs-site.yml'
       - 'README.md'
+      - 'VERSION'
+      - 'scripts/generate_docs_deployment_manifest.py'
+      - 'scripts/docs_deployment_contract.py'
+      - 'scripts/check_first_map_verification_package.py'
+      - 'docs/schemas/first-map-verification-package-v1.schema.json'
+      - 'scripts/product_schema.py'
   workflow_dispatch:
 
 permissions:
@@ -22,6 +28,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-24.04
 
     steps:
@@ -36,12 +43,22 @@ jobs:
       - name: Install doc dependencies
         shell: bash
         run: |
-          python3 -m pip install --upgrade mkdocs mkdocs-material
+          python3 -m pip install --upgrade jsonschema mkdocs mkdocs-material
 
       - name: Build site
         shell: bash
         run: |
+          python3 scripts/check_first_map_verification_package.py --json
           python3 -m mkdocs build --strict
+
+      - name: Bind rendered docs to the exact source revision
+        shell: bash
+        run: |
+          python3 scripts/generate_docs_deployment_manifest.py \
+            --site-dir site \
+            --source-revision "${GITHUB_SHA}" \
+            --version-file VERSION
+          python3 -m json.tool site/docs-deployment-v1.json >/dev/null
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -52,6 +69,7 @@ jobs:
           path: site
 
   deploy:
+    if: github.ref == 'refs/heads/develop'
     needs: build
     runs-on: ubuntu-24.04
     environment:

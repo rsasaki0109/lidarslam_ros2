@@ -499,6 +499,35 @@ def test_colorize_robust_edge_aware_keeps_smooth_bilinear_sampling():
     np.testing.assert_array_equal(rgb[0], [104, 104, 104])
 
 
+def test_edge_aware_sampling_matches_pairwise_corner_reference():
+    rng = np.random.default_rng(19)
+    image = rng.integers(0, 256, (23, 31, 3), dtype=np.uint8)
+    u = rng.uniform(-0.25, 30.25, 1000)
+    v = rng.uniform(-0.25, 22.25, 1000)
+    actual = pcio._sample_pixels(
+        image, u, v, 31, 23, 'edge-aware', 48.0)
+
+    source = image.astype(np.float32)
+    x0 = np.clip(np.floor(u).astype(np.int64), 0, 30)
+    y0 = np.clip(np.floor(v).astype(np.int64), 0, 22)
+    x1, y1 = np.minimum(x0 + 1, 30), np.minimum(y0 + 1, 22)
+    wx = np.clip(u - x0, 0.0, 1.0)[:, None].astype(np.float32)
+    wy = np.clip(v - y0, 0.0, 1.0)[:, None].astype(np.float32)
+    top = source[y0, x0] * (1.0 - wx) + source[y0, x1] * wx
+    bottom = source[y1, x0] * (1.0 - wx) + source[y1, x1] * wx
+    expected = top * (1.0 - wy) + bottom * wy
+    corners = np.stack([
+        source[y0, x0], source[y0, x1],
+        source[y1, x0], source[y1, x1],
+    ], axis=1)
+    use_nearest = np.ptp(corners, axis=1).max(axis=1) > 48.0
+    nearest_u = np.clip(np.round(u).astype(np.int64), 0, 30)
+    nearest_v = np.clip(np.round(v).astype(np.int64), 0, 22)
+    expected[use_nearest] = source[
+        nearest_v[use_nearest], nearest_u[use_nearest]]
+    np.testing.assert_array_equal(actual, expected)
+
+
 def test_colorize_robust_edge_aware_validates_threshold():
     vms, K, W, H = _cam()
     img = np.zeros((H, W, 3), dtype=np.uint8)
@@ -558,6 +587,123 @@ def test_colorize_robust_observation_mask_rejects_bad_view():
         observation_mask=mask, return_counts=True)
     assert seen[0] and counts[0] == 2
     np.testing.assert_array_equal(rgb[0], [50, 50, 50])
+
+
+def test_geometry_occlusion_margin_rejects_adjacent_background():
+    vms, K, width, height = _cam()
+    image = np.zeros((height, width, 3), dtype=np.uint8)
+    image[50, 50], image[50, 51] = [200, 0, 0], [0, 200, 0]
+    points = np.array([[0.0, 0.0, 5.0], [0.1, 0.0, 10.0]])
+    rgb, seen, diagnostics = pcio.colorize_by_projection_robust(
+        points, vms, K, [image], width, height,
+        normalize_exposure=False, interp='nearest',
+        occlusion_margin_px=1, return_diagnostics=True)
+    assert seen.tolist() == [True, False]
+    np.testing.assert_array_equal(rgb[0], [200, 0, 0])
+    assert diagnostics['rejected_occlusion'] == 1
+    assert diagnostics['rejected_zbuffer'] == 0
+    assert diagnostics['rejected_occlusion_margin'] == 1
+
+
+def test_geometry_depth_edge_rejects_both_sides_but_keeps_flat_surface():
+    vms, K, width, height = _cam()
+    image = np.full((height, width, 3), 100, dtype=np.uint8)
+    discontinuity = np.array([[0.0, 0.0, 5.0], [0.1, 0.0, 10.0]])
+    _, seen, diagnostics = pcio.colorize_by_projection_robust(
+        discontinuity, vms, K, [image], width, height,
+        normalize_exposure=False, depth_edge_margin_px=1,
+        depth_edge_tolerance=0.2, return_diagnostics=True)
+    assert seen.tolist() == [False, False]
+    assert diagnostics['rejected_depth_edge'] == 2
+
+    flat = np.array([[0.0, 0.0, 5.0], [0.05, 0.0, 5.0]])
+    _, flat_seen = pcio.colorize_by_projection_robust(
+        flat, vms, K, [image], width, height,
+        normalize_exposure=False, depth_edge_margin_px=1,
+        depth_edge_tolerance=0.2)
+    assert flat_seen.all()
+
+
+def test_geometry_dynamic_mask_and_margin_reject_image_regions():
+    vms, K, width, height = _cam()
+    image = np.full((height, width, 3), 100, dtype=np.uint8)
+    mask = np.zeros((height, width), dtype=bool)
+    mask[50, 50] = True
+    points = np.array([[0.0, 0.0, 5.0], [0.05, 0.0, 5.0]])
+    _, seen, diagnostics = pcio.colorize_by_projection_robust(
+        points, vms, K, [image], width, height,
+        normalize_exposure=False, exclusion_masks=[mask],
+        dynamic_mask_margin_px=1, return_diagnostics=True)
+    assert seen.tolist() == [False, False]
+    assert diagnostics['rejected_dynamic_mask'] == 2
+
+
+def test_calibration_uncertainty_expands_geometry_margin():
+    vms, K, width, height = _cam()
+    image = np.full((height, width, 3), 100, dtype=np.uint8)
+    points = np.array([[0.0, 0.0, 5.0], [0.1, 0.0, 10.0]])
+    calibration = {
+        'accepted': True,
+        'uncertainty_dt_s_xyz_m_rpy_rad':
+            [0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0],
+    }
+    _, seen = pcio.colorize_by_projection_robust(
+        points, vms, K, [image], width, height,
+        normalize_exposure=False, calibration=calibration,
+        view_timestamps=[0.0], calibration_sigma_multiplier=1.0,
+        maximum_uncertainty_margin_px=2, depth_edge_tolerance=100.0)
+    assert seen.tolist() == [True, False]
+
+
+def test_geometry_fusion_rejects_coarse_zbuffer_and_missing_timestamps():
+    vms, K, width, height = _cam()
+    image = np.zeros((height, width, 3), dtype=np.uint8)
+    point = np.array([[0.0, 0.0, 5.0]])
+    with np.testing.assert_raises(ValueError):
+        pcio.colorize_by_projection_robust(
+            point, vms, K, [image], width, height,
+            occlusion_margin_px=1, zbuf_bin=2)
+    with np.testing.assert_raises(ValueError):
+        pcio.colorize_by_projection_robust(
+            point, vms, K, [image], width, height,
+            calibration={'accepted': True,
+                         'uncertainty_dt_s_xyz_m_rpy_rad': [0.0] * 7},
+            calibration_sigma_multiplier=1.0)
+
+
+def test_builder_loads_manifest_dynamic_masks_for_geometry_fusion(tmp_path):
+    import imageio as iio
+    import json
+
+    images = tmp_path / 'images'
+    masks = tmp_path / 'masks'
+    images.mkdir()
+    masks.mkdir()
+    image = np.full((100, 100, 3), 120, dtype=np.uint8)
+    mask = np.zeros((100, 100), dtype=np.uint8)
+    mask[50, 50] = 255
+    iio.imwrite(images / '0.png', image)
+    iio.imwrite(masks / '0.png', mask)
+    document = {
+        'w': 100, 'h': 100, 'fl_x': 100.0, 'fl_y': 100.0,
+        'cx': 50.0, 'cy': 50.0,
+        'frames': [{
+            'file_path': 'images/0.png', 'dynamic_mask_path': 'masks/0.png',
+            'timestamp': 0.0,
+            'transform_matrix': np.diag([1.0, -1.0, -1.0, 1.0]).tolist(),
+        }],
+    }
+    transforms = tmp_path / 'transforms.json'
+    transforms.write_text(json.dumps(document))
+    rgb, seen, diagnostics = bli._colorize(
+        np.array([[0.0, 0.0, 5.0]]), str(transforms), robust=True,
+        normalize_exposure=False, geometry_aware=True,
+        occlusion_margin_px=0, depth_edge_margin_px=0,
+        dynamic_exclusion=True, dynamic_mask_margin_px=0,
+        return_diagnostics=True)
+    assert not seen[0]
+    np.testing.assert_array_equal(rgb[0], [128, 128, 128])
+    assert diagnostics['rejected_dynamic_mask'] == 1
 
 
 def test_colorize_robust_normalizes_mono_images_and_broadcasts_rgb():
@@ -643,3 +789,149 @@ def test_drop_sparse_points_neighbouring_voxels_count_together():
     pts = np.array([[0.0, 0.0, 0.0], [0.11, 0.0, 0.0]])
     keep = pcio.drop_sparse_points(pts, min_neighbors=2, voxel=0.1)
     assert keep.tolist() == [True, True]
+
+
+def test_colorize_robust_image_margin_skips_border_samples():
+    vms, K, W, H = _cam()
+    img = np.full((H, W, 3), 200, dtype=np.uint8)
+    # Two points: one lands at the centre, one lands 4 px from the border.
+    pts = np.array([[0.0, 0.0, 5.0], [2.3, 0.0, 5.0]])  # u = 50 and u = 96
+    rgb, seen = pcio.colorize_by_projection_robust(
+        pts, vms, K, [img], W, H, normalize_exposure=False, image_margin=10)
+    assert seen[0] and not seen[1]
+    np.testing.assert_array_equal(rgb[0], [200, 200, 200])
+    # Margin 0 (default) keeps the border point colourable.
+    _, seen_full = pcio.colorize_by_projection_robust(
+        pts, vms, K, [img], W, H, normalize_exposure=False)
+    assert seen_full.all()
+
+
+def test_colorize_robust_image_margin_keeps_full_frame_occlusion():
+    vms, K, W, H = _cam()
+    img = np.full((H, W, 3), 200, dtype=np.uint8)
+    # A near point inside the margin still occludes the far point behind it
+    # even though the near point itself is never sampled for colour.
+    near = [2.3, 0.0, 5.0]    # u = 96, inside the 10 px margin band
+    far = [4.6, 0.0, 10.0]    # same pixel, twice the depth
+    rgb, seen = pcio.colorize_by_projection_robust(
+        np.array([near, far]), vms, K, [img], W, H,
+        normalize_exposure=False, image_margin=10)
+    assert not seen.any()
+
+
+def test_colorize_robust_image_margin_validation():
+    vms, K, W, H = _cam()
+    img = np.zeros((H, W, 3), dtype=np.uint8)
+    for margin in (-1, 50, 60):
+        with np.testing.assert_raises(ValueError):
+            pcio.colorize_by_projection_robust(
+                np.zeros((1, 3)), vms, K, [img], W, H, image_margin=margin)
+
+
+def test_radial_vignette_gain_recovers_dark_border_and_is_default_off():
+    vms, K, W, H = _cam()
+    yy, xx = np.mgrid[:H, :W]
+    radius = np.hypot(xx - 50.0, yy - 50.0) / np.hypot(50.0, 50.0)
+    image = np.clip(120.0 * (1.0 - 0.5 * radius ** 2), 0, 255)
+    image = np.repeat(image[:, :, None], 3, axis=2).astype(np.uint8)
+    points = np.array([[0.0, 0.0, 5.0], [2.25, 0.0, 5.0]])
+    baseline, _ = pcio.colorize_by_projection_robust(
+        points, vms, K, [image], W, H, normalize_exposure=False)
+    disabled, _ = pcio.colorize_by_projection_robust(
+        points, vms, K, [image], W, H, normalize_exposure=False,
+        vignette_gain_limit=1.0)
+    corrected, _ = pcio.colorize_by_projection_robust(
+        points, vms, K, [image], W, H, normalize_exposure=False,
+        vignette_gain_limit=2.5)
+    np.testing.assert_array_equal(disabled, baseline)
+    assert corrected[1, 0] > baseline[1, 0] + 15
+    assert abs(int(corrected[1, 0]) - int(corrected[0, 0])) < 10
+
+
+def test_radial_vignette_gain_validation():
+    vms, K, W, H = _cam()
+    with np.testing.assert_raises(ValueError):
+        pcio.colorize_by_projection_robust(
+            np.zeros((1, 3)), vms, K, [np.zeros((H, W, 3))], W, H,
+            vignette_gain_limit=0.9)
+
+
+def test_estimate_voxel_normals_finds_planar_axis_and_marks_sparse():
+    yy, xx = np.mgrid[:4, :4]
+    plane = np.column_stack([xx.ravel(), yy.ravel(), np.zeros(16)]) * 0.01
+    sparse = np.array([[2.0, 2.0, 2.0]])
+    normals = pcio.estimate_voxel_normals(
+        np.vstack([plane, sparse]), voxel=0.1, min_points=6)
+    assert np.all(np.abs(normals[:16, 2]) > 0.99)
+    np.testing.assert_array_equal(normals[-1], [0.0, 0.0, 0.0])
+
+
+def test_estimate_overlap_rgb_gains_matches_shared_scene_colours():
+    _, K, W, H = _cam()
+    xx, yy = np.meshgrid(np.linspace(-0.5, 0.5, 5),
+                         np.linspace(-0.5, 0.5, 5))
+    points = np.column_stack([xx.ravel(), yy.ravel(), np.full(xx.size, 5.0)])
+    images = [
+        np.full((H, W, 3), [50, 80, 120], dtype=np.uint8),
+        np.full((H, W, 3), [100, 80, 60], dtype=np.uint8),
+    ]
+    gains = pcio.estimate_overlap_rgb_gains(
+        points, np.stack([np.eye(4), np.eye(4)]), K, images, W, H,
+        min_shared=16, neighbour_span=1, gain_limit=2.0,
+        regularization=0.0)
+    corrected0 = np.array([50, 80, 120]) * gains[0]
+    corrected1 = np.array([100, 80, 60]) * gains[1]
+    np.testing.assert_allclose(corrected0, corrected1, rtol=0.02)
+
+
+def test_view_confidence_rejects_grazing_observation():
+    _, K, W, H = _cam()
+    red = np.full((H, W, 3), [200, 0, 0], dtype=np.uint8)
+    green = np.full((H, W, 3), [0, 200, 0], dtype=np.uint8)
+    centred = np.eye(4)
+    side = np.eye(4)
+    side[0, 3] = -1.0  # camera centre at world x=+1
+    rgb, seen = pcio.colorize_by_projection_robust(
+        np.array([[0.0, 0.0, 5.0]]), np.stack([centred, side]), K,
+        [red, green], W, H, normalize_exposure=False, max_samples=1,
+        point_normals=np.array([[1.0, 0.0, 0.0]]),
+        min_view_cosine=0.1, view_score_power=1.0)
+    assert seen[0]
+    np.testing.assert_array_equal(rgb[0], [0, 200, 0])
+
+
+def test_dynamic_map_cleaner_is_default_off_and_byte_compatible():
+    points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+    cleaned, report = bli.clean_dynamic_map(points, [], algorithm='none')
+    assert cleaned is points
+    assert report['enabled'] is False
+    assert report['removed_points'] == 0
+
+
+def test_dynamic_map_cleaner_forwards_fusion_evidence_and_reports_removal():
+    class FakeCleaner:
+        __version__ = 'test'
+        received = None
+
+        @classmethod
+        def clean_map_by_fusion(cls, points, scans, **kwargs):
+            cls.received = (scans, kwargs)
+            keep = np.array([True, False, True])
+            return points[keep], keep
+
+    points = np.arange(9, dtype=np.float64).reshape(3, 3)
+    scan = (points[:2], np.array([4.0, 5.0, 6.0]))
+    cleaned, report = bli.clean_dynamic_map(
+        points, [scan], algorithm='fusion', workers=3,
+        evidence_stride=2,
+        free_votes_fraction=0.7, free_votes_floor=4,
+        void_min_scans=5, cleaner_module=FakeCleaner)
+    np.testing.assert_array_equal(cleaned, points[[0, 2]])
+    assert FakeCleaner.received[1] == {
+        'workers': 3, 'free_votes_fraction': 0.7,
+        'free_votes_floor': 4, 'void_min_scans': 5}
+    assert report['implementation_version'] == 'test'
+    assert report['scans'] == 1
+    assert report['evidence_stride'] == 2
+    assert report['removed_points'] == 1
+    assert report['removed_ratio'] == 1 / 3

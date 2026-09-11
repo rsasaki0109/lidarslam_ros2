@@ -1,0 +1,104 @@
+# NTNU LiDAR Degeneracy Datasets, "fog" corridor sequence: continuous,
+# information-weighted radar/ICP velocity fusion (see rko_lio/core/lio.cpp
+# register_scan(), radar_velocity_continuous_fusion block).
+#
+# Unlike rko_lio_lidar_degeneracy_radar_weak_direction.ros.yaml's
+# radar_disagreement_gate (10-scan disagreement streak required before any
+# correction starts, single-axis correction along the radar heading only,
+# only above a 0.2 m/s gap), this blends every scan with a fresh radar prior,
+# per axis, weighted by the relative confidence (information) of the ICP
+# solve vs. the radar measurement along that world-frame axis. Fixes fog
+# clutter-lock from scan 1 instead of after ~10 scans of accumulated drift,
+# and is not an all-or-nothing single-direction replacement.
+#
+# radar_sigma_forward/lateral/vertical_mps are the per-axis radar sensor-frame
+# velocity sigmas (m/s) used to build each prior's information matrix
+# (BaseNode::radar_callback): near-unbiased forward-velocity estimate, weak
+# lateral/vertical (narrow-FOV radar, limited direction diversity) -- see the
+# fog validation referenced in radar_weak_direction's header comment.
+#
+# radar_disagreement_gate is left enabled here for documentation/comparison
+# purposes only: LIO::register_scan skips that block entirely whenever
+# radar_velocity_continuous_fusion is on (continuous fusion subsumes it), so
+# its value has no runtime effect in this config.
+#
+# Same base sensor/calibration settings as
+# rko_lio_lidar_degeneracy_radar_weak_direction.ros.yaml; param names already
+# match current upstream (max_correspondence_distance, etc.).
+/**:
+  ros__parameters:
+    extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+    extrinsic_lidar2base_quat_xyzw_xyz: [0.000462, 0.0008483, 0.0028835, 0.9999954, -0.00171, 0.02149, 0.0358]
+    lidar_timestamps.offset_seconds: 0.0
+    initialization_phase: true
+    deskew: true
+    voxel_size: 0.5
+    icp_keypoint_voxel_multiplier: 1.5
+    max_points_per_voxel: 20
+    min_range: 0.7
+    max_range: 100.0
+    max_correspondence_distance: 0.5
+    double_downsample: true
+    degeneracy_aware_solve: true
+    degeneracy_well_conditioned_ratio: 1.5e-5
+    degeneracy_multiplicity_relative_gap: 1.0e-8
+    degeneracy_prior_weight: 0.25
+    degeneracy_persistence_gate: true
+    degeneracy_persistence_min_scans: 3
+    degeneracy_persistence_tracking_ratio: 1.5e-5
+    degeneracy_persistence_min_absolute_cosine: 0.98
+    degeneracy_persistence_min_translation_fraction: 0.99
+    degeneracy_multiscan_observability_gate: true
+    degeneracy_observability_window_scans: 10
+    degeneracy_observability_min_scans: 5
+    degeneracy_observability_max_directional_ratio: 1.0e-5
+    # Radar topic + ego-velocity estimator. Extrinsic is the dataset authors'
+    # published radar-to-IMU calibration (imu2base is identity here); the
+    # -1.0 doppler sign was confirmed empirically against the fog LIO baseline.
+    radar_topic: /radar/cloud
+    extrinsic_radar2base_quat_xyzw_xyz: [0.953717, 0.0, -0.3007058, 0.0, 0.07771, 0.02141, -0.03631]
+    radar_doppler_sign: -1.0
+    radar_ransac_inlier_threshold: 0.15
+    radar_ransac_iterations: 100
+    radar_min_inliers: 8
+    radar_prior_max_time_offset_sec: 0.15
+    # Hessian-weak-direction radar prior (separate feature, see
+    # rko_lio_lidar_degeneracy_radar_weak_direction.ros.yaml): off here so the
+    # A/B isolates the continuous-fusion feature.
+    radar_velocity_fusion: false
+    # Disagreement gate: documented above as inert while continuous fusion is on.
+    radar_disagreement_gate: true
+    radar_disagreement_min_mps: 0.2
+    radar_disagreement_min_scans: 10
+    radar_disagreement_weight: 1.0
+    # Continuous, information-weighted radar/ICP velocity fusion (this config's feature).
+    # Tuning note: the ICP translation-translation Hessian block (icp_H's top-left 3x3) is
+    # ALWAYS ~Identity by construction -- build_icp_linear_system's per-point translation
+    # Jacobian is exactly Identity regardless of point geometry, and H is normalized by
+    # correspondence count, so H_tt carries no signal about clutter-lock (fog aerosol returns
+    # give ICP a perfectly well-conditioned, confidently WRONG Hessian). radar_fusion_icp_information_scale
+    # and the sigmas below were therefore tuned empirically as a fixed trust ratio rather than
+    # relying on H_tt to auto-detect degeneracy; see the fog A/B sweep in this feature's PR
+    # description. 0.06 m/s forward sigma with icp_information_scale 0.2 (icp info ~=0.2/dt^2,
+    # radar forward info ~=1/0.06^2=278) lets radar dominate the forward axis while ICP still
+    # dominates lateral/vertical (radar info there stays 1/0.5^2=4, well below icp's ~20).
+    radar_velocity_continuous_fusion: true
+    radar_sigma_forward_mps: 0.06
+    radar_sigma_lateral_mps: 0.5
+    radar_sigma_vertical_mps: 0.5
+    radar_fusion_icp_information_scale: 0.2
+    enable_kidnap_relocalization: false
+    reset_on_registration_failure: false
+    relocalize_after_scan_gap: false
+
+    # Sliding-window absolute gravity alignment (rko_lio gravity_alignment.hpp):
+    # long-window raw-accel mean as an absolute up reference, fed back as a
+    # small capped roll/pitch correction. Fixes the slow pitch drift that the
+    # min_beta regularization cannot observe (its KF reference drifts with the
+    # estimate). NTNU A/B (gain 0.2): tunnel end-z sag -33.45 -> -5.22 m,
+    # transverse RMS 3.50 -> 1.79 m, reach preserved; fog start-end drift
+    # 11.21 -> 9.63 m. Samples are not accumulated while the world-frame yaw
+    # rate exceeds gravity_alignment_max_yaw_rate_rad_s (sustained turning =
+    # centripetal acceleration, which does not average out).
+    gravity_window_alignment: true
+    gravity_alignment_gain: 0.2

@@ -41,14 +41,14 @@ bash scripts/compare_with_glim.sh \
 test -s "${TUM}" || { echo "ERROR: empty trajectory ${TUM}"; exit 1; }
 
 echo "== [2/4] extract posed images (compressed bag, TF extrinsic, undistort) =="
-python3 tools/gaussian_splatting/extract_posed_images.py \
+python3 tools/colored_map/extract_posed_images.py \
   --bag "${BAG}" --traj "${TUM}" \
   --camera-topic "${CAMERA}/raw_image" --camera-info-topic "${CAMERA}/camera_info" \
   --extrinsic "${EXTRINSIC}" --undistort --max-extrapolation 0.2 \
   --out "${OUT_DIR}/gsplat"
 
 echo "== [3/4] build LiDAR-primed init cloud =="
-python3 tools/gaussian_splatting/build_lidar_init.py \
+python3 tools/colored_map/build_lidar_init.py \
   --bag "${BAG}" --traj "${TUM}" --points-topic "${POINTS}" \
   --voxel 0.15 --max-range 80 --max-points 400000 \
   --out "${OUT_DIR}/gsplat/lidar_init.ply"

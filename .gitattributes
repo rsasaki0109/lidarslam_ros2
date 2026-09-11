@@ -1,0 +1,3 @@
+# Preserve deliberate upstream formatting inside immutable patch carriers while
+# keeping Git whitespace checks enabled for normal source and documentation.
+packaging/ndt_omp/*.patch -whitespace

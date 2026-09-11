@@ -10,6 +10,8 @@ body:
       value: |
         Use this template for issues in the pointcloud-only Autoware flow.
         Include the verifier output and the exact staging/viewer command.
+        Do not upload a map bundle, pointcloud tiles, a rosbag, precise
+        projector coordinates, or screenshots that reveal a private place.
 
   - type: input
     id: environment
@@ -23,8 +25,8 @@ body:
   - type: textarea
     id: command
     attributes:
-      label: Exact command
-      description: Paste the exact staging, smoke, or viewer command.
+      label: Exact command shape
+      description: Paste the staging, smoke, or viewer command with credentials, private paths, and precise locations replaced by explicit REDACTED placeholders. Preserve every option and non-private value.
       render: bash
     validations:
       required: true
@@ -33,7 +35,7 @@ body:
     id: verifier
     attributes:
       label: verify_autoware_map output
-      description: Paste the result of the local verifier.
+      description: Review and paste the local verifier result after removing private paths and precise locations.
       render: text
     validations:
       required: true
@@ -52,9 +54,10 @@ body:
   - type: textarea
     id: projector
     attributes:
-      label: map_projector_info.yaml
-      description: Paste the relevant contents of map_projector_info.yaml.
-      render: yaml
+      label: Projector configuration summary
+      description: State projector_type and whether an origin is present. Replace latitude, longitude, altitude, MGRS/grid identifiers, and every precise origin value with REDACTED; never paste the complete map_projector_info.yaml from a private site.
+      placeholder: "projector_type: LocalCartesian; map_origin: REDACTED"
+      render: text
     validations:
       required: true
 
@@ -70,9 +73,20 @@ body:
   - type: textarea
     id: artifacts
     attributes:
-      label: Relevant artifacts
-      description: Include paths or links to the map bundle, logs, and screenshots.
+      label: Privacy-reviewed diagnostics
+      description: Attach only a reviewed `lidarslam-map support <session_bundle>` ZIP or separately reviewed non-geometry diagnostics. Do not attach a map bundle, pointcloud/lanelet files, rosbag, raw private log, precise coordinates, or screenshots revealing a private place.
       placeholder: |
-        /tmp/autoware_maps/...
-        output/.../slam.launch.log
-        docker logs ...
+        support-<run-id>.zip
+        redacted verifier or viewer finding
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy and location safety
+      options:
+        - label: I removed credentials, private paths, precise locations, and every projector-origin coordinate or grid identifier.
+          required: true
+        - label: I did not attach a rosbag, map bundle, pointcloud/lanelet geometry, raw private log, or screenshot that reveals a private place.
+          required: true
+        - label: I reviewed every attached file before sharing it, or attached no file.
+          required: true

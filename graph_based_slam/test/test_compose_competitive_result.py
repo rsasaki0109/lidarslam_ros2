@@ -53,17 +53,16 @@ def _write(path, document):
 
 
 def _inputs(tmp_path, map_valid=True):
-    calibration = yaml.safe_load(PROFILE.read_text())[
-        'competitive_slam_profile']['datasets']['holdout_slots'][
-            'holdout_2']['calibration_archive_sha256']
+    calibration = 'c' * 64
     manifest = _write(tmp_path / 'manifest.json', {
         'status': 'frozen', 'sequence': 'exp03',
-        'hashes': {'calibration_archive_sha256': calibration}})
+        'hashes': {'calibration_sha256': calibration}})
     machine = _write(tmp_path / 'machine.json', {'machine_id': 'a' * 64})
     reference = tmp_path / 'reference.tum'
     reference.write_text('1 0 0 0 0 0 0 1\n')
     trajectory = _write(tmp_path / 'trajectory.json', {
         'valid_repetitions': 3,
+        'reference': {'common_sha256': 'd' * 64},
         'aggregate': {'ape_rmse_median_m': 0.5},
         'runs': [
             {'completion': {'trajectory_complete': True,
@@ -147,6 +146,12 @@ def test_compose_propagates_two_layer_execution_identity(tmp_path):
             'execution_receipt_file_sha256': ('b' * 63) + str(index),
         })
     trajectory.write_text(json.dumps(document))
+def test_legacy_calibration_archive_hash_remains_explicitly_supported(tmp_path):
+    manifest, reference, machine, trajectory, mapping = _inputs(tmp_path)
+    document = json.loads(manifest.read_text())
+    value = document['hashes'].pop('calibration_sha256')
+    document['hashes']['calibration_archive_sha256'] = value
+    manifest.write_text(json.dumps(document))
     result = MODULE.compose(
         system='ours', track='glim_cpu_lidar_imu',
         manifest_path=manifest, reference_path=reference,
@@ -155,3 +160,24 @@ def test_compose_propagates_two_layer_execution_identity(tmp_path):
     assert len(result['execution_evidence']) == 3
     assert result['execution_evidence'][0]['execution_receipt_sha256'].endswith('1')
     assert result['execution_evidence'][0]['execution_receipt_file_sha256'].endswith('1')
+    assert result['calibration_sha256'] == value
+
+
+def test_fast_mapper_nested_peak_rss_is_used_conservatively(tmp_path):
+    manifest, reference, machine, trajectory, mapping = _inputs(tmp_path)
+    document = json.loads(trajectory.read_text())
+    for run, rss in zip(document['runs'], (120, 140, 130)):
+        run['runtime'].pop('peak_rss_mb')
+        run['runtime']['mapper'] = {'peak_rss_mb': rss}
+    trajectory.write_text(json.dumps(document))
+    processing = _write(tmp_path / 'processing.json', {
+        'valid_processing_rtf_evidence': True,
+        'processing_rtf_upper_bound_median': 0.95})
+    result = MODULE.compose(
+        system='fast_livo2', track='fast_livo2_lidar_imu_visual',
+        manifest_path=manifest, reference_path=reference,
+        machine_path=machine, trajectory_path=trajectory,
+        map_path=mapping, profile_path=PROFILE,
+        processing_path=processing)
+    assert result['runtime'] == {
+        'peak_rss_max_mb': 140.0, 'processing_rtf_median': 0.95}

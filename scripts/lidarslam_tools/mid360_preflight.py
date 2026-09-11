@@ -285,6 +285,16 @@ class Mid360RobotPreflight:
     ) -> PreflightCheck | None:
         frame_ids = topic_diagnostics.get('sampled_frame_ids') or []
         if not frame_ids:
+            if topic_diagnostics.get('sampled_message_count', 0) > 0:
+                return PreflightCheck(
+                    id=check_id,
+                    status='fail',
+                    message=(
+                        f'{label} sampled messages have no non-empty '
+                        'frame_id; fix the publisher header.frame_id and '
+                        'repeat preflight.'
+                    ),
+                )
             return None
         expected = topic_diagnostics.get('expected_frame_id') or ''
         if expected and topic_diagnostics.get('matches_expected_frame') is False:

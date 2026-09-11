@@ -1,0 +1,246 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-demo-plan-v1.schema.json",
+  "title": "lidarslam_ros2 public first-map demo plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "created_at",
+    "status",
+    "ready",
+    "mode",
+    "dataset",
+    "paths",
+    "cache",
+    "output",
+    "storage",
+    "viewer",
+    "steps",
+    "command",
+    "findings"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/first-map-demo-plan-v1.schema.json"
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {
+      "enum": ["ready", "resume_ready", "already_verified", "not_ready"]
+    },
+    "ready": {"type": "boolean"},
+    "mode": {
+      "enum": ["fresh", "resume_postprocessing", "reuse_verified"]
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "source_url",
+        "doi",
+        "license",
+        "archive_size_bytes",
+        "archive_sha256"
+      ],
+      "properties": {
+        "id": {"const": "driving_slam_mid360"},
+        "title": {"const": "Driving SLAM Test with Livox MID360"},
+        "source_url": {"const": "https://zenodo.org/records/14841855"},
+        "doi": {"const": "10.5281/zenodo.14841855"},
+        "license": {
+          "const": "Creative Commons Attribution 4.0 International"
+        },
+        "archive_size_bytes": {"const": 517088133},
+        "archive_sha256": {
+          "const": "f8f89eebf2aaf9cc1d465bfa5451bbb599cd92d079b59949104bb4e5cb619bdd"
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["work_root", "data_dir", "output_dir"],
+      "properties": {
+        "work_root": {"type": "string", "minLength": 1},
+        "data_dir": {"type": "string", "minLength": 1},
+        "output_dir": {"type": "string", "minLength": 1}
+      }
+    },
+    "cache": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "bag_path", "download_required"],
+      "properties": {
+        "status": {
+          "enum": [
+            "prepared_unverified",
+            "archive_unverified",
+            "download_required"
+          ]
+        },
+        "bag_path": {"type": ["string", "null"], "minLength": 1},
+        "download_required": {"type": "boolean"}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "receipt_sha256",
+        "lifecycle_stage",
+        "resume_available",
+        "run_dir"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "absent",
+            "verified",
+            "resumable",
+            "partial",
+            "conflict"
+          ]
+        },
+        "receipt_sha256": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          ]
+        },
+        "lifecycle_stage": {
+          "type": ["string", "null"]
+        },
+        "resume_available": {"type": "boolean"},
+        "run_dir": {"type": ["string", "null"], "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"status": {"const": "resumable"}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "resume_available": {"const": true},
+              "lifecycle_stage": {
+                "enum": [
+                  "workflow_finished",
+                  "verifying",
+                  "verified",
+                  "finalizing",
+                  "finalized",
+                  "diagnosing",
+                  "diagnosed",
+                  "checksumming"
+                ]
+              },
+              "run_dir": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      ]
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_free_gib", "minimum_free_bytes", "volumes"],
+      "properties": {
+        "minimum_free_gib": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "minimum_free_bytes": {"type": "integer", "minimum": 1},
+        "volumes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "probe_path",
+              "free_bytes",
+              "additional_bytes_required",
+              "enough"
+            ],
+            "properties": {
+              "probe_path": {"type": "string", "minLength": 1},
+              "free_bytes": {"type": "integer", "minimum": 0},
+              "additional_bytes_required": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "enough": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    },
+    "viewer": {"enum": ["browser", "none"]},
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "download_and_verify_dataset",
+          "verify_archive_and_prepare_dataset",
+          "verify_prepared_dataset_cache",
+          "build_and_verify_map",
+          "resume_and_verify_map",
+          "reuse_verified_map",
+          "open_offline_review"
+        ]
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["argv", "shell"],
+      "properties": {
+        "argv": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string"}
+        },
+        "shell": {"type": "string", "minLength": 1}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "next_action"],
+        "properties": {
+          "code": {
+            "enum": [
+              "path-not-directory",
+              "path-overlap",
+              "path-symlink",
+              "partial-output",
+              "output-conflict",
+              "insufficient-free-space",
+              "storage-unavailable",
+              "resume-available",
+              "resume-unavailable",
+              "resume-unsafe",
+              "resume-not-needed"
+            ]
+          },
+          "message": {"type": "string", "minLength": 1},
+          "next_action": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

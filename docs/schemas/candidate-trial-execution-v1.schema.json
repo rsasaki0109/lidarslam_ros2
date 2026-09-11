@@ -1,0 +1,419 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-trial-execution-v1.schema.json",
+  "title": "lidarslam_ros2 candidate trial execution v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "started_at",
+    "completed_at",
+    "repository",
+    "trial_id",
+    "handoff",
+    "row",
+    "measurement_capture",
+    "preflight",
+    "trial",
+    "outputs",
+    "sharing",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-trial-execution-v1.schema.json"
+    },
+    "status": {
+      "enum": ["PREFLIGHT_BLOCKED", "TRIAL_RECORDED", "HARNESS_ERROR"]
+    },
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "trial_id": {"$ref": "#/definitions/slug"},
+    "handoff": {"$ref": "#/definitions/handoff"},
+    "row": {"$ref": "#/definitions/row"},
+    "measurement_capture": {"$ref": "#/definitions/measurementCapture"},
+    "preflight": {"$ref": "#/definitions/preflight"},
+    "trial": {"$ref": "#/definitions/trial"},
+    "outputs": {"$ref": "#/definitions/outputs"},
+    "sharing": {"$ref": "#/definitions/sharing"},
+    "authority": {"$ref": "#/definitions/authority"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "PREFLIGHT_BLOCKED"}}},
+      "then": {
+        "properties": {
+          "preflight": {
+            "properties": {
+              "status": {"enum": ["REMOTE_AUDIT_FAIL", "NOT_READY"]}
+            }
+          },
+          "trial": {
+            "properties": {
+              "attempted": {"const": false},
+              "probe_exit_code": {"const": null},
+              "record_status": {"const": "NOT_CREATED"},
+              "record_sha256": {"const": null},
+              "outcome_status": {"const": null},
+              "measurement_status": {"const": null},
+              "comparable": {"const": null},
+              "missing_measurements": {"maxItems": 0},
+              "comparability_blockers": {"maxItems": 0}
+            }
+          },
+          "outputs": {
+            "properties": {
+              "trial_record": {"const": null},
+              "trial_audit": {"const": null},
+              "validation_receipt": {"const": null},
+              "private_evidence_directory": {"const": null}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "TRIAL_RECORDED"}}},
+      "then": {
+        "properties": {
+          "preflight": {
+            "properties": {
+              "status": {"enum": ["REMOTE_AUDIT_PASS", "READY"]}
+            }
+          },
+          "trial": {
+            "properties": {
+              "attempted": {"const": true},
+              "probe_exit_code": {"enum": [0, 1]},
+              "record_status": {"const": "AVAILABLE"},
+              "record_sha256": {"type": "string"},
+              "outcome_status": {"enum": ["PASS", "FAIL"]},
+              "measurement_status": {"enum": ["COMPLETE", "INCOMPLETE"]},
+              "comparable": {"type": "boolean"}
+            }
+          },
+          "outputs": {
+            "properties": {
+              "trial_record": {"const": "trial-record.json"},
+              "trial_audit": {"const": "trial-audit.json"},
+              "private_evidence_directory": {"const": "private"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "HARNESS_ERROR"}}},
+      "then": {
+        "properties": {
+          "preflight": {
+            "properties": {
+              "status": {"enum": ["REMOTE_AUDIT_PASS", "READY"]}
+            }
+          },
+          "trial": {
+            "properties": {
+              "attempted": {"const": true},
+              "probe_exit_code": {"type": "integer"}
+            }
+          },
+          "outputs": {
+            "properties": {
+              "private_evidence_directory": {"const": "private"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "trial": {"properties": {"comparable": {"const": true}}}
+        }
+      },
+      "then": {
+        "properties": {
+          "outputs": {
+            "properties": {
+              "validation_receipt": {
+                "const": "first-map-validation-receipt.json"
+              }
+            }
+          },
+          "sharing": {
+            "properties": {
+              "bounded_outputs": {
+                "contains": {
+                  "const": "first-map-validation-receipt.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableSha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "finding": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preparation_sha256",
+        "workflow_run_url",
+        "run_id",
+        "source_pr",
+        "source_commit",
+        "product_version",
+        "candidate_bundle_sha256",
+        "candidate_set_sha256",
+        "artifact_expires_at"
+      ],
+      "properties": {
+        "preparation_sha256": {"$ref": "#/definitions/sha256"},
+        "workflow_run_url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/actions/runs/[1-9][0-9]*$"
+        },
+        "run_id": {"type": "integer", "minimum": 1},
+        "source_pr": {"type": "integer", "minimum": 1},
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "product_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "candidate_bundle_sha256": {"$ref": "#/definitions/sha256"},
+        "candidate_set_sha256": {"$ref": "#/definitions/sha256"},
+        "artifact_expires_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "row_id",
+        "route",
+        "ros_distro",
+        "os_family",
+        "product_version",
+        "identity"
+      ],
+      "properties": {
+        "row_id": {
+          "enum": [
+            "docker-humble",
+            "docker-jazzy",
+            "source-humble",
+            "source-jazzy"
+          ]
+        },
+        "route": {"enum": ["docker", "source"]},
+        "ros_distro": {"enum": ["humble", "jazzy"]},
+        "os_family": {"enum": ["ubuntu-22.04", "ubuntu-24.04"]},
+        "product_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value", "immutable_ref"],
+          "properties": {
+            "kind": {"enum": ["git-commit", "image-digest"]},
+            "value": {
+              "type": "string",
+              "pattern": "^(?:[0-9a-f]{40}|sha256:[0-9a-f]{64})$"
+            },
+            "immutable_ref": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+    "measurementCapture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested_mode", "resolved_mode", "resolution"],
+      "properties": {
+        "requested_mode": {"enum": ["auto", "prompt", "unknown"]},
+        "resolved_mode": {"enum": ["prompt", "unknown"]},
+        "resolution": {
+          "enum": ["explicit", "interactive-terminal", "non-interactive"]
+        }
+      }
+    },
+    "preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "status", "report_sha256", "finding_codes"],
+      "properties": {
+        "kind": {"enum": ["candidate-remote-audit", "source-public"]},
+        "status": {
+          "enum": [
+            "REMOTE_AUDIT_PASS",
+            "REMOTE_AUDIT_FAIL",
+            "READY",
+            "NOT_READY"
+          ]
+        },
+        "report_sha256": {"$ref": "#/definitions/sha256"},
+        "finding_codes": {
+          "type": "array",
+          "maxItems": 40,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/finding"}
+        }
+      }
+    },
+    "trial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempted",
+        "probe_exit_code",
+        "record_status",
+        "record_sha256",
+        "outcome_status",
+        "measurement_status",
+        "comparable",
+        "missing_measurements",
+        "comparability_blockers",
+        "finding_codes"
+      ],
+      "properties": {
+        "attempted": {"type": "boolean"},
+        "probe_exit_code": {"type": ["integer", "null"]},
+        "record_status": {
+          "enum": ["NOT_CREATED", "AVAILABLE", "QUARANTINED"]
+        },
+        "record_sha256": {"$ref": "#/definitions/nullableSha256"},
+        "outcome_status": {"type": ["string", "null"], "enum": ["PASS", "FAIL", null]},
+        "measurement_status": {
+          "type": ["string", "null"],
+          "enum": ["COMPLETE", "INCOMPLETE", null]
+        },
+        "comparable": {"type": ["boolean", "null"]},
+        "missing_measurements": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "comparability_blockers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/finding"}
+        },
+        "finding_codes": {
+          "type": "array",
+          "maxItems": 40,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/finding"}
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preflight_json",
+        "trial_record",
+        "trial_audit",
+        "validation_receipt",
+        "private_evidence_directory",
+        "execution_json"
+      ],
+      "properties": {
+        "preflight_json": {"const": "row-preflight.json"},
+        "trial_record": {"type": ["string", "null"], "enum": ["trial-record.json", null]},
+        "trial_audit": {"type": ["string", "null"], "enum": ["trial-audit.json", null]},
+        "validation_receipt": {
+          "type": ["string", "null"],
+          "enum": ["first-map-validation-receipt.json", null]
+        },
+        "private_evidence_directory": {"type": ["string", "null"], "enum": ["private", null]},
+        "execution_json": {"const": "execution.json"}
+      }
+    },
+    "sharing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bounded_outputs",
+        "private_evidence_shareable",
+        "review_before_sharing"
+      ],
+      "properties": {
+        "bounded_outputs": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "row-preflight.json",
+              "trial-record.json",
+              "trial-audit.json",
+              "first-map-validation-receipt.json",
+              "execution.json"
+            ]
+          }
+        },
+        "private_evidence_shareable": {"const": false},
+        "review_before_sharing": {"const": true}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dedicated_trial_host_acknowledged",
+        "network_reads_performed",
+        "local_files_written",
+        "atomic_output_publication",
+        "trial_executed",
+        "privileged_container_authorized",
+        "source_host_mutation_authorized",
+        "github_writes_authorized",
+        "registry_writes_authorized",
+        "release_writes_authorized",
+        "community_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "dedicated_trial_host_acknowledged": {"const": true},
+        "network_reads_performed": {"const": true},
+        "local_files_written": {"const": true},
+        "atomic_output_publication": {"const": true},
+        "trial_executed": {"type": "boolean"},
+        "privileged_container_authorized": {"type": "boolean"},
+        "source_host_mutation_authorized": {"type": "boolean"},
+        "github_writes_authorized": {"const": false},
+        "registry_writes_authorized": {"const": false},
+        "release_writes_authorized": {"const": false},
+        "community_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  }
+}

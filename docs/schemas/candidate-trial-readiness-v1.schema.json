@@ -1,0 +1,297 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-trial-readiness-v1.schema.json",
+  "title": "lidar_slam_ros2 candidate trial readiness v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "checked_at",
+    "repository",
+    "row",
+    "request",
+    "summary",
+    "checks",
+    "next_action",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/candidate-trial-readiness-v1.schema.json"
+    },
+    "status": {
+      "enum": [
+        "READY",
+        "READY_NONCOMPARABLE",
+        "CONFIRMATION_REQUIRED",
+        "BLOCKED"
+      ]
+    },
+    "checked_at": {"type": "string", "format": "date-time"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "row_id",
+        "route",
+        "ros_distro",
+        "expected_os_family",
+        "required_architecture"
+      ],
+      "properties": {
+        "row_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "route": {"enum": ["docker", "source", "unknown"]},
+        "ros_distro": {"enum": ["humble", "jazzy", "unknown"]},
+        "expected_os_family": {
+          "enum": ["ubuntu-22.04", "ubuntu-24.04", null]
+        },
+        "required_architecture": {"const": "x86_64"}
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflow_run_url",
+        "output_directory_exists",
+        "human_measurements",
+        "interactive_terminal",
+        "dedicated_trial_host_acknowledged",
+        "minimum_free_bytes"
+      ],
+      "properties": {
+        "workflow_run_url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "output_directory_exists": {"type": "boolean"},
+        "human_measurements": {"enum": ["auto", "prompt", "unknown"]},
+        "interactive_terminal": {"type": "boolean"},
+        "dedicated_trial_host_acknowledged": {"type": "boolean"},
+        "minimum_free_bytes": {"const": 8589934592}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pass_count",
+        "blocker_count",
+        "confirmation_count",
+        "warning_count",
+        "execution_ready",
+        "comparable_measurements_planned"
+      ],
+      "properties": {
+        "pass_count": {"type": "integer", "minimum": 0},
+        "blocker_count": {"type": "integer", "minimum": 0},
+        "confirmation_count": {"type": "integer", "minimum": 0},
+        "warning_count": {"type": "integer", "minimum": 0},
+        "execution_ready": {"type": "boolean"},
+        "comparable_measurements_planned": {"type": "boolean"}
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "message", "next_action"],
+        "properties": {
+          "id": {
+            "enum": [
+              "request-contract",
+              "host-operating-system",
+              "host-architecture",
+              "measured-filesystem",
+              "route-runtime",
+              "network-measurement",
+              "human-observer-measurements",
+              "dedicated-host-confirmation"
+            ]
+          },
+          "status": {
+            "enum": [
+              "PASS",
+              "BLOCKED",
+              "CONFIRMATION_REQUIRED",
+              "WARNING"
+            ]
+          },
+          "message": {"type": "string", "minLength": 1, "maxLength": 500},
+          "next_action": {"type": "string", "minLength": 1, "maxLength": 500}
+        }
+      }
+    },
+    "next_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "command", "write_boundary"],
+      "properties": {
+        "id": {
+          "enum": [
+            "start-candidate-trial",
+            "review-isolation-and-start",
+            "prepare-neutral-observer",
+            "fix-blockers-and-recheck"
+          ]
+        },
+        "title": {"type": "string", "minLength": 1},
+        "command": {
+          "type": "string",
+          "pattern": "^python3 scripts/start_candidate_trial\\.py "
+        },
+        "write_boundary": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_reads_performed",
+        "local_files_written",
+        "trial_executed",
+        "github_writes_authorized",
+        "registry_writes_authorized",
+        "release_writes_authorized",
+        "community_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "network_reads_performed": {"const": false},
+        "local_files_written": {"const": false},
+        "trial_executed": {"const": false},
+        "github_writes_authorized": {"const": false},
+        "registry_writes_authorized": {"const": false},
+        "release_writes_authorized": {"const": false},
+        "community_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "READY",
+              "READY_NONCOMPARABLE",
+              "CONFIRMATION_REQUIRED"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "row": {
+            "properties": {
+              "row_id": {
+                "enum": [
+                  "docker-humble",
+                  "docker-jazzy",
+                  "source-humble",
+                  "source-jazzy"
+                ]
+              },
+              "route": {"enum": ["docker", "source"]},
+              "ros_distro": {"enum": ["humble", "jazzy"]},
+              "expected_os_family": {
+                "enum": ["ubuntu-22.04", "ubuntu-24.04"]
+              }
+            }
+          },
+          "request": {
+            "properties": {
+              "workflow_run_url": {
+                "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/actions/runs/[1-9][0-9]*$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "READY"}}},
+      "then": {
+        "properties": {
+          "summary": {
+            "properties": {
+              "blocker_count": {"const": 0},
+              "confirmation_count": {"const": 0},
+              "warning_count": {"const": 0},
+              "execution_ready": {"const": true},
+              "comparable_measurements_planned": {"const": true}
+            }
+          },
+          "next_action": {
+            "properties": {"id": {"const": "start-candidate-trial"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "READY_NONCOMPARABLE"}}},
+      "then": {
+        "properties": {
+          "summary": {
+            "properties": {
+              "blocker_count": {"const": 0},
+              "confirmation_count": {"const": 0},
+              "warning_count": {"minimum": 1},
+              "execution_ready": {"const": true},
+              "comparable_measurements_planned": {"const": false}
+            }
+          },
+          "next_action": {
+            "properties": {"id": {"const": "prepare-neutral-observer"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "CONFIRMATION_REQUIRED"}}},
+      "then": {
+        "properties": {
+          "summary": {
+            "properties": {
+              "blocker_count": {"const": 0},
+              "confirmation_count": {"minimum": 1},
+              "execution_ready": {"const": false}
+            }
+          },
+          "next_action": {
+            "properties": {"id": {"const": "review-isolation-and-start"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}},
+      "then": {
+        "properties": {
+          "summary": {
+            "properties": {
+              "blocker_count": {"minimum": 1},
+              "execution_ready": {"const": false}
+            }
+          },
+          "next_action": {
+            "properties": {"id": {"const": "fix-blockers-and-recheck"}}
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/run-manifest-v1.schema.json",
+  "title": "lidarslam_ros2 run manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "run_id",
+    "status",
+    "input",
+    "software",
+    "profile",
+    "execution",
+    "output"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/run-manifest-v1.schema.json"
+    },
+    "run_id": {"type": "string", "format": "uuid"},
+    "status": {
+      "enum": ["planned", "running", "succeeded", "failed", "interrupted"]
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bag_path",
+        "metadata_path",
+        "metadata_size_bytes",
+        "metadata_sha256",
+        "storage_identifier",
+        "storage_files",
+        "identity_algorithm"
+      ],
+      "properties": {
+        "bag_path": {"type": "string"},
+        "metadata_path": {"type": "string"},
+        "metadata_size_bytes": {"type": "integer", "minimum": 0},
+        "metadata_sha256": {"$ref": "#/definitions/sha256"},
+        "storage_identifier": {"type": ["string", "null"]},
+        "storage_files": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/file_identity"}
+        },
+        "identity_algorithm": {"const": "sha256"}
+      }
+    },
+    "software": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_version",
+        "git_commit",
+        "git_dirty",
+        "package_versions",
+        "ros_distro"
+      ],
+      "properties": {
+        "product_version": {"type": "string", "minLength": 1},
+        "git_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "git_dirty": {"type": ["boolean", "null"]},
+        "package_versions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "ros_distro": {"type": ["string", "null"]}
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "argv",
+        "command_shell",
+        "started_at",
+        "finished_at",
+        "exit_code"
+      ],
+      "properties": {
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string"}
+        },
+        "command_shell": {"type": "string", "minLength": 1},
+        "started_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "finished_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "exit_code": {"type": ["integer", "null"]}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_dir",
+        "working_dir",
+        "finalized",
+        "artifact_checksums"
+      ],
+      "properties": {
+        "requested_dir": {"type": "string"},
+        "working_dir": {"type": "string"},
+        "finalized": {"type": "boolean"},
+        "diagnosis_status": {
+          "enum": [
+            "success",
+            "map_saved",
+            "verify_failed",
+            "runtime_failed",
+            "incomplete"
+          ]
+        },
+        "artifact_checksums": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/file_identity"}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    }
+  }
+}

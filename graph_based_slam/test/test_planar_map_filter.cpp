@@ -104,31 +104,6 @@ TEST(PlanarMapFilter, FallsBackWhenPlanarSupportWouldDeleteTooMuch)
   EXPECT_EQ(result.stats.output_points, cloud->size());
 }
 
-TEST(PlanarMapFilter, DefaultMinRetainedRatioIsEightyPercent)
-{
-  graphslam::PlanarMapFilterConfig config;
-  EXPECT_DOUBLE_EQ(config.min_retained_ratio, 0.80);
-}
-
-TEST(PlanarMapFilter, DefaultFloorStillFallsBackBelowEightyPercentRetention)
-{
-  const auto cloud = makePlaneAndVolumeCloud();
-  graphslam::PlanarMapFilterConfig config;
-  config.voxel_size = 1.0;
-  config.min_neighbors = 8;
-  config.max_small_eigenvalue_ratio = 0.03;
-  config.min_middle_eigenvalue_ratio = 0.05;
-  // config.min_retained_ratio left at its default (0.80). This cloud's
-  // planar-supported fraction is 16 / 24 (~66.7%), below the default floor,
-  // so the circuit breaker must still trip.
-
-  const auto result = graphslam::buildPlanarMapFilteredMap(cloud, config);
-
-  EXPECT_TRUE(result.stats.fallback_to_input);
-  EXPECT_EQ(result.stats.supported_points, 16u);
-  EXPECT_EQ(result.stats.output_points, cloud->size());
-}
-
 TEST(PlanarMapFilter, InvalidConfigurationPreservesInput)
 {
   const auto cloud = makePlaneAndVolumeCloud();

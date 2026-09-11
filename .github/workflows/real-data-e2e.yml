@@ -1,0 +1,138 @@
+name: real-data-e2e
+
+on:
+  schedule:
+    - cron: '17 17 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: real-data-e2e-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  driving-slam-mid360:
+    name: pinned MID-360 golden path
+    runs-on: ubuntu-24.04
+    container: ros:jazzy-ros-core
+    timeout-minutes: 45
+
+    steps:
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y \
+            git \
+            python3-colcon-common-extensions \
+            python3-rosdep \
+            tar \
+            zstd
+
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Initialize rosdep
+        shell: bash
+        run: |
+          if [[ ! -e /etc/ros/rosdep/sources.list.d/20-default.list ]]; then
+            rosdep init
+          fi
+          rosdep update --rosdistro jazzy
+
+      - name: Install product dependencies
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          rosdep install -r -y \
+            --from-paths \
+              lidarslam \
+              lidarslam_msgs \
+              scanmatcher \
+              graph_based_slam \
+              Thirdparty/ndt_omp_ros2 \
+              Thirdparty/rko_lio \
+            --ignore-src \
+            --rosdistro jazzy
+
+      - name: Restore pinned dataset archive
+        uses: actions/cache@v5
+        with:
+          path: datasets/real-data-e2e/driving_slam_mid360/archives/rosbag2_2024_04_16-14_17_01.zip
+          key: driving-slam-mid360-517088133-0836c50859bb1af591966b69da166186
+
+      - name: Build installed product
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build \
+            --symlink-install \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+      - name: Download and verify pinned real bag
+        shell: bash
+        run: |
+          python3 scripts/download_mid360_robot_public_dataset.py \
+            --dataset driving_slam_mid360 \
+            --dataset-root datasets/real-data-e2e \
+            --output-dir output/real-data-e2e/intake
+
+      - name: Run installed golden path
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          bag="datasets/real-data-e2e/driving_slam_mid360/extracted/rosbag2_2024_04_16-14_17_01/rosbag2_2024_04_16-14_17_01"
+          mkdir -p output/real-data-e2e
+          lidarslam-map doctor "${bag}" --json \
+            > output/real-data-e2e/doctor.json
+          timeout --signal=TERM --kill-after=30s 20m \
+            lidarslam-map run "${bag}" \
+              --output-dir output/real-data-e2e/run
+
+      - name: Validate pinned E2E evidence
+        shell: bash
+        run: |
+          python3 scripts/validate_real_data_e2e.py \
+            --contract configs/real_data_e2e/driving_slam_mid360_v1.json \
+            --intake-manifest datasets/real-data-e2e/driving_slam_mid360/mid360_robot_public_dataset_intake.json \
+            --run-dir output/real-data-e2e/run \
+            --output-json output/real-data-e2e/evidence.json \
+            --output-markdown output/real-data-e2e/evidence.md
+
+      - name: Publish evidence summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f output/real-data-e2e/evidence.md ]]; then
+            sed -n '1,120p' output/real-data-e2e/evidence.md \
+              >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "## Real-data E2E validation did not produce a report" \
+              >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Upload non-geometry evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: driving-slam-mid360-e2e-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            configs/real_data_e2e/driving_slam_mid360_v1.json
+            datasets/real-data-e2e/driving_slam_mid360/mid360_robot_public_dataset_intake.json
+            datasets/real-data-e2e/driving_slam_mid360/mid360_robot_public_dataset_intake.md
+            output/real-data-e2e/doctor.json
+            output/real-data-e2e/evidence.json
+            output/real-data-e2e/evidence.md
+            output/real-data-e2e/run/run_manifest.json
+            output/real-data-e2e/run/autoware_map_diagnosis.json
+            output/real-data-e2e/run/autoware_map_diagnosis.md
+            output/real-data-e2e/run/verify_autoware_map.log
+            output/real-data-e2e/run/slam.launch.log
+            output/real-data-e2e/run/map_save.log

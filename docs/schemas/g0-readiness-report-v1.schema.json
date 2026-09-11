@@ -1,0 +1,1568 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/g0-readiness-report-v1.schema.json",
+  "title": "lidarslam_ros2 G0 readiness report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "scope",
+    "status",
+    "authority",
+    "current_packet",
+    "checks",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/g0-readiness-report-v1.schema.json"
+    },
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "scope": {"const": "local-g0-readiness"},
+    "status": {"enum": ["HOLD", "READY_FOR_REVIEW"]},
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_reads_performed",
+        "github_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "network_reads_performed": {"type": "boolean"},
+        "github_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    },
+    "current_packet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "supersedes_historical_snapshot"],
+      "properties": {
+        "path": {
+          "const": "docs/evidence/growth/g0-current-action-packet-2026-08-14.md"
+        },
+        "supersedes_historical_snapshot": {"const": true}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publication_plan",
+        "publication_review_navigation",
+        "product_draft_review_routing",
+        "product_draft_review_ledger",
+        "onboarding_matrix",
+        "first_map_cohort",
+        "v1_readiness",
+        "product_draft",
+        "candidate_environment",
+        "published_release"
+      ],
+      "properties": {
+        "publication_plan": {"$ref": "#/definitions/publicationPlan"},
+        "publication_review_navigation": {
+          "$ref": "#/definitions/publicationReviewNavigation"
+        },
+        "product_draft_review_routing": {
+          "$ref": "#/definitions/productDraftReviewRouting"
+        },
+        "product_draft_review_ledger": {
+          "$ref": "#/definitions/productDraftReviewLedger"
+        },
+        "onboarding_matrix": {"$ref": "#/definitions/onboardingMatrix"},
+        "first_map_cohort": {"$ref": "#/definitions/cohort"},
+        "v1_readiness": {"$ref": "#/definitions/v1"},
+        "product_draft": {"$ref": "#/definitions/productDraft"},
+        "candidate_environment": {"$ref": "#/definitions/candidateEnvironment"},
+        "published_release": {"$ref": "#/definitions/publishedRelease"}
+      }
+    },
+    "next_action": {"$ref": "#/definitions/nextAction"}
+  },
+  "definitions": {
+    "publicationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "local_tip_sha",
+        "whole_pr_commit_count",
+        "follow_up_review_commit_count",
+        "path_count",
+        "slice_count",
+        "whole_pr_path_count",
+        "review_phase_count",
+        "review_coverage_complete",
+        "bridge_path_count",
+        "worktree_clean",
+        "uncommitted_path_count"
+      ],
+      "properties": {
+        "status": {"const": "PLAN_VALID_LOCAL_ONLY"},
+        "local_tip_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "whole_pr_commit_count": {"type": "integer", "minimum": 1},
+        "follow_up_review_commit_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "path_count": {"type": "integer", "minimum": 0},
+        "slice_count": {"type": "integer", "minimum": 1},
+        "whole_pr_path_count": {"type": "integer", "minimum": 1},
+        "review_phase_count": {"type": "integer", "minimum": 1},
+        "review_coverage_complete": {"type": "boolean"},
+        "bridge_path_count": {"type": "integer", "minimum": 1},
+        "worktree_clean": {"type": "boolean"},
+        "uncommitted_path_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "publicationReviewNavigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "exact_head",
+        "whole_pr_base_sha",
+        "phase_count",
+        "slice_count",
+        "phases",
+        "slices",
+        "overview_command",
+        "slice_command_template",
+        "commands_executed",
+        "github_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "status": {"const": "READY_LOCAL_ONLY"},
+        "exact_head": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "whole_pr_base_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "phase_count": {"const": 3},
+        "slice_count": {"const": 7},
+        "phases": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {"$ref": "#/definitions/publicationReviewPhase"}
+        },
+        "slices": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": {"$ref": "#/definitions/publicationReviewSlice"}
+        },
+        "overview_command": {
+          "const": "python3 scripts/check_publication_slice_plan.py --overview"
+        },
+        "slice_command_template": {
+          "const": "python3 scripts/check_publication_slice_plan.py --slice <ID>"
+        },
+        "commands_executed": {"const": false},
+        "github_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    },
+    "publicationReviewPhase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "start_sha",
+        "end_sha",
+        "commit_count",
+        "path_count",
+        "compare_url"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "P0-initial-review",
+            "P1-ci-bridge",
+            "P2-follow-up-slices"
+          ]
+        },
+        "order": {"type": "integer", "minimum": 1, "maximum": 3},
+        "start_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "end_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "commit_count": {"type": "integer", "minimum": 1},
+        "path_count": {"type": "integer", "minimum": 1},
+        "compare_url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/rsasaki0109/lidar_slam_ros2/compare/[0-9a-f]{40}\\.\\.\\.[0-9a-f]{40}$"
+        }
+      }
+    },
+    "publicationReviewSlice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "title",
+        "path_count",
+        "verification_count",
+        "publication_gate"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "S1-runtime-safety",
+            "S2-first-map-foundation",
+            "S3-map-lifecycle",
+            "S4-source-onboarding",
+            "S5-distribution-readiness",
+            "S6-product-shell-integration",
+            "S7-publication-control"
+          ]
+        },
+        "order": {"type": "integer", "minimum": 1, "maximum": 7},
+        "title": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 ,&/+\\-]{0,159}$"
+        },
+        "path_count": {"type": "integer", "minimum": 1},
+        "verification_count": {"type": "integer", "minimum": 1},
+        "publication_gate": {
+          "enum": ["PUBLIC_CI", "LOCAL_REVIEW", "MAINTAINER_DECISION"]
+        }
+      }
+    },
+    "productDraftReviewRouting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "exact_head",
+        "worktree_clean",
+        "uncommitted_path_count",
+        "policy",
+        "lanes",
+        "summary",
+        "authority"
+      ],
+      "properties": {
+        "status": {
+          "enum": ["READY_LOCAL_ONLY", "PREPARED_DIRTY_WORKTREE"]
+        },
+        "exact_head": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "worktree_clean": {"type": "boolean"},
+        "uncommitted_path_count": {"type": "integer", "minimum": 0},
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "advisory_reviewer_target",
+            "advisory_target_is_merge_gate",
+            "max_parallel_active_lanes",
+            "lane_completion_order_required",
+            "final_decision_role"
+          ],
+          "properties": {
+            "advisory_reviewer_target": {"const": 2},
+            "advisory_target_is_merge_gate": {"const": false},
+            "max_parallel_active_lanes": {"const": 2},
+            "lane_completion_order_required": {"const": true},
+            "final_decision_role": {"const": "lead-maintainer"}
+          }
+        },
+        "lanes": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {"$ref": "#/definitions/productDraftReviewLane"}
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lane_count",
+            "slice_count",
+            "path_count",
+            "verification_count",
+            "unassigned_slice_count",
+            "duplicate_slice_count"
+          ],
+          "properties": {
+            "lane_count": {"const": 4},
+            "slice_count": {"const": 7},
+            "path_count": {"type": "integer", "minimum": 1},
+            "verification_count": {"type": "integer", "minimum": 1},
+            "unassigned_slice_count": {"const": 0},
+            "duplicate_slice_count": {"const": 0}
+          }
+        },
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "commands_executed",
+            "github_reviewer_requests_authorized",
+            "github_reviews_authorized",
+            "mark_ready_authorized",
+            "merge_authorized",
+            "remote_mutations_performed"
+          ],
+          "properties": {
+            "commands_executed": {"const": false},
+            "github_reviewer_requests_authorized": {"const": false},
+            "github_reviews_authorized": {"const": false},
+            "mark_ready_authorized": {"const": false},
+            "merge_authorized": {"const": false},
+            "remote_mutations_performed": {"const": false}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "READY_LOCAL_ONLY"}}},
+          "then": {
+            "properties": {
+              "worktree_clean": {"const": true},
+              "uncommitted_path_count": {"const": 0}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "PREPARED_DIRTY_WORKTREE"}}
+          },
+          "then": {
+            "properties": {
+              "worktree_clean": {"const": false},
+              "uncommitted_path_count": {"minimum": 1}
+            }
+          }
+        }
+      ]
+    },
+    "productDraftReviewLane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "title",
+        "capability",
+        "slice_ids",
+        "depends_on_lanes",
+        "path_count",
+        "verification_count",
+        "slice_commands"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "R1-runtime-safety",
+            "R2-operator-ux",
+            "R3-distribution",
+            "R4-integration-publication"
+          ]
+        },
+        "order": {"type": "integer", "minimum": 1, "maximum": 4},
+        "title": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 ,&/+\\-]{0,159}$"
+        },
+        "capability": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 ,&/+\\-]{0,159}$"
+        },
+        "slice_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^S[1-7]-[a-z0-9-]+$"}
+        },
+        "depends_on_lanes": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^R[1-4]-[a-z0-9-]+$"}
+        },
+        "path_count": {"type": "integer", "minimum": 1},
+        "verification_count": {"type": "integer", "minimum": 1},
+        "slice_commands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^python3 scripts/check_publication_slice_plan\\.py --slice S[1-7]-[a-z0-9-]+$"
+          }
+        }
+      }
+    },
+    "productDraftReviewLedger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "exact_head",
+        "ledger_sha256",
+        "routing_contract_sha256",
+        "worktree_clean",
+        "event_count",
+        "reviewed_lane_count",
+        "passing_lane_count",
+        "blocked_lane_count",
+        "historical_finding_count",
+        "current_finding_count",
+        "open_blocker_count",
+        "current_lanes",
+        "next_lane_id",
+        "authority"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "NOT_CHECKED",
+            "EMPTY_LOCAL_LEDGER",
+            "IN_PROGRESS_LOCAL_REVIEW",
+            "BLOCKED_LOCAL_REVIEW",
+            "COMPLETE_LOCAL_REVIEW"
+          ]
+        },
+        "exact_head": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            {"type": "null"}
+          ]
+        },
+        "ledger_sha256": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        },
+        "routing_contract_sha256": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        },
+        "worktree_clean": {"type": ["boolean", "null"]},
+        "event_count": {"type": "integer", "minimum": 0, "maximum": 100},
+        "reviewed_lane_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "passing_lane_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "blocked_lane_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "historical_finding_count": {"type": "integer", "minimum": 0},
+        "current_finding_count": {"type": "integer", "minimum": 0},
+        "open_blocker_count": {"type": "integer", "minimum": 0},
+        "current_lanes": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {"$ref": "#/definitions/productDraftReviewLedgerLane"}
+        },
+        "next_lane_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "R1-runtime-safety",
+                "R2-operator-ux",
+                "R3-distribution",
+                "R4-integration-publication"
+              ]
+            },
+            {"type": "null"}
+          ]
+        },
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "identities_collected",
+            "review_commands_executed_by_tool",
+            "github_reviewer_requests_authorized",
+            "github_reviews_authorized",
+            "mark_ready_authorized",
+            "merge_authorized",
+            "remote_mutations_performed"
+          ],
+          "properties": {
+            "identities_collected": {"const": false},
+            "review_commands_executed_by_tool": {"const": false},
+            "github_reviewer_requests_authorized": {"const": false},
+            "github_reviews_authorized": {"const": false},
+            "mark_ready_authorized": {"const": false},
+            "merge_authorized": {"const": false},
+            "remote_mutations_performed": {"const": false}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "NOT_CHECKED"}}},
+          "then": {
+            "properties": {
+              "exact_head": {"type": "null"},
+              "ledger_sha256": {"type": "null"},
+              "routing_contract_sha256": {"type": "null"},
+              "worktree_clean": {"type": "null"},
+              "event_count": {"const": 0},
+              "reviewed_lane_count": {"const": 0},
+              "passing_lane_count": {"const": 0},
+              "blocked_lane_count": {"const": 0},
+              "historical_finding_count": {"const": 0},
+              "current_finding_count": {"const": 0},
+              "open_blocker_count": {"const": 0},
+              "current_lanes": {"maxItems": 0},
+              "next_lane_id": {"type": "null"}
+            }
+          },
+          "else": {
+            "properties": {
+              "exact_head": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              },
+              "ledger_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "routing_contract_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "worktree_clean": {"const": true},
+              "current_lanes": {"minItems": 4, "maxItems": 4}
+            }
+          }
+        }
+      ]
+    },
+    "productDraftReviewLedgerLane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "slice_ids",
+        "status",
+        "verification_status",
+        "latest_event_sequence",
+        "finding_count",
+        "blocker_count"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "R1-runtime-safety",
+            "R2-operator-ux",
+            "R3-distribution",
+            "R4-integration-publication"
+          ]
+        },
+        "order": {"type": "integer", "minimum": 1, "maximum": 4},
+        "slice_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^S[1-7]-[a-z0-9-]+$"}
+        },
+        "status": {"enum": ["NOT_REVIEWED", "PASS", "BLOCKED"]},
+        "verification_status": {
+          "enum": ["NOT_RECORDED", "PASS", "FAIL"]
+        },
+        "latest_event_sequence": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 100
+        },
+        "finding_count": {"type": "integer", "minimum": 0, "maximum": 10},
+        "blocker_count": {"type": "integer", "minimum": 0, "maximum": 10}
+      }
+    },
+    "onboardingMatrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "product_versions",
+        "present_rows",
+        "pass_rows",
+        "comparable_rows",
+        "docker_comparable_rows",
+        "source_comparable_rows",
+        "product_version_aligned",
+        "activation_gate",
+        "actions"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "INCOMPLETE",
+            "BLOCKED",
+            "ACTIVATION_GATE_PASS",
+            "ALL_ROWS_COMPARABLE"
+          ]
+        },
+        "product_versions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string"}
+        },
+        "present_rows": {"type": "integer", "minimum": 0, "maximum": 4},
+        "pass_rows": {"type": "integer", "minimum": 0, "maximum": 4},
+        "comparable_rows": {"type": "integer", "minimum": 0, "maximum": 4},
+        "docker_comparable_rows": {"type": "integer", "minimum": 0, "maximum": 2},
+        "source_comparable_rows": {"type": "integer", "minimum": 0, "maximum": 2},
+        "product_version_aligned": {"type": "boolean"},
+        "activation_gate": {"type": "boolean"},
+        "actions": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "cohort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "launch_status",
+        "attempt_count",
+        "accepted_validations",
+        "accepted_target",
+        "pending_launch_gates"
+      ],
+      "properties": {
+        "status": {"type": "string", "minLength": 1},
+        "launch_status": {"type": "string", "minLength": 1},
+        "attempt_count": {"type": "integer", "minimum": 0},
+        "accepted_validations": {"type": "integer", "minimum": 0},
+        "accepted_target": {"type": "integer", "minimum": 1},
+        "pending_launch_gates": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "complete", "incomplete", "total", "incomplete_gates"],
+      "properties": {
+        "status": {"enum": ["READY", "NOT_READY"]},
+        "complete": {"type": "integer", "minimum": 0},
+        "incomplete": {"type": "integer", "minimum": 0},
+        "total": {"type": "integer", "minimum": 1},
+        "incomplete_gates": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "incomplete_gate_details": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/incompleteGateDetail"}
+        }
+      }
+    },
+    "incompleteGateDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "detail", "blockers"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1},
+        "blockers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "publishedRelease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "version", "tag_present", "image_statuses"],
+      "properties": {
+        "status": {"enum": ["NOT_CHECKED", "NOT_PUBLISHED", "PUBLISHED", "BLOCKED"]},
+        "version": {"type": "string", "minLength": 1},
+        "tag_present": {"type": ["boolean", "null"]},
+        "image_statuses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["tag", "status"],
+            "properties": {
+              "tag": {"type": "string", "minLength": 1},
+              "status": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "productDraft": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "pull_request",
+        "url",
+        "state",
+        "is_draft",
+        "merged",
+        "mergeable",
+        "base_ref",
+        "head_ref",
+        "local_head",
+        "remote_head",
+        "head_matches_local",
+        "non_force_update_possible",
+        "remote_description_sha256",
+        "observed_check_count",
+        "passing_check_count",
+        "skipped_check_count",
+        "pending_check_count",
+        "failing_check_count",
+        "required_checks_complete",
+        "blockers",
+        "decision_state",
+        "merge_authorized"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "NOT_CHECKED",
+            "DRAFT_REVIEW_REQUIRED",
+            "READY_FOR_SEPARATE_MERGE_REVIEW",
+            "MERGED",
+            "BLOCKED"
+          ]
+        },
+        "pull_request": {"const": 427},
+        "url": {
+          "const": "https://github.com/rsasaki0109/lidar_slam_ros2/pull/427"
+        },
+        "state": {"enum": ["NOT_CHECKED", "UNKNOWN", "OPEN", "CLOSED"]},
+        "is_draft": {"type": ["boolean", "null"]},
+        "merged": {"type": ["boolean", "null"]},
+        "mergeable": {"type": ["boolean", "null"]},
+        "base_ref": {"const": "develop"},
+        "head_ref": {"const": "agent/product-g0-guided-ux"},
+        "local_head": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            {"type": "null"}
+          ]
+        },
+        "remote_head": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            {"type": "null"}
+          ]
+        },
+        "head_matches_local": {"type": ["boolean", "null"]},
+        "non_force_update_possible": {"type": ["boolean", "null"]},
+        "remote_description_sha256": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        },
+        "observed_check_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "passing_check_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "skipped_check_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "pending_check_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "failing_check_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "required_checks_complete": {"type": ["boolean", "null"]},
+        "blockers": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {"type": "string", "minLength": 1, "maxLength": 1000}
+        },
+        "decision_state": {
+          "enum": [
+            "NOT_CHECKED",
+            "HOLD",
+            "REVIEW_DRAFT",
+            "READY_FOR_SEPARATE_MERGE_REVIEW",
+            "MERGED"
+          ]
+        },
+        "merge_authorized": {"const": false}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "NOT_CHECKED"}}},
+          "then": {
+            "properties": {
+              "state": {"const": "NOT_CHECKED"},
+              "is_draft": {"type": "null"},
+              "merged": {"type": "null"},
+              "mergeable": {"type": "null"},
+              "local_head": {"type": "null"},
+              "remote_head": {"type": "null"},
+              "head_matches_local": {"type": "null"},
+              "non_force_update_possible": {"type": "null"},
+              "remote_description_sha256": {"type": "null"},
+              "required_checks_complete": {"type": "null"},
+              "blockers": {"maxItems": 0},
+              "decision_state": {"const": "NOT_CHECKED"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "BLOCKED"}}},
+          "then": {
+            "properties": {
+              "required_checks_complete": {"const": false},
+              "blockers": {"minItems": 1},
+              "decision_state": {"const": "HOLD"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["non_force_update_possible"],
+            "properties": {
+              "non_force_update_possible": {"type": "boolean"}
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {"const": "BLOCKED"},
+              "head_matches_local": {"const": false},
+              "local_head": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              },
+              "remote_head": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "DRAFT_REVIEW_REQUIRED",
+                  "READY_FOR_SEPARATE_MERGE_REVIEW",
+                  "MERGED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "local_head": {"type": "string"},
+              "remote_head": {"type": "string"},
+              "head_matches_local": {"const": true},
+              "required_checks_complete": {"const": true},
+              "pending_check_count": {"const": 0},
+              "failing_check_count": {"const": 0},
+              "blockers": {"maxItems": 0}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "DRAFT_REVIEW_REQUIRED"}}
+          },
+          "then": {
+            "properties": {
+              "state": {"const": "OPEN"},
+              "is_draft": {"const": true},
+              "merged": {"const": false},
+              "mergeable": {"const": true},
+              "decision_state": {"const": "REVIEW_DRAFT"}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {"const": "READY_FOR_SEPARATE_MERGE_REVIEW"}
+            }
+          },
+          "then": {
+            "properties": {
+              "state": {"const": "OPEN"},
+              "is_draft": {"const": false},
+              "merged": {"const": false},
+              "mergeable": {"const": true},
+              "decision_state": {
+                "const": "READY_FOR_SEPARATE_MERGE_REVIEW"
+              }
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "MERGED"}}},
+          "then": {
+            "properties": {
+              "state": {"const": "CLOSED"},
+              "is_draft": {"const": false},
+              "merged": {"const": true},
+              "decision_state": {"const": "MERGED"}
+            }
+          }
+        }
+      ]
+    },
+    "candidateEnvironment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "environment",
+        "target_present",
+        "required_reviewer_count",
+        "prevent_self_review",
+        "deployment_branch_policy",
+        "decision_state",
+        "blockers",
+        "operator_handoff"
+      ],
+      "properties": {
+        "status": {
+          "enum": ["NOT_CHECKED", "READY", "ABSENT", "MISCONFIGURED", "BLOCKED"]
+        },
+        "environment": {"const": "candidate-images"},
+        "target_present": {"type": ["boolean", "null"]},
+        "required_reviewer_count": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 6
+        },
+        "prevent_self_review": {"type": ["boolean", "null"]},
+        "deployment_branch_policy": {
+          "anyOf": [
+            {"const": "develop_only"},
+            {"type": "null"}
+          ]
+        },
+        "decision_state": {
+          "enum": ["NOT_CHECKED", "HOLD", "READY_FOR_SEPARATE_E2_REVIEW"]
+        },
+        "blockers": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {"type": "string", "minLength": 1, "maxLength": 1000}
+        },
+        "operator_handoff": {
+          "anyOf": [
+            {"$ref": "#/definitions/operatorHandoff"},
+            {"type": "null"}
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "NOT_CHECKED"}}},
+          "then": {
+            "properties": {
+              "target_present": {"type": "null"},
+              "required_reviewer_count": {"type": "null"},
+              "prevent_self_review": {"type": "null"},
+              "deployment_branch_policy": {"type": "null"},
+              "decision_state": {"const": "NOT_CHECKED"},
+              "blockers": {"maxItems": 0},
+              "operator_handoff": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "READY"}}},
+          "then": {
+            "properties": {
+              "target_present": {"const": true},
+              "required_reviewer_count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6
+              },
+              "prevent_self_review": {"const": true},
+              "deployment_branch_policy": {"const": "develop_only"},
+              "decision_state": {"const": "READY_FOR_SEPARATE_E2_REVIEW"},
+              "blockers": {"maxItems": 0},
+              "operator_handoff": {"$ref": "#/definitions/operatorHandoff"}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["ABSENT", "MISCONFIGURED", "BLOCKED"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "required_reviewer_count": {"type": "null"},
+              "prevent_self_review": {"type": "null"},
+              "deployment_branch_policy": {"type": "null"},
+              "decision_state": {"const": "HOLD"},
+              "blockers": {"minItems": 1},
+              "operator_handoff": {"$ref": "#/definitions/operatorHandoff"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "READY"}}},
+          "then": {
+            "properties": {
+              "operator_handoff": {
+                "properties": {
+                  "kind": {"const": "REVIEW_E2_SEPARATELY"},
+                  "authority_required": {"const": "separate-e2-approval"},
+                  "external_write_required": {"const": false},
+                  "settings_url": {"type": "null"}
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "ABSENT"}}},
+          "then": {
+            "properties": {
+              "operator_handoff": {
+                "properties": {
+                  "kind": {"const": "CREATE_AND_REVIEW_ENVIRONMENT"},
+                  "authority_required": {"const": "repository-settings-admin"},
+                  "external_write_required": {"const": true},
+                  "settings_url": {
+                    "const": "https://github.com/rsasaki0109/lidar_slam_ros2/settings/environments"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "MISCONFIGURED"}}},
+          "then": {
+            "properties": {
+              "operator_handoff": {
+                "properties": {
+                  "kind": {"const": "REPAIR_AND_REVIEW_ENVIRONMENT"},
+                  "authority_required": {"const": "repository-settings-admin"},
+                  "external_write_required": {"const": true},
+                  "settings_url": {
+                    "const": "https://github.com/rsasaki0109/lidar_slam_ros2/settings/environments"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "BLOCKED"}}},
+          "then": {
+            "properties": {
+              "operator_handoff": {
+                "properties": {
+                  "kind": {"const": "RESTORE_READ_ACCESS"},
+                  "authority_required": {"const": "read-access"},
+                  "external_write_required": {"const": false},
+                  "settings_url": {"type": "null"}
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "nextAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "reason", "command", "write_boundary"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$"},
+        "title": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "command": {"type": "string", "minLength": 1},
+        "write_boundary": {"type": "string", "minLength": 1},
+        "alternatives": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/definitions/identityAlternative"}
+        },
+        "operator_handoff": {
+          "$ref": "#/definitions/operatorHandoff"
+        },
+        "product_draft_update_handoff": {
+          "$ref": "#/definitions/productDraftUpdateHandoff"
+        },
+        "product_draft_description_refresh_handoff": {
+          "$ref": "#/definitions/productDraftDescriptionRefreshHandoff"
+        },
+        "product_draft_review_handoff": {
+          "$ref": "#/definitions/productDraftReviewHandoff"
+        },
+        "public_transition_handoff": {
+          "$ref": "#/definitions/publicTransitionHandoff"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["id"],
+            "properties": {
+              "id": {"const": "review-product-draft-branch-update"}
+            }
+          },
+          "then": {
+            "required": [
+              "product_draft_update_handoff",
+              "product_draft_description_refresh_handoff"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": ["id"],
+            "properties": {
+              "id": {"const": "review-product-draft-description-refresh"}
+            }
+          },
+          "then": {
+            "required": ["product_draft_description_refresh_handoff"]
+          }
+        },
+        {
+          "if": {
+            "required": ["id"],
+            "properties": {
+              "id": {"const": "review-product-draft"}
+            }
+          },
+          "then": {
+            "required": ["product_draft_review_handoff"]
+          }
+        },
+        {
+          "if": {
+            "required": ["id"],
+            "properties": {
+              "id": {"const": "align-public-product-version"}
+            }
+          },
+          "then": {
+            "required": ["public_transition_handoff"]
+          }
+        }
+      ]
+    },
+    "productDraftReviewHandoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "external_write_required",
+        "pull_request",
+        "url",
+        "exact_head",
+        "whole_pr_path_count",
+        "review_phase_count",
+        "slice_count",
+        "overview_command",
+        "slice_command_template",
+        "steps",
+        "commands_executed",
+        "github_review_submitted",
+        "mark_ready_authorized",
+        "merge_authorized",
+        "writes_performed"
+      ],
+      "properties": {
+        "kind": {"const": "EXACT_DRAFT_REVIEW_SEQUENCE"},
+        "external_write_required": {"const": false},
+        "pull_request": {"const": 427},
+        "url": {
+          "const": "https://github.com/rsasaki0109/lidar_slam_ros2/pull/427"
+        },
+        "exact_head": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "whole_pr_path_count": {"type": "integer", "minimum": 1},
+        "review_phase_count": {"type": "integer", "minimum": 1},
+        "slice_count": {"type": "integer", "minimum": 1},
+        "overview_command": {
+          "const": "python3 scripts/check_publication_slice_plan.py --overview"
+        },
+        "slice_command_template": {
+          "const": "python3 scripts/check_publication_slice_plan.py --slice <ID>"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 300}
+        },
+        "commands_executed": {"const": false},
+        "github_review_submitted": {"const": false},
+        "mark_ready_authorized": {"const": false},
+        "merge_authorized": {"const": false},
+        "writes_performed": {"const": false}
+      }
+    },
+    "productDraftUpdateHandoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "authority_required",
+        "external_write_required",
+        "pull_request",
+        "url",
+        "repository_url",
+        "head_ref",
+        "public_head",
+        "local_head",
+        "fast_forward_verified",
+        "non_force_only",
+        "push_authorized",
+        "force_push_authorized",
+        "steps",
+        "verification_command",
+        "writes_performed"
+      ],
+      "properties": {
+        "kind": {"const": "NON_FORCE_PR_BRANCH_UPDATE"},
+        "authority_required": {
+          "const": "separate-exact-tip-non-force-push-approval"
+        },
+        "external_write_required": {"const": true},
+        "pull_request": {"const": 427},
+        "url": {
+          "const": "https://github.com/rsasaki0109/lidar_slam_ros2/pull/427"
+        },
+        "repository_url": {
+          "const": "https://github.com/rsasaki0109/lidar_slam_ros2.git"
+        },
+        "head_ref": {"const": "agent/product-g0-guided-ux"},
+        "public_head": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "local_head": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "fast_forward_verified": {"const": true},
+        "non_force_only": {"const": true},
+        "push_authorized": {"const": false},
+        "force_push_authorized": {"const": false},
+        "steps": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 400}
+        },
+        "verification_command": {
+          "const": "python3 scripts/check_g0_readiness.py --include-product-draft --json"
+        },
+        "writes_performed": {"const": false}
+      }
+    },
+    "productDraftDescriptionRefreshHandoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "authority_required",
+        "external_write_required",
+        "pull_request",
+        "url",
+        "observed_public_head",
+        "desired_head",
+        "after_branch_update_required",
+        "clean_tip_verified",
+        "observed_body_sha256",
+        "body_sha256",
+        "body_character_count",
+        "body_line_count",
+        "body_matches_observed",
+        "body",
+        "keep_draft_required",
+        "description_update_authorized",
+        "review_submission_authorized",
+        "mark_ready_authorized",
+        "merge_authorized",
+        "steps",
+        "verification_command",
+        "writes_performed"
+      ],
+      "properties": {
+        "kind": {"const": "REFRESH_EXACT_DRAFT_DESCRIPTION"},
+        "authority_required": {
+          "const": "separate-exact-tip-pr-description-update-approval"
+        },
+        "external_write_required": {"const": true},
+        "pull_request": {"const": 427},
+        "url": {
+          "const": "https://github.com/rsasaki0109/lidar_slam_ros2/pull/427"
+        },
+        "observed_public_head": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "desired_head": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "after_branch_update_required": {"type": "boolean"},
+        "clean_tip_verified": {"const": true},
+        "observed_body_sha256": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        },
+        "body_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "body_character_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536
+        },
+        "body_line_count": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 100
+        },
+        "body_matches_observed": {"type": ["boolean", "null"]},
+        "body": {"type": "string", "minLength": 1, "maxLength": 65536},
+        "keep_draft_required": {"const": true},
+        "description_update_authorized": {"const": false},
+        "review_submission_authorized": {"const": false},
+        "mark_ready_authorized": {"const": false},
+        "merge_authorized": {"const": false},
+        "steps": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 400}
+        },
+        "verification_command": {
+          "const": "python3 scripts/check_g0_readiness.py --include-product-draft --json"
+        },
+        "writes_performed": {"const": false}
+      }
+    },
+    "operatorHandoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "authority_required",
+        "external_write_required",
+        "settings_url",
+        "steps",
+        "verification_command",
+        "writes_performed"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "CREATE_AND_REVIEW_ENVIRONMENT",
+            "REPAIR_AND_REVIEW_ENVIRONMENT",
+            "RESTORE_READ_ACCESS",
+            "REVIEW_E2_SEPARATELY"
+          ]
+        },
+        "authority_required": {
+          "enum": [
+            "repository-settings-admin",
+            "read-access",
+            "separate-e2-approval"
+          ]
+        },
+        "external_write_required": {"type": "boolean"},
+        "settings_url": {
+          "anyOf": [
+            {
+              "const": "https://github.com/rsasaki0109/lidar_slam_ros2/settings/environments"
+            },
+            {"type": "null"}
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 300}
+        },
+        "verification_command": {
+          "const": "python3 scripts/check_candidate_environment.py --json --require-ready"
+        },
+        "writes_performed": {"const": false}
+      }
+    },
+    "identityAlternative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "status", "command", "write_boundary"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$"},
+        "title": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
+        "command": {"type": "string", "minLength": 1},
+        "write_boundary": {"type": "string", "minLength": 1}
+      }
+    },
+    "publicTransitionHandoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "status",
+        "target_version",
+        "observed_release_status",
+        "audits",
+        "audit_command",
+        "post_publication_packet_command",
+        "packet_generation_eligible",
+        "published_identity_required",
+        "mixed_version_measurements_reusable",
+        "network_reads_required",
+        "github_writes_authorized",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "kind": {"const": "READ_ONLY_PUBLIC_PRODUCT_TRANSITION"},
+        "status": {
+          "enum": [
+            "AUDIT_REQUIRED",
+            "PUBLICATION_REQUIRED",
+            "AUDIT_BLOCKED",
+            "READY_FOR_FRESH_MATRIX_PACKET"
+          ]
+        },
+        "target_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.\\-]+)?$"
+        },
+        "observed_release_status": {
+          "enum": ["NOT_CHECKED", "NOT_PUBLISHED", "BLOCKED", "PUBLISHED"]
+        },
+        "audits": {
+          "const": [
+            "product_draft",
+            "candidate_environment",
+            "published_release"
+          ]
+        },
+        "audit_command": {
+          "type": "string",
+          "pattern": "^python3 scripts/check_g0_readiness\\.py --include-public-transition --published-release-version [0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.\\-]+)? --json$"
+        },
+        "post_publication_packet_command": {
+          "type": "string",
+          "pattern": "^python3 scripts/check_published_release\\.py --version [0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.\\-]+)? --json --require-published \\| python3 scripts/prepare_onboarding_matrix_packet\\.py --published-release-report - --render$"
+        },
+        "packet_generation_eligible": {"type": "boolean"},
+        "published_identity_required": {"const": true},
+        "mixed_version_measurements_reusable": {"const": false},
+        "network_reads_required": {"const": true},
+        "github_writes_authorized": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "observed_release_status": {"const": "NOT_CHECKED"},
+            "status": {"const": "AUDIT_REQUIRED"},
+            "packet_generation_eligible": {"const": false}
+          }
+        },
+        {
+          "properties": {
+            "observed_release_status": {"const": "NOT_PUBLISHED"},
+            "status": {"const": "PUBLICATION_REQUIRED"},
+            "packet_generation_eligible": {"const": false}
+          }
+        },
+        {
+          "properties": {
+            "observed_release_status": {"const": "BLOCKED"},
+            "status": {"const": "AUDIT_BLOCKED"},
+            "packet_generation_eligible": {"const": false}
+          }
+        },
+        {
+          "properties": {
+            "observed_release_status": {"const": "PUBLISHED"},
+            "status": {"const": "READY_FOR_FRESH_MATRIX_PACKET"},
+            "packet_generation_eligible": {"const": true}
+          }
+        }
+      ]
+    }
+  }
+}

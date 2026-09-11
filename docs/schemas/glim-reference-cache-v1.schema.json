@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/glim-reference-cache-v1.schema.json",
+  "title": "lidarslam_ros2 content-bound GLIM reference cache v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "scope",
+    "entry_state",
+    "cache_key_sha256",
+    "identity",
+    "trajectory",
+    "created_at",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/glim-reference-cache-v1.schema.json"
+    },
+    "scope": {"const": "local-glim-cross-validation-cache"},
+    "entry_state": {"enum": ["IDENTITY_ONLY", "CACHED"]},
+    "cache_key_sha256": {"$ref": "#/definitions/sha256"},
+    "identity": {"$ref": "#/definitions/identity"},
+    "trajectory": {
+      "anyOf": [
+        {"$ref": "#/definitions/trajectory"},
+        {"type": "null"}
+      ]
+    },
+    "created_at": {
+      "anyOf": [
+        {"type": "string", "format": "date-time"},
+        {"type": "null"}
+      ]
+    },
+    "authority": {"$ref": "#/definitions/authority"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"entry_state": {"const": "IDENTITY_ONLY"}}},
+      "then": {
+        "properties": {
+          "trajectory": {"type": "null"},
+          "created_at": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"entry_state": {"const": "CACHED"}}},
+      "then": {
+        "properties": {
+          "trajectory": {"$ref": "#/definitions/trajectory"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "treeIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "file_count", "total_bytes"],
+      "properties": {
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "total_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "runtimeIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "sha256", "artifact_count", "total_bytes"],
+      "properties": {
+        "kind": {"enum": ["local-install", "docker-image"]},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "artifact_count": {"type": "integer", "minimum": 0},
+        "total_bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "points_topic",
+        "imu_topic",
+        "mode",
+        "preset",
+        "no_imu",
+        "viewer",
+        "omp_threads",
+        "harness_sha256",
+        "cache_helper_sha256"
+      ],
+      "properties": {
+        "points_topic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\r\\n]+$"
+        },
+        "imu_topic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\r\\n]+$"
+        },
+        "mode": {"enum": ["lidar-only", "lidar-imu"]},
+        "preset": {"enum": ["cpu", "gpu"]},
+        "no_imu": {"type": "boolean"},
+        "viewer": {"type": "boolean"},
+        "omp_threads": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[1-9][0-9]*$"},
+            {"type": "null"}
+          ]
+        },
+        "harness_sha256": {"$ref": "#/definitions/sha256"},
+        "cache_helper_sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bag", "config", "runtime", "request"],
+      "properties": {
+        "bag": {"$ref": "#/definitions/treeIdentity"},
+        "config": {"$ref": "#/definitions/treeIdentity"},
+        "runtime": {"$ref": "#/definitions/runtimeIdentity"},
+        "request": {"$ref": "#/definitions/request"}
+      }
+    },
+    "trajectory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "line_count", "total_bytes"],
+      "properties": {
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "line_count": {"type": "integer", "minimum": 2},
+        "total_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_kind",
+        "ground_truth",
+        "remote_mutations_performed"
+      ],
+      "properties": {
+        "reference_kind": {"const": "cross_validation"},
+        "ground_truth": {"const": false},
+        "remote_mutations_performed": {"const": false}
+      }
+    }
+  }
+}

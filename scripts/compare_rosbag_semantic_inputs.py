@@ -28,6 +28,39 @@ def _token(digest: Any, tag: bytes, payload: bytes = b'') -> None:
     digest.update(payload)
 
 
+def _update_numeric_dataclass_sequence(digest: Any, value: list[Any]) -> bool:
+    """Hash a homogeneous numeric ROS struct array without per-scalar tokens."""
+    if not value or not is_dataclass(value[0]):
+        return False
+    value_fields = [field for field in fields(value[0])
+                    if field.name != '__msgtype__']
+    numeric_fields: list[tuple[Any, Any]] = []
+    for field in value_fields:
+        sample = getattr(value[0], field.name)
+        if isinstance(sample, (bool, np.bool_)):
+            dtype = np.dtype('?')
+        elif isinstance(sample, (int, np.integer)):
+            dtype = np.dtype('<i8')
+        elif isinstance(sample, (float, np.floating)):
+            dtype = np.dtype('<f8')
+        else:
+            return False
+        numeric_fields.append((field, dtype))
+    expected_type = type(value[0])
+    if any(type(item) is not expected_type for item in value):
+        return False
+    _token(digest, b'Q')
+    update_canonical(digest, len(value))
+    for field, dtype in numeric_fields:
+        _token(digest, b'K', field.name.encode('utf-8'))
+        array = np.fromiter(
+            (getattr(item, field.name) for item in value),
+            dtype=dtype, count=len(value))
+        update_canonical(digest, array)
+    _token(digest, b'E')
+    return True
+
+
 def update_canonical(digest: Any, value: Any) -> None:
     """Append an unambiguous, representation-independent value encoding."""
     if is_dataclass(value):
@@ -38,7 +71,8 @@ def update_canonical(digest: Any, value: Any) -> None:
         for field in value_fields:
             # std_msgs/Header.seq existed only in ROS1 and is transport-era
             # metadata, not sensor content. ROS2 intentionally removed it.
-            if is_ros_header and field.name == 'seq':
+            if ((is_ros_header and field.name == 'seq') or
+                    field.name == '__msgtype__'):
                 continue
             _token(digest, b'K', field.name.encode('utf-8'))
             update_canonical(digest, getattr(value, field.name))
@@ -52,6 +86,9 @@ def update_canonical(digest: Any, value: Any) -> None:
         update_canonical(digest, tuple(int(item) for item in array.shape))
         _token(digest, b'B', array.tobytes(order='C'))
     elif isinstance(value, (list, tuple)):
+        if isinstance(value, list) and _update_numeric_dataclass_sequence(
+                digest, value):
+            return
         _token(digest, b'L')
         update_canonical(digest, len(value))
         for item in value:

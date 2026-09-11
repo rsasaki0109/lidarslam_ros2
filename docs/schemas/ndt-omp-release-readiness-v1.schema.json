@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/ndt-omp-release-readiness-v1.schema.json",
+  "title": "ndt_omp_ros2 initial release readiness report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "package",
+    "candidate",
+    "mode",
+    "status",
+    "local",
+    "remote",
+    "actions"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {"const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/ndt-omp-release-readiness-v1.schema.json"},
+    "package": {"const": "ndt_omp_ros2"},
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "commit"],
+      "properties": {
+        "version": {"const": "0.1.0"},
+        "commit": {"const": "8b77fa5a6cdcad45bf35918361c892b6d94a287e"}
+      }
+    },
+    "mode": {"enum": ["offline", "online"]},
+    "status": {
+      "enum": ["LOCAL_READY", "READY_TO_TAG", "IN_PROGRESS", "RELEASED", "BLOCKED"]
+    },
+    "local": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ready",
+        "gitlink_commit",
+        "head_commit",
+        "package_version",
+        "checks"
+      ],
+      "properties": {
+        "ready": {"type": "boolean"},
+        "gitlink_commit": {"type": "string"},
+        "head_commit": {"type": "string"},
+        "package_version": {"type": "string"},
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/definitions/check"}
+        }
+      }
+    },
+    "remote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inspected",
+        "errors",
+        "origin_branch_commit",
+        "source_tag_present",
+        "release_repository_present",
+        "rosdistro"
+      ],
+      "properties": {
+        "inspected": {"type": "boolean"},
+        "errors": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "origin_branch_commit": {"type": ["string", "null"]},
+        "source_tag_present": {"type": ["boolean", "null"]},
+        "release_repository_present": {"type": ["boolean", "null"]},
+        "rosdistro": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["humble", "jazzy"],
+          "properties": {
+            "humble": {"type": ["boolean", "null"]},
+            "jazzy": {"type": ["boolean", "null"]}
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "definitions": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "detail"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS", "FAIL"]},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

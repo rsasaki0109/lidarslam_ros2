@@ -7,22 +7,86 @@
 
 **Turn a rosbag into a map you can actually drive on.**
 
-ROS 2 LiDAR SLAM that outputs an Autoware-ready map bundle — `pointcloud_map/`,
-`map_projector_info.yaml`, and auto-generated lanelet2. Frontend is `RKO-LIO` (MIT), backend is
-`graph_based_slam` (BSD-2). No GPL components on the default workflow.
+ROS 2 LiDAR SLAM that outputs an Autoware-compatible map bundle — `pointcloud_map/`, `map_projector_info.yaml`, and auto-generated lanelet2. Frontend is `RKO-LIO` (MIT), backend is `graph_based_slam` (BSD-2). No GPL components on the default workflow.
 
 ![Point cloud map built by this stack (Shinjuku demo bag)](lidarslam/images/map.png)
 
-*Shinjuku point cloud map built from a demo rosbag with this stack — start at the
-[Quickstart](#quickstart). `develop` is the default branch; latest release notes:
-[v0.6.0](docs/releases/v0.6.0.md).*
+*Shinjuku point cloud map built from a demo rosbag with this stack — start at the [Quickstart](#quickstart). `develop` is the default branch; current release candidate notes: [v0.9.1](docs/releases/v0.9.1.md). [日本語クイックスタート](docs/getting-started-ja.md).*
+
+## Quickstart
+
+### Choose your shortest path
+
+| Goal | Start here | Safety and cost boundary |
+| --- | --- | --- |
+| See a verified map, no build | **Default if unsure:** [Docker demo](#try-it-with-docker-one-command-no-build) | Stable `v0.9.0-humble`; needs Docker; host writes stay in `./lidarslam_output`. |
+| Map my own rosbag | [Own-bag route](#map-your-own-bag-one-command-after-install): `lidarslam-map doctor /path/to/rosbag2` | Read-only diagnosis first; then `lidarslam-map start /path/to/rosbag2` writes a new output. |
+| Build the current candidate or contribute | [Source quickstart](#build--verified-demo-from-source-one-helper): `bash scripts/source_quickstart.sh --dry-run` | Candidate `v0.9.1`; needs ROS 2, 8 GiB, and roughly 30 minutes. |
+
+### Try it with Docker (one command, no build)
+
+```bash
+docker run --rm -e LIDARSLAM_HOST_UID="$(id -u)" -e LIDARSLAM_HOST_GID="$(id -g)" \
+  -v "$PWD/lidarslam_output:/lidarslam_ws/output" \
+  ghcr.io/rsasaki0109/lidar_slam_ros2:v0.9.0-humble
+```
+
+Use the latest published stable image (`v0.9.0-humble`) for the 517 MB MID-360 demo; it writes `lidarslam_output/mid360_demo/` and returns ownership via UID/GID. The `v0.9.1` release candidate is not published yet; use the [source quickstart](#build--verified-demo-from-source-one-helper) for that candidate. See [Getting Started](docs/getting-started.md) for other platforms.
+
+### Map your own bag (one command after install)
+
+```bash
+lidarslam-map start /path/to/rosbag2
+```
+
+Not sure where to begin? Run `lidarslam-map` with no arguments in a terminal; its safe home offers an installation check, the demo, your own bag, or previous sessions. Before finding a bag, run `lidarslam-map doctor`; it uses no network, writes no files, and prints one recovery action for each missing requirement.
+`start` checks sensor setup before writing. See [supported inputs and recovery](#use-your-own-bag).
+
+### Build + verified demo from source (one helper)
+
+```bash
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws/src
+git clone --recursive https://github.com/rsasaki0109/lidar_slam_ros2.git
+cd lidar_slam_ros2
+bash scripts/source_quickstart.sh
+```
+
+The helper detects Humble/Jazzy, verifies the exact maintained six-package inventory, installs repository-only dependencies, builds only that list, and runs the verified demo. Use `--dry-run` or `--build-only`.
+Completion prints an absolute `lidarslam-map` path that auto-activates this build in a fresh terminal—no remembered `source install/setup.bash`. ROS 2 must be installed. Allow 8 GiB and roughly 30 minutes; see [Getting Started](docs/getting-started.md) and [Operator workflows](docs/workflows.md) for contracts and contributor tests. Before handoff, run the read-only offline package audit: `python3 scripts/check_first_map_verification_package.py --json` and continue only on `READY`.
+
+## Use your own bag
+
+For an Ouster, Velodyne, RoboSense, simulated, or another compatible PointCloud2 bag, do not edit this package's launch files or YAML first; run `lidarslam-map doctor /path/to/rosbag2`, then `start` detects the inputs, builds a verified map, and opens it.
+The guided path checks topics, frames, fields, timestamps, a maintained profile, and calibration; unsafe inputs stop with a stable reason code and one next action, while detection alone is not a verified vendor-support or accuracy claim. PointCloud2+Imu, PointCloud2+NavSatFix, and VelodyneScan+Applanix GSOF49 are the maintained input combinations.
+
+```bash
+lidarslam-map start /path/to/rosbag2
+```
+
+With Docker but no ROS installation, run the same high-level workflow from this checkout; the bag is mounted read-only and all output returns to your user:
+
+```bash
+bash scripts/docker_map_bag.sh /absolute/path/to/rosbag2
+```
+
+See [Docker Own-Bag Map](docs/getting-started.md#docker-own-bag-map) for dry-run, Jazzy, calibration, immutable-image, and private no-write JSON-plan options.
+
+For RKO-LIO profiles, `--editable` retains deterministic replay input for later loop fixes. A successful run writes
+Autoware artifacts; `lidarslam-map view "$PWD/output/my_map"` provides offline 3D review and
+source-preserving edit plans that `lidarslam-map edit` applies without extra replay paths.
+Reopen runs with `lidarslam-map sessions`, compare two with `lidarslam-map compare day1 day2`, create a private-by-default issue ZIP with `lidarslam-map support day1`, prepare a verified first-map report with `lidarslam-map support day1 --first-map`, or merge visits with `lidarslam-map merge day1 day2 --output-dir site_project`.
+For fixed Docker/source output, use `lidarslam-map report /path/to/output/mid360_demo --json` when the reviewed candidate CLI is installed; the stable-image fallback and attachment boundary are in the [first-map validation guide](docs/external-first-map-validation.md).
+Automation can use `lidarslam-map run`; direct launches and filtering are in [Operator workflows](docs/workflows.md).
+
+![Autoware map loaders rendering a pointcloud_map authored by this stack](lidarslam/images/autoware_map_loader_proof.png)
 
 ## Why lidarslam_ros2
 
 Most LiDAR SLAM stacks stop at a trajectory and a point cloud. This one ships the
 artifacts you need downstream:
 
-- **Autoware-ready output** — `pointcloud_map/` + `map_projector_info.yaml` open
+- **Autoware-compatible output** — `pointcloud_map/` + `map_projector_info.yaml` open
   directly in Autoware map loaders; `verify_autoware_map.py` prints
   `map_verify: PASS` on every saved bundle.
 - **lanelet2 auto-generation** — drivable lanelets from the SLAM trajectory,
@@ -32,17 +96,16 @@ artifacts you need downstream:
   ([accuracy](#accuracy)).
 - **Loop closure, GPL-free** — opt-in built-in Scan Context, BEV / SOLiD /
   STD/BTC-style Triangle descriptors, and 3D-BBS verification.
-- **Deterministic offline mapping** — `graph_slam_offline_runner` (backend,
-  recorded odometry bag) and `scan_matcher_offline_runner` (frontend, raw bag)
-  produce *byte-identical* trajectories, loop edges and submaps; the release
-  gate enforces both.
+- **Tunnel / fog degeneracy presets** — opt-in radar fusion and gravity
+  alignment map a ~500 m self-similar tunnel end-to-end
+  ([result](#tunnel-and-fog-mapping-without-degeneracy-collapse), [guide](docs/degeneracy-guide.md)).
+- **Deterministic offline mapping** — backend and frontend offline runners produce
+  byte-identical trajectories, loop edges, and submaps under the release gate.
 - **Globally refined, quality-gated maps** — clean-room plane bundle adjustment
   refines submap poses under holdout-validated quality thresholds
   ([evidence](docs/research/map-quality-baseline.md)).
-- **GNSS georeferencing** — optional GNSS constraints and projector metadata for
-  real-world coordinates.
-- **Camera-coloured point-cloud maps** — synchronized images are projected onto
-  registered LiDAR scans with calibration-aware, occlusion-resistant colouring.
+- **GNSS and camera output** — optional georeferencing plus calibration-aware,
+  occlusion-resistant camera colouring.
 
 ```mermaid
 flowchart LR
@@ -51,90 +114,36 @@ flowchart LR
     gbs --> bundle["Autoware map bundle<br/>pointcloud_map · lanelet2 · projector info"]
 ```
 
-## Quickstart
-
-For the shortest automatic path, run `bash scripts/run_first_map.sh`; it checks the
-environment and selects source or Docker. See [Getting Started](docs/getting-started.md), or add `--dry-run`.
-
-### Try it with Docker (one command, no build)
-
-```bash
-docker run --rm -v "$PWD/lidarslam_output:/lidarslam_ws/output" \
-  ghcr.io/rsasaki0109/lidar_slam_ros2:humble
-```
-
-This downloads a public 517 MB Livox MID-360 bag and runs the full headless
-pipeline. The Autoware bundle and `traj_corrected.tum` appear under
-`./lidarslam_output/mid360_demo/`; the [quickstart](docs/getting-started.md)
-shows caching and interactive-shell options.
-
-### Build from source
-
-```bash
-cd ~/ros2_ws/src
-git clone --recursive https://github.com/rsasaki0109/lidar_slam_ros2.git
-cd ..
-rosdep install --from-paths src --ignore-src -r -y
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-source install/setup.bash
-```
-
-If you cloned without `--recursive`: `git -C src/lidar_slam_ros2 submodule update --init --recursive`.
-
-Then run one public dataset end to end — NTU VIRAL `tnp_01` (~580 s outdoor bag)
-through RKO-LIO + graph_based_slam into an Autoware-loadable map:
-
-```bash
-cd src/lidar_slam_ros2
-bash scripts/download_ntu_viral_tnp01.sh
-bash scripts/run_autoware_quickstart.sh
-python3 scripts/verify_autoware_map.py output/.../pointcloud_map
-```
-
-## Use your own bag
-
-```bash
-bash scripts/run_autoware_map_beginner.sh /path/to/rosbag2
-```
-
-One command turns the bag into a complete Autoware map bundle:
-`pointcloud_map/` tiles, `map_projector_info.yaml`, and a `lanelet2_map.osm`
-generated from the loop-closed trajectory.
-
-Direct launch commands, required topics, GNSS / IMU pre-integration, and
-dynamic-object filtering are in [docs/workflows.md](docs/workflows.md).
-
-![Autoware map loaders rendering a pointcloud_map authored by this stack](lidarslam/images/autoware_map_loader_proof.png)
-
 ## Camera-coloured point-cloud maps
 
 The pipeline registers LiDAR scans with the corrected trajectory, then projects
 synchronized camera pixels onto that geometry. This RTK-SLAM Construction Hall
 1 result follows the full estimated 60 m walking loop.
 
-![Camera-coloured SLAM point-cloud map and its estimated trajectory](lidarslam/images/map_flythrough_rtkslam.webp)
+![Camera-coloured SLAM point-cloud map and its estimated trajectory](lidarslam/images/map_flythrough_rtkslam.webp) ([MP4](lidarslam/images/map_flythrough_rtkslam.mp4) · [GIF](lidarslam/images/map_flythrough_rtkslam.gif))
 
-The sequence is from the RTK-SLAM dataset (CC-BY 4.0). Its total-station
-checkpoints are also used by the [accuracy gate](#accuracy).
+K4 has 4.91 M points, 76.66% colour coverage, and 11/11 profile checks passing. Pose-aware dynamic cleaning before K3's camera fusion improves held-out RGB median from 41.17 to 40.54 and planar roughness median from 7.23 to 6.40. See the [release-readiness record](docs/research/colored-map-release-readiness-2026-07.md) for paired K3/K4 evidence and limits.
+The sequence is from RTK-SLAM (CC-BY 4.0); its total-station checkpoints also drive the [accuracy gate](#accuracy).
 
 If graph optimization outputs sparse keyframes, the coloured-map pipeline can
 propagate their corrections onto the dense SLAM pose stream automatically:
 
 ```bash
-python3 tools/gaussian_splatting/colored_map_pipeline.py \
+python3 tools/colored_map/colored_map_pipeline.py \
   <bag> output/<run>/traj_corrected.tum output/<run>/colored_map \
   --raw-traj output/<run>/traj_raw.tum \
   --extrinsic configs/gaussian_splatting/<lidar_camera_extrinsic>.yaml
 ```
 
-The pipeline caches `dense_corrected_trajectory.tum` and rebuilds stale
-downstream artifacts; use `--force-trajectory` for an explicit refresh.
+The pipeline caches `dense_corrected_trajectory.tum` and rebuilds stale downstream artifacts; use `--force-trajectory` for an explicit refresh.
+Moving rigs can add `--refine-spatiotemporal-calibration`; see the [held-out-gated design and RTK-SLAM result](docs/research/colored-map-spatiotemporal-calibration-2026-07.md).
 
 ### Cross-repository SLAM benchmark
 
-`public_suite_v1.yaml` applies trajectory, geometry, RGB, runtime, and memory
-gates to frozen OFF/ON manifests from MID-360, HILTI, and RTK-SLAM. Reproduction
-commands and both accepted and rejected experiments are in
+`public_suite_v1.yaml` connects Localization Zoo trajectories to trajectory,
+geometry, real-RGB, runtime, and memory gates, with frozen OFF/ON candidate
+promotion across MID-360, HILTI, and RTK-SLAM surveyed references. Commands,
+replay, and adoption records:
 [Benchmarking and release gate](docs/benchmarking.md#slam-candidate-regression).
 
 ## Open-source benchmark results
@@ -147,7 +156,9 @@ profile recorded **34.7% lower median APE RMSE than GLIM** over three runs:
 | **lidarslam_ros2** | **0.0565 m** | 0.993 | **586.83 MB** |
 | GLIM CPU | 0.0866 m | **0.244** | 690.88 MB |
 
-Reproduce one `lidarslam_ros2` sample with:
+This is a scoped HILTI `exp04` trajectory-accuracy and peak-memory win; GLIM
+wins runtime. It is not an overall-SOTA claim. Normal development needs only
+one new run:
 
 ```bash
 python3 scripts/run_ours_competitive_benchmark.py \
@@ -167,20 +178,21 @@ python3 scripts/run_glim_benchmark.py \
   --output output/hilti_exp04_glim_n1 --runs 1
 ```
 
-Exact scoring rules, revisions, checkpoint policy, map-quality limitations, and
-the historical evidence are documented in
-[Comparison](docs/comparison.md#same-input-hilti-2022-exp04-vs-glim-cpu).
-
-The separate Voxel-SLAM `v17` research candidate also achieved the lowest
-geometric-mean APE across NavINST, Oxford, and UrbanNav: **2.2836 m**, versus
-GLIM `5.0779`, Point-LIO `3.8388`, FAST-LIO2 `6.9576`, and fixed Voxel-SLAM
-`2.7160` — **55.0% lower than GLIM**. It is not the default release path, does
-not win every sequence, and is not fresh-blind evidence. Exact revisions,
-per-sequence results, input hashes, resource results, map limitations, and
-reproduction notes are in [Comparison](docs/comparison.md#voxel-slam-v17-research-candidate-vs-pinned-oss-rivals).
+Exact scoring rules, revisions, checkpoint policy, and map-quality limitations
+are in [Comparison](docs/comparison.md#same-input-hilti-2022-exp04-vs-glim-cpu).
 
 <!-- BEGIN GENERATED COMPETITIVE CLAIM PUBLICATION -->
 <!-- END GENERATED COMPETITIVE CLAIM PUBLICATION -->
+
+## Tunnel and fog mapping without degeneracy collapse
+
+On the ~500 m self-similar Fyllingsdalen tunnel from the [NTNU LiDAR degeneracy datasets](https://github.com/ntnu-arl/lidar_degeneracy_datasets),
+the plain frontend covers 98.7 m before along-axis degeneracy freezes it. The opt-in
+presets (radar ego-velocity fusion + sliding-window gravity alignment) map the whole
+tunnel — reach **504.5 m**, transverse RMS 1.34 m, end-height −4.7 m (−33 m without
+gravity alignment) — and cut fog clutter-lock drift 35.6 → 9.6 m, with defaults
+unchanged (a MID-360 driving holdout stays byte-identical). Symptom table:
+[Degeneracy Resilience Guide](docs/degeneracy-guide.md); evidence: [research note](docs/research/gravity-window-alignment-2026-07.md).
 
 ## Accuracy
 
@@ -188,10 +200,10 @@ Release-gate thresholds ([Benchmarking](docs/benchmarking.md#release-gate-accura
 
 ## Docs
 
-- **Getting started**: [Getting Started](docs/getting-started.md) · [Autoware quickstart](docs/autoware-quickstart.md) · [Operator workflows](docs/workflows.md) · [Autoware Foxglove](docs/autoware-foxglove.md)
+- **Getting started**: [Getting Started](docs/getting-started.md) · [Distribution](docs/distribution.md) · [Autoware quickstart](docs/autoware-quickstart.md) · [Operator workflows](docs/workflows.md) · [Autoware Foxglove](docs/autoware-foxglove.md)
 - **Pipelines**: [Autoware-compatible map authoring](docs/autoware-map-authoring.md)
 - **Benchmarking**: [Benchmarking and release gate](docs/benchmarking.md) · [Comparison](docs/comparison.md)
-- **Project**: [v0.2.2 release notes](docs/releases/v0.2.2.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Releasing](RELEASING.md)
+- **Project**: [Product contract](docs/product-contract.md) · [v1.0 readiness](docs/v1-readiness.md) · [Independent first-map validation](docs/external-first-map-validation.md) · [v0.9.1 RC notes](docs/releases/v0.9.1.md) · [v0.9 roadmap](docs/roadmap/v0.9.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Governance](GOVERNANCE.md) · [Changelog](CHANGELOG.md) · [Releasing](RELEASING.md)
 
 Preview the doc site locally: `python3 -m mkdocs serve`.
 
@@ -210,11 +222,7 @@ components (`Thirdparty/lio-sam`, `Thirdparty/3d_bbs`) are excluded via `COLCON_
 
 ```bash
 bash scripts/run_default_ci_checks.sh
-bash scripts/run_release_readiness_checks.sh --ape-threshold 0.10
 ```
-
-Reference commands and parameter pointers live in [docs/workflows.md](docs/workflows.md).
-
----
+Full gate list and parameter pointers: [docs/workflows.md](docs/workflows.md).
 
 If this project saves you mapping time, a ⭐ helps others find it.

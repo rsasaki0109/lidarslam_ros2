@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/rollback-plan-v1.schema.json",
+  "title": "lidarslam_ros2 immutable image rollback plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "source_record",
+    "repository",
+    "ros_distro",
+    "platform",
+    "product_version",
+    "git_commit",
+    "tag",
+    "digest",
+    "immutable_ref",
+    "moving_tag_mutated",
+    "commands"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/rollback-plan-v1.schema.json"
+    },
+    "status": {"const": "PASS"},
+    "source_record": {"type": "string", "minLength": 1},
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "ros_distro": {"enum": ["humble", "jazzy"]},
+    "platform": {"const": "linux/amd64"},
+    "product_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "git_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "tag": {"type": "string", "minLength": 1},
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "immutable_ref": {
+      "type": "string",
+      "pattern": "^ghcr\\.io/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@sha256:[0-9a-f]{64}$"
+    },
+    "moving_tag_mutated": {"const": false},
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pull", "attestation", "cli_smoke"],
+      "properties": {
+        "pull": {
+          "type": "string",
+          "pattern": "^docker pull ghcr\\.io/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@sha256:[0-9a-f]{64}$"
+        },
+        "attestation": {
+          "type": "string",
+          "pattern": "^gh attestation verify oci://ghcr\\.io/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@sha256:[0-9a-f]{64} -R [A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "cli_smoke": {
+          "type": "string",
+          "pattern": "^docker run --rm ghcr\\.io/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@sha256:[0-9a-f]{64} lidarslam-map --version$"
+        }
+      }
+    }
+  }
+}

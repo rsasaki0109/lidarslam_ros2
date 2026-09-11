@@ -14,3 +14,8 @@ _PACKAGE_DIR = Path(__file__).resolve().parent
 _SOURCE_DIR = _PACKAGE_DIR.parents[1] / 'tools' / 'gaussian_splatting'
 if (_SOURCE_DIR / 'pointcloud_io.py').is_file():
     __path__.append(str(_SOURCE_DIR))
+# develop relocated canonical sources to tools/colored_map/ (old directory
+# holds deprecation shims). Expose the canonical tree for submodule lookup.
+_COLORED_DIR = _PACKAGE_DIR.parents[1] / 'tools' / 'colored_map'
+if (_COLORED_DIR / 'pointcloud_io.py').is_file():
+    __path__.append(str(_COLORED_DIR))

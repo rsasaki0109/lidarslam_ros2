@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-trial-matrix-v1.schema.json",
+  "title": "lidarslam_ros2 onboarding trial matrix audit v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "matrix_id",
+    "dataset_id",
+    "product_versions",
+    "source_revisions",
+    "rows",
+    "summary",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/onboarding-trial-matrix-v1.schema.json"
+    },
+    "matrix_id": {"const": "g0-humble-jazzy-docker-source"},
+    "dataset_id": {"const": "mid360-public-zenodo-14841855"},
+    "product_versions": {
+      "type": "array",
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"
+      }
+    },
+    "source_revisions": {
+      "type": "array",
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/definitions/row"}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_rows",
+        "present_rows",
+        "pass_rows",
+        "comparable_rows",
+        "docker_comparable_rows",
+        "source_comparable_rows",
+        "product_version_aligned",
+        "matrix_complete",
+        "activation_gate",
+        "all_rows_comparable"
+      ],
+      "properties": {
+        "required_rows": {"const": 4},
+        "present_rows": {"type": "integer", "minimum": 0, "maximum": 4},
+        "pass_rows": {"type": "integer", "minimum": 0, "maximum": 4},
+        "comparable_rows": {"type": "integer", "minimum": 0, "maximum": 4},
+        "docker_comparable_rows": {"type": "integer", "minimum": 0, "maximum": 2},
+        "source_comparable_rows": {"type": "integer", "minimum": 0, "maximum": 2},
+        "product_version_aligned": {"type": "boolean"},
+        "matrix_complete": {"type": "boolean"},
+        "activation_gate": {"type": "boolean"},
+        "all_rows_comparable": {"type": "boolean"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "actions"],
+      "properties": {
+        "status": {
+          "enum": [
+            "INCOMPLETE",
+            "BLOCKED",
+            "ACTIVATION_GATE_PASS",
+            "ALL_ROWS_COMPARABLE"
+          ]
+        },
+        "actions": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "row_id",
+        "route",
+        "ros_distro",
+        "present",
+        "trial_id",
+        "outcome_status",
+        "measurement_status",
+        "comparable",
+        "comparability_blockers",
+        "finding_codes"
+      ],
+      "properties": {
+        "row_id": {
+          "enum": [
+            "docker-humble",
+            "docker-jazzy",
+            "source-humble",
+            "source-jazzy"
+          ]
+        },
+        "route": {"enum": ["docker", "source"]},
+        "ros_distro": {"enum": ["humble", "jazzy"]},
+        "present": {"type": "boolean"},
+        "trial_id": {
+          "anyOf": [
+            {"$ref": "#/definitions/slug"},
+            {"type": "null"}
+          ]
+        },
+        "outcome_status": {"enum": ["PASS", "FAIL", "MISSING"]},
+        "measurement_status": {
+          "enum": ["COMPLETE", "INCOMPLETE", "MISSING"]
+        },
+        "comparable": {"type": "boolean"},
+        "comparability_blockers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/slug"}
+        },
+        "finding_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/slug"}
+        }
+      }
+    }
+  }
+}

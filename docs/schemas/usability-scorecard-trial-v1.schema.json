@@ -1,0 +1,271 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/usability-scorecard-trial-v1.schema.json",
+  "title": "LiDAR SLAM usability scorecard trial v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "trial_id",
+    "captured_at",
+    "product",
+    "operator",
+    "environment",
+    "tasks",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/usability-scorecard-trial-v1.schema.json"
+    },
+    "trial_id": {"$ref": "#/definitions/slug"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "revision",
+        "documentation_root_url",
+        "publicly_resolvable"
+      ],
+      "properties": {
+        "id": {"enum": ["lidarslam_ros2", "glim"]},
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "revision": {"$ref": "#/definitions/revision"},
+        "documentation_root_url": {"$ref": "#/definitions/httpsUrl"},
+        "publicly_resolvable": {"type": "boolean"}
+      }
+    },
+    "operator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "cohort_id", "first_attempt", "product_order"],
+      "properties": {
+        "class": {"enum": ["maintainer", "external"]},
+        "cohort_id": {"$ref": "#/definitions/slug"},
+        "first_attempt": {"type": "boolean"},
+        "product_order": {"enum": ["first", "second"]}
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison_pair_id",
+        "clean_start",
+        "supported_by_product_docs",
+        "ros_distro",
+        "os_family",
+        "architecture",
+        "hardware_class",
+        "machine_fingerprint_sha256"
+      ],
+      "properties": {
+        "comparison_pair_id": {"$ref": "#/definitions/slug"},
+        "clean_start": {"type": "boolean"},
+        "supported_by_product_docs": {"const": true},
+        "ros_distro": {"enum": ["humble", "jazzy"]},
+        "os_family": {"enum": ["ubuntu-22.04", "ubuntu-24.04"]},
+        "architecture": {"enum": ["x86_64", "aarch64"]},
+        "hardware_class": {"$ref": "#/definitions/slug"},
+        "machine_fingerprint_sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {"$ref": "#/definitions/task"}
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contains_private_paths",
+        "contains_operator_identity",
+        "contains_secrets",
+        "review_before_sharing"
+      ],
+      "properties": {
+        "contains_private_paths": {"const": false},
+        "contains_operator_identity": {"const": false},
+        "contains_secrets": {"const": false},
+        "review_before_sharing": {"const": true}
+      }
+    }
+  },
+  "definitions": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableSha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "httpsUrl": {
+      "type": "string",
+      "pattern": "^https://\\S+$",
+      "maxLength": 500
+    },
+    "nullableMetric": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "nullableInteger": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": {"enum": ["git-commit", "release-tag", "image-digest"]},
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "git-commit"}}},
+          "then": {"properties": {"value": {"pattern": "^[0-9a-f]{40}$"}}}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "release-tag"}}},
+          "then": {"properties": {"value": {"pattern": "^v?[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"}}}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "image-digest"}}},
+          "then": {"properties": {"value": {"pattern": "^sha256:[0-9a-f]{64}$"}}}
+        }
+      ]
+    },
+    "measurements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wall_time_sec",
+        "active_operator_time_sec",
+        "command_count",
+        "workflow_download_bytes",
+        "peak_disk_bytes",
+        "failure_count",
+        "output_bytes"
+      ],
+      "properties": {
+        "wall_time_sec": {"$ref": "#/definitions/nullableMetric"},
+        "active_operator_time_sec": {"$ref": "#/definitions/nullableMetric"},
+        "command_count": {"$ref": "#/definitions/nullableInteger"},
+        "workflow_download_bytes": {"$ref": "#/definitions/nullableInteger"},
+        "peak_disk_bytes": {"$ref": "#/definitions/nullableInteger"},
+        "failure_count": {"$ref": "#/definitions/nullableInteger"},
+        "output_bytes": {"$ref": "#/definitions/nullableInteger"}
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "passed"],
+      "properties": {
+        "id": {"$ref": "#/definitions/slug"},
+        "passed": {"type": "boolean"}
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "documentation_url",
+        "input_id",
+        "exact_commands",
+        "measurements",
+        "checks",
+        "outcome",
+        "evidence"
+      ],
+      "properties": {
+        "task_id": {
+          "enum": [
+            "discover-supported-path",
+            "run-fixed-demo",
+            "inspect-own-bag",
+            "produce-downstream-artifact",
+            "understand-failure",
+            "repeat-or-upgrade"
+          ]
+        },
+        "documentation_url": {"$ref": "#/definitions/httpsUrl"},
+        "input_id": {"$ref": "#/definitions/slug"},
+        "exact_commands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "measurements": {"$ref": "#/definitions/measurements"},
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {"$ref": "#/definitions/check"}
+        },
+        "outcome": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "undocumented_manual_steps",
+            "finding_codes"
+          ],
+          "properties": {
+            "status": {"enum": ["PASS", "FAIL"]},
+            "undocumented_manual_steps": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "finding_codes": {
+              "type": "array",
+              "maxItems": 20,
+              "uniqueItems": true,
+              "items": {"$ref": "#/definitions/slug"}
+            }
+          }
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["transcript_sha256", "public_url"],
+          "properties": {
+            "transcript_sha256": {"$ref": "#/definitions/nullableSha256"},
+            "public_url": {
+              "oneOf": [
+                {"type": "null"},
+                {"$ref": "#/definitions/httpsUrl"}
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

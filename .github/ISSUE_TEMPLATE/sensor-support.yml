@@ -1,0 +1,70 @@
+name: Sensor support
+description: Request or contribute support for a LiDAR, IMU, GNSS, or complete rig.
+title: "[Sensor] "
+labels:
+  - enhancement
+body:
+  - type: input
+    id: hardware
+    attributes:
+      label: Sensor and rig
+      description: Exact LiDAR, IMU, GNSS, computer, and connection mode.
+      placeholder: Livox MID-360 + internal IMU / Jetson Orin / Ethernet
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: Humble / Ubuntu 22.04 / arm64 / source
+    validations:
+      required: true
+
+  - type: textarea
+    id: topics
+    attributes:
+      label: Topics, message types, rates, and frames
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: calibration
+    attributes:
+      label: Calibration and point timing
+      description: Describe LiDAR-to-IMU extrinsics, time synchronization, per-point time fields, and deskew status.
+    validations:
+      required: true
+
+  - type: textarea
+    id: preflight
+    attributes:
+      label: Preflight output
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: support_bundle
+    attributes:
+      label: Privacy-first support ZIP
+      description: If a session exists, run `lidarslam-map support <session_bundle>`, review all three files, then drag the ZIP here.
+
+  - type: textarea
+    id: data
+    attributes:
+      label: Shareable reproduction data
+      description: Link a small licensed bag or metadata-only reproduction and state its license.
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Contribution intent
+      options:
+        - I can test proposed changes
+        - I can open a pull request
+        - I can share data but not code
+        - I am requesting guidance only
+    validations:
+      required: true

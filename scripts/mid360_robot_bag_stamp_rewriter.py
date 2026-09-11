@@ -132,7 +132,7 @@ def _rewrite_bag(
 
     with AnyReader([input_bag], default_typestore=typestore) as reader, Writer(
         output_bag,
-        version=9,
+        version=8,
     ) as writer:
         output_connections: dict[str, Any] = {}
         for conn in reader.connections:

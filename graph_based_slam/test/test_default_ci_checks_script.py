@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -79,6 +80,10 @@ def test_default_ci_help_exits_successfully():
     assert result.returncode == 0
     assert 'run_default_ci_checks.sh' in result.stderr
     assert '--build-only' in result.stderr
+
+
+def test_default_ci_fetches_rko_dependencies_for_clean_local_builds():
+    assert '-DRKO_LIO_FETCH_CONTENT_DEPS=ON' in CI_SCRIPT.read_text()
 
 
 def test_default_ci_rejects_missing_cmake_build_type_value():
@@ -129,3 +134,30 @@ def test_default_ci_wraps_colcon_build_failure(tmp_path: Path):
     assert result.returncode == 1
     assert 'fake colcon build failure' in result.stderr
     assert 'error: colcon build failed for default workflow packages' in result.stderr
+
+
+def test_every_pytest_file_is_registered_with_ctest():
+    missing = []
+    for package in ('graph_based_slam', 'lidarslam'):
+        package_dir = REPO_ROOT / package
+        cmake = (package_dir / 'CMakeLists.txt').read_text(encoding='utf-8')
+        registered = {
+            match.group(1)
+            for match in re.finditer(
+                r'ament_add_pytest_test\(\s*(test_[a-z0-9_]+)'
+                r'\s+test/\1\.py',
+                cmake,
+            )
+        }
+        for match in re.finditer(
+            r'set\([A-Z0-9_]+_ADDITIONAL_PYTESTS(.*?)\)',
+            cmake,
+            flags=re.DOTALL,
+        ):
+            names = re.findall(r'\btest_[a-z0-9_]+\b', match.group(1))
+            registered.update(names)
+        for path in sorted((package_dir / 'test').glob('test_*.py')):
+            if path.stem not in registered:
+                missing.append(f'{package}/test/{path.name}')
+
+    assert missing == []

@@ -1,0 +1,20 @@
+# NTNU LiDAR Degeneracy Datasets baseline (OS0-128 + VectorNav VN100).
+# Extrinsics are the dataset authors' CAD calibration, expressed as
+# IMU/base <- LiDAR. Radar is intentionally excluded from this LIO baseline.
+extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+extrinsic_lidar2base_quat_xyzw_xyz: [0.000462, 0.0008483, 0.0028835, 0.9999954, -0.00171, 0.02149, 0.0358]
+
+lidar_timestamps.offset_seconds: 0.0
+initialization_phase: true
+deskew: true
+voxel_size: 0.5
+icp_keypoint_voxel_multiplier: 1.5
+max_points_per_voxel: 20
+min_range: 0.7
+max_range: 100.0
+max_correspondence_distance: 0.5
+double_downsample: true
+
+enable_kidnap_relocalization: false
+reset_on_registration_failure: false
+relocalize_after_scan_gap: false

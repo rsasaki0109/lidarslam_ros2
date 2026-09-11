@@ -16,7 +16,8 @@
     </div>
     <div class="hero__actions">
       <a class="md-button md-button--primary" href="getting-started.html">Start Here</a>
-      <a class="md-button" href="autoware-quickstart.html">Run The Quickstart</a>
+      <a class="md-button" href="getting-started-ja.html">日本語で始める</a>
+      <a class="md-button" href="autoware-map-authoring.html">Map Your Bag</a>
     </div>
   </div>
   <div class="hero__visual">
@@ -52,13 +53,33 @@
     <h3>Getting Started</h3>
     <p>Choose Docker, a local build, or your own bag without reading every workflow first.</p>
   </a>
+  <a class="link-card" href="product-contract.html">
+    <h3>Product Contract</h3>
+    <p>Know the supported inputs, outputs, entrypoints, and explicit non-goals.</p>
+  </a>
+  <a class="link-card" href="v1-readiness.html">
+    <h3>v1.0 Readiness</h3>
+    <p>Run the fail-closed product audit and inspect every remaining evidence gate.</p>
+  </a>
+  <a class="link-card" href="distribution.html">
+    <h3>Distribution</h3>
+    <p>Install the CLI, understand supported platforms, and see the binary-release boundary.</p>
+  </a>
+  <a class="link-card" href="operational-reliability.html">
+    <h3>Operational Reliability</h3>
+    <p>Understand failure artifacts, termination handling, recovery, and open reliability gates.</p>
+  </a>
+  <a class="link-card" href="real-data-e2e.html">
+    <h3>Pinned Real-data E2E</h3>
+    <p>Inspect the nightly Jazzy gate from a fixed public MID-360 bag to a verified map bundle.</p>
+  </a>
   <a class="link-card" href="autoware-map-authoring.html">
     <h3>Autoware-Compatible Map Authoring</h3>
     <p>The shortest product-level summary of the supported public path.</p>
   </a>
   <a class="link-card" href="autoware-quickstart.html">
-    <h3>Autoware Quickstart</h3>
-    <p>Go from bag preflight to verified pointcloud-map output.</p>
+    <h3>Advanced Autoware Compatibility</h3>
+    <p>Use the older NTU VIRAL viewer and dogfood route after the product path.</p>
   </a>
   <a class="link-card" href="autoware-foxglove.html">
     <h3>Autoware Foxglove</h3>
@@ -96,9 +117,28 @@
 
 ## Releases
 
+- [v0.9.1 release candidate](releases/v0.9.1.md)
+- [v0.9.0 stable release](releases/v0.9.0.md)
+- [v0.7.0 release candidate](releases/v0.7.0.md)
+- [v0.6.0](releases/v0.6.0.md)
+- [v0.5.0](releases/v0.5.0.md)
+- [v0.3.0](releases/v0.3.0.md)
 - [v0.2.2](releases/v0.2.2.md)
 - [v0.2.1](releases/v0.2.1.md)
 - [v0.2.0](releases/v0.2.0.md)
+
+## Project
+
+- [Product contract](product-contract.md)
+- [v1.0 readiness audit](v1-readiness.md)
+- [Operational reliability](operational-reliability.md)
+- [Pinned real-data E2E gate](real-data-e2e.md)
+- [Distribution and installed CLI](distribution.md)
+- [v0.9 product roadmap](roadmap/v0.9.md)
+- [Contributing](https://github.com/rsasaki0109/lidar_slam_ros2/blob/develop/CONTRIBUTING.md)
+- [Support](https://github.com/rsasaki0109/lidar_slam_ros2/blob/develop/SUPPORT.md)
+- [Security](https://github.com/rsasaki0109/lidar_slam_ros2/security/policy)
+- [Governance](https://github.com/rsasaki0109/lidar_slam_ros2/blob/develop/GOVERNANCE.md)
 
 ## Local Preview
 

@@ -269,6 +269,81 @@ def test_preflight_builder_fails_sampled_lidar_frame_mismatch(tmp_path: Path):
     )
 
 
+def test_preflight_builder_fails_readable_empty_sampled_frame(
+    tmp_path: Path,
+):
+    module = _load_module()
+    samples = {
+        '/livox/lidar': [
+            module.MessageSample(
+                '/livox/lidar',
+                'sensor_msgs/msg/PointCloud2',
+                0,
+                frame_id='',
+            ),
+            module.MessageSample(
+                '/livox/lidar',
+                'sensor_msgs/msg/PointCloud2',
+                100_000_000,
+                frame_id='',
+            ),
+        ],
+        '/livox/imu': [
+            module.MessageSample(
+                '/livox/imu',
+                'sensor_msgs/msg/Imu',
+                0,
+                frame_id='livox_frame',
+            ),
+        ],
+    }
+    preflight = module.Mid360RobotPreflight(
+        FakeAutowarePreflightAdapter(_autoware_payload()),
+        diagnostics_builder=module.Mid360BagDiagnosticsBuilder(
+            sample_reader=FakeSampleReader(samples),
+            sample_limit=10,
+        ),
+    )
+
+    payload = preflight.build_payload(
+        tmp_path / 'bag',
+        module.RobotFrames(lidar_frame='livox_frame'),
+    )
+
+    assert payload['ready_for_mid360_launch'] is False
+    empty_frame_check = next(
+        check for check in payload['checks']
+        if check['id'] == 'pointcloud_frame_id'
+    )
+    assert empty_frame_check['status'] == 'fail'
+    assert 'no non-empty frame_id' in empty_frame_check['message']
+    assert 'repeat preflight' in empty_frame_check['message']
+
+
+def test_preflight_builder_keeps_unavailable_sampling_advisory(
+    tmp_path: Path,
+):
+    module = _load_module()
+    preflight = module.Mid360RobotPreflight(
+        FakeAutowarePreflightAdapter(_autoware_payload()),
+        diagnostics_builder=module.Mid360BagDiagnosticsBuilder(
+            sample_reader=FakeSampleReader({}),
+            sample_limit=10,
+        ),
+    )
+
+    payload = preflight.build_payload(
+        tmp_path / 'bag',
+        module.RobotFrames(),
+    )
+
+    assert payload['ready_for_mid360_launch'] is True
+    assert not any(
+        check['id'] == 'pointcloud_frame_id'
+        for check in payload['checks']
+    )
+
+
 def test_preflight_builder_warns_on_low_metadata_rate(tmp_path: Path):
     module = _load_module()
     preflight = module.Mid360RobotPreflight(

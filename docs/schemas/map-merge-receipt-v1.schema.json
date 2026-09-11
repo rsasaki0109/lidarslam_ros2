@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/map-merge-receipt-v1.schema.json",
+  "title": "lidar_slam map merge receipt v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "created_at",
+    "status",
+    "output_dir",
+    "session_count",
+    "source_points",
+    "merged_points",
+    "duplicate_points_removed",
+    "alignments",
+    "sources",
+    "options",
+    "project_sha256",
+    "candidate_map_bundle_sha256",
+    "candidate_full_map_sha256",
+    "candidate_pointcloud_map_sha256",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {"const": "PASS"},
+    "output_dir": {"type": "string", "minLength": 1},
+    "session_count": {"type": "integer", "minimum": 2},
+    "source_points": {"type": "integer", "minimum": 2},
+    "merged_points": {"type": "integer", "minimum": 1},
+    "duplicate_points_removed": {"type": "integer", "minimum": 0},
+    "alignments": {"type": "array", "minItems": 2},
+    "sources": {"type": "array", "minItems": 2},
+    "options": {"type": "object"},
+    "project_sha256": {"$ref": "#/definitions/sha256"},
+    "candidate_map_bundle_sha256": {"$ref": "#/definitions/sha256"},
+    "candidate_full_map_sha256": {"$ref": "#/definitions/sha256"},
+    "candidate_pointcloud_map_sha256": {"$ref": "#/definitions/sha256"},
+    "validation": {
+      "type": "object",
+      "required": ["map_bundle", "autoware_pointcloud_map"],
+      "properties": {
+        "map_bundle": {"const": "PASS"},
+        "autoware_pointcloud_map": {"const": "PASS"}
+      }
+    }
+  },
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "contract_id": "v44g-raw-shadow-failure-profile-contract-20260813",
+  "stage": "definition_only_raw_shadow_failure_profile",
+  "rationale": "Define a bounded diagnostic profile for the sealed v44f first-scan resource failure without reopening a raw bag or continuing replay. The profile must retain the attempted RSS and processing RTF and fixed decoder, reorder, and core wall-time phases before applying the unchanged v44e gate.",
+  "prerequisites": {
+    "v44f_audit": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v6/development/v44f_raw_shadow_replay_execution_audit.json",
+      "sha256": "3da6877b93a386fe875bfefc3844d9105e1cb90ec5820ac86ae7364d97f330b7",
+      "bytes": 5833,
+      "required_contract_id": "v44f-raw-shadow-replay-execution-audit-20260810"
+    },
+    "v44f_aggregate": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44f_raw_shadow_replay_execution_audit_20260810/aggregate.json",
+      "sha256": "9b4dbbaede2239ae619594b6c84ee0f33b7fc89e360bfac777a5c37c37a2e2eb",
+      "bytes": 1624,
+      "required_payload_sha256": "f9a9b25e746f49f5b2dc9665dba1a8019c59bfb2b044897f0561750a1da31073",
+      "required_decision": "REJECT_V44_STAGE4_RAW_SHADOW_REPLAY_RESOURCE_GATE"
+    },
+    "v44e_contract": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/configs/sota_v6/development/v44e_raw_shadow_replay_execution_contract.json",
+      "sha256": "08d7f8850f5081fd18d58a860cae3d9566846605460dadb37660b3c3111d1692",
+      "bytes": 19349,
+      "required_contract_id": "v44e-raw-shadow-replay-execution-20260810"
+    },
+    "adapter": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/scripts/v44_raw_shadow_replay_adapter.py",
+      "sha256": "6fbf16d811a5bcf26c2cac9190f0557844cd3596cf7704cfdc016c7080ddf0ee",
+      "bytes": 38242
+    },
+    "estimator_core": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/scripts/v44_fixed_lag_shadow_estimator.py",
+      "sha256": "c353cce1cde17e45ea1244871da8a7077f10b28055f8c8cdfae49a5bddaf8ee9",
+      "bytes": 108847
+    },
+    "auditor": {
+      "path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/lidar_slam_ros2_kaizen_review/scripts/audit_v44g_raw_shadow_failure_profile.py",
+      "sha256": "d03f1ee399815f04401ab7cadaf5ca7234b662dc133357ae3ec9d1a7901a0839",
+      "required_contract_id": "v44g-raw-shadow-failure-profile-contract-20260813"
+    }
+  },
+  "failure_profile": {
+    "target": {
+      "sequence_id": "navinst_indoor02",
+      "repetition": 1,
+      "scan_index": 0,
+      "maximum_sequence_count": 1,
+      "maximum_scan_count": 1,
+      "full_replay_allowed": false
+    },
+    "phase_inventory": [
+      {
+        "id": "decoder",
+        "order": 1,
+        "counts_toward_processing_rtf": true,
+        "overlap_allowed": false,
+        "scope": "decode the one permitted first scan and its required IMU records"
+      },
+      {
+        "id": "reorder",
+        "order": 2,
+        "counts_toward_processing_rtf": true,
+        "overlap_allowed": false,
+        "scope": "bounded receive-time watermark and stable sensor-time ordering"
+      },
+      {
+        "id": "core",
+        "order": 3,
+        "counts_toward_processing_rtf": true,
+        "overlap_allowed": false,
+        "scope": "shadow estimator call through the diagnostic gate observation"
+      }
+    ],
+    "clock": {
+      "source": "monotonic_ns",
+      "integer_nanoseconds": true,
+      "estimator_input": false,
+      "wall_clock_used_for_estimator": false,
+      "start_stop_rule": "capture each phase around the fixed phase boundary; no wall-clock value enters state or sensor time"
+    },
+    "gate_evaluation_order": [
+      "capture_failure_profile",
+      "compare_rss",
+      "compare_processing_rtf",
+      "terminal_fail"
+    ],
+    "profile_capture_precedes_gate": true,
+    "formula": {
+      "sensor_elapsed_source": "current_scan_end_ns_minus_first_seen_header_ns",
+      "processing_rtf": "(cumulative_decoder_wall_ns + cumulative_reorder_wall_ns + cumulative_core_wall_ns) / sensor_elapsed_seconds",
+      "gate_uses_same_value": true,
+      "sensor_elapsed_seconds_conversion": "sensor_elapsed_ns * 1e-9"
+    },
+    "record": {
+      "required_fields": [
+        "sequence_id",
+        "repetition",
+        "scan_index",
+        "record_type",
+        "status",
+        "sensor_start_ns",
+        "sensor_end_ns",
+        "sensor_elapsed_ns",
+        "phase_wall_ns",
+        "cumulative_phase_wall_ns",
+        "total_wall_ns",
+        "attempted_rss_mib",
+        "attempted_processing_rtf",
+        "maximum_rss_mib",
+        "maximum_processing_rtf",
+        "gate_evaluation_order",
+        "terminal_reason"
+      ],
+      "attempted_rss_is_required": true,
+      "attempted_processing_rtf_is_required": true,
+      "placeholder_rtf_allowed": false,
+      "maximum_records": 4,
+      "maximum_bytes": 65536,
+      "overwrite_allowed": false
+    },
+    "output": {
+      "only_diagnostic_output": true,
+      "path_kind": "new_nonsymlinked_bounded_evidence_file",
+      "raw_input_copy_allowed": false,
+      "protected_output_writeback_allowed": false
+    }
+  },
+  "immutable_gate": {
+    "maximum_rss_mib": 330.0,
+    "maximum_processing_rtf": 0.85,
+    "comparison_rss": "strictly_greater_is_terminal",
+    "comparison_processing_rtf": "strictly_greater_is_terminal",
+    "source": "v44e.runtime_resources",
+    "gate_must_remain_unchanged": true
+  },
+  "execution_boundary": {
+    "mode": "definition_only",
+    "failure_profile_execution_authorized": false,
+    "raw_bags_may_be_opened": false,
+    "maximum_runs": 0,
+    "maximum_sequences": 0,
+    "maximum_scans": 0,
+    "accuracy_or_reference_map_inputs_accessed": false,
+    "primary_trajectory_or_map_mutation": false,
+    "ros_output_published": false,
+    "loop_or_global_correction": false,
+    "remaining_v44e_runs_may_start": false
+  },
+  "required_checks": [
+    "v44f_audit_hash_and_id",
+    "v44f_aggregate_hash_payload_and_decision",
+    "v44e_gate_values_exact",
+    "implementation_hashes_exact",
+    "target_is_first_failure_only",
+    "phase_inventory_fixed",
+    "phase_clock_is_diagnostic_only",
+    "attempted_values_are_required",
+    "profile_precedes_unchanged_gate",
+    "rtf_formula_is_fixed",
+    "bounded_profile_output",
+    "no_threshold_relaxation",
+    "definition_only_boundary",
+    "forbidden_routes_closed",
+    "auditor_is_static"
+  ],
+  "audit_resources": {
+    "maximum_rss_mib": 128.0,
+    "maximum_incremental_rss_mib": 32.0,
+    "maximum_report_bytes": 1048576
+  },
+  "decision": {
+    "required_validation_repetitions": 2,
+    "required_check_count": 15,
+    "on_valid_audit": "AUTHORIZE_V44G_FAILURE_PROFILE_CONTRACT_DEFINITION_ONLY",
+    "failure_profile_execution_authorized": false,
+    "raw_replay_continuation_authorized": false,
+    "accuracy_screen_authorized": false,
+    "primary_mutation_authorized": false,
+    "threshold_relaxation_authorized": false
+  }
+}

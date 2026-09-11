@@ -1,0 +1,9 @@
+<launch>
+  <rosparam command="load" file="/runner/configs/fast_livo2/rtk_slam_mid360.yaml" />
+  <node pkg="fast_livo" type="fastlivo_mapping" name="laserMapping" output="screen">
+    <rosparam file="/runner/configs/fast_livo2/camera_rtk_slam_mid360.yaml" />
+  </node>
+  <node pkg="image_transport" type="republish" name="republish"
+        args="compressed in:=/camera/image_raw raw out:=/camera/image_raw"
+        output="screen" respawn="true" />
+</launch>

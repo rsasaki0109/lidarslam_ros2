@@ -8,10 +8,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from lidarslam_benchmark_tools import module_path, package_root
+from benchmark_provenance import bag_identity, file_identity, software_identity
 
-REPO_ROOT = package_root()
-VERIFY_SCRIPT = module_path('verify_autoware_map')
+import yaml
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+VERIFY_SCRIPT = REPO_ROOT / 'scripts' / 'verify_autoware_map.py'
 
 
 def _load_verify_module():
@@ -89,6 +92,22 @@ def _bag_duration_seconds(metadata_path: Path) -> float | None:
     return None
 
 
+def _bag_topic_message_count(metadata_path: Path, topic: str) -> int | None:
+    """Return the recorded message count for a topic from rosbag2 metadata."""
+    if not metadata_path.is_file():
+        return None
+    try:
+        data = yaml.safe_load(metadata_path.read_text(encoding='utf-8')) or {}
+        topics = data['rosbag2_bagfile_information']['topics_with_message_count']
+        for entry in topics:
+            metadata = entry.get('topic_metadata', {})
+            if metadata.get('name') == topic:
+                return int(entry['message_count'])
+    except (KeyError, TypeError, ValueError, yaml.YAMLError):
+        return None
+    return None
+
+
 def _read_reference_meta(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
@@ -112,6 +131,26 @@ def _fmt_path(path: Path | None) -> str:
     return str(path) if path is not None else ''
 
 
+def _trajectory_offset(metadata: dict[str, Any], frame: str) -> dict[str, Any] | None:
+    """Return the generic reference-point offset, with legacy prism fallback."""
+    return (
+        metadata.get(f'{frame}_to_reference_translation_m')
+        or metadata.get(f'{frame}_to_prism_translation_m')
+    )
+
+
+def _infer_reference_kind(source: str, metadata: dict[str, Any]) -> str:
+    explicit = metadata.get('kind')
+    if explicit:
+        return str(explicit)
+    lowered = source.strip().lower()
+    if 'gt' in lowered or 'ground_truth' in lowered:
+        return 'ground_truth'
+    if 'glim' in lowered or 'cross' in lowered:
+        return 'cross_validation'
+    return 'unknown'
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -131,6 +170,12 @@ def main() -> int:
         '--reference-source',
         default='leica_prism_gt',
         help='Reference source label stored in metrics.json',
+    )
+    parser.add_argument(
+        '--trajectory-source-frame',
+        default='base',
+        choices=('base', 'body', 'imu', 'lidar'),
+        help='Local frame represented by the input trajectory pose origin.',
     )
     parser.add_argument(
         '--points-topic',
@@ -189,6 +234,17 @@ def main() -> int:
         help='Measured wall time for the full benchmark run',
     )
     parser.add_argument(
+        '--completion-reason',
+        default='',
+        help='Authoritative reason the replay was considered complete.',
+    )
+    parser.add_argument(
+        '--completion-end-margin-secs',
+        type=float,
+        default=None,
+        help='Allowed trajectory-to-bag-end gap for completion fallback.',
+    )
+    parser.add_argument(
         '--started-at',
         default='',
         help='Optional ISO-8601 start timestamp',
@@ -203,6 +259,32 @@ def main() -> int:
         '--metrics-out',
         default='',
         help='Output metrics path (default: <out-dir>/metrics.json)',
+    )
+    parser.add_argument(
+        '--skip-map-verify',
+        action='store_true',
+        help=(
+            'Do not inspect pointcloud_map, even if a partial directory exists. '
+            'Use for trajectory-only runs that intentionally skip map_save.'
+        ),
+    )
+    parser.add_argument(
+        '--parameter-file',
+        action='append',
+        default=[],
+        help='Effective parameter file to identify; repeat for multiple files.',
+    )
+    parser.add_argument(
+        '--runtime-artifact',
+        action='append',
+        default=[],
+        metavar='LABEL=PATH',
+        help='Runtime executable/library to identify; repeat for multiple artifacts.',
+    )
+    parser.add_argument(
+        '--benchmark-harness',
+        default='',
+        help='Benchmark wrapper/script to identify for release provenance.',
     )
     parser.add_argument(
         '--pipeline',
@@ -272,10 +354,18 @@ def main() -> int:
     )
 
     bag_duration_sec = _bag_duration_seconds(bag_path / 'metadata.yaml')
+    input_points_messages = _bag_topic_message_count(
+        bag_path / 'metadata.yaml', args.points_topic)
     reference_meta_data = _read_reference_meta(reference_meta) if reference_meta else {}
+    trajectory_offset = _trajectory_offset(
+        reference_meta_data, args.trajectory_source_frame)
+    reference_source = reference_meta_data.get('source', args.reference_source)
     raw_ape = _parse_ape_report(raw_ape_path)
     corrected_ape = _parse_ape_report(corrected_ape_path)
-    map_verify = _verify_map(out_dir / 'pointcloud_map')
+    map_verify = (
+        None if args.skip_map_verify
+        else _verify_map(out_dir / 'pointcloud_map')
+    )
 
     corrected_success = corrected_tum.is_file() and corrected_ape is not None
     raw_success = raw_tum.is_file() and raw_ape is not None
@@ -283,6 +373,11 @@ def main() -> int:
     rtf = None
     if wall_sec is not None and bag_duration_sec and bag_duration_sec > 0.0:
         rtf = wall_sec / bag_duration_sec
+    raw_output_pose_count = _read_pose_count(raw_tum)
+    raw_output_pose_ratio = (
+        raw_output_pose_count / input_points_messages
+        if input_points_messages and input_points_messages > 0 else None
+    )
 
     if args.pipeline in ('lo', 'small_gicp'):
         frames: dict[str, str] = {
@@ -300,6 +395,11 @@ def main() -> int:
         }
 
     metrics: dict[str, Any] = {
+        'schema_version': 1,
+        'schema_uri': (
+            'https://rsasaki0109.github.io/lidar_slam_ros2/'
+            'schemas/benchmark-metrics-v1.schema.json'
+        ),
         'started_at': args.started_at or None,
         'started_at_unix': args.started_at_unix,
         'pipeline': args.pipeline,
@@ -308,9 +408,17 @@ def main() -> int:
         'bag_duration_sec': bag_duration_sec,
         'points_topic': args.points_topic,
         'imu_topic': args.imu_topic,
+        'completion': {
+            'reason': args.completion_reason or None,
+            'end_margin_sec': args.completion_end_margin_secs,
+            'input_points_messages': input_points_messages,
+            'raw_output_pose_count': raw_output_pose_count,
+            'raw_output_pose_ratio': raw_output_pose_ratio,
+        },
         'frames': frames,
         'reference': {
-            'source': reference_meta_data.get('source', args.reference_source),
+            'source': reference_source,
+            'kind': _infer_reference_kind(reference_source, reference_meta_data),
             'tum_path': str(reference_tum),
             'topic': reference_meta_data.get('topic', '/leica/pose/relative'),
             'meta_path': _fmt_path(reference_meta),
@@ -321,7 +429,8 @@ def main() -> int:
             'wall_sec': wall_sec,
             'rtf': rtf,
             'tum_path': str(corrected_tum if corrected_tum.is_file() else raw_tum),
-            'tum_lines': _read_pose_count(corrected_tum if corrected_tum.is_file() else raw_tum),
+            'tum_lines': _read_pose_count(
+                corrected_tum if corrected_tum.is_file() else raw_tum),
             'log_path': str(launch_log) if launch_log.is_file() else '',
             'param_path': str(lidarslam_param),
             'out_dir': str(out_dir),
@@ -348,7 +457,9 @@ def main() -> int:
                 'corrected_tum_lines': _read_pose_count(corrected_tum),
                 'corrected_ape': corrected_ape,
                 'reference_meta_path': _fmt_path(reference_meta),
-                'prism_offset_m': reference_meta_data.get('lidar_to_prism_translation_m'),
+                'trajectory_source_frame': args.trajectory_source_frame,
+                'trajectory_to_prism_offset_m': trajectory_offset,
+                'prism_offset_m': trajectory_offset,
             }
         ),
         'scanmatcher_lo': (
@@ -392,9 +503,15 @@ def main() -> int:
         'graph_based_slam': {
             'corrected_path_available': corrected_tum.is_file(),
             'map_projector_info_path': str(out_dir / 'map_projector_info.yaml')
-            if (out_dir / 'map_projector_info.yaml').is_file() else '',
+            if (
+                not args.skip_map_verify
+                and (out_dir / 'map_projector_info.yaml').is_file()
+            ) else '',
             'pointcloud_map_dir': str(out_dir / 'pointcloud_map')
-            if (out_dir / 'pointcloud_map').is_dir() else '',
+            if (
+                not args.skip_map_verify
+                and (out_dir / 'pointcloud_map').is_dir()
+            ) else '',
             'map_verify': map_verify,
         },
         'evo': {
@@ -404,6 +521,39 @@ def main() -> int:
             'raw_ape': raw_ape,
         },
     }
+
+    if args.runtime_artifact:
+        runtime_artifacts: list[tuple[str, Path]] = []
+        for value in args.runtime_artifact:
+            label, separator, path = value.partition('=')
+            if not separator or not label or not path:
+                parser.error('--runtime-artifact must be LABEL=PATH')
+            runtime_artifacts.append(
+                (label, Path(path).expanduser().resolve()))
+        parameter_files = [
+            Path(path).expanduser().resolve()
+            for path in (
+                args.parameter_file
+                or [str(lidarslam_param), str(rko_param)]
+            )
+        ]
+        harness_path = (
+            Path(args.benchmark_harness).expanduser().resolve()
+            if args.benchmark_harness else Path(__file__).resolve()
+        )
+        metrics['provenance'] = {
+            'input': {
+                'bag': bag_identity(bag_path),
+                'reference_trajectory': file_identity(reference_tum),
+            },
+            'software': software_identity(
+                REPO_ROOT,
+                parameter_files=parameter_files,
+                runtime_artifacts=runtime_artifacts,
+                benchmark_harness=harness_path,
+                metrics_writer=Path(__file__).resolve(),
+            ),
+        }
 
     metrics_path.parent.mkdir(parents=True, exist_ok=True)
     metrics_path.write_text(

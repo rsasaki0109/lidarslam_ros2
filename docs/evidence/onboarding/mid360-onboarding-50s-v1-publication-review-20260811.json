@@ -1,0 +1,157 @@
+{
+  "decision": {
+    "blockers": [
+      "generator-revision-not-remotely-resolvable",
+      "review-revision-not-remotely-resolvable",
+      "publication-host-unset",
+      "explicit-upload-authorization-missing"
+    ],
+    "next_actions": [
+      "Make the exact clean generator revision resolvable from the public repository, then repeat the read-only commit check.",
+      "Make the reviewed product revision publicly resolvable before using it for source onboarding trials.",
+      "Choose either a checksum-pinned GitHub Release asset or a metadata-rich Zenodo derivative record.",
+      "Obtain an explicit maintainer decision before uploading the geometry-bearing fixture.",
+      "Run this gate again and require PUBLICATION_READY before any upload or default-download change."
+    ],
+    "status": "AWAITING_PUBLICATION_DECISION"
+  },
+  "fixture": {
+    "artifact": {
+      "filename": "mid360_onboarding_50s_v1.zip",
+      "member_count": 3,
+      "sha256": "20e5151728522877bff75021a473e91c5ae900448fa9e6977bf88653fa464bd3",
+      "size_bytes": 98873952
+    },
+    "build_manifest": {
+      "filename": "mid360-onboarding-50s-v1-build-20260810.json",
+      "schema_status": "PASS",
+      "sha256": "60c37f5c7efa7d61ca20f21803fa11b02add4bad047ae99d277e9e6811fbbb6e",
+      "size_bytes": 6078
+    },
+    "fixture_id": "mid360_onboarding_50s_v1",
+    "map_receipt": {
+      "filename": "mid360-onboarding-50s-v1-map-receipt-20260810.json",
+      "generator_revision_match": true,
+      "geometry_free": true,
+      "passed_checks": 7,
+      "schema_status": "PASS",
+      "sha256": "86d2b5d2aa493cbb6ecc6efd88095a591f247bcea4bc171c68093cf165cc0754",
+      "size_bytes": 2006,
+      "status": "PASS",
+      "total_checks": 7
+    }
+  },
+  "local_validation": {
+    "archive": {
+      "archive_comment_empty": true,
+      "deflate_only": true,
+      "encrypted_members": 0,
+      "expected_member_count": 3,
+      "fixed_timestamp": true,
+      "member_bytes_verified": 264882669,
+      "member_digests_verified": 3,
+      "member_metadata_empty": true,
+      "safe_member_count": 3,
+      "sorted_members": true,
+      "unexpected_members": 0,
+      "unix_mode_0644": true
+    },
+    "attribution": {
+      "member": "mid360_onboarding_50s_v1/ATTRIBUTION.md",
+      "status": "PASS",
+      "verified_fields": [
+        "change_notice",
+        "citation",
+        "creator",
+        "doi",
+        "full_gate_limit",
+        "license",
+        "license_url",
+        "no_endorsement",
+        "onboarding_limit",
+        "source_url",
+        "title"
+      ]
+    },
+    "checks": [
+      {
+        "id": "fixture_manifest_schema",
+        "status": "PASS"
+      },
+      {
+        "id": "manifest_identity",
+        "status": "PASS"
+      },
+      {
+        "id": "artifact_identity",
+        "status": "PASS"
+      },
+      {
+        "id": "archive_member_safety",
+        "status": "PASS"
+      },
+      {
+        "id": "archive_recipe",
+        "status": "PASS"
+      },
+      {
+        "id": "archive_member_closure",
+        "status": "PASS"
+      },
+      {
+        "id": "archive_member_digests",
+        "status": "PASS"
+      },
+      {
+        "id": "attribution_and_limits",
+        "status": "PASS"
+      },
+      {
+        "id": "map_receipt_schema",
+        "status": "PASS"
+      },
+      {
+        "id": "map_receipt_outcome",
+        "status": "PASS"
+      },
+      {
+        "id": "map_receipt_revision",
+        "status": "PASS"
+      },
+      {
+        "id": "clean_rebuild_reproducibility",
+        "status": "PASS"
+      },
+      {
+        "id": "geometry_privacy_boundary",
+        "status": "PASS"
+      }
+    ],
+    "private_path_markers_found": 0,
+    "status": "LOCAL_ARTIFACT_PASS"
+  },
+  "provenance": {
+    "clean_rebuilds": 2,
+    "generator_revision": "0f91452c505e03fc810c79a0b6e602101ffefce7",
+    "generator_revision_remote_status": "UNRESOLVABLE",
+    "rebuild_artifacts_byte_identical": true,
+    "rebuild_manifests_byte_identical": true,
+    "repository": "rsasaki0109/lidar_slam_ros2",
+    "review_revision": "eae85479180d5cafb797cf53db03af57a4363067",
+    "review_revision_remote_status": "UNRESOLVABLE"
+  },
+  "publication": {
+    "authorization": "NOT_GRANTED",
+    "host": null,
+    "immutable_artifact_url": null,
+    "immutable_record_id": null,
+    "upload_performed": false
+  },
+  "review": {
+    "review_id": "mid360-onboarding-50s-v1-2026-08-11",
+    "reviewed_on": "2026-08-11"
+  },
+  "schema_uri": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/fixture-publication-readiness-v1.schema.json",
+  "schema_version": 1,
+  "status": "AWAITING_PUBLICATION_DECISION"
+}

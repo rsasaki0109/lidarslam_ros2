@@ -1,0 +1,322 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/growth-snapshot-v1.schema.json",
+  "title": "lidarslam_ros2 privacy-bounded weekly growth snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "repository",
+    "captured_at",
+    "source",
+    "goal",
+    "github",
+    "product",
+    "annotations",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/growth-snapshot-v1.schema.json"
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github",
+        "traffic_window_days",
+        "external_pr_window_days",
+        "external_contributor_window_days",
+        "response_window_days"
+      ],
+      "properties": {
+        "github": {"enum": ["live", "fixture"]},
+        "traffic_window_days": {"const": 14},
+        "external_pr_window_days": {"const": 90},
+        "external_contributor_window_days": {"const": 180},
+        "response_window_days": {"const": 90}
+      }
+    },
+    "goal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_stars", "stars_to_goal"],
+      "properties": {
+        "target_stars": {"const": 1000},
+        "stars_to_goal": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "github": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stars",
+        "forks",
+        "subscribers",
+        "traffic_14d",
+        "latest_release",
+        "community"
+      ],
+      "properties": {
+        "stars": {"$ref": "#/definitions/nonNegativeInteger"},
+        "forks": {"$ref": "#/definitions/nonNegativeInteger"},
+        "subscribers": {"$ref": "#/definitions/nonNegativeInteger"},
+        "traffic_14d": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["views", "clones", "referrals"],
+          "properties": {
+            "views": {"$ref": "#/definitions/trafficMetric"},
+            "clones": {"$ref": "#/definitions/trafficMetric"},
+            "referrals": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "top_referrer_unique_sum",
+                "autoware_tier4_unique_sum"
+              ],
+              "properties": {
+                "top_referrer_unique_sum": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                },
+                "autoware_tier4_unique_sum": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                }
+              }
+            }
+          }
+        },
+        "latest_release": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tag",
+            "published_at",
+            "total_asset_downloads",
+            "primary_bundle"
+          ],
+          "properties": {
+            "tag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "published_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "total_asset_downloads": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "primary_bundle": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "downloads"],
+              "properties": {
+                "name": {
+                  "type": ["string", "null"],
+                  "minLength": 1
+                },
+                "downloads": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                }
+              }
+            }
+          }
+        },
+        "community": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "open_issues",
+            "untriaged_open_issues",
+            "external_prs_90d",
+            "external_merged_contributors_180d",
+            "issue_first_response_90d"
+          ],
+          "properties": {
+            "open_issues": {"$ref": "#/definitions/nonNegativeInteger"},
+            "untriaged_open_issues": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "external_prs_90d": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "external_merged_contributors_180d": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "issue_first_response_90d": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "scope",
+                "eligible",
+                "responded",
+                "unanswered",
+                "median_hours"
+              ],
+              "properties": {
+                "scope": {"const": "external_non_bot_issues"},
+                "eligible": {"$ref": "#/definitions/nonNegativeInteger"},
+                "responded": {"$ref": "#/definitions/nonNegativeInteger"},
+                "unanswered": {"$ref": "#/definitions/nonNegativeInteger"},
+                "median_hours": {
+                  "type": ["number", "null"],
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_first_maps", "v1_readiness"],
+      "properties": {
+        "external_first_maps": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["accepted", "required", "remaining"],
+          "properties": {
+            "accepted": {"$ref": "#/definitions/nonNegativeInteger"},
+            "required": {"$ref": "#/definitions/nonNegativeInteger"},
+            "remaining": {"$ref": "#/definitions/nonNegativeInteger"},
+            "cohort": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "status",
+                "phase",
+                "attempted",
+                "terminal",
+                "active",
+                "review_wip",
+                "successful",
+                "accepted",
+                "target",
+                "completion_rate",
+                "median_active_operator_minutes",
+                "operational_signals_fresh",
+                "next_attempt_permitted_by_state",
+                "stop_conditions"
+              ],
+              "properties": {
+                "id": {"const": "g1-first-map-cohort-2026-08"},
+                "status": {
+                  "enum": [
+                    "WAITING_FOR_PUBLIC_GATES",
+                    "WAITING_FOR_OPERATIONAL_SIGNALS",
+                    "PAUSED_REPAIR",
+                    "TARGET_MET",
+                    "HARD_CAP_REVIEW",
+                    "INITIAL_BATCH_REVIEW",
+                    "CAPACITY_FULL",
+                    "READY_FOR_NEXT_ATTEMPT"
+                  ]
+                },
+                "phase": {"enum": ["initial", "extended"]},
+                "attempted": {"type": "integer", "minimum": 0, "maximum": 10},
+                "terminal": {"type": "integer", "minimum": 0, "maximum": 10},
+                "active": {"type": "integer", "minimum": 0, "maximum": 2},
+                "review_wip": {"type": "integer", "minimum": 0, "maximum": 2},
+                "successful": {"type": "integer", "minimum": 0, "maximum": 10},
+                "accepted": {"type": "integer", "minimum": 0, "maximum": 3},
+                "target": {"const": 3},
+                "completion_rate": {
+                  "type": ["number", "null"],
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "median_active_operator_minutes": {
+                  "type": ["number", "null"],
+                  "minimum": 0
+                },
+                "operational_signals_fresh": {"type": "boolean"},
+                "next_attempt_permitted_by_state": {"type": "boolean"},
+                "stop_conditions": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "enum": [
+                      "public-source-or-documentation-drift",
+                      "supported-p0-open",
+                      "failed-release-gate",
+                      "two-unreviewed-receipts",
+                      "two-attempts-share-one-blocker",
+                      "privacy-or-safety-incident",
+                      "completion-below-80-percent-at-attempt-10",
+                      "median-active-time-above-10-minutes-at-attempt-10"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "v1_readiness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "complete", "incomplete", "total"],
+          "properties": {
+            "status": {"enum": ["READY", "NOT_READY"]},
+            "complete": {"$ref": "#/definitions/nonNegativeInteger"},
+            "incomplete": {"$ref": "#/definitions/nonNegativeInteger"},
+            "total": {"$ref": "#/definitions/nonNegativeInteger"}
+          }
+        }
+      }
+    },
+    "annotations": {
+      "type": "array",
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 160
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "personal_identifiers_written",
+        "raw_records_written"
+      ],
+      "properties": {
+        "personal_identifiers_written": {"const": false},
+        "raw_records_written": {"const": false}
+      }
+    }
+  },
+  "definitions": {
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "trafficMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "unique"],
+      "properties": {
+        "total": {"$ref": "#/definitions/nonNegativeInteger"},
+        "unique": {"$ref": "#/definitions/nonNegativeInteger"}
+      }
+    }
+  }
+}

@@ -1,0 +1,118 @@
+name: Independent First-map Validation
+description: Report a first map completed from the public product documentation.
+title: "[First Map] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing the public first-map path. A successful,
+        independently completed report may count toward the v1.0 adoption
+        gate. Failed attempts are equally useful and will not be hidden.
+        Remove private location data and map geometry before posting.
+        PASS requires a reviewed JSON receipt. FAIL may be submitted without
+        one when the run did not produce a receipt.
+
+  - type: checkboxes
+    id: independence
+    attributes:
+      label: Independence
+      options:
+        - label: I am not a lidarslam_ros2 maintainer and did not receive live step-by-step help while completing this run.
+          required: true
+
+  - type: dropdown
+    id: documentation_path
+    attributes:
+      label: Public documentation path
+      options:
+        - Docker First Map
+        - Source quickstart
+        - Own-bag golden path
+    validations:
+      required: true
+
+  - type: input
+    id: release_ref
+    attributes:
+      label: Release, commit, or image digest
+      description: Prefer a release tag or immutable GHCR digest.
+      placeholder: v0.9.0 or ghcr.io/...@sha256:...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, architecture, ROS distribution, install method, and relevant hardware.
+      placeholder: Ubuntu 24.04 / amd64 / container-managed ROS / GHCR / i7-12700
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Redacted command shape
+      description: Paste the command copied or derived from the public documentation. Replace credentials, private paths, host or user names, and precise locations with the literal REDACTED placeholder; keep the executable, options, and non-private values intact.
+      placeholder: lidarslam-map start REDACTED --profile rko_lio_graph_mid360_preset
+      render: bash
+    validations:
+      required: true
+
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - PASS — verified first map completed
+        - FAIL — onboarding or mapping did not complete
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification summary
+      description: For PASS, paste the Verification summary block from first_map_validation_receipt.md. For FAIL, paste the terminal status or first actionable finding instead. For older outputs, run create_first_map_validation_receipt.py --write first. Do not upload map geometry.
+      placeholder: |
+        manifest_status=succeeded
+        diagnosis_status=success
+        autoware_status=PASS
+        manifest_sha256=<64 lowercase hex characters>
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: receipt
+    attributes:
+      label: Privacy-bounded JSON receipt
+      description: >-
+        Required for PASS reports: review first_map_validation_receipt.json,
+        then drag and drop that file here. GitHub uploads it as a public
+        attachment. For FAIL reports, leave this field empty when no receipt
+        was produced. The generated receipt excludes map geometry, private
+        paths, and the exact command; do not attach any other run artifact.
+      placeholder: PASS only — drag and drop first_map_validation_receipt.json here.
+    validations:
+      required: false
+
+  - type: textarea
+    id: findings
+    attributes:
+      label: Findings
+      description: What was unclear, slow, surprising, broken, or especially helpful?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy and reproducibility
+      options:
+        - label: I replaced credentials, private paths, host or user names, and precise locations with REDACTED, and I did not include map geometry.
+          required: true
+        - label: I either reviewed the one attached JSON receipt and confirmed that it contains no information I need to keep private, or selected FAIL because no receipt was produced and attached no file.
+          required: true
+        - label: The report contains enough version, command, environment, and verification identity for maintainers to review it.
+          required: true

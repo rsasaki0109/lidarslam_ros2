@@ -1,7 +1,8 @@
 # Comparison
 
-This page is the public comparison snapshot for `lidarslam_ros2 v0.2.2` and
-the in-flight `v0.3` track on `develop`.
+This page is the public comparison snapshot for the
+`lidarslam_ros2 v0.9.1` release candidate. It is not yet published; the
+historical `v0.9.0` release and tag remain immutable.
 
 It is intentionally scoped to workflows that are actually exercised in this
 repository. It is not trying to be a universal ranking of every LiDAR SLAM
@@ -92,27 +93,29 @@ directories. `output/` is ignored by git; use the commands in
 
 ### Release-track datasets
 
-As of v0.4 every profile below is a blocking release-track profile. The current
-numbers all sit under their `pass` thresholds, so graduation flips their status
-from `WARN` to `PASS` without breaking the gate.
+The current blocking profiles below sit under their `pass` thresholds. The
+Stadtgarten pair remains report-only while its outdoor evidence soaks.
 
 | Dataset | Configuration | Reference kind | APE RMSE (m) | Profile gate | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `NTU VIRAL tnp_01` | current default | `ground_truth` | `0.952` | `PASS` (pass ≤ 1.00, target 0.30) | outdoor long-loop GT |
 | `NTU VIRAL tnp_01` | best observed   | `ground_truth` | `0.870` | `PASS` (same)                     | loop-gated backend run |
-| `MID-360` RTK-SLAM Construction Hall 2 | indoor default | `ground_truth` (total station, 16 chkpt) | `0.154` (median 0.061) | `PASS` (pass ≤ 0.30, target 0.15) | dense odometry scored, `--match-tolerance 2.0` |
-| `MID-360` RTK-SLAM Construction Hall 1 | indoor default | `ground_truth` (total station, 16 chkpt) | `0.403` (median 0.263) | `PASS` (pass ≤ 0.55, target 0.30) | hardest indoor hall (published baselines ~0.22) |
-| `MID-360` RTK-SLAM Stadtgarten 2 | outdoor config | `ground_truth` (total station, 19 chkpt) | `0.835` (median 0.327) | report-only soak (pass ≤ 1.20) | outdoor park; `double_downsample: false` (see methodology note) |
-| `MID-360` RTK-SLAM Stadtgarten 1 | outdoor config | `ground_truth` (total station, 36 chkpt) | `1.666` (median 1.511) | report-only soak (pass ≤ 2.20) | 26 min / ~1 km park loop; raw odometry drift, no GNSS / loop closure |
+| `MID-360` RTK-SLAM Construction Hall 2 | indoor default | `ground_truth` (total station, 16 chkpt) | `0.086` (median 0.064, 16/16) | `PASS` (pass ≤ 0.30, target 0.15) | dense odometry scored, 2.0 s association contract |
+| `MID-360` RTK-SLAM Construction Hall 1 | indoor default | `ground_truth` (total station, 16 chkpt) | `0.321` (median 0.163, 16/16) | `PASS` (pass ≤ 0.55, target 0.30) | hardest indoor hall (published baselines ~0.22) |
+| `MID-360` RTK-SLAM Stadtgarten 2 | sequence-specific compatibility preset | `ground_truth` (total station, 19 chkpt) | `0.426` (median 0.264, 19/19) | report-only soak (pass ≤ 1.20) | legacy voxel order + 105 m range; shared default unchanged |
+| `MID-360` RTK-SLAM Stadtgarten 1 | outdoor config | `ground_truth` (total station, 36 chkpt) | `0.838` (median 0.511, 36/36) | report-only soak (pass ≤ 2.20) | 26 min / ~1 km park loop; raw odometry, no GNSS / loop closure |
 | `MID-360` | current default                  | `cross_validation` vs GLIM | `3.641` | report-only since v0.5 (D-GT-2)   | solid-state LiDAR, non-360° FOV |
 | `MID-360` | best observed                    | `cross_validation` vs GLIM | `3.590` | report-only (same)                | rerun with same tuned backend family |
 | `MID-360` | Scan Context candidate           | `cross_validation` vs GLIM | `3.816` | report-only                       | fair current-code comparison; still opt-in |
 | `MID-360` | experimental BEV-assisted rerank | `cross_validation` vs GLIM | `3.607` | report-only                       | sensor-agnostic rerank of distance candidates; still opt-in |
 | Leo Drive (applanix/velodyne) | current default | `cross_validation` vs Applanix GSOF49 | varies per bag | `PASS` (pass ≤ 1.50, target 0.50) | open-data Velodyne packet path |
 
-The Newer College `math-hard` profile (ground truth) is the tightest gate
-(pass ≤ 0.10); its numbers are not checked in to this repo and are reported
-separately on the long-form benchmark notes. The KITTI Odometry 00/05/07 LO
+The Newer College `Maths-Hard` profile (official ICP-to-survey-map ground
+truth) is the tightest gate (pass ≤ 0.10). Its form-gated, CC BY-NC-SA inputs
+and generated numbers are not checked in to this repo; the exact acquisition,
+calibration, and rerun contract is documented in
+[Benchmarking And Release Gate](benchmarking.md#newer-college-maths-hard).
+The KITTI Odometry 00/05/07 LO
 baseline comparison is wired through `scripts/run_kitti_00_05_07_report.sh` and
 emits a non-regression report under
 `output/kitti_dev_<timestamp>/kitti_dev_report.md`.
@@ -224,12 +227,12 @@ The frozen run configuration used replay rate `1.2` and CPU set `2-7`.
 
 ## Current Default Position
 
-The public `v0.2.2` position is:
+The current tagged-release position is:
 
 - default workflow: `RKO-LIO + graph_based_slam`
-- public Autoware entrypoint: `bash scripts/run_autoware_quickstart.sh`
-- release gate (legacy): `bash scripts/run_release_readiness_checks.sh --ape-threshold 0.10`
-- release gate (`v0.3`): `bash scripts/run_release_readiness_checks.sh --fail-on-profiles`
+- official product entrypoints: the three commands in
+  [`docs/product-contract.md`](product-contract.md)
+- release gate: `bash scripts/run_release_readiness_checks.sh --fail-on-profiles`
   using `scripts/release_profiles.yaml` (per-dataset pass/target thresholds)
 - map-cleanup benchmark: `bash scripts/run_dynamic_object_filter_benchmark.sh`
 - classic-path suite: `bash scripts/run_open_data_classic_path_benchmark_suite.sh`
@@ -267,19 +270,13 @@ Unsafe claims:
 
 ## Release Scope Reminder
 
-`v0.2.2` is a public `v2 beta` release for:
+`v0.9.1` is the current release candidate. The maintained product boundary is
+offline rosbag2-to-verified-map authoring through the three official
+entrypoints. Lanelet generation remains operator-reviewed, and evaluation-tier
+sensor, GNSS, radar, coloured-map, and optional loop-detector paths do not
+become universal hardware guarantees merely because benchmark evidence exists.
 
-- ROS 2 pointcloud-map generation
-- non-GPL default workflow
-- Autoware pointcloud-map loading
-
-`v0.3` (in flight on `develop`) extends this with:
-
-- Autoware-compatible lanelet2 auto-generation + multi-segment routing
-  validation (`scripts/simple_lanelet2_generator.py --validate-structure`)
-- dataset-profile release gate (`scripts/release_profiles.yaml`)
-- KITTI Odometry t_rel / r_rel drift metric and 00/05/07 dev-split aggregator
-- opt-in NIS-driven auto-scale for `adjacent_edge_info_weight`
-
-`MID-360` and other solid-state LiDAR datasets are explicitly research track
-until `v0.4`; they are reported but do not block release.
+The authoritative supported outcome, support tiers, compatibility policy, and
+non-goals are in [`docs/product-contract.md`](product-contract.md). Product
+maturation toward v0.9 and v1.0 follows
+[`docs/roadmap/v0.9.md`](roadmap/v0.9.md).

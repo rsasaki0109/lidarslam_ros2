@@ -1,0 +1,18 @@
+# RKO-LIO preset for RTK-SLAM Stadtgarten sequence 2.
+#
+# Upstream's input-order voxel sampler improves Stadtgarten sequence 1 but
+# regresses sequence 2 from 0.825 m to 1.957 m checkpoint RMSE. Keep the modern
+# sampler as the product default and opt only this measured profile into the
+# pre-v0.3 unordered-map representative order. The current voxel map prunes at
+# exact voxel granularity, unlike the older block-granular map; extending the
+# active range from 100 m to 105 m restores that boundary headroom. Measured
+# sequence-2 validation: 0.426 m RMSE, 19/19 checkpoints.
+extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+extrinsic_lidar2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+initialization_phase: false
+deskew: false
+voxel_size: 0.5
+min_range: 1.0
+max_range: 105.0
+double_downsample: false
+legacy_voxel_downsample: true

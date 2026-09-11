@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/usability-scorecard-evidence-index-v1.schema.json",
+  "title": "GLIM usability scorecard evidence index v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "scorecard_id",
+    "generated_at",
+    "repository",
+    "preparation_receipt_path",
+    "rows",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/usability-scorecard-evidence-index-v1.schema.json"
+    },
+    "scorecard_id": {"const": "stable-release-lidarslam-vs-glim-v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "repository": {"const": "rsasaki0109/lidar_slam_ros2"},
+    "preparation_receipt_path": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 300,
+      "pattern": "^docs/evidence/usability/[A-Za-z0-9_./-]+\\.json$"
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["product_id", "record_path"],
+        "properties": {
+          "product_id": {"enum": ["lidarslam_ros2", "glim"]},
+          "record_path": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 300,
+            "pattern": "^docs/evidence/usability/[A-Za-z0-9_.-]+\\.json$"
+          }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "remote_mutations_performed",
+        "missing_rows_count_as_success",
+        "automatic_winner_claim_authorized"
+      ],
+      "properties": {
+        "remote_mutations_performed": {"const": false},
+        "missing_rows_count_as_success": {"const": false},
+        "automatic_winner_claim_authorized": {"const": false}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "rows": {
+            "contains": {
+              "type": "object",
+              "required": ["record_path"],
+              "properties": {"record_path": {"type": "string"}}
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "preparation_receipt_path": {"type": "string"}
+        }
+      },
+      "else": {
+        "properties": {
+          "preparation_receipt_path": {"const": null}
+        }
+      }
+    }
+  ]
+}

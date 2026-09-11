@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "contract_id": "v44c1-fixed-lag-synthetic-contracts-20260810",
+  "stage": "synthetic_numerical_validation_only",
+  "base_contract": {
+    "path": "configs/sota_v6/development/v44c_fixed_lag_synthetic_contracts.json",
+    "sha256": "0f6c57303f9889b0fd1a21b92ef80bf7d14a632010ad68222a7b6efd816e326f",
+    "contract_id": "v44c-fixed-lag-synthetic-contracts-20260810"
+  },
+  "rejected_preflight": {
+    "aggregate_path": "/home/sasaki/workspace/old_~2026/lidarslam_ws/sota_v6_dev_v44c_fixed_lag_synthetic_contracts_20260810/aggregate.json",
+    "aggregate_sha256": "f3cb78a04efad5615bc37d9ee32242b64238375c71bb21b7a52f1401d6e0a55f",
+    "aggregate_payload_sha256": "c89f1cf5fcece0799afd7d897423bf17ee850b85156706f2fc34cd68c00e4c6f",
+    "reason": "The standalone harness used 42.34 MiB and all 20 numerical cases passed, but the full regression host already exceeded 128 MiB before v44c began. Absolute host RSS therefore measured unrelated resident test modules rather than the bounded synthetic harness allocation. The preliminary authorization is superseded until the corrected resource scope passes the full regression."
+  },
+  "correction": {
+    "scope": "resource_measurement_semantics_only",
+    "performance_or_numerical_threshold_changed": false,
+    "case_seed_or_tolerance_changed": false,
+    "resource_bounds_override": {
+      "rss_measurement_scope": "absolute_for_standalone_process_incremental_for_preloaded_host",
+      "maximum_rss_mib": 128.0,
+      "maximum_incremental_rss_mib": 64.0,
+      "maximum_case_matrix_dimension": 64,
+      "maximum_case_payload_bytes": 16777216,
+      "maximum_report_bytes": 8388608,
+      "capacity_violation_policy": "terminal_fail_closed_before_allocation_or_write"
+    }
+  }
+}

@@ -107,6 +107,8 @@ public:
     voxel_size_ = declare_parameter("voxel_size", 0.1);
     zbuf_bin_ = static_cast<int>(declare_parameter("zbuf_bin", 4));
     depth_tol_ = declare_parameter("depth_tolerance", 0.15);
+    image_margin_ = static_cast<int>(declare_parameter("image_margin", 0));
+    min_color_samples_ = static_cast<int>(declare_parameter("min_color_samples", 1));
     use_bilinear_ = declare_parameter("use_bilinear", true);
     normalize_exposure_ = declare_parameter("normalize_exposure", true);
     exposure_ema_alpha_ = declare_parameter("exposure_ema_alpha", 0.1);
@@ -321,6 +323,9 @@ private:
       if (!zbuf.visible(u, v, depth, static_cast<float>(depth_tol_))) {
         continue;
       }
+      if (!point_colorizer::insideImageMargin(intr, u, v, image_margin_)) {
+        continue;  // vignette band: geometry above still occludes, colour skips
+      }
       float rgb[3];
       if (use_bilinear_) {
         point_colorizer::sampleBilinear(view, u, v, rgb);
@@ -352,7 +357,7 @@ private:
         p.x = vox.x;
         p.y = vox.y;
         p.z = vox.z;
-        if (vox.color.seen()) {
+        if (vox.color.confirmed(static_cast<std::uint16_t>(min_color_samples_))) {
           std::uint8_t rgb[3];
           vox.color.mean(rgb);
           p.r = rgb[0];
@@ -380,6 +385,8 @@ private:
   double voxel_size_ {0.1};
   int zbuf_bin_ {4};
   double depth_tol_ {0.15};
+  int image_margin_ {0};
+  int min_color_samples_ {1};
   bool use_bilinear_ {true};
   bool normalize_exposure_ {true};
   double exposure_ema_alpha_ {0.1};

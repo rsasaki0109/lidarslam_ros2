@@ -1,0 +1,357 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/soak-report-v4.schema.json",
+  "title": "lidarslam_ros2 soak report v4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_uri",
+    "status",
+    "last_error",
+    "active_iteration_id",
+    "profile",
+    "target_duration_sec",
+    "telemetry_interval_sec",
+    "started_at",
+    "completed_at",
+    "hardware_label",
+    "hardware",
+    "harness",
+    "bag_path",
+    "map_profile",
+    "product_cli",
+    "input_identity",
+    "software_identity",
+    "thresholds",
+    "metrics",
+    "checks",
+    "telemetry_samples",
+    "iterations"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {"enum": ["passed", "failed", "interrupted"]}
+        }
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "required": [
+              "target_duration_reached",
+              "all_iterations_succeeded",
+              "peak_rss_within_budget",
+              "output_size_within_budget",
+              "dropped_inputs_within_budget",
+              "free_space_within_budget",
+              "iteration_duration_within_budget",
+              "provenance_recorded"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "passed"}
+        }
+      },
+      "then": {
+        "properties": {
+          "input_identity": {"$ref": "#/definitions/input_identity"},
+          "software_identity": {"$ref": "#/definitions/software_identity"}
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schema_version": {"const": 4},
+    "schema_uri": {
+      "const": "https://rsasaki0109.github.io/lidar_slam_ros2/schemas/soak-report-v4.schema.json"
+    },
+    "status": {"enum": ["running", "passed", "failed", "interrupted"]},
+    "last_error": {"type": ["string", "null"]},
+    "active_iteration_id": {
+      "type": ["string", "null"],
+      "pattern": "^iteration-[0-9]{4,}$"
+    },
+    "profile": {"enum": ["one-hour", "eight-hour"]},
+    "target_duration_sec": {"enum": [3600.0, 28800.0]},
+    "telemetry_interval_sec": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 60
+    },
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"},
+    "hardware_label": {"type": "string", "minLength": 1},
+    "hardware": {"$ref": "#/definitions/hardware"},
+    "harness": {"$ref": "#/definitions/harness"},
+    "bag_path": {"type": "string", "minLength": 1},
+    "map_profile": {"type": ["string", "null"]},
+    "product_cli": {"type": "string", "minLength": 1},
+    "input_identity": {
+      "anyOf": [
+        {"type": "null"},
+        {"$ref": "#/definitions/input_identity"}
+      ]
+    },
+    "software_identity": {
+      "anyOf": [
+        {"type": "null"},
+        {"$ref": "#/definitions/software_identity"}
+      ]
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_peak_rss_mib",
+        "max_output_bytes",
+        "max_dropped_inputs",
+        "max_iteration_sec",
+        "minimum_free_space_bytes"
+      ],
+      "properties": {
+        "max_peak_rss_mib": {"type": "number", "exclusiveMinimum": 0},
+        "max_output_bytes": {"type": "integer", "minimum": 1},
+        "max_dropped_inputs": {"type": "integer", "minimum": 0},
+        "max_iteration_sec": {"type": "number", "exclusiveMinimum": 0},
+        "minimum_free_space_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wall_time_sec",
+        "iterations_completed",
+        "iterations_failed",
+        "peak_rss_mib",
+        "output_size_bytes",
+        "dropped_inputs_total",
+        "max_observed_iteration_sec",
+        "minimum_free_space_bytes"
+      ],
+      "properties": {
+        "wall_time_sec": {"type": "number", "minimum": 0},
+        "iterations_completed": {"type": "integer", "minimum": 0},
+        "iterations_failed": {"type": "integer", "minimum": 0},
+        "peak_rss_mib": {"type": "number", "minimum": 0},
+        "output_size_bytes": {"type": "integer", "minimum": 0},
+        "dropped_inputs_total": {"type": "integer", "minimum": 0},
+        "max_observed_iteration_sec": {"type": "number", "minimum": 0},
+        "minimum_free_space_bytes": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target_duration_reached": {"type": "boolean"},
+        "all_iterations_succeeded": {"type": "boolean"},
+        "peak_rss_within_budget": {"type": "boolean"},
+        "output_size_within_budget": {"type": "boolean"},
+        "dropped_inputs_within_budget": {"type": "boolean"},
+        "free_space_within_budget": {"type": "boolean"},
+        "iteration_duration_within_budget": {"type": "boolean"},
+        "provenance_recorded": {"type": "boolean"}
+      }
+    },
+    "telemetry_samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "captured_at",
+          "iteration_id",
+          "iteration_elapsed_sec",
+          "soak_elapsed_sec",
+          "output_size_bytes",
+          "free_space_bytes"
+        ],
+        "properties": {
+          "captured_at": {"type": "string", "format": "date-time"},
+          "iteration_id": {
+            "type": "string",
+            "pattern": "^iteration-[0-9]{4,}$"
+          },
+          "iteration_elapsed_sec": {"type": "number", "minimum": 0},
+          "soak_elapsed_sec": {"type": "number", "minimum": 0},
+          "output_size_bytes": {"type": "integer", "minimum": 0},
+          "free_space_bytes": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "iterations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "started_at",
+          "completed_at",
+          "command",
+          "command_display",
+          "exit_code",
+          "wall_time_sec",
+          "peak_rss_mib",
+          "output_size_bytes",
+          "free_space_bytes",
+          "dropped_input_signatures",
+          "log",
+          "time_report"
+        ],
+        "properties": {
+          "id": {"type": "string", "pattern": "^iteration-[0-9]{4,}$"},
+          "started_at": {"type": "string", "format": "date-time"},
+          "completed_at": {"type": "string", "format": "date-time"},
+          "command": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string"}
+          },
+          "command_display": {"type": "string", "minLength": 1},
+          "exit_code": {"type": "integer"},
+          "wall_time_sec": {"type": "number", "minimum": 0},
+          "peak_rss_mib": {"type": "number", "minimum": 0},
+          "output_size_bytes": {"type": "integer", "minimum": 0},
+          "free_space_bytes": {"type": "integer", "minimum": 0},
+          "dropped_input_signatures": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["message_filter", "scan_drop", "queue_overflow"],
+            "properties": {
+              "message_filter": {"type": "integer", "minimum": 0},
+              "scan_drop": {"type": "integer", "minimum": 0},
+              "queue_overflow": {"type": "integer", "minimum": 0}
+            }
+          },
+          "log": {"type": "string", "minLength": 1},
+          "time_report": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "machine_id",
+        "architecture",
+        "cpu_model",
+        "logical_cpu_count",
+        "memory_total_kb",
+        "kernel_release",
+        "os_release"
+      ],
+      "properties": {
+        "machine_id": {"$ref": "#/definitions/sha256"},
+        "architecture": {"type": "string"},
+        "cpu_model": {"type": "string"},
+        "logical_cpu_count": {"type": ["integer", "null"], "minimum": 1},
+        "memory_total_kb": {"type": ["integer", "null"], "minimum": 1},
+        "kernel_release": {"type": "string"},
+        "os_release": {"type": "string"}
+      }
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_version",
+        "git_commit",
+        "git_dirty",
+        "ros_distro",
+        "runner_sha256",
+        "product_cli_sha256"
+      ],
+      "properties": {
+        "product_version": {"type": "string", "minLength": 1},
+        "git_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "git_dirty": {"type": ["boolean", "null"]},
+        "ros_distro": {"type": ["string", "null"]},
+        "runner_sha256": {"$ref": "#/definitions/sha256"},
+        "product_cli_sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "input_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bag_path",
+        "metadata_path",
+        "metadata_size_bytes",
+        "metadata_sha256",
+        "storage_identifier",
+        "storage_files",
+        "identity_algorithm"
+      ],
+      "properties": {
+        "bag_path": {"type": "string"},
+        "metadata_path": {"type": "string"},
+        "metadata_size_bytes": {"type": "integer", "minimum": 0},
+        "metadata_sha256": {"$ref": "#/definitions/sha256"},
+        "storage_identifier": {"type": ["string", "null"]},
+        "storage_files": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/file_identity"}
+        },
+        "identity_algorithm": {"const": "sha256"}
+      }
+    },
+    "software_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_version",
+        "git_commit",
+        "git_dirty",
+        "package_versions",
+        "ros_distro"
+      ],
+      "properties": {
+        "product_version": {"type": "string", "minLength": 1},
+        "git_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "git_dirty": {"type": ["boolean", "null"]},
+        "package_versions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "ros_distro": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

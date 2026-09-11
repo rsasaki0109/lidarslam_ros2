@@ -170,11 +170,181 @@ def scale_intrinsics(K: np.ndarray, width: int, height: int,
 
 
 # --------------------------------------------------------------------------- #
-# Rendering (torch + gsplat; imported lazily)
+# Rendering (torch + gsplat imported lazily; device='cpu' is numpy-only)
 # --------------------------------------------------------------------------- #
+def render_frames_cpu(gaussians: dict, viewmats: np.ndarray, K: np.ndarray,
+                      width: int, height: int, *,
+                      supersample: int = 2,
+                      soft_edge_px: float = 0.0,
+                      surface_splat: bool = False,
+                      surface_aspect_limit: float = 3.0) -> np.ndarray:
+    """CUDA-free rasteriser for band-0 point sets (``sh_rest`` must be None).
+
+    Each Gaussian is drawn as an opaque disc whose radius matches its
+    projected 2-sigma extent, with per-pixel nearest-depth visibility, on a
+    ``supersample``x canvas that is box-downsampled for anti-aliasing. This
+    matches the gsplat look for the near-opaque flat-colour point clouds that
+    ``points_to_gaussians`` produces; translucent or anisotropic Gaussian
+    sets still need the CUDA path.
+
+    ``soft_edge_px`` adds a fading outer fringe only where the opaque render
+    is still black. Existing surface pixels and depth winners are untouched,
+    avoiding dark halos where a foreground fringe overlaps another disc.
+    """
+    if gaussians['sh_rest'] is not None:
+        raise ValueError('render_frames_cpu only supports sh_rest=None sets')
+    if supersample < 1:
+        raise ValueError('supersample must be >= 1')
+    if soft_edge_px < 0.0:
+        raise ValueError('soft_edge_px must be >= 0')
+    if surface_aspect_limit < 1.0:
+        raise ValueError('surface_aspect_limit must be >= 1')
+    ss = int(supersample)
+    soft_width = int(round(float(soft_edge_px) * ss))
+    w2, h2 = int(width) * ss, int(height) * ss
+    means = np.asarray(gaussians['means'], dtype=np.float64)
+    normals = None
+    if surface_splat:
+        if 'surface_normals' not in gaussians:
+            raise ValueError('surface_splat needs surface_normals')
+        normals = np.asarray(gaussians['surface_normals'], dtype=np.float64)
+        if normals.shape != means.shape:
+            raise ValueError('surface_normals must match means')
+    sigma = np.exp(np.asarray(gaussians['scales_log'], dtype=np.float64)[:, 0])
+    colors = (np.clip(np.asarray(gaussians['colors_rgb'], dtype=np.float64),
+                      0.0, 1.0) * 255.0).astype(np.uint8)
+    fx, fy = float(K[0, 0]) * ss, float(K[1, 1]) * ss
+    cx, cy = float(K[0, 2]) * ss, float(K[1, 2]) * ss
+    max_radius = 4 * ss
+    max_draw_radius = (int(np.ceil(max_radius * np.sqrt(surface_aspect_limit)))
+                       if surface_splat else max_radius) + soft_width
+    depth_shift = np.int64(1) << np.int64(24)
+    no_hit = np.iinfo(np.int64).max
+    frames = np.empty((len(viewmats), height, width, 3), dtype=np.uint8)
+    for i, vm in enumerate(viewmats):
+        vm = np.asarray(vm, dtype=np.float64)
+        cam = means @ vm[:3, :3].T + vm[:3, 3]
+        z = cam[:, 2]
+        near = z > 0.05
+        u = np.round(fx * cam[near, 0] / z[near] + cx).astype(np.int64)
+        v = np.round(fy * cam[near, 1] / z[near] + cy).astype(np.int64)
+        zn = z[near]
+        radius = np.clip(np.round(2.0 * sigma[near] * fx / zn).astype(np.int64),
+                         1, max_radius)
+        if surface_splat:
+            camera_normals = normals[near] @ vm[:3, :3].T
+            normal_xy = camera_normals[:, :2]
+            normal_xy_length = np.linalg.norm(normal_xy, axis=1)
+            normal_length = np.linalg.norm(camera_normals, axis=1)
+            facing = np.abs(camera_normals[:, 2]) / np.maximum(normal_length, 1.0e-9)
+            valid_normal = normal_length > 0.5
+            aspect = np.where(
+                valid_normal,
+                np.clip(1.0 / np.maximum(facing, 1.0 / surface_aspect_limit),
+                        1.0, surface_aspect_limit),
+                1.0)
+            # The projected normal is the compressed ellipse axis; its
+            # perpendicular is the surface tangent (major axis).
+            angle = np.where(
+                normal_xy_length > 1.0e-9,
+                np.arctan2(normal_xy[:, 1], normal_xy[:, 0]) + np.pi * 0.5,
+                0.0)
+        else:
+            aspect = np.ones_like(radius, dtype=np.float64)
+            angle = np.zeros_like(radius, dtype=np.float64)
+        inb = ((u >= -max_draw_radius) & (u < w2 + max_draw_radius) &
+               (v >= -max_draw_radius) & (v < h2 + max_draw_radius))
+        u, v, zn, radius = u[inb], v[inb], zn[inb], radius[inb]
+        aspect, angle = aspect[inb], angle[inb]
+        ids = np.flatnonzero(near)[inb]
+        buf = np.full(w2 * h2, no_hit, dtype=np.int64)
+        fringe_buf = (np.full(w2 * h2, no_hit, dtype=np.int64)
+                      if soft_width > 0 else None)
+        if len(ids):
+            # One winner-take-all pass per disc offset: pack (quantized depth,
+            # local index) into an int64 so np.minimum.at resolves per-pixel
+            # visibility and point identity at once.
+            zq = np.minimum(zn / max(float(zn.max()), 1.0e-6), 1.0)
+            keys = (zq * float(depth_shift - 2)).astype(np.int64) * depth_shift \
+                + np.arange(len(ids), dtype=np.int64)
+            aspect_bin = np.round(aspect * 2.0).astype(np.int16)
+            angle_bin = np.mod(np.round(angle / np.pi * 8.0), 8).astype(np.int16)
+            shape_key = np.stack([radius, aspect_bin, angle_bin], axis=1)
+            _, shape_inverse = np.unique(shape_key, axis=0, return_inverse=True)
+            for shape in range(int(shape_inverse.max()) + 1):
+                sel = np.flatnonzero(shape_inverse == shape)
+                r = int(radius[sel[0]])
+                shape_aspect = float(aspect_bin[sel[0]]) * 0.5
+                shape_angle = float(angle_bin[sel[0]]) * np.pi / 8.0
+                major = r * np.sqrt(shape_aspect)
+                minor = r / np.sqrt(shape_aspect)
+                draw_radius = int(np.ceil(major)) + soft_width
+                cosine, sine = np.cos(shape_angle), np.sin(shape_angle)
+                for dy in range(-draw_radius, draw_radius + 1):
+                    for dx in range(-draw_radius, draw_radius + 1):
+                        along = cosine * dx + sine * dy
+                        across = -sine * dx + cosine * dy
+                        inner_distance = np.sqrt(
+                            (along / max(major, 1.0e-6)) ** 2 +
+                            (across / max(minor, 1.0e-6)) ** 2)
+                        outer_distance = np.sqrt(
+                            (along / max(major + soft_width, 1.0e-6)) ** 2 +
+                            (across / max(minor + soft_width, 1.0e-6)) ** 2)
+                        if outer_distance > 1.0:
+                            continue
+                        uu = u[sel] + dx
+                        vv = v[sel] + dy
+                        ok = (uu >= 0) & (uu < w2) & (vv >= 0) & (vv < h2)
+                        if not ok.any():
+                            continue
+                        target = (fringe_buf if soft_width > 0 and
+                                  inner_distance > 1.0 else buf)
+                        np.minimum.at(
+                            target, vv[ok] * w2 + uu[ok], keys[sel][ok])
+        canvas = np.zeros((w2 * h2, 3), dtype=np.uint8)
+        hit = buf != no_hit
+        winners = buf[hit] % depth_shift
+        canvas[hit] = colors[ids[winners]]
+        if fringe_buf is not None:
+            fringe_hit = (~hit) & (fringe_buf != no_hit)
+            fringe_winners = fringe_buf[fringe_hit] % depth_shift
+            pixels = np.flatnonzero(fringe_hit)
+            px = pixels % w2
+            py = pixels // w2
+            dx = px - u[fringe_winners]
+            dy = py - v[fringe_winners]
+            winner_aspect = aspect[fringe_winners]
+            winner_angle = angle[fringe_winners]
+            winner_major = radius[fringe_winners] * np.sqrt(winner_aspect)
+            winner_minor = radius[fringe_winners] / np.sqrt(winner_aspect)
+            along = np.cos(winner_angle) * dx + np.sin(winner_angle) * dy
+            across = -np.sin(winner_angle) * dx + np.cos(winner_angle) * dy
+            outside = np.maximum(np.sqrt(
+                (along / np.maximum(winner_major, 1.0e-6)) ** 2 +
+                (across / np.maximum(winner_minor, 1.0e-6)) ** 2) - 1.0, 0.0)
+            alpha = np.clip(1.0 - outside * winner_minor / soft_width,
+                            0.0, 1.0)
+            fringe_colours = colors[ids[fringe_winners]].astype(np.float32)
+            canvas[fringe_hit] = np.round(
+                fringe_colours * alpha[:, None]).astype(np.uint8)
+        frames[i] = canvas.reshape(height, ss, width, ss, 3) \
+            .mean(axis=(1, 3)).astype(np.uint8)
+    return frames
+
+
 def render_frames(gaussians: dict, viewmats: np.ndarray, K: np.ndarray,
-                  width: int, height: int, *, device: str = 'cuda') -> np.ndarray:
+                  width: int, height: int, *, device: str = 'cuda',
+                  soft_edge_px: float = 0.0,
+                  surface_splat: bool = False,
+                  surface_aspect_limit: float = 3.0) -> np.ndarray:
     """Rasterise every w2c view; returns uint8 frames (F, H, W, 3)."""
+    if device == 'cpu':
+        return render_frames_cpu(
+            gaussians, viewmats, K, width, height,
+            soft_edge_px=soft_edge_px, surface_splat=surface_splat,
+            surface_aspect_limit=surface_aspect_limit)
+    if soft_edge_px != 0.0 or surface_splat:
+        raise ValueError('soft_edge_px and surface_splat are CPU-renderer only')
     import torch
     import torch.nn.functional as F
 

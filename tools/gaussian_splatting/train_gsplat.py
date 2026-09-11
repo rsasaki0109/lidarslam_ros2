@@ -37,9 +37,10 @@ def load_transforms(path: str | Path) -> dict:
     (resolved), ``viewmats`` (list of 4x4 world->camera, OpenCV/gsplat
     convention), and ``groups`` (per-frame int index from the optional ``bag``
     frame key; all zeros when absent — used by per-group pose refinement when
-    merging multi-session captures). The stored ``transform_matrix`` is OpenGL
-    c2w, so we undo the ``ROS_OPTICAL_TO_OPENGL`` flip and invert to get the
-    OpenCV w2c gsplat wants.
+    merging multi-session captures). Optional timestamps, dynamic-mask paths,
+    and root spatiotemporal-calibration metadata are retained for geometry-aware
+    RGB fusion. The stored ``transform_matrix`` is OpenGL c2w, so we undo the
+    ``ROS_OPTICAL_TO_OPENGL`` flip and invert to get the OpenCV w2c gsplat wants.
     """
     path = Path(path)
     doc = json.loads(path.read_text())
@@ -49,6 +50,8 @@ def load_transforms(path: str | Path) -> dict:
     image_paths: list[Path] = []
     viewmats: list[np.ndarray] = []
     groups: list[int] = []
+    timestamps: list[float] = []
+    dynamic_mask_paths: list[Optional[Path]] = []
     group_ids: dict = {}
     for fr in doc['frames']:
         c2w_gl = np.asarray(fr['transform_matrix'], dtype=float)
@@ -56,6 +59,10 @@ def load_transforms(path: str | Path) -> dict:
         viewmats.append(np.linalg.inv(c2w_cv))
         image_paths.append((path.parent / fr['file_path']).resolve())
         groups.append(group_ids.setdefault(fr.get('bag', ''), len(group_ids)))
+        timestamps.append(float(fr.get('timestamp', np.nan)))
+        mask_path = fr.get('dynamic_mask_path')
+        dynamic_mask_paths.append(
+            (path.parent / mask_path).resolve() if mask_path else None)
     return {
         'K': K,
         'width': int(doc['w']),
@@ -63,6 +70,10 @@ def load_transforms(path: str | Path) -> dict:
         'image_paths': image_paths,
         'viewmats': viewmats,
         'groups': groups,
+        'timestamps': np.asarray(timestamps, dtype=np.float64),
+        'dynamic_mask_paths': dynamic_mask_paths,
+        'spatiotemporal_calibration':
+            doc.get('spatiotemporal_calibration'),
     }
 
 

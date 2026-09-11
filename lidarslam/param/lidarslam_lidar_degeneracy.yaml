@@ -1,0 +1,76 @@
+# NTNU LiDAR Degeneracy runs: backend configured as a pass-through pose graph.
+# Values mirror the fog/tunnel baseline runs (see
+# runs/fog_rko_lio_baseline_v1/slam.launch.log): loop search is effectively
+# disabled via loop_search_query_stride so the raw RKO-LIO odometry is what
+# gets evaluated; an active event-driven loop search would also fall behind
+# the offline replay and stall it through subscriber backpressure.
+scan_matcher:
+  ros__parameters:
+    global_frame_id: "map"
+    robot_frame_id: "base_link"
+    registration_method: "NDT"
+    ndt_resolution: 2.0
+    ndt_num_threads: 2
+    gicp_corr_dist_threshold: 5.0
+    trans_for_mapupdate: 1.5
+    vg_size_for_input: 0.5
+    vg_size_for_map: 0.1
+    use_min_max_filter: true
+    scan_min_range: 1.0
+    scan_max_range: 200.0
+    scan_period: 0.2
+    map_publish_period: 15.0
+    num_targeted_cloud: 20
+    set_initial_pose: true
+    initial_pose_x: 0.0
+    initial_pose_y: 0.0
+    initial_pose_z: 0.0
+    initial_pose_qx: 0.0
+    initial_pose_qy: 0.0
+    initial_pose_qz: 0.0
+    initial_pose_qw: 1.0
+    use_imu: false
+    use_odom: false
+    odom_prior_planar: false
+    odom_prior_translation_only: false
+    odom_prior_suspect_recovery_only: false
+    odom_prior_weight: 1.0
+    debug_flag: false
+
+graph_based_slam:
+    ros__parameters:
+      registration_method: "NDT"
+      ndt_resolution: 5.0
+      ndt_num_threads: 0
+      voxel_leaf_size: 0.2
+      threshold_loop_closure_score: 1.0
+      distance_loop_closure: 20.0
+      range_of_searching_loop_closure: 20.0
+      search_submap_num: 3
+      loop_search_query_stride: 1000000
+      max_loop_candidate_count: 3
+      loop_edge_dedup_index_window: 8
+      loop_max_translation_delta: 15.0
+      loop_max_rotation_delta_deg: 45.0
+      loop_min_overlap_ratio: 0.0
+      loop_min_overlap_ratio_large_correction: 0.0
+      loop_overlap_large_correction_translation_m: 0.0
+      loop_overlap_max_distance_m: 0.5
+      num_adjacent_pose_cnstraints: 5
+      adjacent_edge_info_weight: 1000.0
+      adjacent_edge_info_auto_scale: false
+      loop_edge_info_weight: 100.0
+      loop_edge_robust_kernel_delta: 1.0
+      loop_edge_robust_kernel_type: "huber"
+      submap_distance_threshold: 1.5
+      use_save_map_in_loop: false
+      use_scan_context: false
+      use_bev_descriptor: false
+      use_solid_descriptor: false
+      use_triangle_descriptor: false
+      use_gnss: false
+      use_dynamic_object_filter: false
+      use_planar_map_filter: false
+      use_imu_preintegration: false
+      save_degeneracy_report: false
+      debug_flag: false
