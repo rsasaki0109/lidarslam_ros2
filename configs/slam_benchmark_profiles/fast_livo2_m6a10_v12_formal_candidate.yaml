@@ -104,13 +104,13 @@ formal_candidate:
       sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
     v12_wrapper:
       path: scripts/fast_livo2_m6a10_v12_formal_container_run.sh
-      sha256: 32fce2c054b92f0d695fd4d32c7737ab75dd3a467fdee1c579c82c63398894e6
+      sha256: af6fa54f834ae209758ee5a9903695674f4095c1063ac57b46c2774bfbc5c7a9
     v12_no_input_payload:
       path: scripts/fast_livo2_m6a10_v12_no_input_container_payload.sh
       sha256: 2c1c9b86fadc0d1d83e7874542f92ff33b99b23421397374ecd9e880ad1b73aa
     v12_feeder:
       path: scripts/fast_livo2_m6a10_feeder.py
-      sha256: 1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831
+      sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
     binder:
       path: scripts/bind_fast_livo2_v12_consumer_evidence.py
       sha256: 3a708c87137f81330b479579dbcb184ac25853596546263c406473dbef106aab

@@ -37,7 +37,7 @@ import lidarslam_benchmark_tools.run_fast_livo2_m6a10_v13_formal as v13  # noqa:
 PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v13_persistence_candidate.yaml"
 PROFILE_SHA256 = "4559f7c359156ea878ae962fab334263481a649c32c12610581ba81536eb9760"
 V13_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v13_formal.py"
-V13_LAUNCHER_SHA256 = "8a2f39a2a4b9e9ef4895662a21947ef2db54dd85cc86bd24d4ce3eb304cb750e"
+V13_LAUNCHER_SHA256 = "1dbfa6aeee1c3d21239b71a264e6e6d73226c9a77e65cb59872c9537a465b76a"
 V12_WRAPPER_PATH = ROOT / "scripts/fast_livo2_m6a10_v12_formal_container_run.sh"
 V12_WRAPPER_SHA256 = "af6fa54f834ae209758ee5a9903695674f4095c1063ac57b46c2774bfbc5c7a9"
 IMAGE_TAG = "m6a10-v2c-v12-nonlidar-boundary-transport-20260824-fast-livo2-benchmark:ros1-pinned"
@@ -53,7 +53,7 @@ FAILED_DIAGNOSTIC_SHA256 = {
 }
 
 V12_PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v12_formal_candidate.yaml"
-V12_PROFILE_SHA256 = "923178c25de157eb97045db7297592bc66f99de07bd0d2eb7fc74a1e78ba627d"
+V12_PROFILE_SHA256 = "46e2f91d4cd1c2d84de499e0a45b7a1c88aa684ed8439923739946bb3b0ce207"
 V12_NO_INPUT_RECEIPT = Path(
     "/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/"
     "fast_livo2_v2c_v12_dual_service_attempt6_20260823T175000Z_agentv12/"
