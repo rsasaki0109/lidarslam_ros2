@@ -6,7 +6,7 @@
   "benchmark_eligible": false,
   "claim_eligible": false,
   "candidate_hash_kind": "canonical_competitive_execution_selection_r3_candidate_sha256_v1",
-  "candidate_identity_sha256": "33882a46d43ba86be8eebe12b97e9b774cf3a1adb42308c5ec51af434c81da48",
+  "candidate_identity_sha256": "80cd78a0d63a314f79fa1eeea001d0119938d4ff314a37c47860d57a826b2bba",
   "profile_binding": {
     "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
     "file_sha256": "e75fd774a78aafec9738584811e017cd6a2f725dfe2ecddaaa68a61b744057a1",
@@ -15,8 +15,8 @@
   },
   "r2_selection_binding": {
     "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
-    "file_sha256": "e4059775b68ffe4be2c5904582a623e65e803ba71102a5832ae066d7d732660b",
-    "canonical_sha256": "eb5e0a3ba0965c1daa8606bbcd6b86696b488bc4115df7cdf66ca7387bcce511",
+    "file_sha256": "1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed",
+    "canonical_sha256": "450a65efff77fbde45f0c6e8da4f01ab13b2fe078c77a30437d792c5759e2873",
     "selection_id": "competitive-execution-selection-2026-08-r2",
     "status": "CURRENT",
     "closure_id": "competitive-rival-source-closure-2026-08-r2",
@@ -111,10 +111,10 @@
         "closure_identity_sha256": "abe385d54f435431aff8ba48975ee69a1a1fac31f548ae3a9733684316f2a5c2",
         "selection_id": "competitive-execution-selection-2026-08-r2",
         "selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
-        "selection_sha256": "e4059775b68ffe4be2c5904582a623e65e803ba71102a5832ae066d7d732660b"
+        "selection_sha256": "1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed"
       },
       "selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
-      "selection_file_sha256": "e4059775b68ffe4be2c5904582a623e65e803ba71102a5832ae066d7d732660b",
+      "selection_file_sha256": "1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed",
       "legal_status": "BLOCKED"
     },
     "dataset_source": {
