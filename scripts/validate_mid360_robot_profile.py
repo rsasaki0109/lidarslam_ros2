@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from mid360_robot_tools import (
+from lidarslam_benchmark_tools.mid360_robot_tools import (
     RobotProfileLoader,
     payload_to_json,
     render_robot_profile_report,

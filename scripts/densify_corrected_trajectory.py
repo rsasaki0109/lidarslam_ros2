@@ -11,12 +11,7 @@ from typing import Sequence
 
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-TOOL_DIR = REPO_ROOT / 'tools' / 'gaussian_splatting'
-if str(TOOL_DIR) not in sys.path:
-    sys.path.insert(0, str(TOOL_DIR))
-
-import posed_images as pi  # noqa: E402
+from lidarslam_benchmark_tools.gaussian_splatting import posed_images as pi
 
 
 @dataclass(frozen=True)

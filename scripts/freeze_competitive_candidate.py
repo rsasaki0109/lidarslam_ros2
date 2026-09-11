@@ -12,7 +12,7 @@ import sys
 
 import yaml
 
-from competitive_candidate_provenance import git_revision, source_tree_digest
+from lidarslam_benchmark_tools.competitive_candidate_provenance import git_revision, source_tree_digest
 
 
 ROOT = Path(__file__).resolve().parents[1]

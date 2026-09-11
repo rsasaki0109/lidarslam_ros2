@@ -1,0 +1,56 @@
+{
+  "benchmark_eligible": false,
+  "candidate_binding": {
+    "candidate_id": "competitive-rival-source-closure-2026-08-r3-candidate",
+    "candidate_identity_sha256": "4bf591c4a20f840c3f8d7dfadfc97d20a047bca054ced0ce18268e4ebeb7aafb",
+    "file_sha256": "e65f00c83e78b70453446525aa36306d9c2e4521597d7c358bff442636874dda",
+    "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-candidate.json"
+  },
+  "claim_eligible": false,
+  "current_runner_bindings": {
+    "fast_livo2": {
+      "current_sha256": "77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f",
+      "hash_kind": "file_sha256",
+      "path": "scripts/run_fast_livo2_benchmark.py",
+      "r2_sha256": "b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30",
+      "status": "CURRENT_BYTES_REBOUND"
+    },
+    "glim": {
+      "current_sha256": "fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5",
+      "hash_kind": "file_sha256",
+      "path": "scripts/run_glim_benchmark.py",
+      "r2_sha256": "1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1",
+      "status": "CURRENT_BYTES_REBOUND"
+    }
+  },
+  "legal_status": {
+    "auto_review": false,
+    "external_review_required": true,
+    "status": "NOT_READY"
+  },
+  "promotion_policy": {
+    "active_profile_switch": false,
+    "handoff_status": "UNSIGNED_REVIEW_REQUIRED",
+    "historical_r2_immutable": true,
+    "requires_candidate_and_profile_reseal": true,
+    "requires_external_reviewed_packet": true
+  },
+  "r2_lineage": {
+    "closure_id": "competitive-rival-source-closure-2026-08-r2",
+    "closure_identity_hash_kind": "canonical_rival_source_closure_identity_sha256_v1",
+    "closure_identity_sha256": "abe385d54f435431aff8ba48975ee69a1a1fac31f548ae3a9733684316f2a5c2",
+    "closure_revision": 2,
+    "historical_selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml",
+    "historical_selection_sha256": "f2f9aefc368a1ce627574b514f65f9cbadd17042716ba7915aee908c199d6b0e",
+    "r2_selection_id": "competitive-execution-selection-2026-08-r2",
+    "r2_selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
+    "r2_selection_sha256": "1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed",
+    "supersedes_status": "R2_IMMUTABLE_NOT_REWRITTEN"
+  },
+  "schema_version": 1,
+  "selection_hash_kind": "canonical_competitive_rival_source_closure_r3_selection_candidate_sha256_v1",
+  "selection_id": "competitive-rival-source-closure-selection-2026-08-r3-candidate",
+  "selection_identity_sha256": "39a1dbb62ddc6b5102e1a58397b58f4ecb11f6eed92b272b846233a22e081917",
+  "selection_kind": "competitive_rival_source_closure_r3_selection_candidate_v1",
+  "status": "NOT_READY"
+}

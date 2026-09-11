@@ -1,0 +1,164 @@
+# FAST-LIVO2 M6a10-v2c v12 implementation candidate.
+#
+# This is an additive source/unit-gate profile.  It is not a replay
+# authorization; formal replay and input access remain forbidden.
+name: fast_livo2_m6a10_v2c_v12_formal_ready
+preregistration:
+  status: IMPLEMENTATION_ONLY_SOURCE_UNIT_GATE
+  replay_count: 0
+  replay_authorized: false
+  formal_replay_forbidden: true
+  created_at_utc: '2026-08-23T00:00:00Z'
+  predecessor_profile: configs/slam_benchmark_profiles/fast_livo2_m6a10_v11_formal_ready.yaml
+  predecessor_profile_sha256: 6f56068a8a283851aa3a3723d2c9b526235bc97ba507a7dee4ea72bcd461bd2d
+  predecessor_status: IMMUTABLE_V11_IMPLEMENTATION_CANDIDATE
+  image_build_not_run: true
+
+competitive_slam_profile:
+  m6a10_fast_livo2_v2c_v12_formal_ready:
+    schema_version: 3
+    profile_key: m6a10_fast_livo2_v2c_v12_formal_ready
+    system: fast_livo2
+    contract_id: m6a10-v2c-fast-livo2-terminal-support-context-v12-formal-ready
+    status: source_unit_gate_validated
+    result: null
+    input:
+      path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+      bytes: 11290464091
+      sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+      expected_messages: 236687
+      expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+      required_evaluation_end_timestamp_seconds: 1623491515.148352
+      opened: false
+      mount_performed: false
+    phase:
+      schema_version: 3
+      contract_version: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+      mode: unpaced_ack
+      maximum_end_gap_seconds: 0.25
+      required_evaluation_end_timestamp_seconds: 1623491515.148352
+      policy:
+        allowed_support_context_topics: [imu, image]
+        strict_after_reason: strictly_after_completed_boundary
+        equal_boundary_reason: equal_to_completed_boundary_nonlidar_support_context
+        equal_boundary_lidar_allowed: false
+        pre_boundary_allowed: false
+        can_form_synchronization_unit_allowed: false
+        finite_gap_required: true
+        nonnegative_gap_required: true
+        residual_lidar_forbidden: true
+        zero_drops_overflow_processing_failures: true
+        stable_terminal_polls_required: 2
+      observed_failure_fixture:
+        source: v11_attempt4_raw_mapper_evidence
+        boundary_timestamp_seconds: 1623491515.03615
+        required_end_timestamp_seconds: 1623491515.148352
+        observed_end_gap_seconds: 0.11220192909240723
+        received_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+        completed_topic_counts: {lidar: 5793, imu: 225024, image: 5789}
+        support_context_counts: {lidar: 0, imu: 78, image: 3}
+        exact_boundary_record: image-236605
+        correction_target: nonlidar_at_or_after_boundary_classification
+    transport:
+      contract_version: m6a10-v12-callback-ack-transport-outstanding-v1
+      callback_evidence_schema_version: 3
+      callback_evidence_contract_version: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+      outstanding_definition: received_total_minus_feeder_acknowledged
+      maximum_allowed_outstanding_messages: 1
+      mapper_internal_deque_current_is_diagnostic_only: true
+      mapper_internal_deque_peak_is_diagnostic_only: true
+      terminal_support_tail_is_transport_backlog: false
+      consumer_eof_finalize_requires_exact_counts_ack_and_outstanding_zero: true
+    failure_lineage:
+      v11_attempt4_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v11_formal_replay_20260823T140331Z_agentv11formal
+      v11_attempt4_closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v11_formal_replay_20260823T140331Z_agentv11formal/closure_receipt.json
+      v11_attempt4_closure_sha256: 9a34616f337dd0297512f05f35d717b1294196f0c9e67c2629a6739f565b6aa8
+      v11_attempt4_raw_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v11_formal_replay_20260823T140331Z_agentv11formal/out/consumer_evidence.json
+      v11_attempt4_raw_sha256: 020de643f37e3cea269445b674c49e5c908b9632ca4c0981221df9fced606b6e
+      v11_attempt4_feeder_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v11_formal_replay_20260823T140331Z_agentv11formal/out/feeder_receipt.json
+      v11_attempt4_feeder_sha256: ae72c91780d4bef67cde7d3c7e87e0518461838751eeac0c1911e53d60755e18
+      v11_attempt4_failure_kind: CONTAINER_PROCESS_FAILURE
+      v11_attempt4_exit_code: 31
+      v11_attempt4_raw_status: invalid
+    required_evidence:
+      exact_received_published_acknowledged_counts: true
+      per_topic_internal_buffers: true
+      backend_completed_boundary: true
+      backend_completed_counters: true
+      terminal_support_context_counts: true
+      transport_outstanding: true
+      callback_consumer_evidence: true
+      terminal_evidence: true
+      timing_after_both_evidence: true
+    source:
+      v12_delta_patch_path: docker/patches/fast_livo2.m6a10-v2c-v12-nonlidar-boundary-transport.patch
+      v12_delta_patch_sha256: 39c77535a7557365dac6b0f2c99849038b29670a57c3101be3a39138317c6333
+      v12_selftest_path: tools/m6a10_terminal_support_context_v12_selftest.cpp
+      v12_selftest_sha256: 1b42ed713dbb2a8614902ae6214d5790ab9c73ac59792f4d68753320cef47a91
+      v12_consumer_selftest_path: tools/m6a10_consumer_evidence_v12_selftest.cpp
+      v12_consumer_selftest_sha256: 02078640496daa28f0be471355c6e2ad2822a76199cda1b54e738eeff5fe48de
+      v12_validator_path: scripts/benchmark_phase_contract.py
+      v12_validator_sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+      v12_dockerfile_path: docker/fast_livo2_m6a10_v12.Dockerfile
+      v12_dockerfile_sha256: f579d6b09868a67fa33c626d23295de41c5517490f7849c2fafdb52203aaae26
+      v12_build_script_path: scripts/build_fast_livo2_m6a10_v12_image.sh
+      v12_build_script_sha256: 4a88bbfd68d5b021b5b3a194f42cfbae67816b31c92e1bb0036b10ed6b62e41b
+      v12_wrapper_path: scripts/fast_livo2_m6a10_v12_formal_container_run.sh
+      v12_stub_ros_sha256: 40c3811b6225da6ffdb2c98ed86b9d218f168ef7c1c0294825f7ad216387bb0a
+      v12_stub_trigger_sha256: 34704c7662d96d395972ac2cc3a1a874331055bb48c5b16fdfb2494f5145dc24
+      v12_base_image_tag: m6a10-v2c-v11-bounded-end-gap-20260823t121749z-fast-livo2-benchmark:ros1-pinned
+      v12_base_image_id: sha256:729a7bba2127fc6517c106d59a12668294aeee1a0b31d04d31f9c25c762f6c3a
+      v12_build_status: RECIPE_STATIC_VALIDATED_NOT_BUILT
+      patch_apply_order:
+        - docker/patches/fast_livo2.m6a10-v2c.patch
+        - docker/patches/fast_livo2.m6a10-v2c-v8-service-queue.patch
+        - docker/patches/fast_livo2.m6a10-v2c-v9-wallrate.patch
+        - docker/patches/fast_livo2.m6a10-v2c-v10-terminal-support-context.patch
+        - docker/patches/fast_livo2.m6a10-v2c-v11-bounded-end-gap.patch
+        - docker/patches/fast_livo2.m6a10-v2c-v12-nonlidar-boundary-transport.patch
+      image_build_status: NOT_RUN
+      runtime_status: NOT_RUN
+      formal_replay_forbidden: true
+    host_interference:
+      contract_version: m6a10-v12-host-interference-gate-v1
+      probe_interval_seconds: 5.0
+      forbidden_classes: [compiler, linker, catkin, docker_build, external_gnss_build]
+      self_and_ancestors_excluded: true
+      process_argv_hashed_redacted: true
+      natural_exit_then_diagnostics_cleanup: true
+      manual_stop_on_detection: false
+      performance_timing_admissible_on_detection: false
+      external_gnss_build_is_separate_provenance_issue: true
+    execution:
+      image_tag: null
+      image_id: null
+      status: build_not_run
+      network: none
+      rootfs: read_only
+      mounts: []
+      one_start: true
+      retry: false
+      manual_stop: false
+      input_opened: false
+      ground_truth_content_opened: false
+      scorer_invoked: false
+      map_saved: false
+      formal_replay_started: false
+    safety:
+      ground_truth_mount_exposed: false
+      ground_truth_content_opened: false
+      scorer_mount_forbidden: true
+      scorer_invoked: false
+      map_save: false
+      formal_replay_forbidden: true
+      replay_count: 0
+    validator:
+      path: scripts/benchmark_phase_contract.py
+      v5_function: validate_terminal_support_context_v5
+      v3_strict_branch_unchanged: true
+      v4_strict_branch_unchanged: true
+      authority_fields_forbidden: true
+    status_gate:
+      formal_replay_authorized: false
+      build_required_before_runtime: true
+      runtime_required_before_formal: true

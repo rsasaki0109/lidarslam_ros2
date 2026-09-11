@@ -1,0 +1,165 @@
+{
+  "schema_version": 2,
+  "candidate_id": "glim-clean-room-phase1-core-public-api-v2",
+  "status": "CANDIDATE_NOT_BENCHMARK_EVIDENCE",
+  "purpose": "Exact pinned GLIM core public-API compile/link smoke only; no ROS bridge or benchmark execution.",
+  "base_image": {
+    "reference": "ros@sha256:31daab66eef9139933379fb67159449944f4e2dcf2e22c2d12cc715f29873e0f",
+    "distribution": "jazzy",
+    "architecture": "linux/amd64",
+    "build_policy": "image_is_optional_and_must_be_recorded_as_NOT_RUN_when_dependency_install_requires_non-approved_network"
+  },
+  "build_policy": {
+    "build_type": "Release",
+    "parallel_jobs": 2,
+    "march_native": false,
+    "cuda": false,
+    "viewer": false,
+    "opencv": false,
+    "gtsam_tests": false,
+    "gtsam_examples": false,
+    "gtsam_timing": false,
+    "gtsam_python": false,
+    "gtsam_matlab": false,
+    "gtsam_tbb": false,
+    "gtsam_points_tests": false,
+    "gtsam_points_demos": false,
+    "gtsam_points_tools": false,
+    "network_policy": "official GitHub commit archives/checkouts and the exact official Boost release archive only; no package-manager or moving-URL dependency fetch during the build"
+  },
+  "boost_source": {
+    "name": "boost",
+    "version": "1.83.0",
+    "release_url": "https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.bz2",
+    "archive_filename": "boost_1_83_0.tar.bz2",
+    "archive_sha256": "6478edfe2f3305127cffe8caf73ea0176c53769f4bf1585be237eb30798c3b8e",
+    "archive_bytes": 122892751,
+    "archive_root": "boost_1_83_0",
+    "source_tree_sha256": "feb033ff2277bff1befa57ca65ede54a2c7a1fd4f6498d238daae8470dd2fbb0",
+    "source_tree_file_count": 76253,
+    "source_tree_hash_kind": "relative_path_content_sha256_v1_excluding_git_metadata",
+    "license_files": [
+      {
+        "path": "LICENSE_1_0.txt",
+        "identity": "Boost Software License 1.0",
+        "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "bytes": 1338
+      }
+    ],
+    "build": {
+      "prefix": "/opt/install/boost",
+      "jobs": 2,
+      "variant": "release",
+      "cxxstd": 17,
+      "threading": "multi",
+      "link": "shared",
+      "runtime_link": "shared",
+      "march_native": false,
+      "libraries": [
+        "serialization",
+        "graph",
+        "filesystem",
+        "thread",
+        "program_options",
+        "date_time",
+        "timer",
+        "chrono",
+        "regex",
+        "system"
+      ]
+    }
+  },
+  "forbidden_bridge_tokens": [
+    "glim",
+    "ros2"
+  ],
+  "components": [
+    {
+      "name": "glim",
+      "role": "core",
+      "repository_url": "https://github.com/koide3/glim.git",
+      "commit": "faa264a1bce1bda406f73457e35511f56cdc2eaa",
+      "archive_url": "https://github.com/koide3/glim/archive/faa264a1bce1bda406f73457e35511f56cdc2eaa.tar.gz",
+      "archive_sha256": "d8176e85199a2297269d34fcfb57e4cb2c2d53e593439f665f614cae57972c25",
+      "archive_bytes": 515767,
+      "source_tree_sha256": "2394e58c0c7fe218770b6db20cdab71395c885608783966ae94491e85899260e",
+      "source_tree_hash_kind": "relative_path_content_sha256_v1_excluding_git_metadata",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "identity": "MIT",
+          "sha256": "e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4"
+        }
+      ],
+      "submodules": []
+    },
+    {
+      "name": "gtsam",
+      "role": "dependency",
+      "repository_url": "https://github.com/borglab/gtsam.git",
+      "commit": "2f3e56c0ddbd3a1aa54ed043643b553d26a069f6",
+      "archive_url": "https://github.com/borglab/gtsam/archive/2f3e56c0ddbd3a1aa54ed043643b553d26a069f6.tar.gz",
+      "archive_sha256": "50bd99ddbb363f03f145d814995df234c83ad38f867080fba5b60f6c151b348a",
+      "archive_bytes": 34895297,
+      "source_tree_sha256": "f43f0991fcb580b421afd30eb191a12dbea9c92d2dfa355a182932dd0048da38",
+      "source_tree_hash_kind": "relative_path_content_sha256_v1_excluding_git_metadata",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "identity": "BSD-3-Clause",
+          "sha256": "38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775"
+        },
+        {
+          "path": "LICENSE.BSD",
+          "identity": "BSD-3-Clause",
+          "sha256": "ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0"
+        },
+        {
+          "path": "gtsam/3rdparty/CCOLAMD/Doc/License.txt",
+          "identity": "BSD-3-Clause",
+          "sha256": "27e1fb1934109aec52982bea8cda801e3791c683690c2eb0c089c496ba394ac6"
+        },
+        {
+          "path": "gtsam/3rdparty/ceres/jet.h",
+          "identity": "BSD-3-Clause",
+          "sha256": "9c98af085ddc729768ca22879825cc95c875ac05e2b6dc268211bdff254011b7"
+        },
+        {
+          "path": "gtsam/3rdparty/Eigen/COPYING.README",
+          "identity": "MPL-2.0",
+          "sha256": "c83230b770f17ef1386ea1fd3681271dd98aa93646bdbfb5bff3a1b7050fff9d"
+        },
+        {
+          "path": "gtsam/3rdparty/metis/LICENSE.txt",
+          "identity": "Apache-2.0",
+          "sha256": "64ab947d7b289ad76e935adff51b31e4ac160df7dfad24480dbaa452e39bbe79"
+        },
+        {
+          "path": "gtsam/3rdparty/Spectra/GenEigsSolver.h",
+          "identity": "MPL-2.0",
+          "sha256": "328d5075d23d78d8d70a32bb8fa6d04a5d871236614c226f510a121a14398382"
+        }
+      ],
+      "submodules": []
+    },
+    {
+      "name": "gtsam_points",
+      "role": "dependency",
+      "repository_url": "https://github.com/koide3/gtsam_points.git",
+      "commit": "9d32e7dbecf6015560d84b4901d6b0a6f483ec46",
+      "archive_url": "https://github.com/koide3/gtsam_points/archive/9d32e7dbecf6015560d84b4901d6b0a6f483ec46.tar.gz",
+      "archive_sha256": "dc977a8b2a6aeda5d48107920e2cdd7e0e45e1478c3590e45f053335eb975479",
+      "archive_bytes": 7780089,
+      "source_tree_sha256": "f3b3ac9b29a49a28e3f9e79fd36cc764caf2e46e961f229283507ff1cc8ffc00",
+      "source_tree_hash_kind": "relative_path_content_sha256_v1_excluding_git_metadata",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "identity": "MIT",
+          "sha256": "e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4"
+        }
+      ],
+      "submodules": []
+    }
+  ]
+}

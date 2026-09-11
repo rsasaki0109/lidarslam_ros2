@@ -89,6 +89,29 @@ def create_rko_offline_node(context, *args, **kwargs):
     if rko_param_file:
         parameters.append(rko_param_file)
 
+    # The v2 benchmark contract is an additive process-level opt-in.  Keep
+    # these values as the last parameter source so a launch default cannot
+    # erase the wrapper's explicit evidence path/mode.  With no v2
+    # environment the dictionary is empty and ordinary launches remain
+    # parameter-compatible.
+    benchmark_environment = {
+        'm6a10_phase_contract_version': 'M6A10_PHASE_CONTRACT_VERSION',
+        'm6a10_phase_mode': 'M6A10_PHASE_MODE',
+        'm6a10_consumer_evidence_path': 'M6A10_CONSUMER_EVIDENCE',
+        'm6a10_drain_timeout_seconds': 'M6A10_DRAIN_TIMEOUT_SECONDS',
+        'm6a10_drain_diagnostic_path': 'M6A10_DRAIN_DIAGNOSTIC',
+    }
+    benchmark_parameters = {
+        parameter: (
+            float(os.environ[environment])
+            if parameter == 'm6a10_drain_timeout_seconds'
+            else os.environ[environment]
+        )
+        for parameter, environment in benchmark_environment.items()
+        if os.environ.get(environment)
+    }
+    if benchmark_parameters:
+        parameters.append(benchmark_parameters)
     prefix = []
     wait_for_subscribers = _parse_bool_arg(
         LaunchConfiguration('wait_for_output_subscribers').perform(context)
@@ -191,6 +214,17 @@ def create_graph_based_slam_node(context, *args, **kwargs):
     _add_optional_param_override(
         overrides, context, 'distance_loop_closure', float,
     )
+    # M6a10's GT-blind trajectory/consumer contract is benchmark-only.  A
+    # ``--skip-map-save`` runner must also suppress loop-triggered map writes:
+    # the graph component otherwise calls ``doPoseAdjustment(..., true)`` for
+    # accepted loop edges, independently of the /map_save service.  Keep the
+    # ordinary launch/YAML defaults untouched unless the wrapper explicitly
+    # exports this opt-in environment marker.
+    if os.environ.get('M6A10_BENCHMARK_NO_MAP_ARTIFACTS') == '1':
+        overrides['use_save_map_in_loop'] = False
+        # An empty path makes optimizePoseGraph retain no save target when
+        # do_save_map is false, so the benchmark cannot leak pose_graph.g2o.
+        overrides['save_pose_graph_path'] = ''
     if overrides:
         parameters.append(overrides)
 

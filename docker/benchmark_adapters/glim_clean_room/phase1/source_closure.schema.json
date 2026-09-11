@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/lidarslam/glim-clean-room-phase1-source-closure.schema.json",
+  "title": "GLIM clean-room Phase 1 source closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "status",
+    "purpose",
+    "base_image",
+    "build_policy",
+    "boost_source",
+    "forbidden_bridge_tokens",
+    "components"
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "candidate_id": {"type": "string", "const": "glim-clean-room-phase1-core-public-api-v2"},
+    "status": {"const": "CANDIDATE_NOT_BENCHMARK_EVIDENCE"},
+    "purpose": {"type": "string", "minLength": 1},
+    "base_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference", "distribution", "architecture", "build_policy"],
+      "properties": {
+        "reference": {"const": "ros@sha256:31daab66eef9139933379fb67159449944f4e2dcf2e22c2d12cc715f29873e0f"},
+        "distribution": {"const": "jazzy"},
+        "architecture": {"const": "linux/amd64"},
+        "build_policy": {"type": "string", "minLength": 1}
+      }
+    },
+    "build_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "build_type", "parallel_jobs", "march_native", "cuda", "viewer", "opencv",
+        "gtsam_tests", "gtsam_examples", "gtsam_timing", "gtsam_python", "gtsam_matlab",
+        "gtsam_tbb", "gtsam_points_tests", "gtsam_points_demos", "gtsam_points_tools",
+        "network_policy"
+      ],
+      "properties": {
+        "build_type": {"const": "Release"},
+        "parallel_jobs": {"type": "integer", "minimum": 1, "maximum": 4},
+        "march_native": {"const": false},
+        "cuda": {"const": false},
+        "viewer": {"const": false},
+        "opencv": {"const": false},
+        "gtsam_tests": {"const": false},
+        "gtsam_examples": {"const": false},
+        "gtsam_timing": {"const": false},
+        "gtsam_python": {"const": false},
+        "gtsam_matlab": {"const": false},
+        "gtsam_tbb": {"const": false},
+        "gtsam_points_tests": {"const": false},
+        "gtsam_points_demos": {"const": false},
+        "gtsam_points_tools": {"const": false},
+        "network_policy": {"type": "string", "minLength": 1}
+      }
+    },
+    "boost_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name", "version", "release_url", "archive_filename", "archive_sha256",
+        "archive_bytes", "archive_root", "source_tree_sha256", "source_tree_file_count",
+        "source_tree_hash_kind", "license_files", "build"
+      ],
+      "properties": {
+        "name": {"const": "boost"},
+        "version": {"const": "1.83.0"},
+        "release_url": {"const": "https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.bz2"},
+        "archive_filename": {"const": "boost_1_83_0.tar.bz2"},
+        "archive_sha256": {"$ref": "#/$defs/sha256"},
+        "archive_bytes": {"const": 122892751},
+        "archive_root": {"const": "boost_1_83_0"},
+        "source_tree_sha256": {"$ref": "#/$defs/sha256"},
+        "source_tree_file_count": {"type": "integer", "minimum": 1},
+        "source_tree_hash_kind": {"const": "relative_path_content_sha256_v1_excluding_git_metadata"},
+        "license_files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "identity", "sha256", "bytes"],
+            "properties": {
+              "path": {"const": "LICENSE_1_0.txt"},
+              "identity": {"const": "Boost Software License 1.0"},
+              "sha256": {"$ref": "#/$defs/sha256"},
+              "bytes": {"const": 1338}
+            }
+          }
+        },
+        "build": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "prefix", "jobs", "variant", "cxxstd", "threading", "link",
+            "runtime_link", "march_native", "libraries"
+          ],
+          "properties": {
+            "prefix": {"const": "/opt/install/boost"},
+            "jobs": {"const": 2},
+            "variant": {"const": "release"},
+            "cxxstd": {"const": 17},
+            "threading": {"const": "multi"},
+            "link": {"const": "shared"},
+            "runtime_link": {"const": "shared"},
+            "march_native": {"const": false},
+            "libraries": {
+              "type": "array",
+              "const": [
+                "serialization", "graph", "filesystem", "thread", "program_options",
+                "date_time", "timer", "chrono", "regex", "system"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "forbidden_bridge_tokens": {
+      "type": "array",
+      "const": ["glim", "ros2"]
+    },
+    "components": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/component"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name", "role", "repository_url", "commit", "archive_url", "archive_sha256",
+        "archive_bytes", "source_tree_sha256", "source_tree_hash_kind", "license_files",
+        "submodules"
+      ],
+      "properties": {
+        "name": {"enum": ["glim", "gtsam", "gtsam_points"]},
+        "role": {"enum": ["core", "dependency"]},
+        "repository_url": {"type": "string", "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\\.git$"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "archive_url": {"type": "string", "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/archive/[0-9a-f]{40}\\.tar\\.gz$"},
+        "archive_sha256": {"$ref": "#/$defs/sha256"},
+        "archive_bytes": {"type": "integer", "minimum": 1},
+        "source_tree_sha256": {"$ref": "#/$defs/sha256"},
+        "source_tree_hash_kind": {"const": "relative_path_content_sha256_v1_excluding_git_metadata"},
+        "license_files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "identity", "sha256"],
+            "properties": {
+              "path": {"type": "string", "pattern": "^(?!/)(?!.*(^|/)\\.\\.(?:/|$)).+"},
+              "identity": {"type": "string", "minLength": 1},
+              "sha256": {"$ref": "#/$defs/sha256"}
+            }
+          }
+        },
+        "submodules": {"const": []}
+      }
+    }
+  }
+}

@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive_execution_machine_identity_pop_handoff_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "benchmark_eligible",
+    "claim_eligible", "candidate_binding", "execution_context",
+    "asset_root", "challenge", "host_public_key", "proof",
+    "machine_artifact", "trust_policy", "validity", "replay",
+    "external_review", "promotion_policy", "producer", "handoff_identity_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "competitive_execution_machine_identity_pop_handoff_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "UNSIGNED_REVIEW_REQUIRED"},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "candidate_binding": {"$ref": "#/$defs/candidateBinding"},
+    "execution_context": {"$ref": "#/$defs/executionContext"},
+    "asset_root": {"$ref": "#/$defs/directoryIdentity"},
+    "challenge": {"$ref": "#/$defs/challengeRef"},
+    "host_public_key": {"$ref": "#/$defs/keyRef"},
+    "proof": {"$ref": "#/$defs/proofRef"},
+    "machine_artifact": {"$ref": "#/$defs/artifactRef"},
+    "trust_policy": {"$ref": "#/$defs/policyRef"},
+    "validity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["issued_at", "expires_at"],
+      "properties": {
+        "issued_at": {"type": "integer", "minimum": 0},
+        "expires_at": {"type": "integer", "minimum": 1}
+      }
+    },
+    "replay": {
+      "type": "object", "additionalProperties": false,
+      "required": ["nonce_sha256", "ledger_path", "claim_path", "claim_sha256"],
+      "properties": {
+        "nonce_sha256": {"$ref": "#/$defs/sha"},
+        "ledger_path": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+        "claim_path": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+        "claim_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "external_review": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "status", "live_host_match", "host_match_status",
+        "key_policy_review", "auto_promoted"
+      ],
+      "properties": {
+        "status": {"const": "UNSIGNED_REVIEW_REQUIRED"},
+        "live_host_match": {"const": false},
+        "host_match_status": {"const": "HOST_MATCH_NOT_CHECKED"},
+        "key_policy_review": {"const": "REQUIRED_EXTERNAL_CUSTODIAN"},
+        "auto_promoted": {"const": false}
+      }
+    },
+    "promotion_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "benchmark_eligible", "claim_eligible", "active_profile_switch",
+        "requires_external_custodian_review", "requires_candidate_profile_reseal",
+        "checked_in_policy_immutable", "private_key_included"
+      ],
+      "properties": {
+        "benchmark_eligible": {"const": false},
+        "claim_eligible": {"const": false},
+        "active_profile_switch": {"const": false},
+        "requires_external_custodian_review": {"const": true},
+        "requires_candidate_profile_reseal": {"const": true},
+        "checked_in_policy_immutable": {"const": true},
+        "private_key_included": {"const": false}
+      }
+    },
+    "producer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["module", "source_sha256", "version"],
+      "properties": {
+        "module": {"const": "scripts/prepare_competitive_execution_machine_identity_pop_handoff.py"},
+        "source_sha256": {"$ref": "#/$defs/sha"},
+        "version": {"const": "1.0.0"}
+      }
+    },
+    "handoff_identity_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relative": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"},
+    "candidateBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "path", "file_sha256", "candidate_identity_sha256", "candidate_id",
+        "status", "profile_binding", "thread_policy", "external_closures_sha256"
+      ],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_identity_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"},
+        "status": {"const": "NOT_READY"},
+        "profile_binding": {"$ref": "#/$defs/profileBinding"},
+        "thread_policy": {"$ref": "#/$defs/threadPolicy"},
+        "external_closures_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "profileBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "canonical_hash_kind"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_hash_kind": {"const": "canonical_profile_sha256_v1"}
+      }
+    },
+    "threadPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "required_keys", "values", "canonical_sha256"],
+      "properties": {
+        "status": {"const": "RECORDED_NOT_READY_EXTERNAL_MACHINE"},
+        "required_keys": {"const": ["cpu_affinity", "max_threads", "omp_num_threads", "openblas_num_threads", "mkl_num_threads", "tbb_num_threads", "accelerator_policy"]},
+        "values": {
+          "type": "object", "additionalProperties": false,
+          "required": ["cpu_affinity", "max_threads", "omp_num_threads", "openblas_num_threads", "mkl_num_threads", "tbb_num_threads", "accelerator_policy"],
+          "properties": {
+            "cpu_affinity": {"const": [0, 1, 2, 3, 4, 5, 6, 7]},
+            "max_threads": {"const": 8},
+            "omp_num_threads": {"const": 8},
+            "openblas_num_threads": {"const": 8},
+            "mkl_num_threads": {"const": 8},
+            "tbb_num_threads": {"const": 8},
+            "accelerator_policy": {"const": "cpu_only"}
+          }
+        },
+        "canonical_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "executionContext": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "required_systems", "release", "source_bindings_sha256",
+        "system_bindings_sha256", "rival_source_closure_sha256",
+        "dataset_source_closure_sha256", "fresh_holdout_authorization_sha256",
+        "image_identity_sha256", "toolchain_identity_sha256", "legal_status"
+      ],
+      "properties": {
+        "required_systems": {"const": ["ours", "glim", "fast_livo2"]},
+        "release": {"const": "Release"},
+        "source_bindings_sha256": {"$ref": "#/$defs/sha"},
+        "system_bindings_sha256": {"$ref": "#/$defs/sha"},
+        "rival_source_closure_sha256": {"$ref": "#/$defs/sha"},
+        "dataset_source_closure_sha256": {"$ref": "#/$defs/sha"},
+        "fresh_holdout_authorization_sha256": {"$ref": "#/$defs/sha"},
+        "image_identity_sha256": {"$ref": "#/$defs/sha"},
+        "toolchain_identity_sha256": {"$ref": "#/$defs/sha"},
+        "legal_status": {"const": "BLOCKED"}
+      }
+    },
+    "directoryIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "device", "inode", "mode"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1},
+        "mode": {"type": "integer", "minimum": 0, "maximum": 4095}
+      }
+    },
+    "sourceBase": {
+      "type": "object",
+      "required": ["schema", "path", "file_sha256", "file_bytes", "canonical_sha256", "sidecar_sha256"],
+      "properties": {
+        "schema": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "file_bytes": {"type": "integer", "minimum": 1, "maximum": 2097152},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "sidecar_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "challengeRef": {
+      "allOf": [{"$ref": "#/$defs/sourceBase"}],
+      "type": "object", "unevaluatedProperties": false,
+      "required": ["schema", "path", "file_sha256", "file_bytes", "canonical_sha256", "sidecar_sha256", "challenge_payload_sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relative"},
+        "challenge_payload_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "keyRef": {
+      "allOf": [{"$ref": "#/$defs/sourceBase"}],
+      "type": "object", "unevaluatedProperties": false,
+      "required": ["schema", "path", "file_sha256", "file_bytes", "canonical_sha256", "sidecar_sha256", "key_id", "algorithm", "public_key_sha256", "provisioning_receipt_sha256", "valid_from", "valid_until"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relative"},
+        "key_id": {"type": "string", "minLength": 1},
+        "algorithm": {"const": "Ed25519"},
+        "public_key_sha256": {"$ref": "#/$defs/sha"},
+        "provisioning_receipt_sha256": {"$ref": "#/$defs/sha"},
+        "valid_from": {"type": "integer", "minimum": 0},
+        "valid_until": {"type": "integer", "minimum": 1}
+      }
+    },
+    "proofRef": {
+      "allOf": [{"$ref": "#/$defs/sourceBase"}],
+      "type": "object", "unevaluatedProperties": false,
+      "required": ["schema", "path", "file_sha256", "file_bytes", "canonical_sha256", "sidecar_sha256", "key_id", "challenge_payload_sha256", "signature_sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relative"},
+        "key_id": {"type": "string", "minLength": 1},
+        "challenge_payload_sha256": {"$ref": "#/$defs/sha"},
+        "signature_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "artifactRef": {
+      "allOf": [{"$ref": "#/$defs/sourceBase"}],
+      "type": "object", "unevaluatedProperties": false,
+      "required": ["schema", "path", "file_sha256", "file_bytes", "canonical_sha256", "sidecar_sha256", "identity_sha256", "status", "review_status"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relative"},
+        "identity_sha256": {"$ref": "#/$defs/sha"},
+        "status": {"const": "LIVE_CAPTURED"},
+        "review_status": {"const": "NOT_REVIEWED_EXTERNAL"}
+      }
+    },
+    "policyRef": {
+      "allOf": [{"$ref": "#/$defs/sourceBase"}],
+      "type": "object", "unevaluatedProperties": false,
+      "required": ["schema", "path", "file_sha256", "file_bytes", "canonical_sha256", "sidecar_sha256", "status", "authorized_runtime", "authorized_keys_sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+        "status": {"const": "READY"},
+        "authorized_runtime": {"const": true},
+        "authorized_keys_sha256": {"$ref": "#/$defs/sha"}
+      }
+    }
+  }
+}

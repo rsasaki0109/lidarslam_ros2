@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PRODUCTION_READINESS_JSON = 'mid360_robot_production_readiness.json'
@@ -405,3 +405,7 @@ def _maybe_float(value: Any) -> float | None:
 def _fmt_float(value: Any) -> str:
     number = _maybe_float(value)
     return '' if number is None else f'{number:.3f}'
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_production_readiness is a library module; import it instead of running it directly.")

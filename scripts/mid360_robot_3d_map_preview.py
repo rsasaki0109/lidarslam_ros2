@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from map_edit import (
+from lidarslam_benchmark_tools.map_edit import (
     MapEditError,
     accepted_loop_edges,
     resolve_bundle_dir,
@@ -17,7 +17,7 @@ from map_edit import (
     sha256_file,
 )
 
-from mid360_robot_loop_alignment_analyzer import (
+from lidarslam_benchmark_tools.mid360_robot_loop_alignment_analyzer import (
     LOOP_ALIGNMENT_JSON,
     LoopAlignmentThresholds,
     find_loop_candidates,
@@ -26,6 +26,7 @@ from mid360_robot_loop_alignment_analyzer import (
     resolve_pointcloud_map_dir,
     resolve_trajectory_path,
 )
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 import yaml
 MAP_PREVIEW_JSON = 'mid360_robot_3d_map_preview.json'
@@ -795,3 +796,7 @@ def _next_actions(
     if not loop_candidates:
         actions.append('Run loop-alignment analysis first if loop candidate markers are needed.')
     return actions
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_3d_map_preview is a library module; import it instead of running it directly.")

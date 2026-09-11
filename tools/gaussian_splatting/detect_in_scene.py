@@ -29,9 +29,9 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-from actor_compositing import (crop_gaussians, points_to_bbox, project_points,
-                               rasterize_rgbda)
-from render_path import load_gaussian_ply
+from lidarslam_benchmark_tools.gaussian_splatting.actor_compositing import (
+    crop_gaussians, points_to_bbox, project_points, rasterize_rgbda)
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import load_gaussian_ply
 
 _UP = {'x': 0, 'y': 1, 'z': 2}
 
@@ -131,7 +131,7 @@ def score_detection(dets: Sequence[dict], gt_box: Optional[Sequence[float]],
     Returns ``(best_iou, hit)``. ``hit`` is False when there is no ground-truth
     box or no detection of ``target_cls`` overlaps it enough.
     """
-    from sim2real_gap import box_iou
+    from lidarslam_benchmark_tools.gaussian_splatting.sim2real_gap import box_iou
 
     if gt_box is None:
         return 0.0, False
@@ -255,7 +255,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     """CLI entry point."""
     args = build_parser().parse_args(argv)
-    from sim2real_gap import Detector
+    from lidarslam_benchmark_tools.gaussian_splatting.sim2real_gap import Detector
 
     detector = Detector(args.detector, conf=args.det_conf)
     report = run(Path(args.ply), Path(args.out),

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-apt-release-signature-trust-root-v1",
+  "title": "Precommitted OpenPGP trust-root metadata",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "key_id", "fingerprint",
+    "keyring_path", "keyring_bytes", "keyring_sha256", "verification_time", "validity",
+    "verifier", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_apt_signature_trust_root_v1"},
+    "schema_version": {"const": 1}, "status": {"const": "PRECOMMITTED"},
+    "key_id": {"type": "string", "pattern": "^[0-9A-F]{16}$"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9A-F]{40}$"},
+    "keyring_path": {"type": "string", "minLength": 1},
+    "keyring_bytes": {"type": "integer", "minimum": 1},
+    "keyring_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verification_time": {"type": "integer", "minimum": 1},
+    "validity": {"type": "object", "additionalProperties": false,
+      "required": ["primary_fingerprint", "created_at", "expires_at", "revoked", "subkeys"],
+      "properties": {"primary_fingerprint": {"type": "string", "pattern": "^[0-9A-F]{40}$"},
+        "created_at": {"type": "integer", "minimum": 0}, "expires_at": {"type": "integer", "minimum": 0},
+        "revoked": {"type": "boolean"}, "subkeys": {"type": "array"}}},
+    "verifier": {"type": "object", "additionalProperties": false,
+      "required": ["name", "version", "binary_sha256", "binary_path", "status_protocol"],
+      "properties": {"name": {"const": "gpg"}, "version": {"type": "string", "minLength": 1},
+        "binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "binary_path": {"type": "string", "pattern": "^/.+"},
+        "status_protocol": {"const": "gpg-status-fd-v1"}}},
+    "canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

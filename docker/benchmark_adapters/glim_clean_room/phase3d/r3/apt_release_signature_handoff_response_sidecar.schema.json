@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-custodian-handoff-response-sidecar-v1",
+  "title": "Sidecar for an immutable custodian handoff response",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "artifact_path", "artifact_bytes",
+    "artifact_sha256", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_custodian_handoff_response_sidecar_v1"},
+    "schema_version": {"const": 1},
+    "artifact_path": {"type": "string", "pattern": "^[^/][^\\u0000]*$"},
+    "artifact_bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+    "artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

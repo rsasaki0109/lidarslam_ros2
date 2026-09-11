@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-machine-host-public-key-v1",
+  "title": "Externally provisioned r3 host Ed25519 public key descriptor",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "campaign_domain", "campaign_id",
+    "key_id", "algorithm", "public_key_base64", "public_key_sha256",
+    "provisioning_receipt_sha256", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_machine_host_public_key_v1"},
+    "schema_version": {"const": 1}, "status": {"const": "EXTERNALLY_PROVISIONED"},
+    "campaign_domain": {"const": "lidarslam/glim-clean-room-r3/machine-identity-keyed/sha256/v1"},
+    "campaign_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "algorithm": {"const": "Ed25519"},
+    "public_key_base64": {"type": "string", "minLength": 44},
+    "public_key_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "provisioning_receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

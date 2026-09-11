@@ -36,8 +36,15 @@ binary-little-endian or ascii. See
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Optional, Sequence
+
+# Sibling helpers stay importable regardless of which directory hosts the
+# caller (same pattern as build_lidar_init.py).
+_HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:
+    sys.path.append(str(_HERE))
 
 import geometry_aware_fusion as gaf
 import numpy as np

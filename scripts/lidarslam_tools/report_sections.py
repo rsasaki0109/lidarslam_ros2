@@ -6,7 +6,7 @@ import html
 from pathlib import Path
 from typing import Any
 
-from lidarslam_tools.report_charts import (
+from lidarslam_benchmark_tools.lidarslam_tools.report_charts import (
     GLIM_COLOR,
     LIDAR_COLOR,
     diff_chart_svg,
@@ -14,8 +14,8 @@ from lidarslam_tools.report_charts import (
     plotly_3d_chart,
     xy_chart_svg,
 )
-from lidarslam_tools.report_diagnostics import render_log_alerts
-from lidarslam_tools.report_model import (
+from lidarslam_benchmark_tools.lidarslam_tools.report_diagnostics import render_log_alerts
+from lidarslam_benchmark_tools.lidarslam_tools.report_model import (
     RunRecord,
     ape_spike_ratio,
     badge,
@@ -26,8 +26,8 @@ from lidarslam_tools.report_model import (
     slugify,
     stability_markup,
 )
-from lidarslam_tools.report_page import render_page
-from lidarslam_tools.trajectory_analysis import build_aligned_series
+from lidarslam_benchmark_tools.lidarslam_tools.report_page import render_page
+from lidarslam_benchmark_tools.lidarslam_tools.trajectory_analysis import build_aligned_series
 
 
 def plot_bundle(rec: RunRecord, output_root: Path, open_default: bool) -> str:
@@ -201,7 +201,7 @@ def section(summary: dict[str, Any], output_root: Path) -> str:
     rows = "\n".join(run_row(rec, output_root) for rec in records)
     plots = "\n".join(plot_bundle(rec, output_root, open_default=(idx == 0)) for idx, rec in enumerate(records))
     return f"""
-    <section class="panel">
+    <section class="panel" id="group-{slugify(summary['group'])}">
       <div class="panel-head">
         <div>
           <p class="eyebrow">Experiment Group</p>

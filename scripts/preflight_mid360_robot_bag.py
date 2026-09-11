@@ -7,7 +7,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_tools import (
+from lidarslam_benchmark_tools.mid360_robot_tools import (
     AutowarePreflightAdapter,
     Mid360RobotPreflight,
     RobotFrames,

@@ -7,14 +7,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_public_split_bag_merge import (
+from lidarslam_benchmark_tools.mid360_robot_public_split_bag_merge import (
     PUBLIC_SPLIT_BAG_MERGE_JSON,
     PUBLIC_SPLIT_BAG_MERGE_MARKDOWN,
     SplitBagMergeOptions,
     SplitBagMerger,
     render_split_bag_merge_markdown,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 def parse_args() -> argparse.Namespace:

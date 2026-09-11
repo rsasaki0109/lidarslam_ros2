@@ -11,13 +11,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_loop_alignment_analyzer import (
+from lidarslam_benchmark_tools.mid360_robot_loop_alignment_analyzer import (
     LoopAlignmentThresholds,
     find_loop_candidates,
     find_nearest_revisit,
     parse_tum_trajectory_lines,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_LOOP_CANDIDATES_JSON = 'mid360_robot_public_loop_candidates.json'
@@ -330,3 +330,7 @@ def _fmt(value: Any) -> str:
         return f'{float(value):.3f}'
     except Exception:
         return ''
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_loop_candidates is a library module; import it instead of running it directly.")

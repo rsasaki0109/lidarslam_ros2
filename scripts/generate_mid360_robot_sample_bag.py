@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from mid360_robot_sample_bag import (
+from lidarslam_benchmark_tools.mid360_robot_sample_bag import (
     Mid360SampleBagWriter,
     SampleBagConfig,
     render_summary,

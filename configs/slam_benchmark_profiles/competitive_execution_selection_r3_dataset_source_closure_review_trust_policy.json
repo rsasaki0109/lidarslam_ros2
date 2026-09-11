@@ -1,0 +1,41 @@
+{
+  "schema": "competitive_execution_selection_r3_dataset_source_closure_review_trust_policy_v1",
+  "schema_version": 1,
+  "status": "NOT_READY",
+  "benchmark_eligible": false,
+  "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
+  "closure_kind": "dataset_source_closure",
+  "candidate_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
+    "file_sha256": "08548ed7f4afafc7575657477601bdc063415e248a3c345ca9e9576c522849c7",
+    "candidate_identity_sha256": "b79d6fb6b6eba73d0db1dbe094a283b33ec2fe78a5d0e27933e892401df1c584",
+    "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
+    "status": "NOT_READY"
+  },
+  "profile_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
+    "file_sha256": "ba426b7b7fbe543c56fc813a144c0079633b447591ba8b565a910e1745d137bd",
+    "canonical_sha256": "b9a454ae9fbb3ffc01348b76aa5086f6c3f8965c7d86721dd6cc3c9396431d31",
+    "canonical_hash_kind": "canonical_profile_sha256_v1"
+  },
+  "response_schema_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_r3_dataset_source_closure_review_response_v1.schema.json",
+    "file_sha256": "66a025b9d503c93427cd72f05d282dfc8c61d71f5e638b27a5775e3d32311826",
+    "schema": "competitive_execution_selection_r3_dataset_source_closure_review_response_v1"
+  },
+  "verifier": {
+    "path": "scripts/validate_competitive_execution_r3_unsigned_closure_review.py",
+    "file_sha256": "367fb19ee0a0961c2f74d807af9b33bbbc33fa22e487d6279ac882900a85a9d5",
+    "implementation": "competitive_execution_r3_closure_review_v1",
+    "backend": {
+      "name": "python-cryptography",
+      "version": "46.0.5",
+      "implementation": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify",
+      "implementation_file": "scripts/validate_competitive_execution_r3_unsigned_closure_review.py",
+      "implementation_sha256": "367fb19ee0a0961c2f74d807af9b33bbbc33fa22e487d6279ac882900a85a9d5"
+    }
+  },
+  "authorized_keys": [],
+  "nonce_policy": {"minimum_length": 32, "maximum_length": 128, "one_shot_ledger_required": true},
+  "policy_identity_sha256": "9cb291c60b46221471e6f6686234ae756204c703f752b973d5ebaec39738534b"
+}

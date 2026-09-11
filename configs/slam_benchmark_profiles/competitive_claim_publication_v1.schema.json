@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive-claim-publication-v1",
+  "title": "Deterministic competitive claim publication specification v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "publication_kind", "repository_root", "profile",
+    "suite_receipt", "scored_evidence", "execution_receipt", "fresh_holdout_authorization",
+    "evidence_bundle", "scope",
+    "caveats", "failures", "reproduction_command"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "publication_kind": {"const": "competitive_sota_claim_publication"},
+    "repository_root": {"type": "string", "minLength": 1},
+    "profile": {"$ref": "#/definitions/documentRef"},
+    "suite_receipt": {"$ref": "#/definitions/documentRef"},
+    "scored_evidence": {"$ref": "#/definitions/documentRef"},
+    "execution_receipt": {"$ref": "#/definitions/documentRef"},
+    "fresh_holdout_authorization": {"$ref": "#/definitions/documentRef"},
+    "evidence_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "manifest_path", "manifest_sha256", "manifest_file_sha256"],
+      "properties": {
+        "root": {"type": "string", "minLength": 1},
+        "manifest_path": {"type": "string", "minLength": 1},
+        "manifest_sha256": {"$ref": "#/definitions/sha256"},
+        "manifest_file_sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "scope": {"$ref": "#/definitions/scope"},
+    "caveats": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "failures": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "reproduction_command": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "definitions": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "documentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "systems", "datasets", "revisions", "run_count", "metrics",
+        "thresholds", "confidence_interval", "scope_sha256"
+      ],
+      "properties": {
+        "systems": {
+          "type": "array", "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "datasets": {
+          "type": "array", "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "revisions": {
+          "type": "object", "minProperties": 1,
+          "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+        },
+        "run_count": {"type": "integer", "minimum": 3},
+        "metrics": {
+          "type": "array", "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "thresholds": {"type": "object", "minProperties": 1},
+        "confidence_interval": {"type": "object", "minProperties": 1},
+        "scope_sha256": {"$ref": "#/definitions/sha256"}
+      }
+    }
+  }
+}

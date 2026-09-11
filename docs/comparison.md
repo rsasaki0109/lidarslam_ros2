@@ -161,8 +161,19 @@ The result does not establish complete map-quality superiority. At 0.1 m
 common downsampling, `lidarslam_ros2` had better mean plane thickness
 (`0.06081` vs `0.07911` m), but GLIM had slightly better p95 thickness
 (`0.12169` vs `0.12504` m) and substantially greater planar coverage
-(`0.43030` vs `0.17949`). Consequently this README claims a trajectory and
+(`0.43030` vs `0.17949`). Consequently this page claims a trajectory and
 peak-memory win on this sequence, not a universal system-level victory.
+
+This is a scoped win on HILTI `exp04`: `lidarslam_ros2` wins trajectory APE
+and peak memory, while GLIM wins runtime. It is not an overall-SOTA claim.
+The table preserves the completed three-run historical comparison; normal
+development needs only one new run.
+
+In a separate `n=1` development measurement, task-local correspondence
+reduction kept the 1,258-pose frontend trajectory byte-identical while mean ICP
+time moved from 21.60 ms to 20.92 ms and frontend wall time from 47.51 s to
+46.55 s. These timing deltas are directional optimization evidence, not a
+statistical or cross-system claim.
 
 Reproducibility identifiers:
 

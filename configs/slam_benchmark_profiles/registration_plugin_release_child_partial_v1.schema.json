@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lidarslam.example.invalid/schema/registration-plugin-release-child-partial-v1.json",
+  "title": "Registration-plugin release child partial receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "benchmark_eligible",
+    "execution_started", "campaign_id", "campaign_set", "row_count",
+    "row_order", "row", "profile", "source_manifest_sha256",
+    "git_revision", "failure", "started_at_unix", "ended_at_unix",
+    "canonical_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "registration-plugin-release-child-partial-v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "FAIL_CLOSED"},
+    "benchmark_eligible": {"const": false},
+    "execution_started": {"const": true},
+    "campaign_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{7,127}$"},
+    "campaign_set": {"$ref": "#/$defs/campaign_set"},
+    "row_count": {"const": 4},
+    "row_order": {"const": [
+      ["humble", "absent"], ["humble", "present"],
+      ["jazzy", "absent"], ["jazzy", "present"]
+    ]},
+    "row": {"$ref": "#/$defs/row"},
+    "profile": {"$ref": "#/$defs/identity"},
+    "source_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "git_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "failure": {"$ref": "#/$defs/failure"},
+    "started_at_unix": {"type": "number", "minimum": 0},
+    "ended_at_unix": {"type": "number", "minimum": 0},
+    "canonical_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [{
+    "if": {"properties": {"row": {"properties": {
+      "index": {"const": 0}
+    }}}},
+    "then": {"properties": {"row": {"$ref": "#/$defs/row_humble_absent"}}}
+  }, {
+    "if": {"properties": {"row": {"properties": {
+      "index": {"const": 1}
+    }}}},
+    "then": {"properties": {"row": {"$ref": "#/$defs/row_humble_present"}}}
+  }, {
+    "if": {"properties": {"row": {"properties": {
+      "index": {"const": 2}
+    }}}},
+    "then": {"properties": {"row": {"$ref": "#/$defs/row_jazzy_absent"}}}
+  }, {
+    "if": {"properties": {"row": {"properties": {
+      "index": {"const": 3}
+    }}}},
+    "then": {"properties": {"row": {"$ref": "#/$defs/row_jazzy_present"}}}
+  }],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "campaign_set": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "campaign_id", "rows",
+        "row_set_sha256", "identity_sha256"],
+      "properties": {
+        "schema": {"const": "registration-plugin-campaign-set-v1"},
+        "schema_version": {"const": 1},
+        "campaign_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{7,127}$"},
+        "rows": {"const": [
+          {"distro": "humble", "dependency_leg": "absent"},
+          {"distro": "humble", "dependency_leg": "present"},
+          {"distro": "jazzy", "dependency_leg": "absent"},
+          {"distro": "jazzy", "dependency_leg": "present"}
+        ]},
+        "row_set_sha256": {"$ref": "#/$defs/sha256"},
+        "identity_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "row": {
+      "type": "object", "additionalProperties": false,
+      "required": ["index", "distro", "dependency_leg", "child_root",
+        "container_name"],
+      "properties": {
+        "index": {"type": "integer", "minimum": 0, "maximum": 3},
+        "distro": {"enum": ["humble", "jazzy"]},
+        "dependency_leg": {"enum": ["absent", "present"]},
+        "child_root": {"type": "string", "pattern": "^/[^\\u0000]*$"},
+        "container_name": {"type": "string", "minLength": 1}
+      }
+    },
+    "row_humble_absent": {"allOf": [
+      {"$ref": "#/$defs/row"},
+      {"properties": {"index": {"const": 0}, "distro": {"const": "humble"},
+        "dependency_leg": {"const": "absent"}}}
+    ]},
+    "row_humble_present": {"allOf": [
+      {"$ref": "#/$defs/row"},
+      {"properties": {"index": {"const": 1}, "distro": {"const": "humble"},
+        "dependency_leg": {"const": "present"}}}
+    ]},
+    "row_jazzy_absent": {"allOf": [
+      {"$ref": "#/$defs/row"},
+      {"properties": {"index": {"const": 2}, "distro": {"const": "jazzy"},
+        "dependency_leg": {"const": "absent"}}}
+    ]},
+    "row_jazzy_present": {"allOf": [
+      {"$ref": "#/$defs/row"},
+      {"properties": {"index": {"const": 3}, "distro": {"const": "jazzy"},
+        "dependency_leg": {"const": "present"}}}
+    ]},
+    "failure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "phase", "row", "message"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "phase": {"const": "leg"},
+        "row": {"type": "integer", "minimum": 0, "maximum": 3},
+        "message": {"type": "string"}
+      }
+    }
+  }
+}

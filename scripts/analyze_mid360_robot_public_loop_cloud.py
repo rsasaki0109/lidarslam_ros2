@@ -7,14 +7,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_public_loop_cloud_analyzer import (
+from lidarslam_benchmark_tools.mid360_robot_public_loop_cloud_analyzer import (
     PUBLIC_LOOP_CLOUD_ANALYSIS_JSON,
     PUBLIC_LOOP_CLOUD_ANALYSIS_MARKDOWN,
     LoopCloudAnalysisOptions,
     PublicLoopCloudAnalyzer,
     render_public_loop_cloud_markdown,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

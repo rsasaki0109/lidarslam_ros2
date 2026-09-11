@@ -1,0 +1,82 @@
+# FAST-LIVO2 M6a10 v15 additive schema-compatible feeder candidate.
+#
+# This profile records an image/source candidate only.  It is not a formal
+# replay authorization; no bag, GT, scorer, or map surface is opened here.
+name: fast_livo2_m6a10_v2c_v15_formal_ready
+schema_version: 1
+status: V15_IMAGE_CANDIDATE
+formal_replay_forbidden: true
+formal_replay_authorized: false
+formal_replay_started: false
+replay_count: 0
+input_opened: false
+ground_truth_content_opened: false
+scorer_invoked: false
+map_saved: false
+
+candidate:
+  contract_version: m6a10-v15-schema3-feeder-v1
+  status: BUILD_PENDING
+  feeder_root_cause_fixed: false
+  feeder_underlying_nonzero_cause: v14_schema2_only_status_gate
+  correction_scope: additive_schema2_schema3_dispatch
+  legacy_cli_preserved: true
+  legacy_feeder_sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
+  v15_feeder_sha256: 6921d159ca4c45bcecfaf9db7fbd6f8a3d92783d100a51ba3ca76abbaf477bb7
+
+image:
+  tag: m6a10-v2c-v15-schema3-feeder-20260823t202247z-fast-livo2-benchmark:ros1-pinned
+  id: null
+  status: BUILD_PENDING
+
+lineage:
+  v12_base_image_tag: m6a10-v2c-v12-nonlidar-boundary-transport-20260824-fast-livo2-benchmark:ros1-pinned
+  v12_base_image_id: sha256:03dfa4c3e7c3f1ea9160ba2276ea23bfbdef43d441bc8afc628f907bd50743a7
+  v12_patch_path: docker/patches/fast_livo2.m6a10-v2c-v12-nonlidar-boundary-transport.patch
+  v12_patch_sha256: 39c77535a7557365dac6b0f2c99849038b29670a57c3101be3a39138317c6333
+  v12_wrapper_path: scripts/fast_livo2_m6a10_v12_formal_container_run.sh
+  v12_wrapper_sha256: 32fce2c054b92f0d695fd4d32c7737ab75dd3a467fdee1c579c82c63398894e6
+
+input_contract:
+  path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+  bytes: 11290464091
+  sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+  expected_messages: 236687
+  expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+  required_evaluation_end_timestamp_seconds: 1623491515.148352
+  opened: false
+  mount_performed: false
+
+phase:
+  schema_version: 3
+  contract_version: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+  mode: unpaced_ack
+  maximum_end_gap_seconds: 0.25
+  required_evaluation_end_timestamp_seconds: 1623491515.148352
+  transport:
+    contract_version: m6a10-v12-callback-ack-transport-outstanding-v1
+    maximum_allowed_outstanding_messages: 1
+    mapper_internal_deque_is_diagnostic_only: true
+  formal_replay_forbidden: true
+
+source:
+  v15_feeder_path: scripts/fast_livo2_m6a10_v15_feeder.py
+  v15_wrapper_path: scripts/fast_livo2_m6a10_v15_formal_container_run.sh
+  v15_dockerfile_path: docker/fast_livo2_m6a10_v15.Dockerfile
+  v15_build_script_path: scripts/build_fast_livo2_m6a10_v15_image.sh
+  v15_fixture_path: graph_based_slam/test/fixtures/fast_livo2_m6a10_v12_consumer_status_pass.json
+  v15_feeder_sha256: 6921d159ca4c45bcecfaf9db7fbd6f8a3d92783d100a51ba3ca76abbaf477bb7
+  v15_build_status: NOT_RUN
+  v15_runtime_status: NOT_RUN
+
+safety:
+  network: none
+  rootfs: read_only
+  input_mounts: 0
+  ground_truth_mount: false
+  scorer_mount: false
+  map_mount: false
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false
+  formal_replay_forbidden: true

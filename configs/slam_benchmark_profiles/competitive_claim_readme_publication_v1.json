@@ -1,0 +1,45 @@
+{
+  "config_kind": "competitive_claim_readme_publication",
+  "config_sha256": "5bd640138b041f24d565dc6af2ceb31465a1e92af94cef748a4c3f6478863ea0",
+  "forbidden_patterns": [
+    "\\bSOTA\\b",
+    "state[- ]of[- ]the[- ]art",
+    "\\buniversal(?:ly)?\\b",
+    "\\b(?:outperform|outperforms|outperformed|beats?|better than)\\b[^.\\n]{0,120}\\b(?:all|every|any)\\b",
+    "\\b(?:best|lowest)\\b[^.\\n]{0,160}\\b(?:all datasets|every sequence|universal)\\b",
+    "\\bcomprehensive\\b[^.\\n]{0,120}\\b(?:superiority|claim|benchmark)\\b",
+    "\\b\\d+(?:\\.\\d+)?%\\s+(?:lower|higher|better)\\b[^.\\n]{0,160}\\b(?:than|over|versus)\\b",
+    "\\b(?:lowest|best)\\b[^.\\n]{0,160}\\b(?:APE|RMSE|rival|sequence|dataset)\\b",
+    "\\b(?:best rival|pinned rival)\\b[^.\\n]{0,160}\\b(?:lower|better|outperform|win)\\b"
+  ],
+  "legacy_allowlist": [
+    {
+      "legacy_id": "hilti-exp04-summary",
+      "heading": "## Open-source benchmark results",
+      "sha256": "5789ad62d8edabe491384d60bd14a5963b1b70757cc81bffc297deed00bad9cd"
+    },
+    {
+      "legacy_id": "hilti-exp04-table",
+      "heading": "## Open-source benchmark results",
+      "sha256": "d2721f7af0f8e2bda54b75fa9a53a973000fb5ef435cab09801a8124460e0830"
+    },
+    {
+      "legacy_id": "voxel-v17-research-summary",
+      "heading": "## Open-source benchmark results",
+      "sha256": "d82cdfcae5e774c1517e74c2e8b2cef8edc17cde9c589412260cad1fd7884406"
+    }
+  ],
+  "legacy_allowlist_policy": "Existing scoped comparison paragraphs are immutable allowlist entries. New entries require an explicit versioned migration and are rejected by this revision.",
+  "legacy_allowlist_revision": 1,
+  "markers": {
+    "begin": "<!-- BEGIN GENERATED COMPETITIVE CLAIM PUBLICATION -->",
+    "end": "<!-- END GENERATED COMPETITIVE CLAIM PUBLICATION -->"
+  },
+  "placeholder": "<!-- NO CLAIM: publication status NOT_READY; generated content unavailable. -->",
+  "publication_spec": null,
+  "readme_path": "README.md",
+  "repository_root": ".",
+  "schema_version": 1,
+  "sealed_root": null,
+  "status": "NOT_READY"
+}

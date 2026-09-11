@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-machine-identity-v1",
+  "title": "Non-secret r3 host machine identity artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "campaign_domain",
+    "campaign_id", "identifier_digests", "public", "identity_sha256",
+    "captured_at", "producer", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_machine_identity_v1"},
+    "schema_version": {"const": 1},
+    "status": {"enum": ["LIVE_CAPTURED", "SYNTHETIC_TEST"]},
+    "campaign_domain": {"const": "lidarslam/glim-clean-room-r3/machine-identity/sha256/v1"},
+    "campaign_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "identifier_digests": {
+      "type": "object", "additionalProperties": false,
+      "required": ["machine_id_sha256", "dmi_uuid_sha256", "board_serial_sha256"],
+      "properties": {
+        "machine_id_sha256": {"$ref": "#/$defs/sha256"},
+        "dmi_uuid_sha256": {"$ref": "#/$defs/sha256"},
+        "board_serial_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "public": {
+      "type": "object", "additionalProperties": false,
+      "required": ["architecture", "cpu_model", "logical_cpu_count",
+        "memory_total_kb", "kernel_release", "toolchain"],
+      "properties": {
+        "architecture": {"type": "string", "maxLength": 512},
+        "cpu_model": {"type": "string", "maxLength": 512},
+        "logical_cpu_count": {"type": "integer", "minimum": 1},
+        "memory_total_kb": {"type": ["integer", "null"], "minimum": 1},
+        "kernel_release": {"type": "string", "maxLength": 512},
+        "toolchain": {
+          "type": "object", "additionalProperties": false,
+          "required": ["python_version", "python_implementation", "python_compiler"],
+          "properties": {
+            "python_version": {"type": "string", "maxLength": 256},
+            "python_implementation": {"type": "string", "maxLength": 256},
+            "python_compiler": {"type": "string", "maxLength": 256}
+          }
+        }
+      }
+    },
+    "identity_sha256": {"$ref": "#/$defs/sha256"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "producer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["module", "source_sha256", "version"],
+      "properties": {
+        "module": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_machine_identity.py"},
+        "source_sha256": {"$ref": "#/$defs/sha256"},
+        "version": {"const": "1.0.0"}
+      }
+    },
+    "canonical_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_public_rko_sweep import (
+from lidarslam_benchmark_tools.mid360_robot_public_rko_sweep import (
     RkoSweepBuilder,
     RkoSweepOptions,
     RkoSweepRunOptions,
@@ -15,7 +15,7 @@ from mid360_robot_public_rko_sweep import (
     parse_rko_sweep_case,
     render_rko_sweep_markdown,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

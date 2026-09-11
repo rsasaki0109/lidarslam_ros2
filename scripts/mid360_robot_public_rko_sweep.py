@@ -18,7 +18,7 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 RKO_SWEEP_JSON = 'mid360_robot_public_rko_sweep.json'
@@ -718,7 +718,7 @@ def _verify_autoware_map_output(output_dir: Path) -> dict[str, Any]:
             'counts': None,
         }
     try:
-        from verify_autoware_map import MapVerifier
+        from lidarslam_benchmark_tools.verify_autoware_map import MapVerifier
 
         stream = io.StringIO()
         verifier = MapVerifier(str(pointcloud_map_dir), check_bounds=False, verbose=False)
@@ -966,3 +966,7 @@ def _fmt_value(value: Any) -> str:
     if value is None:
         return ''
     return str(value)
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_rko_sweep is a library module; import it instead of running it directly.")

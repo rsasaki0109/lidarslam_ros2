@@ -1,0 +1,42 @@
+{
+  "authorized_keys": [],
+  "backend": {
+    "implementation": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify",
+    "implementation_file": "scripts/validate_competitive_rival_source_closure_r3_custodian_response.py",
+    "implementation_sha256": "66772f039313ab823d4bc239aa6283b9c774e753409fb66d6028fc03dac8c3a5",
+    "name": "python-cryptography",
+    "version": "46.0.5"
+  },
+  "benchmark_eligible": false,
+  "candidate_binding": {
+    "candidate_id": "competitive-rival-source-closure-2026-08-r3-candidate",
+    "canonical_sha256": "4bf591c4a20f840c3f8d7dfadfc97d20a047bca054ced0ce18268e4ebeb7aafb",
+    "file_sha256": "e65f00c83e78b70453446525aa36306d9c2e4521597d7c358bff442636874dda",
+    "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-candidate.json"
+  },
+  "nonce_policy": {
+    "maximum_length": 128,
+    "minimum_length": 32,
+    "one_shot_ledger_required": true
+  },
+  "policy_identity_sha256": "4677dd6762f0d28c1c698a5cb78f6930d9c69ba9c21247f821ae5b12d45ca6e3",
+  "response_schema_binding": {
+    "file_sha256": "8d88ae0c96b757fc38dbd44488055c5a0b9d42dc47ad125c61892a8ed52c76d4",
+    "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_r3_custodian_response_v1.schema.json",
+    "schema": "competitive_rival_source_closure_r3_custodian_response_v1"
+  },
+  "schema": "competitive_rival_source_closure_r3_custodian_trust_policy_v1",
+  "schema_version": 1,
+  "selection_binding": {
+    "canonical_sha256": "39a1dbb62ddc6b5102e1a58397b58f4ecb11f6eed92b272b846233a22e081917",
+    "file_sha256": "c6c138c60094e8681c1854e6ed46cab0a0b13a8104429ceb2b1a5e9a091cdc75",
+    "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-selection-candidate.json",
+    "selection_id": "competitive-rival-source-closure-selection-2026-08-r3-candidate"
+  },
+  "status": "NOT_READY",
+  "verifier": {
+    "file_sha256": "66772f039313ab823d4bc239aa6283b9c774e753409fb66d6028fc03dac8c3a5",
+    "implementation": "rival_source_closure_custodian_response_v1",
+    "path": "scripts/validate_competitive_rival_source_closure_r3_custodian_response.py"
+  }
+}

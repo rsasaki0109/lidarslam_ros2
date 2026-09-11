@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive_execution_selection_r3_acceptance_manifest_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "benchmark_eligible",
+    "claim_eligible", "active_profile_switch", "campaign_id",
+    "candidate_binding", "profile_binding", "required_closures", "closures",
+    "manifest_identity_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "competitive_execution_selection_r3_acceptance_manifest_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "NOT_READY"},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "active_profile_switch": {"const": false},
+    "campaign_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"},
+    "candidate_binding": {"$ref": "#/$defs/candidate"},
+    "profile_binding": {"$ref": "#/$defs/profile"},
+    "required_closures": {"const": [
+      "selection_handoff", "rival_source_closure", "dataset_source_closure",
+      "fresh_holdout_authorization", "machine_identity",
+      "image_toolchain_review", "source_worktree_review"
+    ]},
+    "closures": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "selection_handoff", "rival_source_closure", "dataset_source_closure",
+        "fresh_holdout_authorization", "machine_identity",
+        "image_toolchain_review", "source_worktree_review"
+      ],
+      "properties": {
+        "selection_handoff": {"$ref": "#/$defs/pending"},
+        "rival_source_closure": {"$ref": "#/$defs/pending"},
+        "dataset_source_closure": {"$ref": "#/$defs/pending"},
+        "fresh_holdout_authorization": {"$ref": "#/$defs/pending"},
+        "machine_identity": {"$ref": "#/$defs/pending"},
+        "image_toolchain_review": {"$ref": "#/$defs/pending"},
+        "source_worktree_review": {"$ref": "#/$defs/pending"}
+      }
+    },
+    "manifest_identity_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "candidate_identity_sha256", "candidate_id", "status"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_identity_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"},
+        "status": {"const": "NOT_READY"}
+      }
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "canonical_hash_kind"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_hash_kind": {"const": "canonical_profile_sha256_v1"}
+      }
+    },
+    "pending": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "path", "sha256"],
+      "properties": {
+        "status": {"const": "PENDING"},
+        "path": {"type": "null"},
+        "sha256": {"type": "null"}
+      }
+    }
+  }
+}

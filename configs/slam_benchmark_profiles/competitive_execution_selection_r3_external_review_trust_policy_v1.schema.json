@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive_execution_selection_r3_external_review_trust_policy_v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "benchmark_eligible", "candidate_binding", "selection_binding", "capture_producer", "response_schema_binding", "verifier", "authorized_keys", "nonce_policy", "policy_identity_sha256"],
+  "properties": {
+    "schema": {"const": "competitive_execution_selection_r3_external_review_trust_policy_v1"}, "schema_version": {"const": 1}, "status": {"enum": ["NOT_READY", "READY"]}, "benchmark_eligible": {"const": false},
+    "candidate_binding": {"$ref": "competitive_execution_selection_r3_external_review_response_v1.schema.json#/definitions/candidate"}, "selection_binding": {"$ref": "competitive_execution_selection_r3_external_review_response_v1.schema.json#/definitions/selection"}, "capture_producer": {"$ref": "competitive_execution_selection_r3_external_review_response_v1.schema.json#/definitions/producer"},
+    "response_schema_binding": {"type": "object", "additionalProperties": false, "required": ["path", "file_sha256", "schema"], "properties": {"path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_r3_external_review_response_v1.schema.json"}, "file_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "schema": {"const": "competitive_execution_selection_r3_external_review_response_v1"}}},
+    "verifier": {"type": "object"}, "authorized_keys": {"type": "array", "items": {"$ref": "#/definitions/key"}}, "nonce_policy": {"type": "object", "additionalProperties": false, "required": ["minimum_length", "maximum_length", "one_shot_ledger_required"], "properties": {"minimum_length": {"const": 32}, "maximum_length": {"const": 128}, "one_shot_ledger_required": {"const": true}}}, "policy_identity_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "definitions": {"key": {"type": "object", "additionalProperties": false, "required": ["key_id", "algorithm", "status", "public_key_base64", "public_key_sha256", "not_before", "not_after"], "properties": {"key_id": {"type": "string"}, "algorithm": {"const": "Ed25519"}, "status": {"const": "ACTIVE"}, "public_key_base64": {"type": "string"}, "public_key_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "not_before": {"type": "integer", "minimum": 0}, "not_after": {"type": "integer", "minimum": 1}}}}
+}

@@ -311,6 +311,15 @@ def validate_summary(value: dict[str, Any]) -> tuple[bool, str]:
     if isinstance(scheduler_nice, bool) or not isinstance(scheduler_nice, int) or \
             scheduler_nice < 0 or scheduler_nice > 19:
         return False, 'scheduler_nice_invalid'
+    effective_nice = value.get('scheduler_nice_effective')
+    inherited_nice = value.get('scheduler_nice_inherited')
+    if effective_nice is not None:
+        if isinstance(effective_nice, bool) or not isinstance(effective_nice, int) or \
+                effective_nice < scheduler_nice or effective_nice > 19:
+            return False, 'scheduler_nice_effective_invalid'
+    if inherited_nice is not None and (
+            isinstance(inherited_nice, bool) or not isinstance(inherited_nice, int)):
+        return False, 'scheduler_nice_inherited_invalid'
     if value.get('status') != 'pass' or value.get('atomic') is not True:
         return False, str(value.get('status_reason') or 'summary_not_pass')
     thresholds = value.get('thresholds')
@@ -380,13 +389,19 @@ def _run(args: argparse.Namespace) -> int:
         # The sampler is deliberately background priority.  It still wakes at
         # the contractual 250 ms cadence and reads every process, but it does
         # not steal a timeslice from an 8-worker workload on a fully occupied
-        # cpuset.  Positive nice is unprivileged; failure is fail-closed.
-        actual_nice = os.nice(args.scheduler_nice)
+        # cpuset.  Positive nice is unprivileged; an already lower-priority
+        # parent cannot be promoted back to the target without privilege, so
+        # retain that effective priority and record both values.  The profile
+        # target remains the value used for eligibility checks.
+        inherited_nice = os.getpriority(os.PRIO_PROCESS, 0)
+        if inherited_nice < args.scheduler_nice:
+            os.nice(args.scheduler_nice - inherited_nice)
+        actual_nice = os.getpriority(os.PRIO_PROCESS, 0)
     except OSError as error:
         raise SamplerError(f'unable to set sampler scheduler priority: {error}')
-    if actual_nice != args.scheduler_nice:
+    if actual_nice < args.scheduler_nice:
         raise SamplerError(
-            f'sampler scheduler priority mismatch: {actual_nice} != '
+            f'sampler scheduler priority below target: {actual_nice} < '
             f'{args.scheduler_nice}')
     stop = False
 
@@ -425,9 +440,11 @@ def _run(args: argparse.Namespace) -> int:
         max_errors=args.max_errors, max_race_skips=args.max_race_skips,
         max_jitter_percent=args.max_jitter_percent,
         missed_intervals=missed, stopped_by_signal=True,
-        scheduler_nice=actual_nice)
+        scheduler_nice=args.scheduler_nice)
     report['no_rss_skips'] = no_rss_skips
     report['pid_reuse_skips'] = pid_reuse_skips
+    report['scheduler_nice_inherited'] = inherited_nice
+    report['scheduler_nice_effective'] = actual_nice
     write_atomic(args.output, report)
     return 0 if report['status'] == 'pass' else 2
 

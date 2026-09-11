@@ -1,0 +1,637 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0652aab6..bcb8d138 100755
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -83,6 +83,7 @@ find_package(catkin REQUIRED COMPONENTS
+   roscpp
+   rospy
+   std_msgs
++  std_srvs
+   pcl_ros
+   tf
+   message_generation
+@@ -103,7 +104,7 @@ set(Sophus_LIBRARIES libSophus.so)
+ 
+ # Define the catkin package
+ catkin_package(
+-  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp rospy std_msgs message_runtime cv_bridge vikit_common vikit_ros image_transport
++  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp rospy std_msgs std_srvs message_runtime cv_bridge vikit_common vikit_ros image_transport
+   DEPENDS EIGEN3 PCL OpenCV Sophus
+ )
+ 
+diff --git a/include/LIVMapper.h b/include/LIVMapper.h
+index 46664d2b..a3ac4cc3 100644
+--- a/include/LIVMapper.h
++++ b/include/LIVMapper.h
+@@ -14,6 +14,7 @@ which is included as part of this source code package.
+ #define LIV_MAPPER_H
+ 
+ #include "IMU_Processing.h"
++#include "m6a10_consumer_evidence.h"
+ #include "vio.h"
+ #include "preprocess.h"
+ #include <cv_bridge/cv_bridge.h>
+@@ -30,6 +31,10 @@ public:
+   void initializeComponents();
+   void initializeFiles();
+   void run();
++  bool m6a10_eof_service(std_srvs::Trigger::Request &request,
++                         std_srvs::Trigger::Response &response);
++  bool m6a10_finalize_service(std_srvs::Trigger::Request &request,
++                              std_srvs::Trigger::Response &response);
++  bool m6a10_status_service(std_srvs::Trigger::Request &request,
++                            std_srvs::Trigger::Response &response);
++  bool m6a10_ack_service(std_srvs::Trigger::Request &request,
++                         std_srvs::Trigger::Response &response);
+   void gravityAlignment();
+   void handleFirstFrame();
+   void stateEstimationAndMapping();
+@@ -159,11 +164,14 @@ public:
+   VoxelMapManagerPtr voxelmap_manager;
+   VIOManagerPtr vio_manager;
+ 
++  M6A10ConsumerEvidence m6a10_consumer_evidence;
+   ros::Publisher plane_pub;
+   ros::Publisher voxel_pub;
+   ros::Subscriber sub_pcl;
+   ros::Subscriber sub_imu;
+   ros::Subscriber sub_img;
++  ros::ServiceServer m6a10_eof_server;
++  ros::ServiceServer m6a10_finalize_server;
++  ros::ServiceServer m6a10_status_server;
++  ros::ServiceServer m6a10_ack_server;
+   ros::Publisher pubLaserCloudFullRes;
+   ros::Publisher pubNormal;
+   ros::Publisher pubSubVisualMap;
+diff --git a/include/m6a10_consumer_evidence.h b/include/m6a10_consumer_evidence.h
+new file mode 100644
+index 00000000..7a6b51a3
+--- /dev/null
++++ b/include/m6a10_consumer_evidence.h
+@@ -0,0 +1,355 @@
++/*
++ * Benchmark-only consumer evidence for FAST-LIVO2.
++ *
++ * The normal FAST-LIVO2 execution path is unchanged when
++ * M6A10_PHASE_CONTRACT_VERSION is absent.  In the opt-in phase path this
++ * helper records subscriber callback acceptance and exposes explicit EOF and
++ * drain barriers.  It never treats publisher counts or log text as evidence.
++ */
++#ifndef M6A10_CONSUMER_EVIDENCE_H
++#define M6A10_CONSUMER_EVIDENCE_H
++
++#include <ros/ros.h>
++#include <std_srvs/Trigger.h>
++
++#include <cerrno>
++#include <algorithm>
++#include <cmath>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++#include <fstream>
++#include <iomanip>
++#include <limits>
++#include <mutex>
++#include <sstream>
++#include <string>
++#include <utility>
++#include <cstdint>
++
++class M6A10ConsumerEvidence
++{
++public:
++  enum class Topic
++  {
++    Lidar,
++    Imu,
++    Image
++  };
++
++  class CallbackScope
++  {
++  public:
++    CallbackScope(M6A10ConsumerEvidence *owner, Topic topic, double started)
++      : owner_(owner), topic_(topic), started_(started)
++    {
++    }
++
++    CallbackScope(const CallbackScope &) = delete;
++    CallbackScope &operator=(const CallbackScope &) = delete;
++
++    CallbackScope(CallbackScope &&other) noexcept
++      : owner_(other.owner_), topic_(other.topic_), started_(other.started_),
++        accepted_(other.accepted_), timestamp_(other.timestamp_)
++    {
++      other.owner_ = nullptr;
++    }
++
++    ~CallbackScope()
++    {
++      if (owner_ != nullptr) owner_->finish(topic_, started_, accepted_, timestamp_);
++    }
++
++    void accept(double timestamp)
++    {
++      accepted_ = true;
++      timestamp_ = timestamp;
++    }
++
++  private:
++    M6A10ConsumerEvidence *owner_;
++    Topic topic_;
++    double started_;
++    bool accepted_ = false;
++    double timestamp_ = 0.0;
++  };
++
++  M6A10ConsumerEvidence()
++  {
++    const char *contract = std::getenv("M6A10_PHASE_CONTRACT_VERSION");
++    enabled_ = contract != nullptr &&
++               std::string(contract) == "m6a10-online-compute-v2";
++    if (!enabled_) return;
++    phase_mode_ = env_string("M6A10_PHASE_MODE");
++    evidence_path_ = env_string("M6A10_CONSUMER_EVIDENCE");
++    eof_path_ = evidence_path_.empty() ? std::string() : evidence_path_ + ".eof.json";
++    expected_total_ = env_integer("M6A10_FAST_EXPECTED_MESSAGES");
++    expected_lidar_ = env_integer("M6A10_FAST_EXPECTED_LIDAR_MESSAGES");
++    expected_imu_ = env_integer("M6A10_FAST_EXPECTED_IMU_MESSAGES");
++    expected_image_ = env_integer("M6A10_FAST_EXPECTED_IMAGE_MESSAGES");
++    required_end_timestamp_ = env_double("M6A10_FAST_REQUIRED_END_TIMESTAMP_SECONDS");
++    maximum_callback_latency_seconds_ = env_double(
++      "M6A10_FAST_MAX_CALLBACK_LATENCY_SECONDS", 0.25);
++    maximum_backlog_messages_ = env_integer(
++      "M6A10_FAST_MAX_BACKLOG_MESSAGES", 100000);
++    // These are observations, never receipt-controlled claims.  The runner
++    // can only make them true by publishing one message, waiting for the
++    // callback counter, and then calling the ACK service for every message.
++    queue_overflow_observable_ = false;
++    ack_backpressure_verified_ = false;
++    paced_rate_verified_ = env_string("M6A10_FAST_PACED_RATE_VERIFIED") == "1";
++  }
++
++  bool enabled() const { return enabled_; }
++
++  CallbackScope begin(Topic topic)
++  {
++    return CallbackScope(this, topic, ros::WallTime::now().toSec());
++  }
++
++  void observe_queue(std::size_t lidar, std::size_t imu, std::size_t image)
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    const long long total = static_cast<long long>(lidar + imu + image);
++    if (total > maximum_observed_backlog_) maximum_observed_backlog_ = total;
++  }
++
++  bool eof_service(std_srvs::Trigger::Request &, std_srvs::Trigger::Response &response,
++                  std::size_t lidar, std::size_t imu, std::size_t image)
++  {
++    if (!enabled_)
++    {
++      response.success = false;
++      response.message = "M6a10 phase is disabled";
++      return true;
++    }
++    std::lock_guard<std::mutex> guard(mutex_);
++    observe_queue_locked(lidar, imu, image);
++    eof_observed_ = true;
++    response.success = write_eof_locked(lidar, imu, image);
++    response.message = response.success ? "EOF evidence written" : "EOF evidence write failed";
++    return true;
++  }
++
++  bool status_service(std_srvs::Trigger::Request &, std_srvs::Trigger::Response &response,
++                      std::size_t lidar, std::size_t imu, std::size_t image)
++  {
++    if (!enabled_)
++    {
++      response.success = false;
++      response.message = "M6a10 phase is disabled";
++      return true;
++    }
++    std::lock_guard<std::mutex> guard(mutex_);
++    observe_queue_locked(lidar, imu, image);
++    response.success = true;
++    response.message = common_json_locked(false, lidar, imu, image, eof_observed_, false);
++    return true;
++  }
++
++  bool ack_service(std_srvs::Trigger::Request &, std_srvs::Trigger::Response &response)
++  {
++    if (!enabled_)
++    {
++      response.success = false;
++      response.message = "M6a10 phase is disabled";
++      return true;
++    }
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (feeder_acknowledged_ >= received_total_)
++    {
++      response.success = false;
++      response.message = "ACK arrived without a newly accepted callback";
++      return true;
++    }
++    ++feeder_acknowledged_;
++    response.success = true;
++    response.message = "consumer callback ACK recorded";
++    return true;
++  }
++
++  bool finalize_service(std_srvs::Trigger::Request &, std_srvs::Trigger::Response &response,
++                        std::size_t lidar, std::size_t imu, std::size_t image)
++  {
++    if (!enabled_)
++    {
++      response.success = false;
++      response.message = "M6a10 phase is disabled";
++      return true;
++    }
++    std::lock_guard<std::mutex> guard(mutex_);
++    observe_queue_locked(lidar, imu, image);
++    const bool counts_ok = expected_total_ >= 0 && expected_lidar_ >= 0 &&
++      expected_imu_ >= 0 && expected_image_ >= 0 &&
++      received_total_ == expected_total_ && received_lidar_ == expected_lidar_ &&
++      received_imu_ == expected_imu_ && received_image_ == expected_image_;
++    const bool ack_ok = feeder_acknowledged_ == expected_total_ &&
++      feeder_acknowledged_ == received_total_;
++    // A one-message publisher queue plus an ACK for every callback makes a
++    // subscriber drop observable through an exact-count/ACK mismatch.  The
++    // capability is therefore recorded only after this run-level observation.
++    queue_overflow_observable_ = ack_ok;
++    ack_backpressure_verified_ = ack_ok;
++    const bool phase_ok = phase_mode_ == "paced_1x" ? paced_rate_verified_ : ack_ok;
++    const bool pass = eof_observed_ && counts_ok && lidar + imu + image == 0 &&
++      dropped_messages_ == 0 && queue_overflow_ == 0 && processing_failures_ == 0 &&
++      queue_overflow_observable_ && phase_ok &&
++      maximum_observed_backlog_ <= maximum_backlog_messages_ &&
++      maximum_callback_latency_seconds_observed_ <= maximum_callback_latency_seconds_;
++    response.success = write_final_locked(pass, lidar, imu, image);
++    if (!response.success)
++    {
++      response.message = "final evidence write failed";
++    }
++    else if (!pass)
++    {
++      response.message = "consumer evidence is invalid; no completion claim";
++    }
++    else
++    {
++      response.message = "consumer evidence PASS";
++    }
++    return true;
++  }
++
++private:
++  static std::string env_string(const char *name)
++  {
++    const char *value = std::getenv(name);
++    return value == nullptr ? std::string() : std::string(value);
++  }
++
++  static long long env_integer(const char *name, long long fallback = -1)
++  {
++    const std::string value = env_string(name);
++    if (value.empty()) return fallback;
++    char *end = nullptr;
++    const long long parsed = std::strtoll(value.c_str(), &end, 10);
++    return end != value.c_str() && *end == '\0' ? parsed : fallback;
++  }
++
++  static double env_double(const char *name, double fallback = -1.0)
++  {
++    const std::string value = env_string(name);
++    if (value.empty()) return fallback;
++    char *end = nullptr;
++    const double parsed = std::strtod(value.c_str(), &end);
++    return end != value.c_str() && *end == '\0' ? parsed : fallback;
++  }
++
++  static std::string json_string(const std::string &value)
++  {
++    std::ostringstream output;
++    output << '"';
++    for (const char character : value)
++    {
++      if (character == '\\' || character == '"') output << '\\';
++      if (character == '\n') output << "\\n";
++      else if (character == '\r') output << "\\r";
++      else if (character == '\t') output << "\\t";
++      else output << character;
++    }
++    output << '"';
++    return output.str();
++  }
++
++  static std::string number_or_null(long long value)
++  {
++    return value < 0 ? "null" : std::to_string(value);
++  }
++
++  static std::string double_or_null(double value)
++  {
++    if (!std::isfinite(value)) return "null";
++    std::ostringstream output;
++    output << std::setprecision(17) << value;
++    return output.str();
++  }
++
++  void observe_queue_locked(std::size_t lidar, std::size_t imu, std::size_t image)
++  {
++    const long long total = static_cast<long long>(lidar + imu + image);
++    if (total > maximum_observed_backlog_) maximum_observed_backlog_ = total;
++  }
++
++  void finish(Topic topic, double started, bool accepted, double timestamp)
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    const double latency = std::max(0.0, ros::WallTime::now().toSec() - started);
++    if (latency > maximum_callback_latency_seconds_observed_)
++      maximum_callback_latency_seconds_observed_ = latency;
++    if (!accepted)
++    {
++      ++dropped_messages_;
++      return;
++    }
++    ++received_total_;
++    if (topic == Topic::Lidar) ++received_lidar_;
++    if (topic == Topic::Imu) ++received_imu_;
++    if (topic == Topic::Image) ++received_image_;
++    if (first_timestamp_ < 0.0) first_timestamp_ = timestamp;
++    last_timestamp_ = timestamp;
++  }
++
++  bool write_atomic_locked(const std::string &path, const std::string &contents)
++  {
++    if (path.empty() || std::ifstream(path).good()) return false;
++    const std::string part = path + ".part";
++    if (std::ifstream(part).good()) return false;
++    std::ofstream output(part, std::ios::out | std::ios::trunc);
++    if (!output) return false;
++    output << contents;
++    output.flush();
++    if (!output.good()) return false;
++    output.close();
++    if (std::rename(part.c_str(), path.c_str()) != 0) return false;
++    return true;
++  }
++
++  std::string common_json_locked(bool pass, std::size_t lidar, std::size_t imu,
++                                 std::size_t image, bool eof, bool drain) const
++  {
++    const long long backlog = static_cast<long long>(lidar + imu + image);
++    std::ostringstream out;
++    out << "{\n"
++        << "  \"schema_version\": 2,\n"
++        << "  \"contract_version\": \"m6a10-online-compute-v2\",\n"
++        << "  \"phase_mode\": " << json_string(phase_mode_) << ",\n"
++        << "  \"system\": \"fast_livo2\",\n"
++        << "  \"status\": " << json_string(pass ? "pass" : "invalid") << ",\n"
++        << "  \"consumer\": {\n"
++        << "    \"ack_source_kind\": \"consumer_callback\",\n"
++        << "    \"ack_source\": \"LIVMapper subscriber callback return\",\n"
++        << "    \"ack_semantics\": \"callback_acceptance_not_backend_completion\",\n"
++        << "    \"publisher_count_used\": false,\n"
++        << "    \"eof_observed\": " << (eof ? "true" : "false") << ",\n"
++        << "    \"eof_source\": \"/m6a10/consumer_eof service\",\n"
++        << "    \"expected_messages\": " << number_or_null(expected_total_) << ",\n"
++        << "    \"expected_topic_counts\": {\"lidar\": " << number_or_null(expected_lidar_)
++        << ", \"imu\": " << number_or_null(expected_imu_) << ", \"image\": "
++        << number_or_null(expected_image_) << "},\n"
++        << "    \"received_messages\": " << received_total_ << ",\n"
++        << "    \"processed_messages\": " << received_total_ << ",\n"
++        << "    \"acked_messages\": " << feeder_acknowledged_ << ",\n"
++        << "    \"received_topic_counts\": {\"lidar\": " << received_lidar_
++        << ", \"imu\": " << received_imu_ << ", \"image\": " << received_image_ << "},\n"
++        << "    \"dropped_messages\": " << dropped_messages_ << ",\n"
++        << "    \"queue_overflow\": " << queue_overflow_ << ",\n"
++        << "    \"queue_overflow_observable\": " << (queue_overflow_observable_ ? "true" : "false") << ",\n"
++        << "    \"processing_failures\": " << processing_failures_ << ",\n"
++        << "    \"backlog_at_drain\": " << backlog << ",\n"
++        << "    \"maximum_backlog_messages\": " << maximum_observed_backlog_ << ",\n"
++        << "    \"maximum_allowed_backlog_messages\": " << number_or_null(maximum_backlog_messages_) << ",\n"
++        << "    \"maximum_callback_latency_seconds\": " << double_or_null(maximum_callback_latency_seconds_observed_) << ",\n"
++        << "    \"maximum_allowed_callback_latency_seconds\": " << double_or_null(maximum_callback_latency_seconds_) << ",\n"
++        << "    \"first_processed_timestamp_seconds\": " << double_or_null(first_timestamp_) << ",\n"
++        << "    \"last_processed_timestamp_seconds\": " << double_or_null(last_timestamp_) << ",\n"
++        << "    \"required_end_timestamp_seconds\": " << double_or_null(required_end_timestamp_) << ",\n"
++        << "    \"paced_input_rate\": 1.0,\n"
++        << "    \"paced_input_rate_verified\": " << (paced_rate_verified_ ? "true" : "false") << ",\n"
++        << "    \"ack_backpressure_verified\": " << (ack_backpressure_verified_ ? "true" : "false") << ",\n"
++        << "    \"acknowledgement_contract\": \"one_publish_waits_for_callback_then_one_ack_service_call\",\n"
++        << "    \"queue_capacity_messages\": 1,\n"
++        << "    \"queue_drop_detection\": \"exact_counts_plus_single_inflight_ack\",\n"
++        << "    \"single_message_buffer_verified\": false,\n"
++        << "    \"counter_evidence_path\": " << json_string(evidence_path_) << ",\n"
++        << "    \"drain_complete\": " << (drain ? "true" : "false") << "\n"
++        << "  },\n"
++        << "  \"benchmark_only\": true,\n"
++        << "  \"ground_truth_content_opened\": false,\n"
++        << "  \"scorer_invoked\": false\n"
++        << "}\n";
++    return out.str();
++  }
++
++  bool write_eof_locked(std::size_t lidar, std::size_t imu, std::size_t image)
++  {
++    return write_atomic_locked(eof_path_, common_json_locked(false, lidar, imu, image, true, false));
++  }
++
++  bool write_final_locked(bool pass, std::size_t lidar, std::size_t imu, std::size_t image)
++  {
++    return write_atomic_locked(evidence_path_, common_json_locked(pass, lidar, imu, image, eof_observed_, pass));
++  }
++
++  bool enabled_ = false;
++  bool eof_observed_ = false;
++  bool queue_overflow_observable_ = false;
++  bool ack_backpressure_verified_ = false;
++  bool paced_rate_verified_ = false;
++  std::string phase_mode_;
++  std::string evidence_path_;
++  std::string eof_path_;
++  long long expected_total_ = -1;
++  long long expected_lidar_ = -1;
++  long long expected_imu_ = -1;
++  long long expected_image_ = -1;
++  double required_end_timestamp_ = -1.0;
++  double maximum_callback_latency_seconds_ = 0.25;
++  long long maximum_backlog_messages_ = 100000;
++  long long received_total_ = 0;
++  long long feeder_acknowledged_ = 0;
++  long long received_lidar_ = 0;
++  long long received_imu_ = 0;
++  long long received_image_ = 0;
++  long long dropped_messages_ = 0;
++  long long queue_overflow_ = 0;
++  long long processing_failures_ = 0;
++  long long maximum_observed_backlog_ = 0;
++  double maximum_callback_latency_seconds_observed_ = 0.0;
++  double first_timestamp_ = -1.0;
++  double last_timestamp_ = -1.0;
++  mutable std::mutex mutex_;
++};
++
++#endif
+diff --git a/package.xml b/package.xml
+index c2eedfac..24458b2f 100755
+--- a/package.xml
++++ b/package.xml
+@@ -22,6 +22,7 @@
+   <build_depend>roscpp</build_depend>
+   <build_depend>rospy</build_depend>
+   <build_depend>std_msgs</build_depend>
++  <build_depend>std_srvs</build_depend>
+   <build_depend>sensor_msgs</build_depend>
+   <build_depend>tf</build_depend>
+   <build_depend>pcl_ros</build_depend>
+@@ -36,6 +37,7 @@
+   <run_depend>roscpp</run_depend>
+   <run_depend>rospy</run_depend>
+   <run_depend>std_msgs</run_depend>
++  <run_depend>std_srvs</run_depend>
+   <run_depend>tf</run_depend>
+   <run_depend>pcl_ros</run_depend>
+   <run_depend>message_runtime</run_depend>
+diff --git a/src/LIVMapper.cpp b/src/LIVMapper.cpp
+index 15af3540..05b6c589 100755
+--- a/src/LIVMapper.cpp
++++ b/src/LIVMapper.cpp
+@@ -194,5 +194,15 @@ void LIVMapper::initializeSubscribersAndPublishers(ros::NodeHandle &nh, image_tr
+-  sub_pcl = p_pre->lidar_type == AVIA ? 
+-            nh.subscribe(lid_topic, 200000, &LIVMapper::livox_pcl_cbk, this): 
+-            nh.subscribe(lid_topic, 200000, &LIVMapper::standard_pcl_cbk, this);
+-  sub_imu = nh.subscribe(imu_topic, 200000, &LIVMapper::imu_cbk, this);
+-  sub_img = nh.subscribe(img_topic, 200000, &LIVMapper::img_cbk, this);
++  const uint32_t m6a10_queue_size = m6a10_consumer_evidence.enabled() ? 1U : 200000U;
++  sub_pcl = p_pre->lidar_type == AVIA ?
++            nh.subscribe(lid_topic, m6a10_queue_size, &LIVMapper::livox_pcl_cbk, this):
++            nh.subscribe(lid_topic, m6a10_queue_size, &LIVMapper::standard_pcl_cbk, this);
++  sub_imu = nh.subscribe(imu_topic, m6a10_queue_size, &LIVMapper::imu_cbk, this);
++  sub_img = nh.subscribe(img_topic, m6a10_queue_size, &LIVMapper::img_cbk, this);
++  if (m6a10_consumer_evidence.enabled())
++  {
++    m6a10_eof_server = nh.advertiseService(
++      "/m6a10/consumer_eof", &LIVMapper::m6a10_eof_service, this);
++    m6a10_finalize_server = nh.advertiseService(
++      "/m6a10/consumer_finalize", &LIVMapper::m6a10_finalize_service, this);
++    m6a10_status_server = nh.advertiseService(
++      "/m6a10/consumer_status", &LIVMapper::m6a10_status_service, this);
++    m6a10_ack_server = nh.advertiseService(
++      "/m6a10/consumer_ack", &LIVMapper::m6a10_ack_service, this);
++  }
+   
+   pubLaserCloudFullRes = nh.advertise<sensor_msgs::PointCloud2>("/cloud_registered", 100);
+   pubNormal = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker", 100);
+@@ -549,10 +559,38 @@ void LIVMapper::run()
+     // if (!p_imu->imu_time_init) continue;
+ 
+     stateEstimationAndMapping();
++    {
++      std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++      m6a10_consumer_evidence.observe_queue(
++        lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
++    }
+   }
+-  savePCD();
++  if (!m6a10_consumer_evidence.enabled()) savePCD();
+ }
+ 
++bool LIVMapper::m6a10_eof_service(
++  std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response)
++{
++  std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++  return m6a10_consumer_evidence.eof_service(
++    request, response, lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
++}
++
++bool LIVMapper::m6a10_finalize_service(
++  std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response)
++{
++  std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++  return m6a10_consumer_evidence.finalize_service(
++    request, response, lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
++}
++
++bool LIVMapper::m6a10_status_service(
++  std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response)
++{
++  std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++  return m6a10_consumer_evidence.status_service(
++    request, response, lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
++}
++
++bool LIVMapper::m6a10_ack_service(
++  std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response)
++{
++  return m6a10_consumer_evidence.ack_service(request, response);
++}
++
+ void LIVMapper::prop_imu_once(StatesGroup &imu_prop_state, const double dt, V3D acc_avr, V3D angvel_avr)
+ {
+   double mean_acc_norm = p_imu->IMU_mean_acc_norm;
+@@ -702,6 +725,8 @@ void LIVMapper::RGBpointBodyLidarToIMU(PointType const *const pi, PointType *con
+ 
+ void LIVMapper::standard_pcl_cbk(const sensor_msgs::PointCloud2::ConstPtr &msg)
+ {
++  auto m6a10_callback = m6a10_consumer_evidence.begin(
++    M6A10ConsumerEvidence::Topic::Lidar);
+   if (!lidar_en) return;
+   mtx_buffer.lock();
+ 
+@@ -721,10 +746,13 @@ void LIVMapper::standard_pcl_cbk(const sensor_msgs::PointCloud2::ConstPtr &msg)
+ 
+   mtx_buffer.unlock();
+   sig_buffer.notify_all();
++  m6a10_callback.accept(msg->header.stamp.toSec());
+ }
+ 
+ void LIVMapper::livox_pcl_cbk(const livox_ros_driver::CustomMsg::ConstPtr &msg_in)
+ {
++  auto m6a10_callback = m6a10_consumer_evidence.begin(
++    M6A10ConsumerEvidence::Topic::Lidar);
+   if (!lidar_en) return;
+   mtx_buffer.lock();
+   livox_ros_driver::CustomMsg::Ptr msg(new livox_ros_driver::CustomMsg(*msg_in));
+@@ -764,10 +792,13 @@ void LIVMapper::livox_pcl_cbk(const livox_ros_driver::CustomMsg::ConstPtr &msg_i
+ 
+   mtx_buffer.unlock();
+   sig_buffer.notify_all();
++  m6a10_callback.accept(msg_in->header.stamp.toSec());
+ }
+ 
+ void LIVMapper::imu_cbk(const sensor_msgs::Imu::ConstPtr &msg_in)
+ {
++  auto m6a10_callback = m6a10_consumer_evidence.begin(
++    M6A10ConsumerEvidence::Topic::Imu);
+   if (!imu_en) return;
+ 
+   if (last_timestamp_lidar < 0.0) return;
+@@ -817,6 +848,7 @@ void LIVMapper::imu_cbk(const sensor_msgs::Imu::ConstPtr &msg_in)
+     mtx_buffer_imu_prop.unlock();
+   }
+   sig_buffer.notify_all();
++  m6a10_callback.accept(timestamp);
+ }
+ 
+ cv::Mat LIVMapper::getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
+@@ -828,6 +860,8 @@ cv::Mat LIVMapper::getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
+ 
+ void LIVMapper::img_cbk(const sensor_msgs::ImageConstPtr &msg_in)
+ {
++  auto m6a10_callback = m6a10_consumer_evidence.begin(
++    M6A10ConsumerEvidence::Topic::Image);
+   if (!img_en) return;
+   sensor_msgs::Image::Ptr msg(new sensor_msgs::Image(*msg_in));
+   // if ((abs(msg->header.stamp.toSec() - last_timestamp_img) > 0.2 && last_timestamp_img > 0) || sync_jump_flag)
+@@ -879,6 +913,7 @@ void LIVMapper::img_cbk(const sensor_msgs::ImageConstPtr &msg_in)
+   // cout<<"last_timestamp_img:::"<<last_timestamp_img<<endl;
+   mtx_buffer.unlock();
+   sig_buffer.notify_all();
++  m6a10_callback.accept(img_time_correct);
+ }
+ 
+ bool LIVMapper::sync_packages(LidarMeasureGroup &meas)

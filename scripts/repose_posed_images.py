@@ -36,11 +36,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / 'tools' / 'gaussian_splatting'
-if str(TOOLS) not in sys.path:
-    sys.path.insert(0, str(TOOLS))
-
-import extract_posed_images as extractor  # noqa: E402
-import posed_images as pi  # noqa: E402
+from lidarslam_benchmark_tools.gaussian_splatting import extract_posed_images as extractor
+from lidarslam_benchmark_tools.gaussian_splatting import posed_images as pi
 
 
 def repose(template_path: Path, trajectory_path: Path,

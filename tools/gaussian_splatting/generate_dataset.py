@@ -28,10 +28,10 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-import posed_images as pi
-from render_path import load_gaussian_ply, render_rgbd_frames, scale_intrinsics
-from sim2real_gap import offset_viewmat, select_views
-from train_gsplat import load_transforms
+import lidarslam_benchmark_tools.gaussian_splatting.posed_images as pi
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import load_gaussian_ply, render_rgbd_frames, scale_intrinsics
+from lidarslam_benchmark_tools.gaussian_splatting.sim2real_gap import offset_viewmat, select_views
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import load_transforms
 
 
 # --------------------------------------------------------------------------- #

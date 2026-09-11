@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-rival-source-closure-r3-selection-candidate-v1",
+  "title": "Non-promoting rival source closure r3 selection candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "selection_kind", "selection_id", "status",
+    "benchmark_eligible", "claim_eligible", "selection_hash_kind",
+    "selection_identity_sha256", "candidate_binding", "r2_lineage",
+    "current_runner_bindings", "legal_status", "promotion_policy"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "selection_kind": {"const": "competitive_rival_source_closure_r3_selection_candidate_v1"},
+    "selection_id": {"const": "competitive-rival-source-closure-selection-2026-08-r3-candidate"},
+    "status": {"const": "NOT_READY"},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "selection_hash_kind": {"const": "canonical_competitive_rival_source_closure_r3_selection_candidate_sha256_v1"},
+    "selection_identity_sha256": {"$ref": "#/$defs/sha"},
+    "candidate_binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "candidate_identity_sha256", "candidate_id"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-candidate.json"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_identity_sha256": {"$ref": "#/$defs/sha"},
+        "candidate_id": {"const": "competitive-rival-source-closure-2026-08-r3-candidate"}
+      }
+    },
+    "r2_lineage": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "closure_id", "closure_revision", "closure_identity_hash_kind",
+        "closure_identity_sha256", "r2_selection_path", "r2_selection_id",
+        "r2_selection_sha256", "historical_selection_path",
+        "historical_selection_sha256", "supersedes_status"
+      ],
+      "properties": {
+        "closure_id": {"const": "competitive-rival-source-closure-2026-08-r2"},
+        "closure_revision": {"const": 2},
+        "closure_identity_hash_kind": {"const": "canonical_rival_source_closure_identity_sha256_v1"},
+        "closure_identity_sha256": {"$ref": "#/$defs/sha"},
+        "r2_selection_path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml"},
+        "r2_selection_id": {"const": "competitive-execution-selection-2026-08-r2"},
+        "r2_selection_sha256": {"$ref": "#/$defs/sha"},
+        "historical_selection_path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml"},
+        "historical_selection_sha256": {"$ref": "#/$defs/sha"},
+        "supersedes_status": {"const": "R2_IMMUTABLE_NOT_REWRITTEN"}
+      }
+    },
+    "current_runner_bindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["glim", "fast_livo2"],
+      "properties": {
+        "glim": {"$ref": "#/$defs/runner"},
+        "fast_livo2": {"$ref": "#/$defs/runner"}
+      }
+    },
+    "legal_status": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "external_review_required", "auto_review"],
+      "properties": {
+        "status": {"const": "NOT_READY"},
+        "external_review_required": {"const": true},
+        "auto_review": {"const": false}
+      }
+    },
+    "promotion_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["active_profile_switch", "requires_external_reviewed_packet", "requires_candidate_and_profile_reseal", "historical_r2_immutable", "handoff_status"],
+      "properties": {
+        "active_profile_switch": {"const": false},
+        "requires_external_reviewed_packet": {"const": true},
+        "requires_candidate_and_profile_reseal": {"const": true},
+        "historical_r2_immutable": {"const": true},
+        "handoff_status": {"const": "UNSIGNED_REVIEW_REQUIRED"}
+      }
+    }
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "runner": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "hash_kind", "r2_sha256", "current_sha256", "status"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "hash_kind": {"const": "file_sha256"},
+        "r2_sha256": {"$ref": "#/$defs/sha"},
+        "current_sha256": {"$ref": "#/$defs/sha"},
+        "status": {"const": "CURRENT_BYTES_REBOUND"}
+      }
+    }
+  }
+}

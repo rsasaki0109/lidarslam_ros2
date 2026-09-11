@@ -1,0 +1,630 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lidarslam.example.invalid/schema/registration-plugin-rosdep-prepare-v1.json",
+  "title": "Registration-plugin offline rosdep prepare v1",
+  "description": "Strict candidate-only consumer of the pinned discovery-11 packet. This receipt never authorizes promotion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "outcome", "benchmark_eligible",
+    "promotion", "active_profile_switch", "claim_eligible", "discovery",
+    "discovery_profile_sha256", "consumer_profile_sha256", "consumer_profile",
+    "execution", "phase_order", "phases", "artifacts", "summary", "failure",
+    "root", "transport_root", "root_mount", "discovery_transport",
+    "input_binding", "started_at_unix", "ended_at_unix", "canonical_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "registration-plugin-rosdep-prepare-v1"},
+    "schema_version": {"const": 1},
+    "status": {"enum": ["REVIEW_REQUIRED", "PARTIAL_FAILURE_REVIEW_REQUIRED"]},
+    "outcome": {"enum": ["PASS_REVIEW_REQUIRED", "PARTIAL_FAILURE_REVIEW_REQUIRED"]},
+    "benchmark_eligible": {"const": false},
+    "promotion": {"const": "FORBIDDEN_UNTIL_SIGNED_REVIEW"},
+    "active_profile_switch": {"const": false},
+    "claim_eligible": {"const": false},
+    "discovery": {"$ref": "#/$defs/discovery"},
+    "discovery_profile_sha256": {"const": "6f4faf87ff7a81dabe75141d0335367a7f0cd3ae39ee74d878aaf68da4888c86"},
+    "consumer_profile_sha256": {"$ref": "#/$defs/sha"},
+    "consumer_profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/logicalProfilePath"},
+        "sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "execution": {"$ref": "#/$defs/execution"},
+    "phase_order": {
+      "const": ["dependency_install", "rosdep_prepare"]
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {"$ref": "#/$defs/installPhase"},
+        {"$ref": "#/$defs/preparePhase"}
+      ],
+      "items": false
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/outputDescriptor"}
+    },
+    "summary": {"$ref": "#/$defs/summary"},
+    "failure": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/failure"}
+      ]
+    },
+    "root": {"$ref": "#/$defs/root"},
+    "transport_root": {"$ref": "#/$defs/root"},
+    "root_mount": {"$ref": "#/$defs/rootMount"},
+    "discovery_transport": {"$ref": "#/$defs/discoveryTransport"},
+    "input_binding": {"$ref": "#/$defs/prepareInputBinding"},
+    "started_at_unix": {"type": "integer", "minimum": 0},
+    "ended_at_unix": {"type": "integer", "minimum": 0},
+    "canonical_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "REVIEW_REQUIRED"}}},
+      "then": {
+        "properties": {
+          "outcome": {"const": "PASS_REVIEW_REQUIRED"},
+          "failure": {"type": "null"}
+        }
+      },
+      "else": {
+        "properties": {
+          "outcome": {"const": "PARTIAL_FAILURE_REVIEW_REQUIRED"},
+          "failure": {"$ref": "#/$defs/failure"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "absolute": {
+      "type": "string",
+      "pattern": "^/[^\\u0000\\r\\n]*$"
+    },
+    "logicalProfilePath": {
+      "type": "string",
+      "pattern": "^/.+/configs/slam_benchmark_profiles/registration_plugin_matrix_current_2026-08\\.json$"
+    },
+    "relative": {
+      "type": "string",
+      "pattern": "^[^/\\.][^\\\\\\u0000\\r\\n]*$"
+    },
+    "outputDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sidecar", "bytes", "sha256", "mode", "nlink"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relative"},
+        "sidecar": {"$ref": "#/$defs/relative"},
+        "bytes": {"type": "integer", "minimum": 0, "maximum": 16777216},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"const": 292},
+        "nlink": {"const": 1}
+      }
+    },
+    "basicDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path", "bytes", "sha256", "mode", "uid", "gid", "nlink",
+        "device", "inode"
+      ],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 134217728},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "inputDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path", "bytes", "sha256", "mode", "uid", "gid", "nlink",
+        "device", "inode", "sidecar"
+      ],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 134217728},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1},
+        "sidecar": {"$ref": "#/$defs/basicDescriptor"}
+      }
+    },
+    "prepareInputDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path", "bytes", "sha256", "mode", "uid", "gid", "nlink",
+        "device", "inode"
+      ],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 134217728},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"type": "integer", "minimum": 0, "maximum": 511},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "prepareInputFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role", "source_path", "container_path", "relative_path", "source",
+        "before", "after"
+      ],
+      "properties": {
+        "role": {"enum": ["tool", "schema", "discovery_validator", "consumer_profile"]},
+        "source_path": {"type": "string", "minLength": 1},
+        "container_path": {"$ref": "#/$defs/absolute"},
+        "relative_path": {"$ref": "#/$defs/relative"},
+        "source": {"$ref": "#/$defs/prepareInputDescriptor"},
+        "before": {"$ref": "#/$defs/prepareInputDescriptor"},
+        "after": {"$ref": "#/$defs/prepareInputDescriptor"}
+      }
+    },
+    "prepareInputBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema", "schema_version", "relative_root", "container_root", "mount",
+        "files", "identity_sha256"
+      ],
+      "properties": {
+        "schema": {"const": "registration-plugin-rosdep-prepare-input-v1"},
+        "schema_version": {"const": 1},
+        "relative_root": {"const": "rosdep-prepare/input"},
+        "container_root": {"const": "/opt/registration-plugin/prepare"},
+        "mount": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "target", "read_only", "noexec", "repository_bind"],
+          "properties": {
+            "source": {"$ref": "#/$defs/absolute"},
+            "target": {"const": "/opt/registration-plugin/prepare"},
+            "read_only": {"const": true},
+            "noexec": {"const": false},
+            "repository_bind": {"const": "forbidden"}
+          }
+        },
+        "files": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            {"allOf": [
+              {"$ref": "#/$defs/prepareInputFile"},
+              {"properties": {
+                "role": {"const": "tool"},
+                "source_path": {"const": "scripts/prepare_registration_plugin_rosdep.py"},
+                "container_path": {"const": "/opt/registration-plugin/prepare/prepare_registration_plugin_rosdep.py"},
+                "relative_path": {"const": "prepare_registration_plugin_rosdep.py"}
+              }}
+            ]},
+            {"allOf": [
+              {"$ref": "#/$defs/prepareInputFile"},
+              {"properties": {
+                "role": {"const": "schema"},
+                "source_path": {"const": "configs/slam_benchmark_profiles/registration_plugin_rosdep_prepare_v1.schema.json"},
+                "container_path": {"const": "/opt/registration-plugin/prepare/registration_plugin_rosdep_prepare_v1.schema.json"},
+                "relative_path": {"const": "registration_plugin_rosdep_prepare_v1.schema.json"}
+              }}
+            ]},
+            {"allOf": [
+              {"$ref": "#/$defs/prepareInputFile"},
+              {"properties": {
+                "role": {"const": "discovery_validator"},
+                "source_path": {"const": "scripts/capture_registration_plugin_rosdep_discovery.py"},
+                "container_path": {"const": "/opt/registration-plugin/prepare/capture_registration_plugin_rosdep_discovery.py"},
+                "relative_path": {"const": "capture_registration_plugin_rosdep_discovery.py"}
+              }}
+            ]},
+            {"allOf": [
+              {"$ref": "#/$defs/prepareInputFile"},
+              {"properties": {
+                "role": {"const": "consumer_profile"},
+                "source_path": {"const": "<active-profile>"},
+                "container_path": {"const": "/opt/registration-plugin/prepare/consumer-profile.json"},
+                "relative_path": {"const": "consumer-profile.json"}
+              }}
+            ]}
+          ],
+          "items": false
+        },
+        "identity_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "receiptDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "canonical_sha256", "descriptor", "transport_descriptor"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "descriptor": {"$ref": "#/$defs/inputDescriptor"},
+        "transport_descriptor": {"$ref": "#/$defs/inputDescriptor"}
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name", "version", "architecture", "filename", "uri", "size_bytes",
+        "sha256", "artifact"
+      ],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9+.-]*$"},
+        "version": {"type": "string", "minLength": 1},
+        "architecture": {"const": "all"},
+        "filename": {"type": "string", "pattern": "^[^/\\.][^\\\\\\u0000\\r\\n]*$"},
+        "uri": {"type": "string", "pattern": "^http://packages\\.ros\\.org/"},
+        "size_bytes": {"type": "integer", "minimum": 1, "maximum": 536870912},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "artifact": {"$ref": "#/$defs/inputArtifact"}
+      }
+    },
+    "inputArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sidecar", "bytes", "sha256", "mode", "nlink"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relative"},
+        "sidecar": {"$ref": "#/$defs/relative"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 536870912},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"const": 292},
+        "nlink": {"const": 1}
+      }
+    },
+    "selectedFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "bytes", "sha256", "artifact"],
+      "properties": {
+        "relative_path": {"$ref": "#/$defs/relative"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "artifact": {"$ref": "#/$defs/inputArtifact"}
+      }
+    },
+    "sourceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit_url", "line", "relative_path", "requested_url", "type"
+      ],
+      "properties": {
+        "commit_url": {"type": "string", "pattern": "^https://raw\\.githubusercontent\\.com/"},
+        "line": {"type": "integer", "minimum": 1},
+        "relative_path": {"$ref": "#/$defs/relative"},
+        "requested_url": {"type": "string", "pattern": "^https://raw\\.githubusercontent\\.com/"},
+        "type": {"enum": ["yaml", "gbpdistro"]},
+        "distribution": {"type": "string", "minLength": 1}
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "discovery_id", "root", "receipt", "profile", "image", "rosdistro",
+        "packages", "selected_files", "source_records", "receipt_bytes_sha256"
+      ],
+      "properties": {
+        "discovery_id": {"const": "registration-plugin-rosdep-discovery-20260827-11"},
+        "root": {"$ref": "#/$defs/absolute"},
+        "receipt": {"$ref": "#/$defs/receiptDescriptor"},
+        "profile": {
+          "type": "object", "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {"path": {"$ref": "#/$defs/logicalProfilePath"}, "sha256": {"$ref": "#/$defs/sha"}}
+        },
+        "image": {
+          "type": "object", "additionalProperties": false,
+          "required": ["digest", "platform", "repo_digests"],
+          "properties": {
+            "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+            "platform": {"const": "linux/amd64"},
+            "repo_digests": {
+              "type": "array", "const": [
+                "ros@sha256:ebae805c9d985e443b26e13a47339098dc0a42eee4626055bfd4ebc6dcdb4988"
+              ]
+            }
+          }
+        },
+        "rosdistro": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "repository", "commit", "archive_url", "archive_bytes",
+            "archive_sha256", "archive_artifact"
+          ],
+          "properties": {
+            "repository": {"const": "https://github.com/ros/rosdistro.git"},
+            "commit": {"const": "2667056d0320bb77edf1e28fec13d56aa8d325e2"},
+            "archive_url": {"type": "string", "pattern": "^https://codeload\\.github\\.com/ros/rosdistro/tar\\.gz/"},
+            "archive_bytes": {"const": 690616},
+            "archive_sha256": {"$ref": "#/$defs/sha"},
+            "archive_artifact": {"$ref": "#/$defs/inputArtifact"}
+          }
+        },
+        "packages": {
+          "type": "array", "minItems": 4, "maxItems": 4,
+          "items": {"$ref": "#/$defs/package"}
+        },
+        "selected_files": {
+          "type": "array", "minItems": 8, "maxItems": 8,
+          "items": {"$ref": "#/$defs/selectedFile"}
+        },
+        "source_records": {
+          "type": "array", "minItems": 5, "maxItems": 5,
+          "items": {"$ref": "#/$defs/sourceRecord"}
+        },
+        "receipt_bytes_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image_digest", "platform", "pull", "build", "network",
+        "runner_injected", "external_execution"
+      ],
+      "properties": {
+        "image_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "platform": {"const": "linux/amd64"},
+        "pull": {"const": false},
+        "build": {"const": false},
+        "network": {"const": "none"},
+        "runner_injected": {"type": "boolean"},
+        "external_execution": {"type": "boolean"}
+      }
+    },
+    "outputCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label", "argv", "env", "network", "timeout_seconds", "returncode",
+        "stdout", "stderr", "network_attempts", "record"
+      ],
+      "properties": {
+        "label": {"type": "string", "pattern": "^[a-z0-9_-]+$"},
+        "argv": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "env": {
+          "type": "object", "additionalProperties": {"type": "string"},
+          "required": ["PATH"],
+          "properties": {"PATH": {"const": "/usr/sbin:/usr/bin:/sbin:/bin"}}
+        },
+        "network": {"const": "none"},
+        "timeout_seconds": {"const": 300},
+        "returncode": {"type": "integer"},
+        "stdout": {"$ref": "#/$defs/outputDescriptor"},
+        "stderr": {"$ref": "#/$defs/outputDescriptor"},
+        "network_attempts": {"const": []},
+        "record": {"$ref": "#/$defs/outputDescriptor"}
+      }
+    },
+    "installPhase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "status", "commands"],
+      "properties": {
+        "phase": {"const": "dependency_install"},
+        "status": {"enum": ["NOT_STARTED", "PASS", "FAILED"]},
+        "commands": {"type": "array", "items": {"$ref": "#/$defs/outputCommand"}},
+        "packages": {"type": "array", "items": {"$ref": "#/$defs/installedPackage"}},
+        "files": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}}},
+        "offline": {"const": true}
+      }
+    },
+    "installedPackage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "architecture", "status"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "architecture": {"const": "all"},
+        "status": {"const": "install ok installed"}
+      }
+    },
+    "sourceBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["relative_path", "type", "line", "local_uri", "bytes", "sha256", "artifact"],
+      "properties": {
+        "relative_path": {"$ref": "#/$defs/relative"},
+        "type": {"enum": ["yaml", "gbpdistro"]},
+        "line": {"type": "integer", "minimum": 1},
+        "local_uri": {"type": "string", "pattern": "^file:///opt/registration-plugin/rosdistro/files/"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "artifact": {"$ref": "#/$defs/inputArtifact"}
+      }
+    },
+    "cacheEntry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "type", "bytes"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relative"},
+        "type": {"enum": ["f", "d"]},
+        "bytes": {"type": "integer", "minimum": 0, "maximum": 134217728}
+      }
+    },
+    "preparePhase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "status", "commands"],
+      "properties": {
+        "phase": {"const": "rosdep_prepare"},
+        "status": {"enum": ["NOT_STARTED", "PASS", "FAILED"]},
+        "commands": {"type": "array", "items": {"$ref": "#/$defs/outputCommand"}},
+        "source_list": {"$ref": "#/$defs/outputDescriptor"},
+        "source_bindings": {"type": "array", "items": {"$ref": "#/$defs/sourceBinding"}},
+        "distribution": {"$ref": "#/$defs/outputDescriptor"},
+        "network_policy": {
+          "type": "object", "additionalProperties": false,
+          "required": ["mode", "attempts", "fallback"],
+          "properties": {"mode": {"const": "none"}, "attempts": {"const": []}, "fallback": {"const": "forbidden"}}
+        },
+        "env": {"type": "object", "additionalProperties": {"type": "string"}},
+        "rosdep_version": {"const": "0.26.0"},
+        "cache_tree": {"$ref": "#/$defs/outputDescriptor"},
+        "cache_entries": {"type": "array", "items": {"$ref": "#/$defs/cacheEntry"}},
+        "resolution": {
+          "type": "object", "additionalProperties": false,
+          "required": ["update", "resolve"],
+          "properties": {"update": {"type": "string"}, "resolve": {"type": "string"}}
+        }
+      }
+    },
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dependency_install", "rosdep_prepare", "package_count", "selected_file_count", "network_attempts", "offline_only"],
+      "properties": {
+        "dependency_install": {"enum": ["NOT_STARTED", "PASS", "FAILED"]},
+        "rosdep_prepare": {"enum": ["NOT_STARTED", "PASS", "FAILED"]},
+        "package_count": {"type": "integer", "minimum": 0, "maximum": 4},
+        "selected_file_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "network_attempts": {"const": []},
+        "offline_only": {"const": true}
+      }
+    },
+    "failure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["phase", "kind", "message"],
+      "properties": {
+        "phase": {"enum": ["dependency_install", "rosdep_prepare", "prepare"]},
+        "kind": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "message": {"type": "string", "maxLength": 2048}
+      }
+    },
+    "root": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "type", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "type": {"const": "directory"},
+        "mode": {"const": 448},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"type": "integer", "minimum": 2},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "rootMount": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "target", "read_only", "type", "noexec", "identity"],
+      "properties": {
+        "source": {"$ref": "#/$defs/absolute"},
+        "target": {"$ref": "#/$defs/absolute"},
+        "read_only": {"const": false},
+        "type": {"const": "bind"},
+        "noexec": {"const": false},
+        "identity": {
+          "type": "object", "additionalProperties": false,
+          "required": ["device", "inode", "uid", "gid", "mode", "nlink"],
+          "properties": {
+            "device": {"type": "integer", "minimum": 0},
+            "inode": {"type": "integer", "minimum": 1},
+            "uid": {"type": "integer", "minimum": 0},
+            "gid": {"type": "integer", "minimum": 0},
+            "mode": {"const": 448},
+            "nlink": {"type": "integer", "minimum": 2}
+          }
+        }
+      }
+    },
+    "transportSidecar": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 512},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      }
+    },
+    "transportDescriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "mode", "uid", "gid", "nlink", "device", "inode", "sidecar"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 536870912},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "mode": {"const": 292},
+        "uid": {"type": "integer", "minimum": 0},
+        "gid": {"type": "integer", "minimum": 0},
+        "nlink": {"const": 1},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1},
+        "sidecar": {"$ref": "#/$defs/transportSidecar"}
+      }
+    },
+    "discoveryTransportArtifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "index", "relative_path", "transport_path", "descriptor", "transport_descriptor"],
+      "properties": {
+        "role": {"enum": ["archive", "package", "selected_file"]},
+        "index": {"type": "integer", "minimum": 0},
+        "relative_path": {"$ref": "#/$defs/relative"},
+        "transport_path": {"$ref": "#/$defs/absolute"},
+        "descriptor": {"$ref": "#/$defs/inputArtifact"},
+        "transport_descriptor": {"$ref": "#/$defs/transportDescriptor"}
+      }
+    },
+    "discoveryTransport": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "logical_root", "transport_root", "mount", "artifact_count", "artifacts", "identity_sha256"],
+      "properties": {
+        "schema": {"const": "registration-plugin-discovery-transport-binding-v1"},
+        "schema_version": {"const": 1},
+        "logical_root": {"$ref": "#/$defs/absolute"},
+        "transport_root": {"$ref": "#/$defs/absolute"},
+        "mount": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source", "target", "read_only", "type", "noexec"],
+          "properties": {
+            "source": {"$ref": "#/$defs/absolute"},
+            "target": {"$ref": "#/$defs/absolute"},
+            "read_only": {"const": true},
+            "type": {"const": "bind"},
+            "noexec": {"const": false}
+          }
+        },
+        "artifact_count": {"const": 13},
+        "artifacts": {
+          "type": "array", "minItems": 13, "maxItems": 13,
+          "items": {"$ref": "#/$defs/discoveryTransportArtifact"}
+        },
+        "identity_sha256": {"$ref": "#/$defs/sha"}
+      }
+    }
+  }
+}

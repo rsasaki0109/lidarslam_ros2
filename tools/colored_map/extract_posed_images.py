@@ -19,11 +19,18 @@ See ``docs/research/3dgs-postprocess-map-design.md``.
 from __future__ import annotations
 
 import argparse
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence
 
 import numpy as np
+
+# Sibling helpers stay importable regardless of which directory hosts the
+# caller (same pattern as build_lidar_init.py).
+_HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:
+    sys.path.append(str(_HERE))
 
 import posed_images as pi
 

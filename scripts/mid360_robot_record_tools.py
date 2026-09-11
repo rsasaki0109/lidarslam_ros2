@@ -13,7 +13,7 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import RobotProfile, payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import RobotProfile, payload_to_json
 
 
 @dataclass(frozen=True)
@@ -218,3 +218,7 @@ def record_plan_to_json(profile: RobotProfile, plan: RecordPlan) -> str:
     """Serialize a record plan with the profile snapshot payload."""
     payload = Mid360RecordManifestWriter().build_manifest(profile, plan)
     return json.dumps(payload, indent=2, sort_keys=True)
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_record_tools is a library module; import it instead of running it directly.")

@@ -12,7 +12,7 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_SPLIT_BAG_MERGE_JSON = 'mid360_robot_public_split_bag_merge.json'
@@ -421,3 +421,7 @@ def _write_report(output_bag: Path, report: dict[str, Any]) -> None:
         render_split_bag_merge_markdown(report) + '\n',
         encoding='utf-8',
     )
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_split_bag_merge is a library module; import it instead of running it directly.")

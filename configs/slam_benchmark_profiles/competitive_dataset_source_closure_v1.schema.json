@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-dataset-source-closure-v1",
+  "title": "Competitive SLAM dataset source closure v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "required", "status", "minimum_gt_dataset_families",
+    "require_fresh_holdout", "require_historical_partition", "required_systems",
+    "datasets"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "required": {"const": true},
+    "status": {"enum": ["READY", "NOT_READY", "INVALID"]},
+    "status_reason": {"type": "array", "items": {"type": "string"}},
+    "minimum_gt_dataset_families": {"type": "integer", "minimum": 2},
+    "require_fresh_holdout": {"type": "boolean"},
+    "require_historical_partition": {"type": "boolean"},
+    "required_partitions": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_systems": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "schema_path": {"type": "string", "minLength": 1},
+    "schema_sha256": {"$ref": "#/$defs/sha256"},
+    "auditor_path": {"type": "string", "minLength": 1},
+    "auditor_sha256": {"$ref": "#/$defs/sha256"},
+    "selection_id": {"type": "string", "minLength": 1},
+    "selection_path": {"type": "string", "minLength": 1},
+    "selection_sha256": {"$ref": "#/$defs/sha256"},
+    "selection_schema_path": {"type": "string", "minLength": 1},
+    "selection_schema_sha256": {"$ref": "#/$defs/sha256"},
+    "reviewed_pin_required": {"type": "boolean"},
+    "reviewed_pin_manifest_path": {"type": ["string", "null"], "minLength": 1},
+    "reviewed_pin_manifest_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+    "reviewed_pin_manifest_status": {"enum": ["NOT_CONFIGURED", "REVIEWED", "INVALID"]},
+    "hash_policy": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "recorded_status": {"const": "RECORDED_ONLY"},
+        "revalidated_status": {"const": "REVALIDATED"},
+        "revalidation_requires_mount_identity": {"type": "boolean"},
+        "ground_truth_content_opened": {"const": false}
+      }
+    },
+    "datasets": {
+      "type": "array", "minItems": 1,
+      "items": {"$ref": "#/$defs/dataset"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "dataset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile_partition", "profile_key", "dataset_id", "sequence_id"],
+      "properties": {
+        "profile_partition": {"type": "string", "minLength": 1},
+        "profile_key": {"type": "string", "minLength": 1},
+        "dataset_id": {"type": "string", "minLength": 1},
+        "sequence_id": {"type": "string", "minLength": 1},
+        "family_id": {"type": "string", "minLength": 1},
+        "evaluation_eligible": {"type": "boolean"},
+        "fresh_eligible": {"type": "boolean"},
+        "status": {"type": "string", "minLength": 1},
+        "exclusion_reason": {"type": "string", "minLength": 1},
+        "source": {"$ref": "#/$defs/source"},
+        "license_terms": {"$ref": "#/$defs/licenseTerms"},
+        "sensor_contract": {"$ref": "#/$defs/sensor"},
+        "input": {"$ref": "#/$defs/artifact"},
+        "calibration": {"$ref": "#/$defs/calibration"},
+        "ground_truth": {"$ref": "#/$defs/groundTruth"},
+        "sequence": {"$ref": "#/$defs/sequence"},
+        "alignment": {"type": "object", "additionalProperties": false,
+          "properties": {
+            "frame_transform": {"type": "string", "minLength": 1},
+            "timestamp_conversion": {"type": "string", "minLength": 1}
+          }
+        },
+        "supported_systems": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "project_name": {"type": "string", "minLength": 1},
+        "publisher": {"type": "string", "minLength": 1},
+        "project_url": {"type": "string", "format": "uri"},
+        "official_primary": {"type": "boolean"},
+        "immutable_version": {"type": "string", "minLength": 1},
+        "download_refs": {
+          "type": "object", "additionalProperties": {"$ref": "#/$defs/download"}
+        }
+      }
+    },
+    "download": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "url": {"type": "string", "format": "uri"},
+        "immutable": {"type": "boolean"},
+        "primary": {"type": "boolean"}
+      }
+    },
+    "licenseTerms": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "status": {"enum": ["READY", "NOT_READY", "UNKNOWN"]},
+        "license_id": {"type": "string", "minLength": 1},
+        "terms_url": {"type": "string", "format": "uri"},
+        "citation": {"type": "string", "minLength": 1}
+      }
+    },
+    "sensor": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "topics": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "formats": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "timestamp_basis": {"type": "string", "minLength": 1},
+        "modalities": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "hash_kind": {"type": "string", "minLength": 1},
+        "validation_status": {"enum": ["RECORDED_ONLY", "REVALIDATED"]},
+        "revalidation_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "revalidation_mount_identity": {"type": "string", "minLength": 1}
+      }
+    },
+    "calibration": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "hash_kind": {"type": "string", "minLength": 1},
+        "validation_status": {"enum": ["RECORDED_ONLY", "REVALIDATED"]},
+        "revalidation_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "revalidation_mount_identity": {"type": "string", "minLength": 1},
+        "frame_convention": {"type": "string", "minLength": 1},
+        "timestamp_basis": {"type": "string", "minLength": 1}
+      }
+    },
+    "groundTruth": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "role": {"enum": ["ground_truth", "not_applicable", "cross_validation_only"]},
+        "artifact_id": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "format": "uri"},
+        "method": {"type": "string", "minLength": 1},
+        "frame": {"type": "string", "minLength": 1},
+        "timestamp_basis": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "hash_kind": {"type": "string", "minLength": 1},
+        "validation_status": {"enum": ["RECORDED_ONLY", "REVALIDATED"]},
+        "revalidation_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "revalidation_mount_identity": {"type": "string", "minLength": 1}
+      }
+    },
+    "sequence": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+        "message_counts": {"type": "object", "minProperties": 1,
+          "additionalProperties": {"type": "integer", "exclusiveMinimum": 0}}
+      }
+    }
+  }
+}

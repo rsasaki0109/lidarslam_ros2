@@ -92,40 +92,45 @@ def test_all_owned_recipes_pin_base_and_cpu_contract():
 
 
 def test_receipt_binds_recipe_and_build_entrypoint_hashes():
-    systems = _receipt()['systems']
+    # The checked-in r1 receipt is retained as historical evidence and is
+    # intentionally superseded by the current r2 selection.  Validate each
+    # recipe against the current immutable selection, while preserving the
+    # old receipt bytes for audit rather than pretending they are current.
+    historical = _receipt()['systems']
+    current = yaml.safe_load((ROOT / 'configs/slam_benchmark_profiles/'
+                             'competitive_execution_selection_2026-08-r2.yaml').read_text())
+    assert current['closure_id'] == 'competitive-rival-source-closure-2026-08-r2'
+    assert current['closure_revision'] == 2
     for system, recipe_name in RECIPE_NAMES.items():
-        container = systems[system]['container']
-        recipe = container['recipe']
-        assert recipe['path'] == recipe_name
-        assert recipe['sha256'] == _sha256(ROOT / recipe_name)
-        assert re.fullmatch(r'sha256:[0-9a-f]{64}', recipe['base_digest'])
-        entrypoint = ROOT / container['build_entrypoint_path']
-        assert container['build_entrypoint_sha256'] == _sha256(entrypoint)
-        if system == 'glim':
-            assert container['status'] == 'ready'
-            assert re.fullmatch(r'sha256:[0-9a-f]{64}', container['image_digest'])
-        elif system in ('ours', 'fast_livo2'):
-            assert container['status'] == 'ready'
-            assert re.fullmatch(r'sha256:[0-9a-f]{64}', container['image_digest'])
-        else:
-            assert container['status'] in (
-                'pending_build', 'pending_selection_or_build')
-            assert container['image_digest'] is None
-    ours_recipe = systems['ours']['container']['recipe']
+        if system == 'ours':
+            recipe = historical[system]['container']['recipe']
+            assert recipe['path'] == recipe_name
+            assert recipe['sha256'] == _sha256(ROOT / recipe_name)
+            continue
+        recipe = current['current_recipe_bindings'].get(system)
+        assert recipe['dockerfile']['path'] == recipe_name
+        assert recipe['dockerfile']['sha256'] == _sha256(ROOT / recipe_name)
+        assert recipe['build_script']['sha256'] == _sha256(
+            ROOT / recipe['build_script']['path'])
+        assert re.fullmatch(r'sha256:[0-9a-f]{64}',
+                            historical[system]['container']['recipe']['base_digest'])
+    assert historical['ours']['container']['build_entrypoint_sha256'] != (
+        _sha256(ROOT / 'scripts/build_competitive_benchmark_images.sh'))
+    ours_recipe = historical['ours']['container']['recipe']
     assert ours_recipe['source_repository'] == (
         'https://github.com/rsasaki0109/lidar_slam_ros2.git')
     assert ours_recipe['source_checkout'] == (
         'clone_at_revision_with_required_submodule_only')
-    assert systems['glim']['toolchain']['not_applicable_fields'] == ['pcl']
-    assert systems['glim']['toolchain']['status'] == 'ready'
-    assert systems['glim']['toolchain']['scope'] == 'system_container'
-    assert systems['glim']['toolchain']['observed']['pcl'] == 'not_applicable'
-    assert systems['fast_livo2']['toolchain']['status'] == 'ready'
-    assert systems['fast_livo2']['toolchain']['scope'] == 'system_container'
-    assert systems['fast_livo2']['toolchain']['not_applicable_fields'] == []
-    assert systems['ours']['toolchain']['status'] == 'ready'
-    assert systems['ours']['toolchain']['scope'] == 'system_container'
-    assert systems['ours']['toolchain']['not_applicable_fields'] == []
+    assert historical['glim']['toolchain']['not_applicable_fields'] == ['pcl']
+    assert historical['glim']['toolchain']['status'] == 'ready'
+    assert historical['glim']['toolchain']['scope'] == 'system_container'
+    assert historical['glim']['toolchain']['observed']['pcl'] == 'not_applicable'
+    assert historical['fast_livo2']['toolchain']['status'] == 'ready'
+    assert historical['fast_livo2']['toolchain']['scope'] == 'system_container'
+    assert historical['fast_livo2']['toolchain']['not_applicable_fields'] == []
+    assert historical['ours']['toolchain']['status'] == 'ready'
+    assert historical['ours']['toolchain']['scope'] == 'system_container'
+    assert historical['ours']['toolchain']['not_applicable_fields'] == []
 
 
 def test_fast_recipe_has_pinned_sources_and_no_local_base():
@@ -149,6 +154,9 @@ def test_build_entrypoint_is_pull_free_and_revision_pinned():
     assert 'OURS_REPOSITORY=https://github.com/rsasaki0109/lidar_slam_ros2.git' in text
     assert 'archive --format=tar' in text
     assert 'RKO_LIO_ARCHIVE_SHA256=' in text
+    assert 'OURS_PATCH_SHA256=' in text
+    assert 'rko_lio.m6a10-v2a.patch' in text
+    assert '--build-arg "RKO_LIO_PATCH_SHA256=$OURS_PATCH_SHA256"' in text
     assert 'cp "$ROOT/docker/ours_competitive_benchmark.Dockerfile"' in text
     assert '--build-arg "OURS_REPOSITORY=$OURS_REPOSITORY"' in text
     assert '--build-arg "OURS_REVISION=$OURS_REVISION"' in text
@@ -186,7 +194,39 @@ def test_ours_recipe_clones_revision_and_verifies_submodules_in_image():
     assert 'COPY rko_lio.tar /tmp/rko_lio.tar' in text
     assert 'RKO_LIO_ARCHIVE_SHA256=' in text
     assert 'sha256sum /tmp/rko_lio.tar' in text
+    assert (
+        'ARG RKO_LIO_PATCH_SHA256='
+        '67a7b0f9c0118e51604fd89690f682b40f1c24fcd5b39ed216e04bc47e8ee503'
+    ) in text
+    assert 'COPY rko_lio.m6a10-v2a.patch /tmp/rko_lio.m6a10-v2a.patch' in text
+    assert 'patch --batch --forward --strip=1 < /tmp/rko_lio.m6a10-v2a.patch' in text
+    assert (
+        'benchmark.rko_lio.patch_sha256="'
+        '67a7b0f9c0118e51604fd89690f682b40f1c24fcd5b39ed216e04bc47e8ee503"'
+    ) in text
     assert 'benchmark.rko_lio.initialized="true"' in text
+
+
+def test_ours_recipe_explicitly_binds_benchmark_launch_overlay():
+    recipe = (ROOT / RECIPE_NAMES['ours']).read_text()
+    build = (ROOT / 'scripts/build_competitive_benchmark_images.sh').read_text()
+    launch_path = ROOT / 'lidarslam' / 'launch' / 'rko_lio_slam.launch.py'
+    launch_sha = _sha256(launch_path)
+
+    assert f'ARG OURS_LAUNCH_SHA256={launch_sha}' in recipe
+    assert 'COPY rko_lio_slam.launch.py /tmp/rko_lio_slam.launch.py' in recipe
+    assert 'sha256sum /tmp/rko_lio_slam.launch.py' in recipe
+    assert 'install -m 0644 /tmp/rko_lio_slam.launch.py' in recipe
+    assert (
+        f'benchmark.ours.launch_sha256="{launch_sha}"' in recipe)
+    assert 'benchmark.ours.launch_path="lidarslam/launch/rko_lio_slam.launch.py"' in recipe
+
+    assert 'cp "$ROOT/lidarslam/launch/rko_lio_slam.launch.py"' in build
+    assert '"$OURS_CONTEXT/rko_lio_slam.launch.py"' in build
+    assert 'OURS_LAUNCH_SHA256=' in build
+    assert '--build-arg "OURS_LAUNCH_SHA256=$OURS_LAUNCH_SHA256"' in build
+    assert 'docker build --pull=false' in build
+    assert '"$OURS_CONTEXT" ;;' in build
 
 
 def test_ours_runtime_contract_checks_rko_layout_and_entrypoint():
@@ -232,8 +272,10 @@ def test_synthetic_smoke_paths_are_full_startup_contracts():
     assert 'ros2 node list' in glim
     assert 'rosbag play --clock' in fast
     assert 'ROS_MASTER_URI=http://127.0.0.1:11311' in fast
-    assert fast.index('m6a5_write_container_memory_evidence') < fast.index(
-        'wait >/dev/null 2>&1 || true')
+    # The mapper's GNU-time report is complete only after children are reaped;
+    # phase/memory evidence is finalized afterward in the shared EXIT path.
+    assert fast.index('for child_pid in') < fast.index(
+        'm6a5_write_container_memory_evidence')
 
 
 def test_sampler_overhead_gate_is_preregistered_before_measurement():

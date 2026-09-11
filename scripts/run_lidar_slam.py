@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import sys
 
-from lidarslam_tools.slam_runtime import (
+from lidarslam_benchmark_tools.lidarslam_tools.slam_runtime import (
     DEFAULT_SCAN_ROOTS,
     clock as _clock,
     default_output_dir,

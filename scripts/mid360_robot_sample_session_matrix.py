@@ -8,12 +8,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_sample_session import (
+from lidarslam_benchmark_tools.mid360_robot_sample_session import (
     Mid360SampleSessionRunner,
     SampleSessionOptions,
 )
-from mid360_robot_sample_session_matrix_dashboard import MATRIX_HTML, write_matrix_dashboard
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_sample_session_matrix_dashboard import MATRIX_HTML, write_matrix_dashboard
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 MATRIX_JSON = 'mid360_robot_sample_session_matrix.json'
@@ -195,3 +195,7 @@ def matrix_options_to_dict(options: SampleSessionMatrixOptions) -> dict[str, Any
 
 def _safe_name(value: str) -> str:
     return ''.join(ch if ch.isalnum() else '_' for ch in value).strip('_') or 'scenario'
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_sample_session_matrix is a library module; import it instead of running it directly.")

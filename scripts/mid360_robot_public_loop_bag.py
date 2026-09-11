@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_LOOP_BAG_JSON = 'mid360_robot_public_loop_bag.json'
@@ -277,3 +277,7 @@ def options_payload(options: PublicLoopBagOptions) -> dict[str, Any]:
     payload['input_bags'] = [str(bag) for bag in options.input_bags]
     payload['output_bag'] = str(options.output_bag)
     return payload
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_loop_bag is a library module; import it instead of running it directly.")

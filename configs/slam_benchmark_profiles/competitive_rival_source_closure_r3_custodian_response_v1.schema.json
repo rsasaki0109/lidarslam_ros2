@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-rival-source-closure-r3-custodian-response-v1",
+  "title": "Signed custodian response for competitive rival source closure r3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "decision_status", "benchmark_eligible",
+    "claim_eligible", "active_profile_switch", "campaign_id", "nonce",
+    "issued_at", "expires_at", "handoff", "candidate", "selection",
+    "trust_policy", "capture", "r2_lineage", "blocker_decisions",
+    "signature", "verifier", "response_identity_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "competitive_rival_source_closure_r3_custodian_response_v1"},
+    "schema_version": {"const": 1},
+    "decision_status": {"enum": ["ACCEPTED", "REJECTED", "NEEDS_CLARIFICATION"]},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "active_profile_switch": {"const": false},
+    "campaign_id": {"const": "competitive-rival-source-closure-2026-08-r3-candidate"},
+    "nonce": {"type": "string", "pattern": "^[A-Za-z0-9_-]{32,128}$"},
+    "issued_at": {"type": "integer", "minimum": 0},
+    "expires_at": {"type": "integer", "minimum": 1},
+    "handoff": {"$ref": "#/$defs/descriptor"},
+    "candidate": {"$ref": "#/$defs/descriptor"},
+    "selection": {"$ref": "#/$defs/descriptor"},
+    "trust_policy": {"$ref": "#/$defs/descriptor"},
+    "capture": {"$ref": "#/$defs/captureBinding"},
+    "r2_lineage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["closure_id", "closure_identity_hash_kind",
+        "closure_identity_sha256", "closure_revision", "historical_selection_path",
+        "historical_selection_sha256", "r2_selection_id", "r2_selection_path",
+        "r2_selection_sha256", "supersedes_status"],
+      "properties": {
+        "closure_id": {"type": "string", "minLength": 1},
+        "closure_identity_hash_kind": {"const": "canonical_rival_source_closure_identity_sha256_v1"},
+        "closure_identity_sha256": {"$ref": "#/$defs/sha"},
+        "closure_revision": {"const": 2},
+        "historical_selection_path": {"type": "string", "minLength": 1},
+        "historical_selection_sha256": {"$ref": "#/$defs/sha"},
+        "r2_selection_id": {"type": "string", "minLength": 1},
+        "r2_selection_path": {"type": "string", "minLength": 1},
+        "r2_selection_sha256": {"$ref": "#/$defs/sha"},
+        "supersedes_status": {"const": "R2_IMMUTABLE_NOT_REWRITTEN"}
+      }
+    },
+    "blocker_decisions": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "prefixItems": [
+        {"$ref": "#/$defs/decision"}, {"$ref": "#/$defs/decision"},
+        {"$ref": "#/$defs/decision"}, {"$ref": "#/$defs/decision"}
+      ],
+      "items": false
+    },
+    "signature": {"$ref": "#/$defs/signature"},
+    "verifier": {"$ref": "#/$defs/verifier"},
+    "response_identity_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "absolutePath": {
+      "type": "string", "pattern": "^/[^\\u0000]*$",
+      "not": {"pattern": "(^|/)\\.\\.?(/|$)"}
+    },
+    "descriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_bytes", "file_sha256", "canonical_sha256", "schema"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolutePath"},
+        "file_bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "path", "file_bytes", "file_sha256"],
+      "properties": {
+        "kind": {"enum": ["LICENSE_TEXT", "CUSTODIAN_REVIEW_NOTE"]},
+        "path": {"$ref": "#/$defs/absolutePath"},
+        "file_bytes": {"type": "integer", "minimum": 1, "maximum": 8388608},
+        "file_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "licenseIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["component", "status", "upstream_url", "revision",
+        "license_text", "declaration_is_not_license_text"],
+      "properties": {
+        "component": {"type": "string", "minLength": 1},
+        "status": {"enum": ["ESTABLISHED", "CONFLICT", "MISSING", "UNRESOLVED"]},
+        "upstream_url": {"type": "string", "pattern": "^https://github\\.com/[^#?]+$"},
+        "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "license_text": {
+          "oneOf": [{"$ref": "#/$defs/evidence"}, {"type": "null"}]
+        },
+        "declaration_is_not_license_text": {"const": true}
+      }
+    },
+    "policyMap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "binary"],
+      "properties": {
+        "source": {"enum": ["ALLOWED", "DENIED", "CONDITIONAL", "UNKNOWN"]},
+        "binary": {"enum": ["ALLOWED", "DENIED", "CONDITIONAL", "UNKNOWN"]}
+      }
+    },
+    "allowedUse": {
+      "type": "object", "additionalProperties": false,
+      "required": ["build", "execute"],
+      "properties": {
+        "build": {"enum": ["ALLOWED", "DENIED", "CONDITIONAL", "UNKNOWN"]},
+        "execute": {"enum": ["ALLOWED", "DENIED", "CONDITIONAL", "UNKNOWN"]}
+      }
+    },
+    "publicationPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "binary", "benchmark_claim"],
+      "properties": {
+        "source": {"enum": ["ALLOWED", "DENIED", "CONDITIONAL", "UNKNOWN"]},
+        "binary": {"enum": ["ALLOWED", "DENIED", "CONDITIONAL", "UNKNOWN"]},
+        "benchmark_claim": {"enum": ["ALLOWED", "DENIED", "CONDITIONAL", "UNKNOWN"]}
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["blocker_id", "decision", "evidence", "license_identity",
+        "allowed_use", "redistribution_policy", "publication_policy", "review_note"],
+      "properties": {
+        "blocker_id": {"enum": [
+          "glim_ros2_license_text_missing",
+          "fast_livo2_license_declaration_conflict",
+          "rpg_vikit_license_artifacts_incomplete",
+          "sophus_license_artifact_missing"
+        ]},
+        "decision": {"enum": ["ACCEPTED", "REJECTED", "NEEDS_CLARIFICATION"]},
+        "evidence": {"type": "array", "minItems": 1, "maxItems": 8,
+          "items": {"$ref": "#/$defs/evidence"}},
+        "license_identity": {"$ref": "#/$defs/licenseIdentity"},
+        "allowed_use": {"$ref": "#/$defs/allowedUse"},
+        "redistribution_policy": {"$ref": "#/$defs/policyMap"},
+        "publication_policy": {"$ref": "#/$defs/publicationPolicy"},
+        "review_note": {"type": "string", "minLength": 1, "maxLength": 4096}
+      }
+    },
+    "captureBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_bytes", "file_sha256", "capture_identity_sha256",
+        "schema", "status", "review_status", "remote_responses_status",
+        "closure_identity_sha256", "selection_sha256", "producer", "schema_binding"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolutePath"},
+        "file_bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "capture_identity_sha256": {"$ref": "#/$defs/sha"},
+        "schema": {"const": "competitive_rival_legal_provenance_capture_v1"},
+        "status": {"const": "REVIEW_REQUIRED"},
+        "review_status": {"const": "UNSIGNED_REVIEW_REQUIRED"},
+        "remote_responses_status": {"const": "NOT_RUN"},
+        "closure_identity_sha256": {"$ref": "#/$defs/sha"},
+        "selection_sha256": {"$ref": "#/$defs/sha"},
+        "producer": {"$ref": "#/$defs/sourceBinding"},
+        "schema_binding": {"$ref": "#/$defs/sourceBinding"}
+      }
+    },
+    "sourceBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "status"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "status": {"const": "CONTRACT_BOUND_NOT_REVIEWED"}
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "public_key_sha256", "payload_sha256",
+        "signature_base64", "backend"],
+      "properties": {
+        "algorithm": {"const": "Ed25519"},
+        "key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+        "public_key_sha256": {"$ref": "#/$defs/sha"},
+        "payload_sha256": {"$ref": "#/$defs/sha"},
+        "signature_base64": {"type": "string", "minLength": 86},
+        "backend": {"type": "object", "additionalProperties": false,
+          "required": ["name", "version", "implementation", "implementation_file", "implementation_sha256"],
+          "properties": {
+            "name": {"const": "python-cryptography"},
+            "version": {"type": "string", "minLength": 1},
+            "implementation": {"type": "string", "minLength": 1},
+            "implementation_file": {"type": "string", "minLength": 1},
+            "implementation_sha256": {"$ref": "#/$defs/sha"}
+          }}
+      }
+    },
+    "verifier": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "implementation", "backend"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "implementation": {"const": "rival_source_closure_custodian_response_v1"},
+        "backend": {"$ref": "#/$defs/signature/properties/backend"}
+      }
+    }
+  }
+}

@@ -1,0 +1,180 @@
+name: fast_livo2_m6a10_v2c_v9b_wallrate_corrected
+preregistration:
+  status: AUTHORIZED_SINGLE_REPLAY
+  replay_authorized: true
+  created_at_utc: '2026-08-23T04:39:14Z'
+  predecessor_profile: configs/slam_benchmark_profiles/fast_livo2_m6a10_v9_formal.yaml
+  predecessor_profile_sha256: 11ef3175f09712f9810e2c812560319a7d8a51ef369734d9fb042c7ce13c51b8
+  predecessor_closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v9_formal_replay_20260823T042334Z_agentv9/closure_receipt.json
+  predecessor_closure_sha256: 30b18ed5261de67d5dbb5ffa3b74df445b9ccd9251620a48593523af8848e9d8
+  predecessor_status: FAIL_CLOSED
+  formal_replay_forbidden: false
+  image_build_not_run: true
+  bound_image_tag: m6a10-v2c-v9wallrate-20260823t040642-fast-livo2-benchmark:ros1-pinned
+  bound_image_id: sha256:0686d85da9c789e5d0edf6c0c13921ce7fb87730239356537928a7a2e1d070d0
+  build_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v9wallrate-20260823T040642Z/build_receipt.json
+  build_receipt_sha256: c705c3e53df52db6403d8022fada617f2d8c8ab1ea3e2912a7e587600676a441
+  identity_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v9wallrate-20260823T040642Z/identity_preflight.json
+  identity_receipt_sha256: 4785ce5064dca0375afefcdb66194c530934f48856538687b286360d2affd773
+  synthetic_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v9wallrate-20260823T040642Z/synthetic_live_gate.json
+  synthetic_receipt_sha256: 9e5aa131e4b9c9650b2f2951dce770d004bf26a65767f624376e4c51b3683e1d
+  quiescence_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v9wallrate-20260823T040642Z/quiescence.json
+  quiescence_receipt_sha256: ec6fa5bcf895cdee949b41d66b1b3ecf3ee5b8bd4d54b7f1960f585ed51f15d4
+competitive_slam_profile:
+  m6a10_fast_livo2_v2c_v9:
+    schema_version: 2
+    profile_key: m6a10_fast_livo2_v2c_v9
+    system: fast_livo2
+    contract_id: m6a10-v2c-fast-livo2-wallrate-v9
+    status: build_passed_not_executed
+    result: null
+    predecessor:
+      profile_path: configs/slam_benchmark_profiles/fast_livo2_m6a10_v9_formal.yaml
+      profile_sha256: 11ef3175f09712f9810e2c812560319a7d8a51ef369734d9fb042c7ce13c51b8
+      closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v9_formal_replay_20260823T042334Z_agentv9/closure_receipt.json
+      closure_sha256: 30b18ed5261de67d5dbb5ffa3b74df445b9ccd9251620a48593523af8848e9d8
+      status: FAIL_CLOSED
+      failure_kind: input_sha256_mismatch_before_container_start
+      failure_stage: native_runner_input_identity_preflight
+      container_started: false
+      formal_replay_started: false
+      first_difference_zero_based: 23
+      expected_sha256_profile_length: 65
+      observed_sha256_length: 64
+      published_count: 0
+      ack_count: 0
+    input:
+      path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+      bytes: 11290464091
+      sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+      expected_messages: 236687
+      expected_topic_counts:
+        lidar: 5793
+        imu: 225102
+        image: 5792
+      topics:
+        lidar: /os1_cloud_node1/points
+        imu: /imu/imu
+        image: /left/image_raw
+    phase:
+      contract_version: m6a10-online-compute-v2
+      mode: unpaced_ack
+      drain_timeout_seconds: 60
+      maximum_callback_latency_seconds: 0.25
+      maximum_backlog_messages: 100000
+      maximum_online_compute_rtf: 1.0
+      maximum_end_gap_seconds: 0.25
+    source:
+      revision: 0d2c0346107b75b59934975adec9a6eeeb913c64
+      rpg_revision: 6c886c8e5d83997806e00294826d528cea3581dd
+      base_patch_path: docker/patches/fast_livo2.m6a10-v2c.patch
+      base_patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+      v8_delta_patch_path: docker/patches/fast_livo2.m6a10-v2c-v8-service-queue.patch
+      v8_delta_patch_sha256: e4a3b2b9d981ec0f740365695f53a662797aaf9400e1d7186551687143c4fd87
+      v9_delta_patch_path: docker/patches/fast_livo2.m6a10-v2c-v9-wallrate.patch
+      v9_delta_patch_sha256: 1cf3067a634a34d5c3a2126f9f495fcb675068cb94edf562eb7e84b1e470146b
+      patch_apply_order:
+      - base_patch
+      - v8_delta_patch
+      - v9_delta_patch
+      algorithm_semantics_changed: false
+      idle_sleep_clock: wall_time_only
+      nominal_loop_rate_hz: 5000
+    image_labels:
+      variant: v9
+      patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+      base_patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+      v8_delta_patch_sha256: e4a3b2b9d981ec0f740365695f53a662797aaf9400e1d7186551687143c4fd87
+      v9_delta_patch_sha256: 1cf3067a634a34d5c3a2126f9f495fcb675068cb94edf562eb7e84b1e470146b
+      consumer_contract: m6a10-v2c-fast-livo2-wallrate-v9
+      service_handshake_contract: m6a10-v2c-fast-livo2-synthetic-lidar-handshake-v1
+      queue_overflow_capability: single_inflight_exact_count_observed
+      consumer_capability: callback_acceptance_eof_service_v1
+    execution:
+      image_tag: m6a10-v2c-v9wallrate-20260823t040642-fast-livo2-benchmark:ros1-pinned
+      image_id: sha256:0686d85da9c789e5d0edf6c0c13921ce7fb87730239356537928a7a2e1d070d0
+      image_digest: sha256:0686d85da9c789e5d0edf6c0c13921ce7fb87730239356537928a7a2e1d070d0
+      status: build_passed_not_executed
+      image_reuse_forbidden: true
+      build_required: false
+      recipe_path: docker/fast_livo2_m6a10_v9.Dockerfile
+      build_entrypoint_path: scripts/build_fast_livo2_m6a10_v9_image.sh
+      network: none
+      rootfs: read_only
+      input_mount_performed: false
+      parent_asset_mount_forbidden: true
+      ground_truth_mount_forbidden: true
+      scorer_mount_forbidden: true
+    build:
+      status: PASS
+      authoritative: true
+      command: env FAST_LIVO2_M6A10_V9_IMAGE_TAG=m6a10-v2c-v9wallrate-20260823t040642-fast-livo2-benchmark:ros1-pinned
+        bash scripts/build_fast_livo2_m6a10_v9_image.sh
+      gate: scripts/preflight_fast_livo2_m6a10_v2c_v9_handshake.py
+      receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v9wallrate-20260823T040642Z/build_receipt.json
+      receipt_sha256: c705c3e53df52db6403d8022fada617f2d8c8ab1ea3e2912a7e587600676a441
+    handshake_preflight:
+      status: PASS
+      script_path: scripts/preflight_fast_livo2_m6a10_v2c_v9_handshake.py
+      script_sha256: baab1cb1911dd0b192b3469e76c24cb36d6dd5788ff2808c3d45f285d9453372
+      input_mount_performed: false
+      host_mounts: []
+      synthetic_message_contract: ouster_pointcloud2_one_lidar_only_v1
+      publish_return_proof: true
+      received_count_exactly_one: true
+      ack_count_exactly_one: true
+      duplicate_ack_must_reject: true
+      callback_latency_bound_seconds: 0.25
+      cross_topic_counts:
+        lidar: 1
+        imu: 0
+        image: 0
+      estimator_claim: false
+      finalize_not_attempted: true
+      limitation: callback dispatch only; no IMU/image prerequisites or estimator
+        result
+      receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v9wallrate-20260823T040642Z/synthetic_live_gate.json
+      receipt_sha256: 9e5aa131e4b9c9650b2f2951dce770d004bf26a65767f624376e4c51b3683e1d
+    feeder:
+      path: scripts/fast_livo2_m6a10_feeder.py
+      sha256: 1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831
+      python_compatibility: python3.8
+    runner:
+      path: scripts/run_fast_livo2_benchmark.py
+      sha256: f7efa0e45eb5849df8ad7b62e5be86d072e14c76ee9edcf00b79cca724b17fd4
+      profile_key: m6a10_fast_livo2_v2c_v9
+      profile_selection_schema: explicit_profile_key_v1
+      phase_entrypoint_path: scripts/fast_livo2_container_run.sh
+      phase_entrypoint_sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
+    watchdog:
+      contract_id: m6a10-fast-livo2-host-watchdog-v2
+      enabled: true
+      max_runtime_seconds: 900
+      term_grace_seconds: 15
+      poll_interval_seconds: 2
+      stats_interval_seconds: 5
+      natural_completion_allowed: true
+      manual_stop_allowed: false
+      manual_retry_allowed: false
+    consumer:
+      expected_messages: 236687
+      expected_topic_counts:
+        lidar: 5793
+        imu: 225102
+        image: 5792
+      maximum_callback_latency_seconds: 0.25
+      maximum_backlog_messages: 100000
+      queue_overflow_observable: true
+      ack_backpressure_verified: true
+    safety:
+      input_only_mount: true
+      ground_truth_mount_exposed: false
+      ground_truth_content_opened: false
+      scorer_invoked: false
+      map_save: false
+      formal_replay_started: false
+    output:
+      root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v9b_formal_replay_20260823T043914Z_agentv9b
+      overwrite_existing: false
+      repetitions: 1
+      result: null

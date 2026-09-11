@@ -12,6 +12,13 @@ numbers below come from
 (NTNU LiDAR Degeneracy Datasets fog/tunnel sequences, plus a HILTI 2022
 exp07 negative-result check). Read that page for the full methodology.
 
+![NTNU tunnel SLAM map: top view and gravity-alignment before/after side view](../lidarslam/images/tunnel_degeneracy_map.png)
+
+On the ~500 m self-similar Fyllingsdalen tunnel, the plain frontend covers
+98.7 m before along-axis degeneracy freezes it. The opt-in presets map the
+whole tunnel — reach **504.5 m**, transverse RMS 1.34 m — and cut fog
+clutter-lock drift 35.6 → 9.6 m, with defaults unchanged.
+
 ## Is your odometry degenerating?
 
 | Symptom | Root cause | Preset | Sensors needed |

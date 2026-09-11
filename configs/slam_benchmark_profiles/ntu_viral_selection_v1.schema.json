@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-ntu-viral-selection-v1",
+  "title": "NTU VIRAL preregistered selection v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "selection_id", "status", "family_id", "partition",
+    "selection_basis", "official_sources", "acquisition", "selected_sequences",
+    "excluded_sequences", "disjointness"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "selection_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["NOT_READY", "PASS", "INVALID"]},
+    "family_id": {"const": "ntu_viral"},
+    "partition": {"const": "historical"},
+    "selection_basis": {"type": "string", "minLength": 1},
+    "official_sources": {"$ref": "#/$defs/sources"},
+    "acquisition": {"$ref": "#/$defs/acquisition"},
+    "selected_sequences": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/selected"}
+    },
+    "excluded_sequences": {
+      "type": "array", "minItems": 1,
+      "items": {"$ref": "#/$defs/excluded"}
+    },
+    "disjointness": {"$ref": "#/$defs/disjointness"}
+  },
+  "$defs": {
+    "url": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "sources": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "project_url", "dataset_repository_url", "ground_truth_repository_url",
+        "evaluation_tutorial_url", "citation", "terms_url", "license_id"
+      ],
+      "properties": {
+        "project_url": {"$ref": "#/$defs/url"},
+        "dataset_repository_url": {"$ref": "#/$defs/url"},
+        "ground_truth_repository_url": {"$ref": "#/$defs/url"},
+        "evaluation_tutorial_url": {"$ref": "#/$defs/url"},
+        "terms_url": {"$ref": "#/$defs/url"},
+        "license_id": {"type": "string", "minLength": 1},
+        "citation": {"type": "string", "minLength": 1},
+        "download_reference_status": {"const": "MOVING_OFFICIAL_REFERENCE"}
+      }
+    },
+    "acquisition": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "recipe_id", "recipe_revision", "materialization", "status",
+        "required_before_execution", "evidence_mount", "candidate_root_relative",
+        "calibration_roles"
+      ],
+      "properties": {
+        "recipe_id": {"type": "string", "minLength": 1},
+        "recipe_revision": {"type": "string", "minLength": 1},
+        "materialization": {"type": "string", "minLength": 1},
+        "status": {"const": "NOT_READY"},
+        "required_before_execution": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "evidence_mount": {"$ref": "#/$defs/evidence_mount"},
+        "candidate_root_relative": {"type": "string", "minLength": 1},
+        "calibration_roles": {
+          "type": "object", "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/download_ref"}
+        }
+      }
+    },
+    "byte_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "input_sha256", "input_size_bytes", "ground_truth_sha256",
+        "ground_truth_size_bytes", "calibration_sha256", "calibration_size_bytes",
+        "validation_status"
+      ],
+      "properties": {
+        "input_sha256": {"type": ["string", "null"]},
+        "input_size_bytes": {"type": ["integer", "null"], "minimum": 1},
+        "ground_truth_sha256": {"type": ["string", "null"]},
+        "ground_truth_size_bytes": {"type": ["integer", "null"], "minimum": 1},
+        "calibration_sha256": {"type": ["string", "null"]},
+        "calibration_size_bytes": {"type": ["integer", "null"], "minimum": 1},
+        "validation_status": {"const": "NOT_READY"}
+      }
+    },
+    "selected": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "sequence_id", "profile_key", "selection_rationale", "environment",
+        "official_size_label", "official_duration_seconds", "expected_files",
+        "supported_systems", "evaluation_eligible", "fresh_eligible",
+        "sensor_contract", "ground_truth_contract", "calibration_contract",
+        "byte_identity", "download_refs"
+      ],
+      "properties": {
+        "sequence_id": {"type": "string", "minLength": 1},
+        "profile_key": {"type": "string", "minLength": 1},
+        "selection_rationale": {"type": "string", "minLength": 1},
+        "environment": {"type": "string", "minLength": 1},
+        "official_size_label": {"type": "string", "minLength": 1},
+        "official_duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+        "expected_files": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "supported_systems": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "evaluation_eligible": {"const": true},
+        "fresh_eligible": {"const": false},
+        "sensor_contract": {"$ref": "#/$defs/sensor"},
+        "ground_truth_contract": {"$ref": "#/$defs/ground_truth"},
+        "calibration_contract": {"$ref": "#/$defs/calibration"},
+        "byte_identity": {"$ref": "#/$defs/byte_identity"},
+        "download_refs": {
+          "type": "object", "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/download_ref"}
+        }
+      }
+    },
+    "sensor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["official_modalities", "topics", "formats", "timestamp_basis", "status"],
+      "properties": {
+        "official_modalities": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "topics": {"type": ["array", "null"], "items": {"type": "string", "minLength": 1}},
+        "formats": {"type": ["array", "null"], "items": {"type": "string", "minLength": 1}},
+        "timestamp_basis": {"type": ["string", "null"]},
+        "status": {"const": "NOT_READY"}
+      }
+    },
+    "ground_truth": {
+      "type": "object", "additionalProperties": false,
+      "required": ["official_method", "frame_convention", "timestamp_basis", "status"],
+      "properties": {
+        "official_method": {"type": "string", "minLength": 1},
+        "frame_convention": {"type": "string", "minLength": 1},
+        "timestamp_basis": {"type": "string", "minLength": 1},
+        "status": {"const": "NOT_READY"}
+      }
+    },
+    "calibration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["expected_artifacts", "frame_convention", "timestamp_basis", "status"],
+      "properties": {
+        "expected_artifacts": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "frame_convention": {"type": "string", "minLength": 1},
+        "timestamp_basis": {"type": "string", "minLength": 1},
+        "status": {"const": "NOT_READY"}
+      }
+    },
+    "excluded": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence_id", "profile_key", "reason", "evaluation_eligible", "fresh_eligible"],
+      "properties": {
+        "sequence_id": {"type": "string", "minLength": 1},
+        "profile_key": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "evaluation_eligible": {"const": false},
+        "fresh_eligible": {"const": false}
+      }
+    },
+    "disjointness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["excluded_training_sequences", "excluded_historical_families", "required_immutable_ids"],
+      "properties": {
+        "excluded_training_sequences": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "excluded_historical_families": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "required_immutable_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "evidence_mount": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "uuid", "filesystem", "label", "require_rw"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "uuid": {"type": "string", "pattern": "^[0-9a-fA-F-]{36}$"},
+        "filesystem": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "require_rw": {"type": "boolean"}
+      }
+    },
+    "download_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["url", "official_primary", "allowed_hosts", "expected_filename", "archive", "expected_member_paths"],
+      "properties": {
+        "url": {"type": ["string", "null"], "format": "uri"},
+        "official_primary": {"const": true},
+        "allowed_hosts": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "expected_filename": {"type": ["string", "null"], "minLength": 1},
+        "archive": {"type": "boolean"},
+        "expected_member_paths": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

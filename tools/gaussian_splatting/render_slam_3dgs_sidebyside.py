@@ -22,10 +22,11 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-import pointcloud_io as pcio
-from render_path import (load_gaussian_ply, path_through_views, ping_pong_indices,
-                         render_frames, scale_intrinsics, write_videos)
-from train_gsplat import load_transforms
+import lidarslam_benchmark_tools.gaussian_splatting.pointcloud_io as pcio
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import (
+    load_gaussian_ply, path_through_views, ping_pong_indices, render_frames,
+    scale_intrinsics, write_videos)
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import load_transforms
 
 
 # Cold-to-warm height ramp (low -> high): indigo, blue, teal, green, yellow, red.

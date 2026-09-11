@@ -186,20 +186,39 @@ def test_docker_command_leaves_cgroup_memory_uncapped_for_process_rss():
     assert '--memory-swap' not in command
 
 
+def test_v2_phase_selection_is_explicit_and_does_not_fake_unpaced_ack():
+    item = {
+        'raw_path': Path('/managed/slots/exp14/source/exp14.bag'),
+        'canonical_path': Path('/managed/slots/exp14/canonical_ros2'),
+    }
+    command, env = RUNNER.docker_command(
+        'ours', item, 'ours:test@sha256:' + 'a' * 64,
+        Path('/M6A_OUTPUT_PLACEHOLDER'),
+        {'schedule_index': 1, 'system': 'ours',
+         'slot': 'fresh_1', 'repetition': 1}, phase_contract='v2-paced')
+    assert env['M6A10_PHASE_CONTRACT_VERSION'] == \
+        'm6a10-online-compute-v2'
+    assert env['M6A10_PHASE_MODE'] == 'paced_1x'
+    assert 'M6A10_ACK_BACKPRESSURE_ENABLED' not in env
+    command, env = RUNNER.docker_command(
+        'ours', item, 'ours:test@sha256:' + 'a' * 64,
+        Path('/M6A_OUTPUT_PLACEHOLDER'),
+        {'schedule_index': 2, 'system': 'ours',
+         'slot': 'fresh_1', 'repetition': 1}, phase_contract='v2-unpaced')
+    assert env['M6A10_PHASE_MODE'] == 'unpaced_ack'
+    assert 'M6A10_ACK_BACKPRESSURE_ENABLED' not in env
+    assert '--network' in command and command[command.index('--network') + 1] == 'none'
+
+
 def test_campaign4_plan_binds_m6a7_process_rss_contract():
     receipt_path = ROOT / 'configs' / 'slam_benchmark_profiles' / (
         'competitive_execution_selection_2026-08.yaml')
     receipt = RUNNER.yaml.safe_load(receipt_path.read_text(encoding='utf-8'))
-    identity = RUNNER.m6a7_contract_identity(receipt)
-    assert identity['primary_metric'] == (
-        'aggregate_process_tree_peak_rss_bytes')
-    assert identity['memory_max'] == 'max'
-    assert identity['docker_client_comparable'] is False
-    assert identity['schedule']['runs'] == 40
-    tampered = json.loads(json.dumps(receipt))
-    tampered['m6a7_process_rss_contract']['memory_max'] = '4g'
-    with pytest.raises(RUNNER.ContractError):
-        RUNNER.m6a7_contract_identity(tampered)
+    # The retained receipt points at historical external M6a7 evidence.  The
+    # current workspace cannot reopen that volume, so the production helper
+    # must fail closed rather than treating absent bytes as a PASS.
+    with pytest.raises(RUNNER.ContractError, match='path/SHA does not match'):
+        RUNNER.m6a7_contract_identity(receipt)
 
 
 def test_runtime_writable_state_is_scoped_to_attempt_output():
@@ -335,13 +354,65 @@ def test_existing_attempt_cannot_be_overwritten(tmp_path):
 def test_expected_output_contract_is_fail_closed():
     assert RUNNER.expected_outputs('ours', Path('/out')) == [
         Path('/out/traj_raw.tum'), Path('/out/container_memory.json'),
-        Path('/out/container_process_rss.json')]
+        Path('/out/container_process_rss.json'), Path('/out/phase_evidence.json')]
+
+
+def test_phase_evidence_is_primary_and_missing_is_invalid(tmp_path):
+    assert RUNNER.parse_phase_evidence(tmp_path / 'missing.json')['valid'] is False
+    value = {
+        'schema_version': 1,
+        'contract_version': 'm6a10-online-compute-v1',
+        'events_monotonic_ns': {
+            name: (index + 1) * 1_000_000_000
+            for index, name in enumerate(
+                ('startup_start', 'startup_end', 'input_start', 'input_end',
+                 'drain_start', 'drain_end', 'postprocess_start',
+                 'postprocess_end', 'save_start', 'save_end',
+                 'shutdown_start', 'shutdown_end'))},
+        'input_duration_seconds': 10.0,
+        'maximum_trajectory_end_gap_seconds': 0.25,
+        'coverage': {
+            'status': 'verified', 'mode': 'trajectory_timestamp_coverage',
+            'complete': True, 'dropped_messages': 0, 'queue_overflow': 0,
+            'last_input_timestamp_seconds': 109.9,
+            'required_end_timestamp_seconds': 110.0,
+            'end_gap_seconds': 0.1,
+        },
+        'resource': {
+            'status': 'verified', 'cpu_user_seconds': 1.0,
+            'cpu_system_seconds': 1.0, 'io_input_operations': 1,
+            'io_output_operations': 1,
+        },
+        'exit_status': 0,
+    }
+    path = tmp_path / 'phase_evidence.json'
+    path.write_text(json.dumps(value), encoding='utf-8')
+    checked = RUNNER.parse_phase_evidence(path)
+    assert checked['valid'] is True
+    assert checked['runtime']['online_compute_rtf'] == pytest.approx(0.3)
+    mismatched = RUNNER.parse_phase_evidence(
+        path, expected_contract_version=RUNNER.PHASE_CONTRACT_VERSION_V2,
+        expected_phase_mode='paced_1x')
+    assert mismatched['valid'] is False
+    assert 'does not match scheduled mode' in mismatched['reason']
+    value['coverage']['dropped_messages'] = 1
+    path.write_text(json.dumps(value), encoding='utf-8')
+    assert RUNNER.parse_phase_evidence(path)['valid'] is False
     assert RUNNER.expected_outputs('glim_cpu', Path('/out')) == [
         Path('/out/dump/traj_lidar.txt'), Path('/out/container_memory.json'),
-        Path('/out/container_process_rss.json')]
+        Path('/out/container_process_rss.json'), Path('/out/phase_evidence.json')]
     assert RUNNER.expected_outputs('fast_livo2', Path('/out')) == [
         Path('/out/odometry.csv'), Path('/out/container_memory.json'),
-        Path('/out/container_process_rss.json')]
+        Path('/out/container_process_rss.json'), Path('/out/phase_evidence.json')]
+
+
+def test_v2_ours_requires_application_consumer_evidence():
+    assert RUNNER.expected_outputs(
+        'ours', Path('/out'), RUNNER.PHASE_CONTRACT_VERSION_V2) == [
+            Path('/out/traj_raw.tum'), Path('/out/container_memory.json'),
+            Path('/out/container_process_rss.json'),
+            Path('/out/phase_evidence.json'),
+            Path('/out/consumer_evidence.json')]
 
 
 def _valid_process_rss_evidence():

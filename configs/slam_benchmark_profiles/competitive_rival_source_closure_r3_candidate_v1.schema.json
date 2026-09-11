@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-rival-source-closure-r3-candidate-v1",
+  "title": "Non-promoting competitive rival source closure r3 candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "candidate_kind", "candidate_id", "status",
+    "benchmark_eligible", "claim_eligible", "candidate_hash_kind",
+    "candidate_identity_sha256", "r2_lineage", "profile_binding",
+    "r2_selection_binding", "r2_inherited_closure",
+    "current_runner_bindings", "current_recipe_bindings",
+    "legal_capture_contract", "legal_status", "source_provenance",
+    "promotion_policy"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "candidate_kind": {"const": "competitive_rival_source_closure_r3_candidate_v1"},
+    "candidate_id": {"const": "competitive-rival-source-closure-2026-08-r3-candidate"},
+    "status": {"const": "NOT_READY"},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "candidate_hash_kind": {"const": "canonical_competitive_rival_source_closure_r3_candidate_sha256_v1"},
+    "candidate_identity_sha256": {"$ref": "#/$defs/sha"},
+    "r2_lineage": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "closure_id", "closure_revision", "closure_identity_hash_kind",
+        "closure_identity_sha256", "r2_selection_path", "r2_selection_id",
+        "r2_selection_sha256", "historical_selection_path",
+        "historical_selection_sha256", "supersedes_status"
+      ],
+      "properties": {
+        "closure_id": {"const": "competitive-rival-source-closure-2026-08-r2"},
+        "closure_revision": {"const": 2},
+        "closure_identity_hash_kind": {"const": "canonical_rival_source_closure_identity_sha256_v1"},
+        "closure_identity_sha256": {"$ref": "#/$defs/sha"},
+        "r2_selection_path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml"},
+        "r2_selection_id": {"const": "competitive-execution-selection-2026-08-r2"},
+        "r2_selection_sha256": {"$ref": "#/$defs/sha"},
+        "historical_selection_path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml"},
+        "historical_selection_sha256": {"$ref": "#/$defs/sha"},
+        "supersedes_status": {"const": "R2_IMMUTABLE_NOT_REWRITTEN"}
+      }
+    },
+    "profile_binding": {"$ref": "#/$defs/profileBinding"},
+    "r2_selection_binding": {"$ref": "#/$defs/r2SelectionBinding"},
+    "r2_inherited_closure": {"$ref": "#/$defs/inheritedClosure"},
+    "current_runner_bindings": {"$ref": "#/$defs/runnerBindings"},
+    "current_recipe_bindings": {"$ref": "#/$defs/recipeBindings"},
+    "legal_capture_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "producer", "status", "auto_review"],
+      "properties": {
+        "schema": {"$ref": "#/$defs/captureBinding"},
+        "producer": {"$ref": "#/$defs/captureBinding"},
+        "status": {"const": "NOT_READY_EXTERNAL_REVIEW_REQUIRED"},
+        "auto_review": {"const": false}
+      }
+    },
+    "legal_status": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "blockers", "external_review_required", "package_metadata_is_not_license_text"],
+      "properties": {
+        "status": {"const": "NOT_READY"},
+        "blockers": {
+          "type": "array", "const": [
+            "glim_ros2_license_text_missing",
+            "fast_livo2_license_declaration_conflict",
+            "rpg_vikit_license_artifacts_incomplete",
+            "sophus_license_artifact_missing",
+            "external_custodian_legal_review_required"
+          ]
+        },
+        "external_review_required": {"const": true},
+        "package_metadata_is_not_license_text": {"const": true}
+      }
+    },
+    "source_provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "remote_observation", "execution"],
+      "properties": {
+        "status": {"const": "CURRENT_BYTES_REBOUND_NOT_LEGAL_REVIEWED"},
+        "remote_observation": {"const": "NOT_RUN"},
+        "execution": {"const": "NOT_RUN"}
+      }
+    },
+    "promotion_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["active_profile_switch", "r2_immutable", "requires_external_reviewed_packet", "requires_profile_canonical_reseal", "handoff_status", "benchmark_eligible_until_review"],
+      "properties": {
+        "active_profile_switch": {"const": false},
+        "r2_immutable": {"const": true},
+        "requires_external_reviewed_packet": {"const": true},
+        "requires_profile_canonical_reseal": {"const": true},
+        "handoff_status": {"const": "UNSIGNED_REVIEW_REQUIRED"},
+        "benchmark_eligible_until_review": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relativePath": {
+      "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+    },
+    "profileBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "canonical_hash_kind"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_hash_kind": {"const": "canonical_profile_sha256_v1"}
+      }
+    },
+    "r2SelectionBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "selection_id", "status", "closure_id", "closure_revision", "closure_identity_hash_kind", "closure_identity_sha256"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "selection_id": {"const": "competitive-execution-selection-2026-08-r2"},
+        "status": {"const": "CURRENT"},
+        "closure_id": {"const": "competitive-rival-source-closure-2026-08-r2"},
+        "closure_revision": {"const": 2},
+        "closure_identity_hash_kind": {"const": "canonical_rival_source_closure_identity_sha256_v1"},
+        "closure_identity_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "runnerBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "hash_kind", "r2_sha256", "current_sha256", "status"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "hash_kind": {"const": "file_sha256"},
+        "r2_sha256": {"$ref": "#/$defs/sha"},
+        "current_sha256": {"$ref": "#/$defs/sha"},
+        "status": {"const": "CURRENT_BYTES_REBOUND"}
+      }
+    },
+    "runnerBindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["glim", "fast_livo2"],
+      "properties": {
+        "glim": {"$ref": "#/$defs/runnerBinding"},
+        "fast_livo2": {"$ref": "#/$defs/runnerBinding"}
+      }
+    },
+    "recipeArtifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "path", "hash_kind", "r2_sha256", "current_sha256", "status"],
+      "properties": {
+        "role": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "path_kind": {"const": "pinned_upstream_archive_relative_path"},
+        "hash_kind": {"type": "string", "enum": ["file_sha256", "canonical_tree_sha256", "upstream_archive_file_sha256"]},
+        "r2_sha256": {"$ref": "#/$defs/sha"},
+        "current_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "source": {"type": "string", "minLength": 1},
+        "source_role": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["CURRENT_BYTES_REBOUND", "CURRENT_BYTES_MATCH", "PINNED_UPSTREAM_ARCHIVE_UNOBSERVED"]}
+      }
+    },
+    "recipeSystem": {
+      "type": "object", "additionalProperties": false,
+      "required": ["r2_recipe_sha256", "artifacts"],
+      "properties": {
+        "r2_recipe_sha256": {"$ref": "#/$defs/sha"},
+        "artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/recipeArtifact"}}
+      }
+    },
+    "recipeBindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["glim", "fast_livo2"],
+      "properties": {
+        "glim": {"$ref": "#/$defs/recipeSystem"},
+        "fast_livo2": {"$ref": "#/$defs/recipeSystem"}
+      }
+    },
+    "captureBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "status"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "status": {"const": "CONTRACT_BOUND_NOT_REVIEWED"}
+      }
+    },
+    "inheritedClosure": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema_version", "required", "status", "status_reason",
+        "closure_id", "closure_revision", "closure_identity_hash_kind",
+        "active_selection", "legal_policy", "required_systems",
+        "archive_hash_kind", "source_tree_hash_kind", "revision_policy",
+        "official_source_policy", "rivals"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "required": {"const": true},
+        "status": {"enum": ["READY", "NOT_READY", "INVALID"]},
+        "status_reason": {"type": "array", "items": {"type": "string"}},
+        "closure_id": {"type": "string", "minLength": 1},
+        "closure_revision": {"type": "integer", "minimum": 1},
+        "closure_identity_hash_kind": {"const": "canonical_rival_source_closure_identity_sha256_v1"},
+        "active_selection": {"type": "object"},
+        "legal_policy": {"type": "object"},
+        "required_systems": {"type": "array", "minItems": 1, "uniqueItems": true},
+        "archive_hash_kind": {"type": "string", "minLength": 1},
+        "source_tree_hash_kind": {"type": "string", "minLength": 1},
+        "revision_policy": {"type": "string", "minLength": 1},
+        "official_source_policy": {"type": "string", "minLength": 1},
+        "rivals": {"type": "object", "minProperties": 1}
+      }
+    }
+  }
+}

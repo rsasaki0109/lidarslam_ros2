@@ -1,0 +1,139 @@
+# FAST-LIVO2 M6A10 v15 additive formal candidate.
+#
+# This is a fail-closed, unauthorized profile.  It binds the v15 schema-3
+# feeder image and the read-only identity/persistence evidence, but it does
+# not authorize a bag replay or any GT/scoring/map operation.
+name: fast_livo2_m6a10_v2c_v15_formal_candidate
+schema_version: 1
+status: V15_FORMAL_CANDIDATE_UNAUTHORIZED
+formal_replay_forbidden: true
+formal_replay_authorized: false
+formal_replay_started: false
+replay_count: 0
+input_opened: false
+ground_truth_content_opened: false
+scorer_invoked: false
+map_saved: false
+
+formal_candidate:
+  contract_version: m6a10-v15-formal-candidate-v1
+  status: UNAUTHORIZED_NOT_RUN
+  authorization_required: true
+  feeder_root_cause_fixed: false
+  feeder_underlying_nonzero_cause: unknown
+  correction_scope: schema2_schema3_dispatch_and_persistence_identity
+  predecessor_profile: configs/slam_benchmark_profiles/fast_livo2_m6a10_v15_formal_ready.yaml
+  predecessor_profile_sha256: 070fb2b762881a7126caf021c7a98ab59c8fa55e10be220b6482d7f2ef97899f
+  launcher_hash_self_reference_omitted: true
+  builder_original_captured_before_patch: true
+  builder_called_exactly_once: true
+  scoped_restore_on_exception: true
+  popen_called_exactly_once: true
+
+image:
+  tag: m6a10-v2c-v15-schema3-feeder-20260823t203230z-correction-fast-livo2-benchmark:ros1-pinned
+  id: sha256:f103a0f61f7ec9b19cbae02da6c6b8a28f17475dbc3f51fba3206b954ca4ca7a
+  base_id: sha256:03dfa4c3e7c3f1ea9160ba2276ea23bfbdef43d441bc8afc628f907bd50743a7
+  status: BUILT_NOT_FORMALLY_AUTHORIZED
+
+source:
+  v15_feeder_path: scripts/fast_livo2_m6a10_v15_feeder.py
+  v15_feeder_sha256: 6921d159ca4c45bcecfaf9db7fbd6f8a3d92783d100a51ba3ca76abbaf477bb7
+  v15_wrapper_path: scripts/fast_livo2_m6a10_v15_formal_container_run.sh
+  v15_wrapper_sha256: d3ab90871422100aa2d89e2469ac413c69346300e2766cc2cc88096e9b45e8f2
+  v15_dockerfile_path: docker/fast_livo2_m6a10_v15.Dockerfile
+  v15_dockerfile_sha256: b78ae56a3485e1d02c00221389421b258cfe92fd04b84112f4cf097919f082c9
+  v15_build_script_path: scripts/build_fast_livo2_m6a10_v15_image.sh
+  v15_build_script_sha256: 67b5d33d8e290bd392bfe5dddda5117cef9ca2d92c4ec866966f30bfa646711a
+  v15_fixture_path: graph_based_slam/test/fixtures/fast_livo2_m6a10_v12_consumer_status_pass.json
+  v15_fixture_sha256: a30a5d50ea9a02fe9d7e0edc230801b33ee57676a06ac5e3a9fe30d0eede4a0a
+  v12_patch_path: docker/patches/fast_livo2.m6a10-v2c-v12-nonlidar-boundary-transport.patch
+  v12_patch_sha256: 39c77535a7557365dac6b0f2c99849038b29670a57c3101be3a39138317c6333
+
+evidence:
+  build_receipt:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v15_build_20260823T203230Z_agentv15_correction/build_identity.receipt.json
+    sha256: 5005c8d392a8591bdfcda8e1de31be3a550a39c61ed22a3ae48455e1a05bce40
+    sidecar_sha256: 6940f5762e87bf9f08752b950f12de2ae8423c9b0217841e212af56f61a04c65
+    status: PASS
+  no_input_pass:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v15_no_input_correction_20260823T204349Z_agentv15/no_input_correction.receipt.json
+    sha256: e5e1703b6cfcd6b10c9703af06f7d89ede2c638519b285d3ae12152b3e63b5ff
+    sidecar_sha256: d2cf11c36fb203d3972daeef9f9c2f0fe462a82dfac19070a822c6672fb086a3
+    status: PASS
+  prior_no_input_fail:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v15_build_20260823T203230Z_agentv15_correction/no_input_identity.receipt.json
+    sha256: 36782a546e558a537619f183599112354d547f0fd0a70f06c4618ec76aa5a4de
+    sidecar_sha256: 197ee62c79b397d9f7ef6c6d6be40f1063584dea7cc69ef5c47558991b52320f
+    failure_kind: ROS_MASTER_URI_UNSET
+    status: FAIL_CLOSED
+  prior_validator_fail:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v15_no_input_correction_20260823T203806Z_agentv15/no_input_correction.receipt.json
+    sha256: 804620192884f097de5fbc4e7946c789af2237c679f38d1ffbdecf616a28aca8
+    sidecar_sha256: 581f9835c23a200f2a651ded025e3fe783371c4e12ebb334b13b0529d4e0ed7a
+    failure_kind: TMPFS_VALIDATION_MODEL_MISMATCH
+    status: FAIL_CLOSED
+
+input_contract:
+  path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+  bytes: 11290464091
+  sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+  expected_messages: 236687
+  expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+  required_end_timestamp_seconds: 1623491515.148352
+  opened: false
+  mount_performed: false
+
+phase:
+  schema_version: 3
+  contract_version: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+  mode: unpaced_ack
+  maximum_end_gap_seconds: 0.25
+  required_end_timestamp_seconds: 1623491515.148352
+  sensor_duration_seconds: 579.278127298
+  transport:
+    contract_version: m6a10-v12-callback-ack-transport-outstanding-v1
+    callback_schema_version: 3
+    maximum_allowed_outstanding_messages: 1
+    mapper_internal_deque_is_diagnostic_only: true
+  formal_replay_forbidden: true
+
+mount_contract:
+  network: none
+  rootfs: read_only
+  input_mounts: 1
+  output_destination: /out
+  output_readonly: false
+  output_tmpfs: false
+  wrapper_readonly: true
+  feeder_readonly: true
+  duplicate_output_destinations: false
+  extra_capabilities: false
+  shell_entrypoint: false
+  explicit_ros_environment:
+    ROS_MASTER_URI: http://127.0.0.1:11311
+    ROS_IP: 127.0.0.1
+    ROS_HOSTNAME: 127.0.0.1
+    ROS_HOME: /out/ros_home
+    ROS_LOG_DIR: /out/ros_logs
+
+execution:
+  status: CANDIDATE_NOT_RUN
+  formal_replay_forbidden: true
+  one_start: true
+  retry: false
+  manual_stop: false
+  watchdog_seconds: 1200
+  monitor_interval_seconds: 4.0
+  monitor_continuous: true
+  feeder_persistence_required: true
+  schema3_callback_required: true
+  source_conservation_required: true
+  no_docker_test_execution: true
+
+safety:
+  formal_replay_started: false
+  input_opened: false
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false

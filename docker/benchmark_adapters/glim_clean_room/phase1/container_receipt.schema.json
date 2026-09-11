@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://lidarslam.local/schemas/glim-clean-room-container-receipt-v1.json",
+  "title": "GLIM clean-room Phase 1 container attempt receipt",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "receipt_kind",
+    "candidate_id",
+    "candidate_revision",
+    "status",
+    "benchmark_execution",
+    "dataset_execution",
+    "gt_execution",
+    "scorer_execution",
+    "attempt",
+    "recipe",
+    "base_image",
+    "image",
+    "postrun"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "receipt_kind": {"const": "glim_clean_room_phase1_container_attempt"},
+    "candidate_id": {"const": "glim-clean-room-phase1-core-public-api-v2"},
+    "candidate_revision": {"const": "r2"},
+    "status": {"enum": ["PASS", "FAIL_CLOSED"]},
+    "receipt_status": {
+      "enum": ["NEW_ATTEMPT", "FINALIZED_EXISTING", "CORRECTED_SEALED"]
+    },
+    "benchmark_execution": {"const": "FORBIDDEN"},
+    "dataset_execution": {"const": "FORBIDDEN"},
+    "gt_execution": {"const": "FORBIDDEN"},
+    "scorer_execution": {"const": "FORBIDDEN"},
+    "attempt": {
+      "type": "object",
+      "required": ["build_exit"],
+      "properties": {"build_exit": {"type": "integer", "minimum": 0}}
+    },
+    "base_image": {"type": "object"},
+    "image": {
+      "type": "object",
+      "required": ["labels"],
+      "properties": {
+        "labels": {
+          "type": "object",
+          "required": ["org.opencontainers.image.benchmark_eligible"],
+          "properties": {
+            "org.opencontainers.image.benchmark_eligible": {"const": "false"}
+          }
+        }
+      }
+    },
+    "postrun": {
+      "type": "object",
+      "required": ["exit", "ctest_all", "ctest_link_smoke", "ldd_unresolved"],
+      "properties": {
+        "exit": {"type": "integer", "minimum": 0},
+        "ctest_all": {
+          "type": "object",
+          "required": ["total", "passed", "failed"],
+          "properties": {
+            "total": {"const": 3},
+            "passed": {"const": 3},
+            "failed": {"const": 0}
+          }
+        },
+        "ctest_link_smoke": {
+          "type": "object",
+          "required": ["total", "passed", "failed"],
+          "properties": {
+            "total": {"const": 1},
+            "passed": {"const": 1},
+            "failed": {"const": 0}
+          }
+        },
+        "ldd_unresolved": {"const": 0}
+      }
+    },
+    "supersedes_receipt": {
+      "type": "object",
+      "required": ["path", "sha256", "reason"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"receipt_status": {"const": "CORRECTED_SEALED"}}},
+      "then": {"required": ["supersedes_receipt"]}
+    },
+    {
+      "if": {"properties": {"status": {"const": "PASS"}}},
+      "then": {
+        "properties": {
+          "attempt": {"properties": {"build_exit": {"const": 0}}},
+          "postrun": {
+            "properties": {
+              "exit": {"const": 0},
+              "ctest_all": {"required": ["total", "passed", "failed"]},
+              "ctest_link_smoke": {"required": ["total", "passed", "failed"]},
+              "ldd_unresolved": {"const": 0}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

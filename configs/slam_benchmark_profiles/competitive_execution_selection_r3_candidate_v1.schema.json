@@ -1,0 +1,251 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive_execution_selection_r3_candidate_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "candidate_kind", "candidate_id", "status",
+    "benchmark_eligible", "claim_eligible", "candidate_hash_kind",
+    "candidate_identity_sha256", "profile_binding", "r2_selection_binding",
+    "prior_campaign_lineage", "required_systems", "release_binding",
+    "thread_policy_binding", "source_bindings", "system_bindings",
+    "external_closures", "source_provenance", "blockers", "promotion_policy"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "candidate_kind": {"const": "competitive_execution_selection_r3_candidate_v1"},
+    "candidate_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"},
+    "status": {"const": "NOT_READY"},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "candidate_hash_kind": {"const": "canonical_competitive_execution_selection_r3_candidate_sha256_v1"},
+    "candidate_identity_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_binding": {"$ref": "#/definitions/profileBinding"},
+    "r2_selection_binding": {"$ref": "#/definitions/r2Binding"},
+    "prior_campaign_lineage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "receipt_kind", "recorded_status", "promotion_status", "superseded_by"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml"},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "receipt_kind": {"const": "competitive_execution_selection"},
+        "recorded_status": {"const": "ready"},
+        "promotion_status": {"const": "REJECTED_HISTORICAL_INVALID"},
+        "superseded_by": {"const": "competitive-execution-selection-2026-08-r2"}
+      }
+    },
+    "required_systems": {
+      "type": "array", "const": ["ours", "glim", "fast_livo2"]
+    },
+    "release_binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["release", "status"],
+      "properties": {
+        "release": {"const": "Release"},
+        "status": {"const": "RECORDED_NOT_READY_EXTERNAL_EXECUTION"}
+      }
+    },
+    "thread_policy_binding": {"$ref": "#/definitions/threadPolicy"},
+    "source_bindings": {"$ref": "#/definitions/sourceBindings"},
+    "system_bindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ours", "glim", "fast_livo2"],
+      "properties": {
+        "ours": {"$ref": "#/definitions/systemBinding"},
+        "glim": {"$ref": "#/definitions/systemBinding"},
+        "fast_livo2": {"$ref": "#/definitions/systemBinding"}
+      }
+    },
+    "external_closures": {"$ref": "#/definitions/externalClosures"},
+    "source_provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "reason"],
+      "properties": {
+        "status": {"const": "DIRTY_EXTERNAL_REVIEW_REQUIRED"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "blockers": {
+      "type": "array", "minItems": 9, "maxItems": 9, "uniqueItems": true,
+      "items": {"type": "string", "enum": [
+        "active_profile_points_to_historical_execution_receipt",
+        "historical_selection_receipt_rejected_after_r2_closure_revision",
+        "rival_source_closure_not_ready_legal_provenance",
+        "dataset_source_closure_not_ready_revalidation_or_pin",
+        "fresh_holdout_authorization_not_ready_external_custodian",
+        "machine_identity_not_ready_external_execution_artifact",
+        "image_identity_not_ready_external_inspect",
+        "toolchain_identity_not_ready_external_capture",
+        "source_worktree_requires_external_review"
+      ]}
+    },
+    "promotion_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["active_profile_switch", "historical_receipts_immutable", "requires_separately_reviewed_ready_receipt", "requires_profile_canonical_reseal", "handoff_status"],
+      "properties": {
+        "active_profile_switch": {"const": false},
+        "historical_receipts_immutable": {"const": true},
+        "requires_separately_reviewed_ready_receipt": {"const": true},
+        "requires_profile_canonical_reseal": {"const": true},
+        "handoff_status": {"const": "UNSIGNED_REVIEW_REQUIRED"}
+      }
+    }
+  },
+  "definitions": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relativePath": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"},
+    "fileBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/definitions/relativePath"},
+        "sha256": {"$ref": "#/definitions/sha"}
+      }
+    },
+    "profileBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "canonical_hash_kind"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "canonical_sha256": {"$ref": "#/definitions/sha"},
+        "canonical_hash_kind": {"const": "canonical_profile_sha256_v1"}
+      }
+    },
+    "r2Binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "canonical_sha256", "selection_id", "status", "closure_id", "closure_revision", "closure_identity_hash_kind", "closure_identity_sha256"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml"},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "canonical_sha256": {"$ref": "#/definitions/sha"},
+        "selection_id": {"const": "competitive-execution-selection-2026-08-r2"},
+        "status": {"const": "CURRENT"},
+        "closure_id": {"const": "competitive-rival-source-closure-2026-08-r2"},
+        "closure_revision": {"const": 2},
+        "closure_identity_hash_kind": {"const": "canonical_rival_source_closure_identity_sha256_v1"},
+        "closure_identity_sha256": {"$ref": "#/definitions/sha"}
+      }
+    },
+    "threadPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "required_keys", "values", "canonical_sha256"],
+      "properties": {
+        "status": {"const": "RECORDED_NOT_READY_EXTERNAL_MACHINE"},
+        "required_keys": {"const": ["cpu_affinity", "max_threads", "omp_num_threads", "openblas_num_threads", "mkl_num_threads", "tbb_num_threads", "accelerator_policy"]},
+        "values": {
+          "type": "object", "additionalProperties": false,
+          "required": ["cpu_affinity", "max_threads", "omp_num_threads", "openblas_num_threads", "mkl_num_threads", "tbb_num_threads", "accelerator_policy"],
+          "properties": {
+            "cpu_affinity": {"const": [0, 1, 2, 3, 4, 5, 6, 7]},
+            "max_threads": {"const": 8}, "omp_num_threads": {"const": 8},
+            "openblas_num_threads": {"const": 8}, "mkl_num_threads": {"const": 8},
+            "tbb_num_threads": {"const": 8}, "accelerator_policy": {"const": "cpu_only"}
+          }
+        },
+        "canonical_sha256": {"$ref": "#/definitions/sha"}
+      }
+    },
+    "sourceRole": {
+      "type": "object", "additionalProperties": false,
+      "patternProperties": {"^[a-z][a-z0-9_]*$": {"$ref": "#/definitions/fileBinding"}}
+    },
+    "sourceBindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runner", "scorer", "memory"],
+      "properties": {
+        "runner": {"$ref": "#/definitions/runnerSources"},
+        "scorer": {"$ref": "#/definitions/scorerSources"},
+        "memory": {"$ref": "#/definitions/memorySources"}
+      }
+    },
+    "runnerSources": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ours", "ours_entrypoint", "glim", "glim_entrypoint", "fast_livo2", "fast_livo2_entrypoint", "gt_blind_driver"],
+      "properties": {
+        "ours": {"$ref": "#/definitions/fileBinding"}, "ours_entrypoint": {"$ref": "#/definitions/fileBinding"},
+        "glim": {"$ref": "#/definitions/fileBinding"}, "glim_entrypoint": {"$ref": "#/definitions/fileBinding"},
+        "fast_livo2": {"$ref": "#/definitions/fileBinding"}, "fast_livo2_entrypoint": {"$ref": "#/definitions/fileBinding"},
+        "gt_blind_driver": {"$ref": "#/definitions/fileBinding"}
+      }
+    },
+    "scorerSources": {
+      "type": "object", "additionalProperties": false,
+      "required": ["trajectory", "map_quality", "paired_map_regression", "sequence_gate", "suite_gate", "result_composer"],
+      "properties": {
+        "trajectory": {"$ref": "#/definitions/fileBinding"}, "map_quality": {"$ref": "#/definitions/fileBinding"},
+        "paired_map_regression": {"$ref": "#/definitions/fileBinding"}, "sequence_gate": {"$ref": "#/definitions/fileBinding"},
+        "suite_gate": {"$ref": "#/definitions/fileBinding"}, "result_composer": {"$ref": "#/definitions/fileBinding"}
+      }
+    },
+    "memorySources": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sampler", "helper", "gate"],
+      "properties": {
+        "sampler": {"$ref": "#/definitions/fileBinding"}, "helper": {"$ref": "#/definitions/fileBinding"},
+        "gate": {"$ref": "#/definitions/fileBinding"}
+      }
+    },
+    "systemBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile_image_pointer", "image_digest", "image_status", "toolchain_fingerprint", "toolchain_status", "release"],
+      "properties": {
+        "profile_image_pointer": {"type": "string", "minLength": 1},
+        "image_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "image_status": {"const": "NOT_READY_EXTERNAL_IMAGE_REVALIDATION"},
+        "toolchain_fingerprint": {"type": ["null", "string"]},
+        "toolchain_status": {"const": "NOT_READY_EXTERNAL_IMAGE_REVALIDATION"},
+        "release": {"const": "Release"}
+      }
+    },
+    "externalClosures": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rival_source", "dataset_source", "fresh_holdout_authorization", "machine_identity", "image_identity", "toolchain_identity"],
+      "properties": {
+        "rival_source": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "identity", "selection_path", "selection_file_sha256", "legal_status"],
+          "properties": {
+            "status": {"const": "NOT_READY"}, "identity": {"type": "object"},
+            "selection_path": {"$ref": "#/definitions/relativePath"}, "selection_file_sha256": {"$ref": "#/definitions/sha"},
+            "legal_status": {"const": "BLOCKED"}
+          }
+        },
+        "dataset_source": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "section_sha256", "selection_path", "selection_file_sha256", "selection_schema_path", "selection_schema_sha256", "reviewed_pin_status"],
+          "properties": {
+            "status": {"const": "NOT_READY"}, "section_sha256": {"$ref": "#/definitions/sha"},
+            "selection_path": {"$ref": "#/definitions/relativePath"}, "selection_file_sha256": {"$ref": "#/definitions/sha"},
+            "selection_schema_path": {"$ref": "#/definitions/relativePath"}, "selection_schema_sha256": {"$ref": "#/definitions/sha"},
+            "reviewed_pin_status": {"const": "NOT_CONFIGURED"}
+          }
+        },
+        "fresh_holdout_authorization": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "section_sha256", "external_attestation_status", "required_systems", "run_count"],
+          "properties": {
+            "status": {"const": "NOT_READY"}, "section_sha256": {"$ref": "#/definitions/sha"},
+            "external_attestation_status": {"const": "NOT_READY"},
+            "required_systems": {"const": ["ours", "glim", "fast_livo2"]}, "run_count": {"const": 3}
+          }
+        },
+        "machine_identity": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "path", "sha256", "reason"],
+          "properties": {"status": {"const": "NOT_READY"}, "path": {"type": "null"}, "sha256": {"type": "null"}, "reason": {"type": "string", "minLength": 1}}
+        },
+        "image_identity": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "systems", "required_evidence"],
+          "properties": {"status": {"const": "NOT_READY_EXTERNAL_REVALIDATION"}, "systems": {"const": ["ours", "glim", "fast_livo2"]}, "required_evidence": {"type": "string", "minLength": 1}}
+        },
+        "toolchain_identity": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "required_evidence", "fingerprints"],
+          "properties": {"status": {"const": "NOT_READY_EXTERNAL_REVALIDATION"}, "required_evidence": {"type": "string", "minLength": 1}, "fingerprints": {"const": {"ours": null, "glim": null, "fast_livo2": null}}}
+        }
+      }
+    }
+  }
+}

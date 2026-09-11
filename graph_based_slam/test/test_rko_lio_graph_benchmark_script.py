@@ -34,9 +34,19 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 
+import yaml
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BENCHMARK_SCRIPT = REPO_ROOT / 'scripts' / 'run_rko_lio_graph_benchmark.sh'
+COMPETITIVE_RKO_CONFIG = (
+    REPO_ROOT / 'configs' / 'hilti2022' /
+    'rko_lio_hilti2022_pandar_competitive_v2.yaml'
+)
+PIECEWISE_RKO_CONFIG = (
+    REPO_ROOT / 'configs' / 'hilti2022' /
+    'rko_lio_hilti2022_pandar_competitive_piecewise_v1.yaml'
+)
 
 
 def _run_benchmark(*args: str) -> subprocess.CompletedProcess[str]:
@@ -73,8 +83,50 @@ def test_rko_lio_benchmark_help_exits_successfully():
 def test_trajectory_only_mode_uses_full_dump_as_explicit_passthrough():
     script = BENCHMARK_SCRIPT.read_text(encoding='utf-8')
     assert 'find "$OUTPUT_DIR" -mindepth 2 -maxdepth 2' in script
+    assert 'Authoritative full-rate trajectory:' in script
+    assert 'benchmark expected exactly one authoritative full-rate TUM dump' in script
     assert 'Trajectory-only passthrough from full-rate dump' in script
     assert 'cp "${BACKEND_TUMS[0]}" "$RAW_TUM"' in script
+
+
+def test_installed_launch_target_uses_ros2_package_and_file_arguments():
+    script = BENCHMARK_SCRIPT.read_text(encoding='utf-8')
+
+    assert 'RKO_LAUNCH_TARGET=(lidarslam rko_lio_slam.launch.py)' in script
+    assert 'ros2 launch "${RKO_LAUNCH_TARGET[@]}"' in script
+    assert 'RKO_LAUNCH_TARGET="lidarslam/rko_lio_slam.launch.py"' not in script
+
+
+def test_ordinary_completion_does_not_treat_pending_as_v2_corruption():
+    script = BENCHMARK_SCRIPT.read_text(encoding='utf-8')
+    ordinary_branch = script.split(
+        '    else\n      if [[ -s "$RKO_RESULT_TUM" ]]; then', 1)[1]
+    ordinary_branch = ordinary_branch.split(
+        '    fi\n\n    if [[ -n "$LAUNCH_PID" ]]', 1)[0]
+
+    assert 'if offline_completion_recorded; then' in ordinary_branch
+    assert 'v2 consumer evidence is invalid or malformed' not in ordinary_branch
+    assert 'completion_state' not in ordinary_branch
+
+
+def test_sparse_graph_path_is_densified_before_scoring():
+    script = BENCHMARK_SCRIPT.read_text(encoding='utf-8')
+
+    assert 'CORRECTED_SPARSE_TUM="${OUTPUT_DIR}/traj_corrected_sparse.tum"' in script
+    assert 'densify_corrected_trajectory.py' in script
+    assert '--corrected "$CORRECTED_SPARSE_TUM"' in script
+    assert '--output "$CORRECTED_TUM"' in script
+    assert 'dense corrected trajectory pose count differs' in script
+
+
+def test_piecewise_candidate_changes_exactly_one_estimator_knob():
+    baseline = yaml.safe_load(COMPETITIVE_RKO_CONFIG.read_text(encoding='utf-8'))
+    candidate = yaml.safe_load(PIECEWISE_RKO_CONFIG.read_text(encoding='utf-8'))
+
+    assert candidate['piecewise_gyro_deskew'] is True
+    candidate_without_piecewise = dict(candidate)
+    candidate_without_piecewise.pop('piecewise_gyro_deskew')
+    assert candidate_without_piecewise == baseline
 
 
 def test_quiet_completion_requires_substantial_bag_progress():

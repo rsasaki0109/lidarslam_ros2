@@ -23,7 +23,7 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-import drive_env
+import lidarslam_benchmark_tools.gaussian_splatting.drive_env as drive_env
 
 
 def load_traj_xy(path: Path) -> np.ndarray:
@@ -98,8 +98,8 @@ def build_camera_env(args):
     the ego camera. This closes the sim2real loop -- the policy learns from exactly
     the image the closed-loop sensor-sim publishes.
     """
-    import scene_camera as sc
-    from gaussian_renderer import GaussianRenderer
+    import lidarslam_benchmark_tools.gaussian_splatting.scene_camera as sc
+    from lidarslam_benchmark_tools.gaussian_splatting.gaussian_renderer import GaussianRenderer
 
     v_max, dt = 1.5, 0.2
     c2w = sc.load_cam_c2w(args.transforms)
@@ -131,9 +131,9 @@ def build_detect_env(args):
     where the object is best seen. This closes the perception-driven loop:
     render -> policy -> action -> render -> detector -> reward.
     """
-    import scene_camera as sc
-    from gaussian_renderer import GaussianRenderer
-    from sim2real_gap import Detector
+    import lidarslam_benchmark_tools.gaussian_splatting.scene_camera as sc
+    from lidarslam_benchmark_tools.gaussian_splatting.gaussian_renderer import GaussianRenderer
+    from lidarslam_benchmark_tools.gaussian_splatting.sim2real_gap import Detector
 
     target = [float(v) for v in args.target.split(',')]
     renderer = GaussianRenderer(args.ply)

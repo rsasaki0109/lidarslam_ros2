@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-package-requirements-v1",
+  "title": "Versionless precommitted apt package requirements",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "build", "runtime", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_package_requirements_v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "PRECOMMITTED"},
+    "build": {"$ref": "#/$defs/requirements"},
+    "runtime": {"$ref": "#/$defs/requirements"},
+    "canonical_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "requirements": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "object", "additionalProperties": false,
+        "required": ["name", "architecture"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9+.-]{0,127}$"},
+          "architecture": {"enum": ["amd64", "arm64", "armhf", "all"]}
+        }}
+    }
+  }
+}

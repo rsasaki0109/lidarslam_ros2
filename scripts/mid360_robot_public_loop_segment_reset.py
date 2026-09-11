@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_public_bag_segments import (
+from lidarslam_benchmark_tools.mid360_robot_public_bag_segments import (
     PUBLIC_BAG_SEGMENTS_JSON,
     PUBLIC_BAG_SEGMENTS_MARKDOWN,
     PublicBagSegmentOptions,
@@ -19,7 +19,7 @@ from mid360_robot_public_bag_segments import (
     render_public_bag_segments_markdown,
     split_contiguous_scan_segments,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_LOOP_SEGMENT_RESET_JSON = 'mid360_robot_public_loop_segment_reset.json'
@@ -436,3 +436,7 @@ def _select_candidate(sequence: dict[str, Any], candidate_index: int) -> dict[st
 
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.expanduser().resolve().read_text(encoding='utf-8'))
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_loop_segment_reset is a library module; import it instead of running it directly.")

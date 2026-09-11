@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_tools import (
+from lidarslam_benchmark_tools.mid360_robot_tools import (
     AutowarePreflightAdapter,
     MapRunOptions,
     Mid360MapRunPlanner,
@@ -393,3 +393,7 @@ def write_readiness_artifacts(
         result['map_plan_json'] = str(manifest_paths['json'])
         result['map_plan_markdown'] = str(manifest_paths['markdown'])
     return result
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_recording_check_tools is a library module; import it instead of running it directly.")

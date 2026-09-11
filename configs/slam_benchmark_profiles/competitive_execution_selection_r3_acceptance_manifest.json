@@ -1,0 +1,69 @@
+{
+  "active_profile_switch": false,
+  "benchmark_eligible": false,
+  "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
+  "candidate_binding": {
+    "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
+    "candidate_identity_sha256": "69d55b69b7081381f58027008c18ec8048d4ecf001dcaa2934caca7a90d788c9",
+    "file_sha256": "5f23aa13ebccfd3e80207e9116f15ea2b17f3ee9b29cf7d401c5d29f2ec57676",
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
+    "status": "NOT_READY"
+  },
+  "claim_eligible": false,
+  "closures": {
+    "dataset_source_closure": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "fresh_holdout_authorization": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "image_toolchain_review": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "machine_identity": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "rival_source_closure": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "selection_handoff": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "source_worktree_review": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    }
+  },
+  "manifest_identity_sha256": "e632777730670b5d55b282a230149d0141dad5bdacbf1a435c7ee83a396bc37b",
+  "profile_binding": {
+    "canonical_hash_kind": "canonical_profile_sha256_v1",
+    "canonical_sha256": "c6374aabfb218f14810b1544e3b8c9ebbee9992184ac1e9f344245f0e526ca05",
+    "file_sha256": "b2c0c0ea48d120c2f5b5322987205f80da362050428f9322fc49944145c62573",
+    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"
+  },
+  "required_closures": [
+    "selection_handoff",
+    "rival_source_closure",
+    "dataset_source_closure",
+    "fresh_holdout_authorization",
+    "machine_identity",
+    "image_toolchain_review",
+    "source_worktree_review"
+  ],
+  "schema": "competitive_execution_selection_r3_acceptance_manifest_v1",
+  "schema_version": 1,
+  "status": "NOT_READY"
+}

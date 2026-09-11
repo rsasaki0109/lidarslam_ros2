@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-machine-identity-keyed-sidecar-v1",
+  "title": "DMI-less keyed machine identity immutable sidecar",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "artifact_path", "artifact_bytes",
+    "artifact_sha256", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_machine_identity_keyed_sidecar_v1"},
+    "schema_version": {"const": 1}, "artifact_path": {"type": "string", "minLength": 1},
+    "artifact_bytes": {"type": "integer", "minimum": 1, "maximum": 262144},
+    "artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

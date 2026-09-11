@@ -37,6 +37,16 @@ arguments retain the stable usage error and exit code `2`.
 
 ### Check The Installation Before Choosing A Bag
 
+Before downloading data or starting SLAM, run the read-only environment check:
+
+```bash
+python3 scripts/lidarslam_doctor.py --profile source
+```
+
+It checks the supported ROS environment, commands, workspace build, submodules,
+and free disk space, then prints the exact next action. Use `--json` for support
+and automation. Docker-only users can select `--profile docker`.
+
 ```bash
 lidarslam-map doctor
 ```
@@ -266,10 +276,27 @@ bash scripts/source_quickstart.sh --dry-run
 
 For CI or a wrapper that needs machine-readable review, add `--json`:
 
+For the maintained public demo, one command performs the doctor, downloads the
+dataset when necessary, and launches the existing quickstart:
+
+```bash
+bash scripts/run_first_map.sh
+```
+
+Use `--dry-run` to inspect the selected path without running checks, downloads,
+containers, or SLAM. Force a path with `--path source` or `--path docker`.
+
+For your own bag:
+
 ```bash
 bash scripts/source_quickstart.sh --dry-run --json
 ```
 
+The dry run prints the selected public workflow before anything starts. The real
+run writes the map under `output/` by default. A user-supplied `--output-dir`
+must be empty: the runner fails closed instead of mixing a previous or partial
+map with a new execution. Operational resume is not advertised until the
+mapping pipeline has an identity-bound checkpoint contract.
 This emits the versioned [`source-quickstart-plan-v1` schema](schemas/source-quickstart-plan-v1.schema.json)
 to stdout only. It still performs no network access, APT, submodule checkout,
 build, demo, or filesystem write; the plan reports missing bootstrap actions and
@@ -692,8 +719,15 @@ Successful runs should leave these files:
 - `run_manifest.json`
 - `autoware_map_diagnosis.json`
 - `autoware_map_diagnosis.md`
+- `map_run_manifest.json` (profile, portable command, revision and tracked-diff
+  hash, config hashes, full metadata/storage-file hashes, deterministic input
+  tree hash, and full output-file hashes)
 - `first_map_validation_receipt.json`
 - `first_map_validation_receipt.md`
+
+The public RKO-LIO path passes both effective parameter YAMLs explicitly, even
+when using its defaults, so their hashes cannot disappear behind shell-script
+defaults in the manifest.
 
 The first-map receipt contains a copy-ready verification summary without map
 geometry or private paths. At the end of a run, the CLI prints the reviewable
@@ -760,7 +794,21 @@ Or inspect an existing output directory:
 
 ```bash
 lidarslam-map inspect output/<run_dir> --write
+python3 scripts/verify_map_run_manifest.py output/<run_dir> \
+  --bag-dir /path/to/original/rosbag2
+python3 scripts/diagnose_autoware_map_run.py output/<run_dir> --write
+python3 scripts/verify_autoware_map.py output/<run_dir>/pointcloud_map
 ```
+
+To share a failure report without the bag, map, point cloud, or local absolute
+paths:
+
+```bash
+python3 scripts/create_map_support_bundle.py output/<run_dir>
+```
+
+The archive contains the redacted manifest, diagnosis, verification output, and
+bounded log tails only.
 
 ## Common First-Run Problems
 

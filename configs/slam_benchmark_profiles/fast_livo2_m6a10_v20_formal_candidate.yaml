@@ -1,0 +1,72 @@
+# Additive v20 authorization correction. The v19 failed authorization is an
+# immutable failure lineage; no v19 root or receipt is reused.
+schema_version: 1
+status: V20_FORMAL_CANDIDATE_UNAUTHORIZED
+formal_replay_forbidden: true
+formal_replay_authorized: false
+formal_replay_started: false
+replay_count: 0
+
+candidate:
+  contract_version: m6a10-v20-formal-exact-root-authorization-v1
+  status: UNAUTHORIZED_NOT_RUN
+  authorization_required: true
+  authorization_status: UNAUTHORIZED_NOT_INSTALLED
+  v19_failed_authorization:
+    path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v19_formal_authorization_20260824T005300Z_agentv19/formal_authorization.receipt.json
+    sha256: ddd42d38f60710bd39d984292194f9869c45d81993fd98ae4962bc8d7d4cb747
+    sidecar_sha256: 3c6b1851455d6139b517aa00893d713b2ab0d86983fd600d7b440fd3abf6ff98
+    failure_kind: AUTHORIZATION_FAIL_CLOSED
+    failure_message: "invalid literal for int() with base 10: 'pt'"
+    formal_replay_started: false
+  v19_index_bug_sha256: 33aa3a0230d98d8d8da4c64f568fbe221ce8dfcccf261f3eb4c4d672f4e88f34
+  v19_corrected_authorizer_sha256: 0de44fa9a44423c59ab7587acc567a9a7a1dac3b03a64c0672d49e9f7dfb15c9
+  v19_adapter_sha256: 61b3396aa54079773aa7066e5652527e27ddaa46121650b711f61807d0c82846
+  v19_launcher_sha256: 854c138fe0673fd82766e0c26a262616c3c883577d1ab781ebabc3822fb8528a
+  v19_profile_sha256: 4decdb6d5091a8d0ba04e116e61a238383a2283ea0ba206f54a788108f266f6c
+  v20_authorizer_sha256: e5f6beafa8043512c7ea62f9785cd36295084cc947c42c090c0e5dec40d54dcc
+  v20_launcher_sha256: 2fe3ba3cb577ee82433290d3a2a9867af6a1fd186a274af02b629061bef7e351
+
+image:
+  tag: m6a10-v2c-v17-retryable-abort-correction-20260823t224017z-fast-livo2-benchmark:ros1-pinned
+  id: sha256:f1432426af64e76d9ad9c655a8727d35c2fb0a03753502ada3b21187638f747c
+  status: BUILT_NO_INPUT_PASS
+
+phase:
+  contract: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+  transport_contract: m6a10-v12-callback-ack-transport-outstanding-v1
+  mode: unpaced_ack
+  expected_messages: 236687
+  expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+  required_end_timestamp_seconds: 1623491515.148352
+  sensor_duration_seconds: 579.278127298
+
+lineage:
+  v17_launcher_sha256: 769aaa1b2f818bb8f4eeac1b57f45e4734949e4510cb3a4557d47348d847c686
+  v17_profile_sha256: 10ddffb6eed647eb3b7a2ee7ede49505923755eb917d8b87737675853e35d9c5
+  v17_image_id: sha256:f1432426af64e76d9ad9c655a8727d35c2fb0a03753502ada3b21187638f747c
+  v17_build_receipt_sha256: 23811d4200f9ed3ac464083ef339eb6d0437815ffdd82a2f37cc4180195bc2f7
+  v17_no_input_receipt_sha256: ac1df6f390ad3e348e572ced668f4971bc05ac835c55cc83fef9ea4ad5fa3d74
+  v18b_authorization_sha256: 78fc1ea039f4c8725a773a81dafca64486341a14eb4c052ddbba3f8d1ee3a291
+  v18b_closure_sha256: 1e532bbf58c5bfffc7315a2b228342228c96fc45fe799bd2a0893605841550fd
+
+execution:
+  status: FORMAL_UNAUTHORIZED_NOT_RUN
+  formal_replay_forbidden: true
+  one_start: true
+  retry: false
+  manual_stop: false
+  watchdog_seconds: 1200
+  monitor_interval_seconds: 4.0
+  continuous_quiescence_windows: 3
+  exact_window_filename_regex: '^quiescence_window_(\\d{2})\\.receipt\\.json$'
+  actual_v17_runtime_surface_required: true
+  shell_free_popen_required: true
+  natural_completion_required: true
+
+safety:
+  formal_replay_started: false
+  input_opened: false
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false

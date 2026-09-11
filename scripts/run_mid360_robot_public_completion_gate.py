@@ -7,14 +7,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_public_completion_gate import (
+from lidarslam_benchmark_tools.mid360_robot_public_completion_gate import (
     PUBLIC_COMPLETION_GATE_JSON,
     PUBLIC_COMPLETION_GATE_MARKDOWN,
     PublicCompletionGate,
     PublicCompletionGateOptions,
     render_public_completion_gate_markdown,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

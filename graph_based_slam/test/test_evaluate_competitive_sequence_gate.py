@@ -47,15 +47,21 @@ CONTRACT = yaml.safe_load(PROFILE.read_text())['competitive_slam_profile']
 
 
 def _result(system, track='glim_cpu_lidar_imu'):
+    closure_identity = MODULE.current_rival_source_closure_identity(
+        {'competitive_slam_profile': CONTRACT}, root=ROOT)
     return {
         'system': system, 'sequence': 'exp99', 'track': track,
         'input_manifest_sha256': 'a' * 64, 'reference_sha256': 'b' * 64,
+        'calibration_sha256': 'c' * 64, 'machine_id': 'machine',
+        'rival_source_closure': closure_identity,
         'calibration_sha256': 'c' * 64,
         'evaluation_reference_sha256': 'd' * 64, 'machine_id': 'machine',
         'excluded_capabilities': CONTRACT['excluded_capabilities'],
         'repetitions': {'valid': 3, 'failures': 0},
         'trajectory': {'ape_rmse_median_m': 0.09 if system == 'ours' else 0.1},
-        'runtime': {'processing_rtf_median': 0.9, 'peak_rss_max_mb': 110},
+        'runtime': {'processing_rtf_median': 0.9,
+                    'online_compute_rtf_median': 0.8,
+                    'peak_rss_max_mb': 110},
         'mapping': {'aggregation_valid': True,
                     'valid_repetitions': 3,
                     'meaningful_repetitions': 3,

@@ -1,0 +1,202 @@
+diff --git a/include/LIVMapper.h b/include/LIVMapper.h
+--- a/include/LIVMapper.h
++++ b/include/LIVMapper.h
+@@ -15,12 +15,15 @@
+ 
+ #include "IMU_Processing.h"
+ #include "m6a10_consumer_evidence.h"
++#include <ros/callback_queue.h>
++#include <ros/spinner.h>
+ #include "vio.h"
+ #include "preprocess.h"
+ #include <cv_bridge/cv_bridge.h>
+ #include <image_transport/image_transport.h>
+ #include <nav_msgs/Path.h>
+ #include <vikit/camera_loader.h>
++#include <memory>
+ 
+ class LIVMapper
+ {
+@@ -169,6 +172,12 @@
+   VIOManagerPtr vio_manager;
+ 
+   M6A10ConsumerEvidence m6a10_consumer_evidence;
++  // Keep benchmark service callbacks independent from the algorithm's
++  // global callback queue.  run() may block in simulated-time sleep before
++  // the first /clock message exists.
++  ros::CallbackQueue m6a10_service_callback_queue;
++  std::unique_ptr<ros::NodeHandle> m6a10_service_node;
++  std::unique_ptr<ros::AsyncSpinner> m6a10_service_spinner;
+   ros::Publisher plane_pub;
+   ros::Publisher voxel_pub;
+   ros::Subscriber sub_pcl;
+diff --git a/include/m6a10_consumer_evidence.h b/include/m6a10_consumer_evidence.h
+--- a/include/m6a10_consumer_evidence.h
++++ b/include/m6a10_consumer_evidence.h
+@@ -113,6 +113,20 @@
+     std::lock_guard<std::mutex> guard(mutex_);
+     const long long total = static_cast<long long>(lidar + imu + image);
+     if (total > maximum_observed_backlog_) maximum_observed_backlog_ = total;
++    observed_lidar_ = lidar;
++    observed_imu_ = imu;
++    observed_image_ = image;
++  }
++
++  // Return the last queue snapshot published by the algorithm thread.  The
++  // service callback never touches FAST-LIVO2's deques: this avoids a new
++  // cross-thread data race when the dedicated service spinner is active.
++  void queue_snapshot(std::size_t &lidar, std::size_t &imu, std::size_t &image) const
++  {
++    std::lock_guard<std::mutex> guard(mutex_);
++    lidar = observed_lidar_;
++    imu = observed_imu_;
++    image = observed_image_;
+   }
+ 
+   bool eof_service(std_srvs::Trigger::Request &, std_srvs::Trigger::Response &response,
+@@ -271,6 +285,9 @@
+   {
+     const long long total = static_cast<long long>(lidar + imu + image);
+     if (total > maximum_observed_backlog_) maximum_observed_backlog_ = total;
++    observed_lidar_ = lidar;
++    observed_imu_ = imu;
++    observed_image_ = image;
+   }
+ 
+   void finish(Topic topic, double started, bool accepted, double timestamp)
+@@ -398,6 +415,9 @@
+   long long queue_overflow_ = 0;
+   long long processing_failures_ = 0;
+   long long maximum_observed_backlog_ = 0;
++  std::size_t observed_lidar_ = 0;
++  std::size_t observed_imu_ = 0;
++  std::size_t observed_image_ = 0;
+   double maximum_callback_latency_seconds_observed_ = 0.0;
+   double first_timestamp_ = -1.0;
+   double last_timestamp_ = -1.0;
+diff --git a/src/LIVMapper.cpp b/src/LIVMapper.cpp
+--- a/src/LIVMapper.cpp
++++ b/src/LIVMapper.cpp
+@@ -45,7 +45,12 @@
+   path.header.frame_id = "camera_init";
+ }
+ 
+-LIVMapper::~LIVMapper() {}
++LIVMapper::~LIVMapper()
++{
++  // Stop before member destruction so no service callback can observe a
++  // partially destroyed mapper or evidence object.
++  m6a10_eof_server.shutdown();
++  m6a10_finalize_server.shutdown();
++  m6a10_status_server.shutdown();
++  m6a10_ack_server.shutdown();
++  if (m6a10_service_spinner) m6a10_service_spinner->stop();
++}
+ 
+ void LIVMapper::readParameters(ros::NodeHandle &nh)
+ {
+@@ -199,14 +204,21 @@
+   sub_img = nh.subscribe(img_topic, m6a10_queue_size, &LIVMapper::img_cbk, this);
+   if (m6a10_consumer_evidence.enabled())
+   {
+-    m6a10_eof_server = nh.advertiseService(
++    m6a10_service_node.reset(new ros::NodeHandle(nh));
++    m6a10_service_node->setCallbackQueue(&m6a10_service_callback_queue);
++    m6a10_eof_server = m6a10_service_node->advertiseService(
+       "/m6a10/consumer_eof", &LIVMapper::m6a10_eof_service, this);
+-    m6a10_finalize_server = nh.advertiseService(
++    m6a10_finalize_server = m6a10_service_node->advertiseService(
+       "/m6a10/consumer_finalize", &LIVMapper::m6a10_finalize_service, this);
+-    m6a10_status_server = nh.advertiseService(
++    m6a10_status_server = m6a10_service_node->advertiseService(
+       "/m6a10/consumer_status", &LIVMapper::m6a10_status_service, this);
+-    m6a10_ack_server = nh.advertiseService(
++    m6a10_ack_server = m6a10_service_node->advertiseService(
+       "/m6a10/consumer_ack", &LIVMapper::m6a10_ack_service, this);
++    // One deterministic service thread is enough.  Sensor callbacks and the
++    // algorithm remain on the original queue and therefore retain semantics.
++    m6a10_service_spinner.reset(new ros::AsyncSpinner(
++      1, &m6a10_service_callback_queue));
++    m6a10_service_spinner->start();
+   }
+   
+   pubLaserCloudFullRes = nh.advertise<sensor_msgs::PointCloud2>("/cloud_registered", 100);
+@@ -551,6 +563,11 @@
+     ros::spinOnce();
+     if (!sync_packages(LidarMeasures)) 
+     {
++      {
++        std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++        m6a10_consumer_evidence.observe_queue(
++          lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
++      }
+       rate.sleep();
+       continue;
+     }
+@@ -573,25 +590,28 @@
+ bool LIVMapper::m6a10_eof_service(
+   std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response)
+ {
+-  std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++  std::size_t lidar = 0, imu = 0, image = 0;
++  m6a10_consumer_evidence.queue_snapshot(lidar, imu, image);
+   return m6a10_consumer_evidence.eof_service(
+-    request, response, lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
++    request, response, lidar, imu, image);
+ }
+ 
+ bool LIVMapper::m6a10_finalize_service(
+   std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response)
+ {
+-  std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++  std::size_t lidar = 0, imu = 0, image = 0;
++  m6a10_consumer_evidence.queue_snapshot(lidar, imu, image);
+   return m6a10_consumer_evidence.finalize_service(
+-    request, response, lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
++    request, response, lidar, imu, image);
+ }
+ 
+ bool LIVMapper::m6a10_status_service(
+   std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response)
+ {
+-  std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++  std::size_t lidar = 0, imu = 0, image = 0;
++  m6a10_consumer_evidence.queue_snapshot(lidar, imu, image);
+   return m6a10_consumer_evidence.status_service(
+-    request, response, lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
++    request, response, lidar, imu, image);
+ }
+ 
+ bool LIVMapper::m6a10_ack_service(
+@@ -767,6 +789,8 @@
+   lid_raw_data_buffer.push_back(ptr);
+   lid_header_time_buffer.push_back(cur_head_time);
+   last_timestamp_lidar = cur_head_time;
++  m6a10_consumer_evidence.observe_queue(
++    lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
+ 
+   mtx_buffer.unlock();
+@@ -813,6 +837,8 @@
+   lid_raw_data_buffer.push_back(ptr);
+   lid_header_time_buffer.push_back(cur_head_time);
+   last_timestamp_lidar = cur_head_time;
++  m6a10_consumer_evidence.observe_queue(
++    lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
+ 
+   mtx_buffer.unlock();
+@@ -861,6 +887,8 @@
+   last_timestamp_imu = timestamp;
+ 
+   imu_buffer.push_back(msg);
++  m6a10_consumer_evidence.observe_queue(
++    lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
+   // cout<<"got imu: "<<timestamp<<" imu size "<<imu_buffer.size()<<endl;
+   mtx_buffer.unlock();
+@@ -928,6 +956,8 @@
+   cv::Mat img_cur = getImageFromMsg(msg);
+   img_buffer.push_back(img_cur);
+   img_time_buffer.push_back(img_time_correct);
++  m6a10_consumer_evidence.observe_queue(
++    lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
+ 
+   // ROS_INFO("Correct Image time: %.6f", img_time_correct);

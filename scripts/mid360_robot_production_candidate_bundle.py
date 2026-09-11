@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 BUNDLE_MANIFEST_JSON = 'mid360_robot_production_candidate_bundle.json'
@@ -335,3 +335,7 @@ def _load_json(path: Path) -> dict[str, Any]:
     except Exception:
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_production_candidate_bundle is a library module; import it instead of running it directly.")

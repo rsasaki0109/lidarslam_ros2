@@ -21,6 +21,9 @@ from typing import Any, BinaryIO, TextIO
 
 import yaml
 
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
+
+
 PUBLIC_DATASET_INTAKE_JSON = 'mid360_robot_public_dataset_intake.json'
 PUBLIC_DATASET_INTAKE_MARKDOWN = 'mid360_robot_public_dataset_intake.md'
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024
@@ -1451,3 +1454,7 @@ def public_dataset_payload() -> dict[str, Any]:
     return {
         'datasets': [dataset.to_dict() for dataset in public_dataset_registry()],
     }
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_datasets is a library module; import it instead of running it directly.")

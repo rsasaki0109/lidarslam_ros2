@@ -14,8 +14,8 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import payload_to_json
-from verify_autoware_map import MapVerifier
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.verify_autoware_map import MapVerifier
 
 
 CONTINUOUS_RELOCALIZATION_GATE_JSON = (
@@ -551,3 +551,7 @@ def _as_float(value: Any, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_continuous_relocalization_gate is a library module; import it instead of running it directly.")

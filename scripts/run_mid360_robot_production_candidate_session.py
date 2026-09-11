@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_production_candidate_session import (
+from lidarslam_benchmark_tools.mid360_robot_production_candidate_session import (
     DEFAULT_PUBLIC_RKO_CONFIG,
     Mid360ProductionCandidateSessionRunner,
     PRODUCTION_CANDIDATE_SESSION_JSON,
@@ -15,7 +15,7 @@ from mid360_robot_production_candidate_session import (
     ProductionCandidateSessionOptions,
     render_production_candidate_session_markdown,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

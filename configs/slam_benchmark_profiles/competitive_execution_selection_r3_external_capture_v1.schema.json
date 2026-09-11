@@ -1,0 +1,232 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "competitive_execution_selection_r3_external_capture_v1",
+  "oneOf": [
+    {"$ref": "#/definitions/manifest"},
+    {"$ref": "#/definitions/imageDocument"},
+    {"$ref": "#/definitions/toolchainDocument"}
+  ],
+  "definitions": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "imageDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "timestamp": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"},
+    "candidateBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_sha256", "candidate_identity_sha256", "candidate_id"],
+      "properties": {
+        "path": {"const": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json"},
+        "file_sha256": {"$ref": "#/definitions/sha"},
+        "candidate_identity_sha256": {"$ref": "#/definitions/sha"},
+        "candidate_id": {"const": "competitive-execution-selection-2026-08-r3-candidate"}
+      }
+    },
+    "status": {"enum": ["PARTIAL_OBSERVATION", "UNREVIEWED_COMPLETE_OBSERVATION"]},
+    "imageSafety": {
+      "type": "object", "additionalProperties": false,
+      "required": ["docker_image_inspect_only", "pull", "build", "network", "shell"],
+      "properties": {
+        "docker_image_inspect_only": {"const": true},
+        "pull": {"const": false}, "build": {"const": false},
+        "network": {"const": false}, "shell": {"const": false}
+      }
+    },
+    "toolchainSafety": {
+      "type": "object", "additionalProperties": false,
+      "required": ["explicit_opt_in", "pull", "build", "network", "read_only_root", "shell"],
+      "properties": {
+        "explicit_opt_in": {"type": "boolean"},
+        "pull": {"const": false}, "build": {"const": false},
+        "network": {"const": "none"}, "read_only_root": {"const": true},
+        "shell": {"const": false}
+      }
+    },
+    "imageObserved": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["Id", "RepoDigests", "RepoTags", "Created", "Architecture", "Os", "Size"],
+          "properties": {
+            "Id": {"$ref": "#/definitions/imageDigest"},
+            "RepoDigests": {"type": "array", "items": {"type": "string", "maxLength": 512}},
+            "RepoTags": {"type": "array", "items": {"type": "string", "maxLength": 512}},
+            "Created": {"type": ["string", "null"]},
+            "Architecture": {"type": ["string", "null"]},
+            "Os": {"type": ["string", "null"]},
+            "Size": {"type": ["integer", "null"]}
+          }
+        }
+      ]
+    },
+    "imageSystem": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "expected_digest", "command", "returncode", "timed_out", "reason", "observed"],
+      "properties": {
+        "status": {"enum": ["PENDING", "OBSERVED"]},
+        "expected_digest": {"$ref": "#/definitions/imageDigest"},
+        "command": {"type": "array", "minItems": 5, "items": {"type": "string"}},
+        "returncode": {"type": "integer"}, "timed_out": {"type": "boolean"},
+        "reason": {"type": ["string", "null"]},
+        "observed": {"$ref": "#/definitions/imageObserved"}
+      }
+    },
+    "toolProbe": {
+      "oneOf": [
+        {"$ref": "#/definitions/observedToolProbe"},
+        {"$ref": "#/definitions/notApplicableToolProbe"}
+      ]
+    },
+    "observedToolProbe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["command", "returncode", "timed_out", "value", "stdout_sha256", "reason"],
+      "properties": {
+        "command": {"type": "array", "minItems": 8, "items": {"type": "string"}},
+        "returncode": {"type": "integer"}, "timed_out": {"type": "boolean"},
+        "value": {"type": ["string", "null"], "maxLength": 512},
+        "stdout_sha256": {"$ref": "#/definitions/sha"},
+        "reason": {"type": ["string", "null"]}
+      }
+    },
+    "notApplicableToolProbe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["command", "returncode", "timed_out", "value", "stdout_sha256", "reason"],
+      "properties": {
+        "command": {"type": "null"},
+        "returncode": {"const": 0}, "timed_out": {"const": false},
+        "value": {"const": "not_applicable"},
+        "stdout_sha256": {"const": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+        "reason": {"const": "not_applicable"}
+      }
+    },
+    "toolSystem": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "probe_requested", "image_digest", "probes", "fingerprint", "not_applicable_fields", "reason"],
+      "properties": {
+        "status": {"enum": ["NOT_REQUESTED", "PENDING", "OBSERVED"]},
+        "probe_requested": {"type": "boolean"},
+        "image_digest": {"$ref": "#/definitions/imageDigest"},
+        "not_applicable_fields": {
+          "type": "array", "uniqueItems": true, "maxItems": 1,
+          "items": {"const": "pcl"}
+        },
+        "probes": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "compiler": {"$ref": "#/definitions/toolProbe"},
+            "linker": {"$ref": "#/definitions/toolProbe"},
+            "ros_distro": {"$ref": "#/definitions/toolProbe"},
+            "pcl": {"$ref": "#/definitions/toolProbe"},
+            "eigen": {"$ref": "#/definitions/toolProbe"},
+            "openmp": {"$ref": "#/definitions/toolProbe"}
+          }
+        },
+        "fingerprint": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "reason": {"type": ["string", "null"]}
+      }
+    },
+    "toolSystemNoPcl": {
+      "allOf": [
+        {"$ref": "#/definitions/toolSystem"},
+        {"properties": {
+          "not_applicable_fields": {"maxItems": 0}
+        }}
+      ]
+    },
+    "toolSystemGlim": {
+      "allOf": [
+        {"$ref": "#/definitions/toolSystem"},
+        {"properties": {
+          "not_applicable_fields": {
+            "minItems": 1, "maxItems": 1,
+            "items": {"const": "pcl"}
+          }
+        }}
+      ]
+    },
+    "imageDocument": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "artifact_kind", "status", "review_status", "benchmark_eligible", "claim_eligible", "observed_at", "candidate_binding", "safety", "systems", "blockers", "artifact_identity_sha256"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "artifact_kind": {"const": "competitive_execution_selection_r3_image_inspect_v1"},
+        "status": {"$ref": "#/definitions/status"},
+        "review_status": {"const": "NOT_REVIEWED_EXTERNAL"},
+        "benchmark_eligible": {"const": false}, "claim_eligible": {"const": false},
+        "observed_at": {"$ref": "#/definitions/timestamp"},
+        "candidate_binding": {"$ref": "#/definitions/candidateBinding"},
+        "safety": {"$ref": "#/definitions/imageSafety"},
+        "systems": {
+          "type": "object", "additionalProperties": false,
+          "required": ["ours", "glim", "fast_livo2"],
+          "properties": {
+            "ours": {"$ref": "#/definitions/imageSystem"},
+            "glim": {"$ref": "#/definitions/imageSystem"},
+            "fast_livo2": {"$ref": "#/definitions/imageSystem"}
+          }
+        },
+        "blockers": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "artifact_identity_sha256": {"$ref": "#/definitions/sha"}
+      }
+    },
+    "toolchainDocument": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "artifact_kind", "status", "review_status", "benchmark_eligible", "claim_eligible", "observed_at", "candidate_binding", "probe_requested", "safety", "systems", "blockers", "artifact_identity_sha256"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "artifact_kind": {"const": "competitive_execution_selection_r3_toolchain_capture_v1"},
+        "status": {"$ref": "#/definitions/status"},
+        "review_status": {"const": "NOT_REVIEWED_EXTERNAL"},
+        "benchmark_eligible": {"const": false}, "claim_eligible": {"const": false},
+        "observed_at": {"$ref": "#/definitions/timestamp"},
+        "candidate_binding": {"$ref": "#/definitions/candidateBinding"},
+        "probe_requested": {"type": "boolean"},
+        "safety": {"$ref": "#/definitions/toolchainSafety"},
+        "systems": {
+          "type": "object", "additionalProperties": false,
+          "required": ["ours", "glim", "fast_livo2"],
+          "properties": {
+            "ours": {"$ref": "#/definitions/toolSystemNoPcl"},
+            "glim": {"$ref": "#/definitions/toolSystemGlim"},
+            "fast_livo2": {"$ref": "#/definitions/toolSystemNoPcl"}
+          }
+        },
+        "blockers": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "artifact_identity_sha256": {"$ref": "#/definitions/sha"}
+      }
+    },
+    "artifactRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "status"],
+      "properties": {
+        "path": {"enum": ["image_inspect.json", "toolchain_capture.json"]},
+        "sha256": {"$ref": "#/definitions/sha"},
+        "status": {"$ref": "#/definitions/status"}
+      }
+    },
+    "manifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "manifest_kind", "status", "review_status", "benchmark_eligible", "claim_eligible", "observed_at", "candidate_binding", "safety", "image_inspect", "toolchain_capture", "blockers", "capture_identity_sha256"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "manifest_kind": {"const": "competitive_execution_selection_r3_external_capture_manifest_v1"},
+        "status": {"$ref": "#/definitions/status"},
+        "review_status": {"const": "NOT_REVIEWED_EXTERNAL"},
+        "benchmark_eligible": {"const": false}, "claim_eligible": {"const": false},
+        "observed_at": {"$ref": "#/definitions/timestamp"},
+        "candidate_binding": {"$ref": "#/definitions/candidateBinding"},
+        "safety": {
+          "type": "object", "additionalProperties": false,
+          "required": ["capture_only", "promotion", "network_used", "shell_used"],
+          "properties": {
+            "capture_only": {"const": true}, "promotion": {"const": false},
+            "network_used": {"const": false}, "shell_used": {"const": false}
+          }
+        },
+        "image_inspect": {"$ref": "#/definitions/artifactRef"},
+        "toolchain_capture": {"$ref": "#/definitions/artifactRef"},
+        "blockers": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "capture_identity_sha256": {"$ref": "#/definitions/sha"}
+      }
+    }
+  }
+}

@@ -10,8 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_public_bag_segments import PUBLIC_BAG_SEGMENTS_JSON
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_public_bag_segments import PUBLIC_BAG_SEGMENTS_JSON
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_BAG_SEGMENT_CLIP_JSON = 'mid360_robot_public_bag_segment_clip.json'
@@ -266,3 +266,7 @@ def _suggested_next_steps(
 
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding='utf-8'))
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_bag_clip is a library module; import it instead of running it directly.")

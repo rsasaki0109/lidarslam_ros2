@@ -122,8 +122,7 @@ synchronized camera pixels onto that geometry. This RTK-SLAM Construction Hall
 
 ![Camera-coloured SLAM point-cloud map and its estimated trajectory](lidarslam/images/map_flythrough_rtkslam.webp) ([MP4](lidarslam/images/map_flythrough_rtkslam.mp4) · [GIF](lidarslam/images/map_flythrough_rtkslam.gif))
 
-K4 has 4.91 M points, 76.66% colour coverage, and 11/11 profile checks passing. Pose-aware dynamic cleaning before K3's camera fusion improves held-out RGB median from 41.17 to 40.54 and planar roughness median from 7.23 to 6.40. See the [release-readiness record](docs/research/colored-map-release-readiness-2026-07.md) for paired K3/K4 evidence and limits.
-The sequence is from RTK-SLAM (CC-BY 4.0); its total-station checkpoints also drive the [accuracy gate](#accuracy).
+K4 has 4.91 M points, 76.66% colour coverage, and 11/11 profile checks passing. Pose-aware dynamic cleaning before K3's camera fusion improves held-out RGB median from 41.17 to 40.54 and planar roughness median from 7.23 to 6.40. See the [release-readiness record](docs/research/colored-map-release-readiness-2026-07.md) for paired K3/K4 evidence and limits. The sequence is from RTK-SLAM (CC-BY 4.0); its total-station checkpoints also drive the [accuracy gate](#accuracy).
 
 If graph optimization outputs sparse keyframes, the coloured-map pipeline can
 propagate their corrections onto the dense SLAM pose stream automatically:
@@ -137,20 +136,12 @@ python3 tools/colored_map/colored_map_pipeline.py \
 
 The pipeline caches `dense_corrected_trajectory.tum` and rebuilds stale downstream artifacts; use `--force-trajectory` for an explicit refresh.
 Moving rigs can add `--refine-spatiotemporal-calibration`; see the [held-out-gated design and RTK-SLAM result](docs/research/colored-map-spatiotemporal-calibration-2026-07.md).
-
-### Cross-repository SLAM benchmark
-
-`public_suite_v1.yaml` connects Localization Zoo trajectories to trajectory,
-geometry, real-RGB, runtime, and memory gates, with frozen OFF/ON candidate
-promotion across MID-360, HILTI, and RTK-SLAM surveyed references. Commands,
-replay, and adoption records:
-[Benchmarking and release gate](docs/benchmarking.md#slam-candidate-regression).
+Cross-repository gates (`public_suite_v1.yaml`, frozen OFF/ON promotion): [Benchmarking](docs/benchmarking.md#slam-candidate-regression).
 
 ## Open-source benchmark results
 
 On the same HILTI 2022 `exp04` LiDAR/IMU input and CPU-only host, the competitive
-profile recorded **34.7% lower median APE RMSE than GLIM** over three completed
-historical runs:
+profile recorded **34.7% lower median APE RMSE than GLIM** over three runs:
 
 | System | Median APE RMSE | Median processing RTF | Maximum peak RSS |
 | --- | ---: | ---: | ---: |
@@ -158,7 +149,7 @@ historical runs:
 | GLIM CPU | 0.0866 m | **0.244** | 690.88 MB |
 
 This is a scoped HILTI `exp04` trajectory-accuracy and peak-memory win; GLIM
-wins runtime. It is not an overall-SOTA claim. Normal development needs only
+wins runtime. It is not an overall best-system claim. Normal development needs only
 one new run:
 
 ```bash
@@ -182,58 +173,29 @@ python3 scripts/run_glim_benchmark.py \
 Exact scoring rules, revisions, checkpoint policy, and map-quality limitations
 are in [Comparison](docs/comparison.md#same-input-hilti-2022-exp04-vs-glim-cpu).
 
-In a separate `n=1` development measurement, task-local correspondence
-reduction kept the 1,258-pose frontend trajectory byte-identical while mean ICP
-time moved from 21.60 ms to 20.92 ms and frontend wall time from 47.51 s to
-46.55 s. These timing deltas are directional optimization evidence; see the
-[SOTA product development plan](docs/roadmap/sota-product-development-2026-08.md#2026-08-28-development-checkpoint-n1).
+The separate Voxel-SLAM `v17` research candidate also achieved the lowest
+geometric-mean APE across NavINST, Oxford, and UrbanNav: **2.2836 m**, versus
+GLIM `5.0779`, Point-LIO `3.8388`, FAST-LIO2 `6.9576`, and fixed Voxel-SLAM
+`2.7160` — **55.0% lower than GLIM**. It is not the default release path, does
+not win every sequence, and is not fresh-blind evidence. Exact revisions,
+per-sequence results, input hashes, resource results, map limitations, and
+reproduction notes are in [Comparison](docs/comparison.md#voxel-slam-v17-research-candidate-vs-pinned-oss-rivals).
 
-## Tunnel and fog mapping without degeneracy collapse
-
-On the ~500 m self-similar Fyllingsdalen tunnel from the [NTNU LiDAR degeneracy datasets](https://github.com/ntnu-arl/lidar_degeneracy_datasets),
-the plain frontend covers 98.7 m before along-axis degeneracy freezes it. The opt-in
-presets (radar ego-velocity fusion + sliding-window gravity alignment) map the whole
-tunnel — reach **504.5 m**, transverse RMS 1.34 m, end-height −4.7 m (−33 m without
-gravity alignment) — and cut fog clutter-lock drift 35.6 → 9.6 m, with defaults
-unchanged (a MID-360 driving holdout stays byte-identical). Symptom table:
-[Degeneracy Resilience Guide](docs/degeneracy-guide.md); evidence: [research note](docs/research/gravity-window-alignment-2026-07.md).
-
-![NTNU tunnel SLAM map: top view and gravity-alignment before/after side view](lidarslam/images/tunnel_degeneracy_map.png)
+<!-- BEGIN GENERATED COMPETITIVE CLAIM PUBLICATION -->
+<!-- END GENERATED COMPETITIVE CLAIM PUBLICATION -->
 
 ## Accuracy
 
-Current numbers from the release-gate profiles (`scripts/release_profiles.yaml`).
-The pre-release gate rejects missing evidence and regressions in every blocking profile.
+Release-gate thresholds ([Benchmarking](docs/benchmarking.md#release-gate-accuracy-snapshot)) block every release in CI.
 
-| Dataset | Sensor | Reference | APE RMSE | Gate (pass) |
-| --- | --- | --- | --- | --- |
-| NTU VIRAL `tnp_01` (outdoor, ~580 s) | Ouster OS1-16 + VN-100 | Leica prism ground truth | **0.95 m** (best 0.87) | ≤ 1.00 m |
-| RTK-SLAM Construction Hall 2 (indoor, ~600 s) | Livox MID-360 | total-station checkpoints¹ | **0.086 m** (median 0.064, 16/16) | ≤ 0.30 m |
-| RTK-SLAM Construction Hall 1 (indoor, ~741 s) | Livox MID-360 | total-station checkpoints¹ | **0.321 m** (median 0.163, 16/16) | ≤ 0.55 m |
-| RTK-SLAM Stadtgarten 2 (outdoor park, ~876 s) | Livox MID-360 | total-station checkpoints¹ | **0.426 m** (median 0.264, 19/19) | report-only² |
-| RTK-SLAM Stadtgarten 1 (outdoor park, ~1 km loop) | Livox MID-360 | total-station checkpoints¹ | **0.838 m** (median 0.511, 36/36) | report-only² |
-| Newer College `Maths-Hard` (~320 m loop) | Ouster OS0-128 | ICP registration to survey-grade map | candidate evidence required locally | ≤ 0.10 m |
-
-¹ Surveyed checkpoints from the public RTK-SLAM dataset (CC-BY 4.0), scored like
-its published baselines (dense odometry trajectory).
-² Outdoor profiles soak as report-only before graduating; the former GLIM
-cross-validation gate is also report-only since v0.5. Methodology and
-caveats: [docs/comparison.md](docs/comparison.md).
-
-Reproduce locally:
-```bash
-python3 scripts/download_rtk_slam_dataset.py --sequence construction_seq2 --eval-assets
-python3 scripts/run_rtk_slam_accuracy_suite.py
-```
-
-Details and optional MID-360 / production-bundle gates: [docs/benchmarking.md](docs/benchmarking.md).
+Tunnel and fog mapping: [Degeneracy Resilience Guide](docs/degeneracy-guide.md).
 
 ## Docs
 
 - **Getting started**: [Getting Started](docs/getting-started.md) · [Distribution](docs/distribution.md) · [Autoware quickstart](docs/autoware-quickstart.md) · [Operator workflows](docs/workflows.md) · [Autoware Foxglove](docs/autoware-foxglove.md)
 - **Pipelines**: [Autoware-compatible map authoring](docs/autoware-map-authoring.md)
 - **Benchmarking**: [Benchmarking and release gate](docs/benchmarking.md) · [Comparison](docs/comparison.md)
-- **Project**: [SOTA product development plan](docs/roadmap/sota-product-development-2026-08.md) · [Product contract](docs/product-contract.md) · [v1.0 readiness](docs/v1-readiness.md) · [Independent first-map validation](docs/external-first-map-validation.md) · [v0.9.1 RC notes](docs/releases/v0.9.1.md) · [v0.9 roadmap](docs/roadmap/v0.9.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Governance](GOVERNANCE.md) · [Changelog](CHANGELOG.md) · [Releasing](RELEASING.md)
+- **Project**: [Product contract](docs/product-contract.md) · [v1.0 readiness](docs/v1-readiness.md) · [Independent first-map validation](docs/external-first-map-validation.md) · [v0.9.1 RC notes](docs/releases/v0.9.1.md) · [v0.9 roadmap](docs/roadmap/v0.9.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Governance](GOVERNANCE.md) · [Changelog](CHANGELOG.md) · [Releasing](RELEASING.md)
 
 Preview the doc site locally: `python3 -m mkdocs serve`.
 
@@ -252,11 +214,7 @@ components (`Thirdparty/lio-sam`, `Thirdparty/3d_bbs`) are excluded via `COLCON_
 
 ```bash
 bash scripts/run_default_ci_checks.sh
-bash scripts/run_release_readiness_checks.sh --fail-on-profiles
-python3 scripts/check_v1_readiness.py
-python3 scripts/check_ndt_omp_release_readiness.py --offline
 ```
-
-Reference commands and parameter pointers live in [docs/workflows.md](docs/workflows.md).
+Full gate list and parameter pointers: [docs/workflows.md](docs/workflows.md).
 
 If this project saves you mapping time, a ⭐ helps others find it.

@@ -1,0 +1,191 @@
+# FAST-LIVO2 M6a10-v2c v10 terminal-support-context implementation profile.
+#
+# This is an additive implementation/preregistration artifact.  It is not a
+# replay authorization.  Formal replay remains forbidden in this phase.
+name: fast_livo2_m6a10_v2c_v10_terminal_support_context
+preregistration:
+  status: IMPLEMENTATION_ONLY_COMPILE_SYNTHETIC_DUAL_SERVICE_VALIDATED
+  replay_authorized: false
+  formal_replay_forbidden: true
+  created_at_utc: '2026-08-23T00:00:00Z'
+  predecessor_profile: configs/slam_benchmark_profiles/fast_livo2_m6a10_v9_formal.yaml
+  predecessor_closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v9c_formal_replay_20260823T051354Z_agentv9c/closure_receipt.json
+  predecessor_closure_sha256: 467d85dfb714a4f5b71c5058c5dd39e1d42d57d6cda3c79ee950535699181682
+  predecessor_correction_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v9c_formal_replay_20260823T051354Z_agentv9c/closure_receipt.correction.json
+  predecessor_correction_sha256: d77e26c83abc4fe10f874a43ff45f62e8120f223df919075f4a956ef47569b3b
+  predecessor_status: FAIL_CLOSED
+  image_build_not_run: false
+
+competitive_slam_profile:
+  m6a10_fast_livo2_v2c_v10:
+    schema_version: 3
+    profile_key: m6a10_fast_livo2_v2c_v10
+    system: fast_livo2
+    contract_id: m6a10-v2c-fast-livo2-terminal-support-context-v10
+    status: preregistered_not_built
+    result: null
+    predecessor:
+      profile_path: configs/slam_benchmark_profiles/fast_livo2_m6a10_v9_formal.yaml
+      closure_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v9c_formal_replay_20260823T051354Z_agentv9c/closure_receipt.json
+      closure_sha256: 467d85dfb714a4f5b71c5058c5dd39e1d42d57d6cda3c79ee950535699181682
+      correction_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v9c_formal_replay_20260823T051354Z_agentv9c/closure_receipt.correction.json
+      correction_sha256: d77e26c83abc4fe10f874a43ff45f62e8120f223df919075f4a956ef47569b3b
+      outcome: FAIL_CLOSED_full_publish_but_unproven_terminal_drain
+      published_count: 236687
+      acknowledged_count: 236687
+      residual_backlog_total: 81
+      consumer_eof_valid: false
+      drain_complete: false
+    input:
+      path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+      bytes: 11290464091
+      sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+      expected_messages: 236687
+      expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+      topics:
+        lidar: /os1_cloud_node1/points
+        imu: /imu/imu
+        image: /left/image_raw
+    phase:
+      schema_version: 3
+      contract_version: m6a10-online-compute-v3-terminal-support-context
+      mode: unpaced_ack
+      maximum_end_gap_seconds: 0.25
+      required_evaluation_end_timestamp_seconds: 1623491515.148352
+      required_evaluation_end_source:
+        path: /media/sasaki/aiueo/benchmarks/m6a10_training_20260822/ntu_tnp01_training_validation_summary.json
+        sha256: 4217a4b07f5ff85148e7433be1b9fef51e35d843a98bbb287d6f9c010c254177
+        field: dataset.sensor_end_timestamp_seconds
+      terminal_status_min_poll_wall_seconds: 0.05
+      terminal_support_context_contract: strict_schema3
+      required_evidence:
+        exact_received_published_acknowledged_counts: true
+        per_topic_internal_buffers: true
+        per_topic_buffer_timestamps: true
+        backend_completed_boundary: true
+        backend_completed_counters: true
+        terminal_support_context_counts: true
+        in_flight_state: true
+        required_evaluation_end_timestamp: true
+      residual_policy:
+        residual_lidar_allowed: false
+        allowed_support_context_topics: [imu, image]
+        strictly_post_boundary: true
+        can_form_synchronization_unit: false
+        processed_or_dropped_labels_forbidden: true
+        support_context_is_not_processed_or_dropped: true
+      pass_requires:
+        exact_count_conservation: received_equals_completed_plus_support_context
+        zero_drops: true
+        zero_overflow: true
+        zero_processing_failures: true
+        backend_quiescent: true
+        backend_in_flight: false
+        boundary_covers_required_end: true
+        trajectory_covers_required_end: true
+    source:
+      adapter_status: COMPILE_SYNTHETIC_DUAL_SERVICE_VALIDATED_FAIL_CLOSED
+      synthetic_gate_status: PASS
+      dual_service_no_input_status: PASS
+      dual_service_no_input_contract: m6a10-v2c-v10-callback-v3-dual-service-handshake-v1
+      runtime_ready: true
+      runtime_ready_for_preregistered_replay: true
+      operational_blocker: >-
+        Formal replay remains forbidden.  The source adapter is compile and
+        no-input-service validated, but no sensor replay has been authorized;
+        any missing or invalid terminal evidence remains fail-closed.
+      consumer_contract: m6a10-fast-livo2-consumer-terminal-v1
+      feeder_binding_contract: host_compositor_v1
+      revision: 0d2c0346107b75b59934975adec9a6eeeb913c64
+      rpg_revision: 6c886c8e5d83997806e00294826d528cea3581dd
+      base_patch_path: docker/patches/fast_livo2.m6a10-v2c.patch
+      base_patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+      v8_delta_patch_path: docker/patches/fast_livo2.m6a10-v2c-v8-service-queue.patch
+      v8_delta_patch_sha256: e4a3b2b9d981ec0f740365695f53a662797aaf9400e1d7186551687143c4fd87
+      v9_delta_patch_path: docker/patches/fast_livo2.m6a10-v2c-v9-wallrate.patch
+      v9_delta_patch_sha256: 1cf3067a634a34d5c3a2126f9f495fcb675068cb94edf562eb7e84b1e470146b
+      v10_delta_patch_path: docker/patches/fast_livo2.m6a10-v2c-v10-terminal-support-context.patch
+      v10_delta_patch_sha256: 155bae4e37eac7d6220baedd861b9110b6139ee2b384d5b90db78ac24a6733c6
+      v10_dockerfile_path: docker/fast_livo2_m6a10_v10.Dockerfile
+      v10_build_script_path: scripts/build_fast_livo2_m6a10_v10_image.sh
+      synthetic_helper_selftest_path: tools/m6a10_terminal_support_context_selftest.cpp
+      synthetic_helper_selftest_sha256: 4e37d0aa67fa384e99cf633c0afab95fd718484a5ddf5758e3f6807a3a438941
+      patch_apply_order: [base_patch, v8_delta_patch, v9_delta_patch, v10_delta_patch]
+      algorithm_semantics_changed: false
+      image_behavior_unchanged: true
+      estimator_boundary_observation_only: true
+    validator:
+      path: scripts/benchmark_phase_contract.py
+      sha256: fea2de15e3f886f851a60fbb3b9600c03a72d9f5e5893e76e9fca59afb5f1265
+      schema_version: 3
+      v2_rules_unchanged: true
+      fail_closed_on_mixed_schema_or_version: true
+    contract_tests:
+      path: graph_based_slam/test/test_m6a10_terminal_support_context_v10.py
+      sha256: 5a31be9f183cc29bca59a09e743dcf64ce7d70aae025d412df75fd6c316b3dbb
+      negative_cases_required: true
+      source_level_gate: true
+    compositor:
+      path: scripts/compose_fast_livo2_terminal_evidence.py
+      sha256: b706084392d858fb4c61f341e088c994996659a757a7ef209e9104851998fdfe
+      host_binds_feeder_receipt: true
+      generic_v3_validator_required: true
+      output_atomic_immutable: true
+    compositor_tests:
+      path: graph_based_slam/test/test_compose_fast_livo2_terminal_evidence.py
+      sha256: 74b9ad0ecf2d29140dc425ed51bcb219ed635c4878feb4817cbdb45eace32a54
+      negative_cases_required: true
+    execution:
+      image_tag: m6a10-v2c-v10-callback-v3-20260823t094100z-fast-livo2-benchmark:ros1-pinned
+      image_id: sha256:3e087acc5ef116f03357a73927c18b2059068b093ae1cce6cb41c1baf1fbf759
+      image_digest: m6a10-v2c-v10-callback-v3-20260823t094100z-fast-livo2-benchmark@sha256:3e087acc5ef116f03357a73927c18b2059068b093ae1cce6cb41c1baf1fbf759
+      status: compile_synthetic_dual_service_no_input_validated
+      previous_image_superseded: true
+      previous_evidence_superseded: true
+      superseded_reason: >-
+        The v10 callback/ACK compatibility delta now enables the v2 consumer
+        helper for the v3 contract.  The previous image and no-input evidence
+        remain historical and cannot be reused pending a rebuild.
+      superseded_previous_image_tag: m6a10-v2c-v10-terminal-20260823-fast-livo2-benchmark:selftest3-ros1-pinned
+      superseded_previous_image_id: sha256:ee9419f632ebdc53196c8ae7c45959c29800b99e00dd3f93abb38dadf0e1b52f
+      superseded_previous_image_digest: m6a10-v2c-v10-terminal-20260823-fast-livo2-benchmark@sha256:ee9419f632ebdc53196c8ae7c45959c29800b99e00dd3f93abb38dadf0e1b52f
+      superseded_intermediate_image_tag: m6a10-v2c-v10-callback-v3-20260823t093600z-fast-livo2-benchmark:ros1-pinned
+      superseded_intermediate_image_id: sha256:463615bbe604ed70022787ace68baff400009e445543e85a55e0eaa247f1badd
+      superseded_intermediate_image_digest: m6a10-v2c-v10-callback-v3-20260823t093600z-fast-livo2-benchmark@sha256:463615bbe604ed70022787ace68baff400009e445543e85a55e0eaa247f1badd
+      intermediate_image_audit_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v10_callback_v3_rebuild_20260823T093600Z_agentv10callback/intermediate_superseded/build_identity.superseded.receipt.json
+      intermediate_image_final_gate_forbidden: true
+      final_image_binding_pending: false
+      image_reuse_forbidden: false
+      build_required: false
+      rebuild_required: false
+      image_build_not_run: false
+      no_input_service_gate: pass_dual_service_callback_ack_terminal_invalid_gt_scorer_false_final_image
+      synthetic_matrix_gate: pass_8_cases_2_positive_6_fail_closed_final_image
+      network: none
+      rootfs: read_only
+      input_mount_performed: false
+      parent_asset_mount_forbidden: true
+      ground_truth_mount_forbidden: true
+      scorer_mount_forbidden: true
+      formal_replay_forbidden: true
+    watchdog:
+      contract_id: m6a10-fast-livo2-host-watchdog-v2
+      enabled: true
+      max_runtime_seconds: 1200
+      supervision_only: true
+      algorithm_parameter: false
+      natural_completion_allowed: true
+      manual_stop_allowed: false
+      manual_retry_allowed: false
+    safety:
+      input_only_mount: true
+      ground_truth_mount_exposed: false
+      ground_truth_content_opened: false
+      scorer_invoked: false
+      map_save: false
+      formal_replay_started: false
+    output:
+      root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_v10_callback_v3_rebuild2_20260823T094100Z_agentv10callback
+      overwrite_existing: false
+      repetitions: 0
+      result: null

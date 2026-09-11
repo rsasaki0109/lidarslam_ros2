@@ -1,0 +1,76 @@
+diff --git a/include/m6a10_terminal_support_context.h b/include/m6a10_terminal_support_context.h
+--- a/include/m6a10_terminal_support_context.h
++++ b/include/m6a10_terminal_support_context.h
+@@ -175,6 +175,34 @@
+     estimator_in_flight_ = false;
+   }
+ 
++  // A synchronization retry before any record is incorporated is a normal
++  // queue-availability outcome, not a completed-unit discard.  Once a record
++  // has entered the unit, this path is deliberately fatal just like the
++  // legacy abort path; only the truly empty retry is non-sticky.
++  void abort_retryable_synchronization_unit()
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (!unit_open_ || estimator_in_flight_)
++    {
++      ++processing_failures_;
++      completion_disposition_valid_ = false;
++      unit_open_ = false;
++      estimator_in_flight_ = false;
++      return;
++    }
++    if (!unit_records_.empty())
++    {
++      discard_unit_locked("retryable_abort_after_record");
++      unit_open_ = false;
++      estimator_in_flight_ = false;
++      return;
++    }
++    unit_open_ = false;
++    estimator_in_flight_ = false;
++    ++retryable_synchronization_aborts_;
++  }
++
+   void begin_estimator()
+   {
+     if (!enabled_) return;
+@@ -781,6 +809,7 @@
+   long long processing_failures_ = 0;
+   long long completed_synchronization_units_ = 0;
+   long long completed_sequence_ = -1;
++  long long retryable_synchronization_aborts_ = 0;
+   bool completed_boundary_valid_ = false;
+   bool completion_disposition_valid_ = true;
+   bool unit_open_ = false;
+diff --git a/src/LIVMapper.cpp b/src/LIVMapper.cpp
+--- a/src/LIVMapper.cpp
++++ b/src/LIVMapper.cpp
+@@ -1109,7 +1109,7 @@
+       // larger than _lidar_frame_end_time,
+       // make sure complete propagate.
+       // ROS_ERROR("out sync");
+-      m6a10_terminal_support_context.abort_synchronization_unit();
++      m6a10_terminal_support_context.abort_retryable_synchronization_unit();
+       return false;
+     }
+ 
+@@ -1184,7 +1184,7 @@
+         // ROS_ERROR("lost first camera frame");
+         // printf("img_capture_time, lid_newest_time, imu_newest_time: %lf , %lf
+         // , %lf \n", img_capture_time, lid_newest_time, imu_newest_time);
+-        m6a10_terminal_support_context.abort_synchronization_unit();
++        m6a10_terminal_support_context.abort_retryable_synchronization_unit();
+         return false;
+       }
+ 
+@@ -1312,7 +1312,7 @@
+       // If not in lidar scan, need to generate new meas
+       if (lid_raw_data_buffer.empty())
+       {
+-        m6a10_terminal_support_context.abort_synchronization_unit();
++        m6a10_terminal_support_context.abort_retryable_synchronization_unit();
+         return false;
+       }
+       meas.lidar = lid_raw_data_buffer.front(); // push the first lidar topic

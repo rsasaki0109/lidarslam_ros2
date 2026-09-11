@@ -1,6 +1,7 @@
 competitive_slam_profile:
   schema_version: 1
   name: competitive_slam_v1
+  profile_revision_id: competitive-slam-v1-2026-08-r2
   frozen_on: '2026-07-15'
   holdout_selection_preregistration_sha256: 4853d37197eab76c77952aa38fb38a374016ee00c4cd4403f70b36f59dc5db23
   repetitions: 3
@@ -25,15 +26,1997 @@ competitive_slam_profile:
     unknown_metrics_must_be_omitted: true
   runtime_policy:
     playback_rate: 1.0
+    # M6a10 primary gate.  The interval begins only after implementation
+    # startup and input-consume readiness, and ends after the required input
+    # drain.  Save/postprocess/fixed shutdown grace/container startup are not
+    # included.  A wrapper without a complete coverage proof is invalid.
+    gate_metric: runtime.online_compute_rtf
+    gate_definition: input_consume_start_to_required_drain_end_divided_by_sensor_duration
+    maximum_online_compute_rtf: 1.0
+    phase_contract_version: m6a10-online-compute-v1
+    phase_contract_schema_version: 1
+    require_no_input_drops: true
+    require_no_queue_overflow: true
+    require_complete_input_coverage: true
     fast_livo2_processing_probe_rate: 1.25
     fast_livo2_processing_probe_fixed_drain_seconds: 5.0
     fast_livo2_processing_probe_max_ape_drift_percent: 1.0
     fast_livo2_processing_probe_repetitions: 3
-    gate_metric: runtime.processing_realtime_factor
-    gate_definition: processing_wall_time_divided_by_sensor_duration
     exclude_runner_startup_shutdown: true
+    exclude_container_startup: true
+    exclude_map_save_postprocess: true
+    exclude_fixed_shutdown_grace: true
+    legacy_wall_gate_metric: runtime.processing_realtime_factor
+    legacy_wall_gate_definition: processing_wall_time_divided_by_sensor_duration
+    legacy_wall_gate_role: diagnostic_only
     replay_wall_realtime_factor_is_diagnostic_only: true
     maximum_trajectory_end_gap_seconds: 0.25
+    # M6a10-v2 replaces wall-RTF-as-followability with an explicit consumer
+    # acknowledgement contract.  Thresholds are preregistered before the
+    # next training replay: exact counts/EOF/empty drain are hard requirements;
+    # 250 ms covers the existing timestamp-coverage bound and a bounded
+    # callback tail without turning wall time into the paced primary metric.
+    phase_contract_v2:
+      schema_version: 2
+      version: m6a10-online-compute-v2
+      primary_modes: [paced_1x, unpaced_ack]
+      paced_primary_metric: runtime.paced_followability_passed
+      unpaced_primary_metric: runtime.unpaced_throughput_gate_passed
+      maximum_unpaced_throughput_rtf: 1.0
+      maximum_timestamp_end_gap_seconds: 0.25
+      maximum_callback_latency_seconds: 0.25
+      maximum_backlog_messages: 0
+      require_exact_consumer_counts: true
+      require_eof_observed: true
+      require_zero_dropped_messages: true
+      require_zero_queue_overflow: true
+      require_empty_drain_backlog: true
+      require_ack_backpressure_for_unpaced: true
+      publisher_counts_are_not_consumer_acks: true
+      wall_rtf_role: diagnostic_only
+      source:
+        path: scripts/benchmark_phase_contract.py
+        sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+      shell_bridge:
+        path: scripts/container_phase_evidence.sh
+        sha256: 4def58dd17b3ec1f8e9803f418267cb97dd3189063b5dd4fb6d74f748e14d107
+      completion_barrier:
+        path: scripts/run_rko_lio_graph_benchmark.sh
+        sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
+        state_exit_codes:
+          pass: 0
+          invalid_or_malformed: 125
+          pending: 2
+          terminal_drain_timeout: 124
+        map_save_after_terminal_timeout: false
+        fixture_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2a-fixed9-propagation-20260822/fixed9_terminal_propagation_receipt.json
+        fixture_receipt_sha256: 0bf81724cbaa1a4e9afd369a5e3d39c6669d0030c1adbb82e89b1750896506c0
+        fixture_status: expected_fail_closed_timeout
+      synchronized_tail_input_contract:
+        schema_version: 1
+        contract_id: m6a10-v2a-synchronized-tail-v1
+        status: implemented_read_only_dry_run
+        scope: ntu_viral_tnp_01_canonical_ros2_training_validation_only
+        lidar_topic: /os1_cloud_node1/points
+        lidar_message_type: sensor_msgs/msg/PointCloud2
+        imu_topic: /imu/imu
+        imu_message_type: sensor_msgs/msg/Imu
+        point_timestamp_field:
+          name: t
+          datatype: UINT32
+          ros_pointfield_datatype: 6
+          count: 1
+          unit: nanoseconds
+          relative_to: header.stamp
+          relation: header.stamp + relative point offset
+          endianness: little
+        eligibility:
+          comparator: point_timestamp_max_ns < last_imu_header_timestamp_ns
+          strict: true
+          reason: rko_lio_requires_imu_buffer_back_newer_than_lidar_point_max
+          input_order_independent: true
+          system_name_independent: true
+        terminal_suffix:
+          ineligible_messages_must_be_contiguous_suffix: true
+          nonterminal_ineligible_pattern: fail_closed
+          output_bag_written_by_dry_run: false
+        producer:
+          path: scripts/analyze_m6a10_synchronized_tail.py
+          sha256: 08651760e43b34ea33bb6aa44d0d68d601d8e1c4483a359e3a1710836c851c0a
+        dry_run_receipt:
+          path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_dryrun.iD9dIn/receipt.json
+          sha256: 31072befe0ee816cfe09ee600f0ed604fd361a26e863e9bc51e5edab6f5f66d3
+          status: PASS
+          gt_content_opened: false
+          scorer_invoked: false
+      preregistration_status: pending_training_remeasurement
+      synchronized_tail_materialization:
+        schema_version: 1
+        contract_id: m6a10-v2a-synchronized-tail-materialization-v1
+        status: ros2_materialized_verified_ros1_verified
+        selection_source: analyzer_receipt_only
+        producer:
+          path: scripts/materialize_m6a10_synchronized_tail.py
+          sha256: 2a2ff6476c6996a20b3e27d375ef33528ad08f20ea8b9bb539c8359075a5ee2b
+        contract_test:
+          path: graph_based_slam/test/test_materialize_m6a10_synchronized_tail.py
+          sha256: f0c58ddbdfeaae2399125bfffc0ebef5ef5c57aba4dca72e7e8238ec0c3175d4
+        output_policy:
+          input_read_only: true
+          terminal_ineligible_suffix_only: true
+          preserve_non_lidar_records: true
+          preserve_eligible_lidar_records: true
+          preserve_raw_serialized_payloads: true
+          preserve_storage_timestamps: true
+          preserve_input_record_order: true
+          order_definition: anyreader_chronological_playback_order_including_deterministic_ties
+          preserve_connection_metadata_by_id: true
+          duplicate_connection_signature: fail_closed
+          output_staging_container_suffix: .staging
+          output_staging_inner_basename: final_output_basename
+          legacy_part_staging: fail_closed
+          internal_database_part_suffix: forbidden
+          atomic_directory_publish: true
+          existing_output_or_staging: fail_closed
+          receipt_external_required: true
+          receipt_tree_self_reference: forbidden
+          independent_stream_verification: required
+          verification_before_publish: required
+          post_publish_check: output_tree_hash_only
+        ros1_fast_livo2:
+          conversion_executed_here: true
+          status: ros1_verified
+          converter: rosbags-convert
+          converter_version: '0.11.0'
+          converter_executable_path: /home/sasaki/.local/bin/rosbags-convert
+          converter_executable_sha256: 83f210e4fd135eb81c12191b20fe06443eab0344398a5e0712283a538749bfc2
+          converter_help_sha256: 5fc5a415d32b0ccc953cc2b2f4f5213c1c201a9338b4b53eb7bdc1cebc23e4aa
+          ros1_output_path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+          ros1_staging_container_path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.staging
+          ros1_staging_output_path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.staging/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+          destination_extension: .bag
+          staging_policy: sibling_container_exact_final_basename
+          conversion_argv:
+            - rosbags-convert
+            - --src
+            - <canonical_ros2>
+            - --dst
+            - <ros1_staging_container>/<ros1_final_basename>.bag
+            - --compress
+            - none
+            - --src-typestore
+            - ros2_humble
+            - --dst-typestore
+            - ros1_noetic
+          semantic_comparator:
+            path: scripts/compare_rosbag_semantic_inputs.py
+            sha256: 7464d0e64ba1cafbdbb7a2e162bd2735b7288d9ea6e3a2dc1e7757bdab5fcf41
+            topics:
+              - /os1_cloud_node1/points
+              - /imu/imu
+              - /left/image_raw
+            all_topics_equal_required: true
+            report_required_before_fast_run: true
+            result_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1/semantic.json
+            result_sha256: 0a64efb618c9bdbba4e762c350f21e36fb1244b4e2c2ffa17b3d7604cdd318ec
+            all_topics_equal: true
+            status: PASS
+          wrapper:
+            path: scripts/materialize_m6a10_ros1_equivalent.py
+            sha256: 23170ffb0fe1d0b3fc8c05b7ef592e30ddc387825d6b5f09a6b5339b97687142
+            test_path: graph_based_slam/test/test_materialize_m6a10_ros1_equivalent.py
+            test_sha256: f3572921c330fd0a9b8f504caac6d775938495f244b918f15c8e109dddc720ea
+            contract_id: m6a10-v2a-ros1-equivalence-v1
+            status: wrapper_executed_verified
+            evidence:
+              root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1
+              receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1/receipt.json
+              semantic_report_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1/semantic.json
+              time_report_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1/time-v.txt
+            command:
+              argv:
+                - python3
+                - scripts/materialize_m6a10_ros1_equivalent.py
+                - --input
+                - /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros2
+                - --fixed-receipt
+                - /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_materialization_v1_fixed10/receipt.json
+                - --output
+                - /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+                - --receipt
+                - /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1/receipt.json
+                - --profile
+                - configs/slam_benchmark_profiles/competitive_slam_v1.yaml
+                - --semantic-report
+                - /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1/semantic.json
+              timed_argv:
+                - /usr/bin/time
+                - -v
+                - -o
+                - /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1/time-v.txt
+                - --
+            result:
+              status: PASS
+              receipt_sha256: b71e7f5aa8f82a5711e6b25e42532caa8248a3fcf062d9b3b15a5c86460438ec
+              semantic_report_sha256: 0a64efb618c9bdbba4e762c350f21e36fb1244b4e2c2ffa17b3d7604cdd318ec
+              ros1_output_sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+              ros1_output_bytes: 11290464091
+              message_count: 236687
+              topic_counts:
+                /os1_cloud_node1/points: 5793
+                /imu/imu: 225102
+                /left/image_raw: 5792
+              time_report_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ros1_equivalence_v1/time-v.txt
+              time_report_sha256: 080dfbc2d50e016359702f58554f428b9aea1f18e974bc8275c2f2104b07459a
+              time_elapsed_wall_seconds: 207.57
+              time_max_rss_kib: 153252
+            safety:
+              ground_truth_content_opened: false
+              scorer_invoked: false
+              input_modified: false
+              output_identity_recorded: true
+              staging_present: false
+        generated_output:
+          path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros2
+          tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263
+          tree_hash_kind: relative_path_size_content_sha256_v1
+          total_bytes: 11299255700
+          file_count: 2
+          input_tree_sha256: 2f289335989a8c95226218dcb68445a02ae9080bf0984bb0ee382c9b29c35b68
+          input_record_count: 236688
+          output_record_count: 236687
+          ordered_payload_stream_sha256: 1512e3946d013b8543f09146b81474745ad9e718910b5f1322bda2823546e101
+          per_topic:
+            /imu/imu:
+              count: 225102
+              ordered_payload_stream_sha256: 55657ceaea2f586f78f8857db9fed5dfcab45e42ea272eb9e02328387190415c
+            /left/image_raw:
+              count: 5792
+              ordered_payload_stream_sha256: 37cb0e5bbd78da1545d902f1a233337608c1c1ed5c3fd3e76297d230b7e07d90
+            /os1_cloud_node1/points:
+              count: 5793
+              ordered_payload_stream_sha256: b66479c9c58dd0b557ff5b08cc00c199ecb7ad40a08ec18588ea0eb4d084bf93b
+        generated_receipt:
+          path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_materialization_v1_fixed10/receipt.json
+          sha256: 62defcf7a1b5cdadee666de44b09f71f8e011551ea93e37eec51b64a333cae9f
+          receipt_kind: m6a10_v2a_synchronized_tail_generation
+          contract_id: m6a10-v2a-synchronized-tail-materialization-v1
+          analyzer_contract_id: m6a10-v2a-synchronized-tail-v1
+          status: PASS
+          verification:
+            status: PASS
+            method: independent_raw_stream_reread
+            output_record_count: 236687
+            dropped_count: 1
+            ordered_payload_stream_sha256: 1512e3946d013b8543f09146b81474745ad9e718910b5f1322bda2823546e101
+            connection_metadata_equal: true
+          order_definition: anyreader_chronological_playback_order_including_deterministic_ties
+          dropped_lidar:
+            count: 1
+            payload_sha256: a11e441e679c424d31a43755d96328f94e73a1d2a52e48a1c808ac51f7443830
+          safety:
+            atomic_publish: true
+            ground_truth_content_opened: false
+            input_modified: false
+            input_record_order_preserved_except_declared_terminal_suffix: true
+            output_bag_written: true
+            raw_serialized_payloads_preserved: true
+            receipt_external_to_output: true
+            scorer_invoked: false
+          connection_metadata_equal: true
+          connection_identity:
+            semantics: source_connection_id_bound_by_ordered_metadata_signature
+            connection_ids: [1, 2, 3]
+            topics:
+              - /imu/imu
+              - /left/image_raw
+              - /os1_cloud_node1/points
+        superseded_lineage:
+          status: superseded_not_promoted
+          reason: contract_id_mismatch_and_internal_part_filename
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_materialization_v1/receipt.json
+          receipt_sha256: c6f0cec83956b3405f841242db0e8d5b71630477701728add74af2b3115c64a9
+          output_path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_v1_ros2
+          output_tree_sha256: 4b4500450306aa60bf4b9daa79dc29a2cae8743a2b5ace197413bd06544fee9e
+        ground_truth_content_opened: false
+        scorer_invoked: false
+      ours_m6a10_v2a_unpaced_ack_replay:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v1
+        status: preregistered_not_measured
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        input:
+          path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros2
+          tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb926
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_materialization_v1_fixed10/receipt.json
+          receipt_sha256: 62defcf7a1b5cdadee666de44b09f71f8e011551ea93e37eec51b64a333cae9f
+          lidar_topic: /os1_cloud_node1/points
+          imu_topic: /imu/imu
+          image_topic: /left/image_raw
+          eligible_lidar_count: 5793
+          imu_count: 225102
+          expected_consumer_count: 230895
+          image_count: 5792
+          image_consumer_scope: not_consumed_by_ours_direct_visual_frontend_false
+        execution:
+          image_tag: m6a10-v2a-fixed9-lidarslam-ours:jazzy
+          image_digest: sha256:2ee632eb0bcde28d74b90ea91975c2b560956cee293c7d36248b0d63fd648329
+          algorithm_revision: 866f733677e92ecb08d67126e463da99dd140d46
+          image_bound_binary: /opt/ours_ws/install/rko_lio/lib/rko_lio/offline_node
+          rko_config_path: lidarslam/param/rko_lio_ntu_viral.yaml
+          rko_config_sha256: 3392a87fa587152e0659f1be6c5121b761a76d5a5e51ba7bc1df641d220cc89f
+          wrapper:
+            path: scripts/ours_container_gt_blind_run.sh
+            sha256: 806857afec65c16105446e75fb32450e2b0efe1116268ce4412ffb44559db8a6
+          runner:
+            path: scripts/run_rko_lio_graph_benchmark.sh
+            sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
+          completion_contract:
+            path: scripts/m6a10_completion_contract.sh
+            sha256: 9e770dbd0f5c755a2271ec431e6018cf4614e58c3836812292f9977e31b9d3e1
+          phase_contract:
+            path: scripts/benchmark_phase_contract.py
+            sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+          environment:
+            ros_domain_id: 229
+            omp_num_threads: 8
+            openblas_num_threads: 8
+            mkl_num_threads: 8
+            tbb_num_threads: 8
+          gt_mount: false
+        command:
+          entrypoint: /runner/scripts/ours_container_gt_blind_run.sh
+          phase_mode: unpaced_ack
+          bag_path_in_container: /input/canonical_ros2
+          output_path_in_container: /out
+          lidar_topic: /os1_cloud_node1/points
+          imu_topic: /imu/imu
+          drain_timeout_seconds: 30
+          max_online_compute_rtf: 1.0
+          skip_map_save: true
+          gt_blind: true
+          network: none
+          input_mount_read_only: true
+          image_mount_read_only: true
+        consumer_contract:
+          ack_source_kind: synchronous_processing
+          ack_backpressure_required: true
+          expected_messages: 230895
+          expected_lidar_messages: 5793
+          expected_imu_messages: 225102
+          expected_image_messages: 0
+          require_exact_counts: true
+          require_eof_observed: true
+          require_empty_drain_backlog: true
+          maximum_backlog_messages: 0
+          require_zero_dropped_messages: true
+          require_zero_queue_overflow: true
+          trajectory_completion_required: true
+          trajectory_hash_only: true
+        output:
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v1
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v1/out
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v1/time-v.txt
+          required_artifacts:
+            - phase_evidence.json
+            - consumer_evidence.json
+            - m6a10_drain_diagnostic.eof.json
+            - container_process_rss.json
+            - container_memory.json
+            - gt_blind_run.json
+            - traj_raw.tum
+            - traj_corrected.tum
+          forbidden_on_pass:
+            - m6a10_drain_diagnostic.timeout.json
+            - '*.part'
+            - map_save
+            - ground_truth
+            - scorer
+        fixed9_lineage:
+          status: superseded_not_replayed
+          old_contract: m6a10-v2a-ours-rko-unpaced-ack-fixed9
+          old_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/fixed9_tnp01_unpaced_diag.dmHeoi
+          old_receipt_sha256: 6cb00c5f38910079bc47bd3f333452b5fdd56eeebade32a05e6ae38db41a7902
+          old_status: INVALID_DRAIN_TIMEOUT
+          old_terminal_lidar_buffer_size: 1
+          old_timestamp_gap_ns: -15805696
+          fixed10_change: terminal_ineligible_lidar_removed_by_verified_materialization
+        fixed10_v1_attempt:
+          status: FAIL_CLOSED
+          verification_status: FAIL_CLOSED
+          verification_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v1/evidence/independent_verification_final.json
+          verification_sha256: ce0211f2e55e09ed2e8cb9f0692daf2dc5ebdf0f6707942292734bd542f35a0e
+          output_tree_sha256: 508df8568e9db1d51e8f167a12349cec33d04f61564b6154bf86244ae5f52624
+          consumer_status: PASS
+          phase_status: PASS
+          map_artifact_count: 18
+          failure_reason: forbidden_map_artifacts_present_after_skip_map_save
+          retries: 0
+          ground_truth_content_opened: false
+          scorer_invoked: false
+        safety:
+          input_read_only: true
+          ground_truth_content_opened: false
+          scorer_invoked: false
+          performance_comparison: false
+          wall_rtf_diagnostic_only: true
+      ours_m6a10_v2a_unpaced_ack_fixed10_v2:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v2
+        status: preregistered_not_executed
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        predecessor:
+          contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v1
+          status: FAIL_CLOSED
+          verification_sha256: ce0211f2e55e09ed2e8cb9f0692daf2dc5ebdf0f6707942292734bd542f35a0e
+        fixed10_v2_attempt:
+          status: FAIL_CLOSED
+          verification_status: FAIL_CLOSED
+          execution_status: 125
+          process_exit_status: 125
+          retry_count: 0
+          output_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v2
+          root_tree_sha256: 868dc7369494eb7f6f7e09ab9363c408024c8bdeb31d7055113f1d9c6d5d7418
+          output_tree_sha256: 28772ce7cec189fbaa3a151f966cc6e8714d57cdaea86c26652b01ddbf987af3
+          host_time_report_sha256: c31f5f62dd5db641ca0cbc69432f574e62662fdd26733b766c4051709f3ff764
+          consumer_evidence_sha256: 43a45b33d8f39dbab256adede11f03fe7b35556602d9cb2729fb8474bd8ab5a0
+          phase_evidence_sha256: d0930a0817067fedf3ddc56bc0046bcafa9176bd964807bd54e4c9e1c1943b4e
+          drain_diagnostic_eof_sha256: 720e713a7d9e8eda745fbfd8904053782c5cfe38ee97cb375ecb5c3bfaf6ad18
+          process_rss_evidence_sha256: afbbf67b3019775f7740716454e85cf9e9574d7a021a12c2853e297fd4e41d17
+          container_memory_evidence_sha256: 8946c2a585f6dfbdd7222f8c50fc2441adc88ed7db559a95ec4f3e843f5f3863
+          consumer_status: PASS
+          consumer_expected_messages: 230895
+          consumer_received_messages: 230895
+          consumer_processed_messages: 230895
+          consumer_dropped_messages: 0
+          consumer_queue_overflow: 0
+          consumer_processing_failures: 0
+          consumer_eof_observed: true
+          consumer_drain_complete: true
+          consumer_backlog_at_drain: 0
+          callback_latency_seconds: 0.371609411
+          callback_latency_limit_seconds: 0.25
+          phase_status: INVALID
+          phase_failure_reason: missing_phase_boundary_input_end
+          rss_status: INVALID
+          rss_jitter_percent: 139.5325092
+          rss_jitter_limit_percent: 100.0
+          container_cgroup_peak_bytes: 6883102720
+          memory_max: max
+          oom_delta: 0
+          forbidden_map_artifacts: []
+          part_artifacts: []
+          timeout_artifacts: []
+          ground_truth_content_opened: false
+          scorer_invoked: false
+          performance_comparison: false
+        input:
+          path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros2
+          tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb926
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_materialization_v1_fixed10/receipt.json
+          receipt_sha256: 62defcf7a1b5cdadee666de44b09f71f8e011551ea93e37eec51b64a333cae9f
+          lidar_topic: /os1_cloud_node1/points
+          imu_topic: /imu/imu
+          eligible_lidar_count: 5793
+          imu_count: 225102
+          expected_consumer_count: 230895
+          image_count: 5792
+          image_consumer_scope: not_consumed_by_ours_direct_visual_frontend_false
+        execution:
+          image_tag: m6a10-v2a-fixed10-v2-lidarslam-ours:jazzy
+          image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          algorithm_revision: 866f733677e92ecb08d67126e463da99dd140d46
+          wrapper:
+            path: scripts/ours_container_gt_blind_run.sh
+            sha256: 806857afec65c16105446e75fb32450e2b0efe1116268ce4412ffb44559db8a6
+          runner:
+            path: scripts/run_rko_lio_graph_benchmark.sh
+            sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
+          launch:
+            path: lidarslam/launch/rko_lio_slam.launch.py
+            sha256: d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c
+            installed_path: /opt/ours_ws/install/lidarslam/share/lidarslam/launch/rko_lio_slam.launch.py
+            installed_sha256: d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c
+            image_label: benchmark.ours.launch_sha256
+          completion_contract:
+            path: scripts/m6a10_completion_contract.sh
+            sha256: 9e770dbd0f5c755a2271ec431e6018cf4614e58c3836812292f9977e31b9d3e1
+          phase_contract:
+            path: scripts/benchmark_phase_contract.py
+            sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+          environment:
+            ros_domain_id: 229
+            omp_num_threads: 8
+            openblas_num_threads: 8
+            mkl_num_threads: 8
+            tbb_num_threads: 8
+            gt_mount: false
+        command:
+          entrypoint: /runner/scripts/ours_container_gt_blind_run.sh
+          phase_mode: unpaced_ack
+          bag_path_in_container: /input/canonical_ros2
+          output_path_in_container: /out
+          lidar_topic: /os1_cloud_node1/points
+          imu_topic: /imu/imu
+          drain_timeout_seconds: 30
+          max_online_compute_rtf: 1.0
+          skip_map_save: true
+          benchmark_no_map_artifacts_env: M6A10_BENCHMARK_NO_MAP_ARTIFACTS=1
+          gt_blind: true
+          network: none
+          input_mount_read_only: true
+          image_mount_read_only: true
+        no_map_artifact_contract:
+          status: preregistered_not_executed
+          contract_test:
+            path: graph_based_slam/test/test_m6a10_no_map_artifacts.py
+            sha256: dfa8308b5bfdbccfa6b04c9489c62811a4cbb021673566cbfea390d6f819e87e
+          trigger: M6A10_SKIP_MAP_SAVE=1
+          launch_override:
+            use_save_map_in_loop: false
+            save_pose_graph_path: ''
+          forbidden_relative_paths:
+            - map.pcd
+            - map_bundle.yaml
+            - map_projector_info.yaml
+            - degeneracy_report.yaml
+            - pose_graph.g2o
+            - trajectory_optimized.tum
+            - loop_edges.csv
+            - pointcloud_map
+          verification: runner_assert_no_map_artifacts_after_launch_termination
+        consumer_contract:
+          ack_source_kind: synchronous_processing
+          ack_backpressure_required: true
+          expected_messages: 230895
+          require_exact_counts: true
+          require_eof_observed: true
+          require_empty_drain_backlog: true
+          maximum_backlog_messages: 0
+          require_zero_dropped_messages: true
+          require_zero_queue_overflow: true
+          trajectory_completion_required: true
+          trajectory_hash_only: true
+        output:
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v2
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v2/out
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v2/time-v.txt
+          required_artifacts:
+            - phase_evidence.json
+            - consumer_evidence.json
+            - container_process_rss.json
+            - container_memory.json
+            - gt_blind_run.json
+            - traj_raw.tum
+            - traj_corrected.tum
+          forbidden_on_pass:
+            - m6a10_drain_diagnostic.timeout.json
+            - '*.part'
+            - map.pcd
+            - map_bundle.yaml
+            - map_projector_info.yaml
+            - degeneracy_report.yaml
+            - pose_graph.g2o
+            - trajectory_optimized.tum
+            - loop_edges.csv
+            - pointcloud_map
+            - ground_truth
+            - scorer
+        safety:
+          input_read_only: true
+          ground_truth_content_opened: false
+          scorer_invoked: false
+          performance_comparison: false
+          wall_rtf_diagnostic_only: true
+      ours_m6a10_v2a_unpaced_ack_fixed10_v3:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v3
+        status: preregistered_not_executed
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        result: null
+        predecessor:
+          contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v2
+          status: FAIL_CLOSED
+          execution_status: 125
+          output_tree_sha256: 28772ce7cec189fbaa3a151f966cc6e8714d57cdaea86c26652b01ddbf987af3
+          retry_count: 0
+        quiescence_attempt:
+          status: FAIL_CLOSED
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v3/quiescence.json
+          receipt_sha256: 74732fbdeb9bb8da094bacde3518cc2475eaeb29a3f4fec5c39d7972dc97a5a6
+          runner_start_allowed: false
+          retry_count: 0
+          cpu_busy_percent: 98.72340425531915
+          max_cpu_busy_percent: 5.0
+          load1: 6.44
+          load1_per_cpu: 0.805
+          max_load1_per_cpu: 0.5
+          nproc: 8
+          forbidden_process_count: 8
+          forbidden_process_classes:
+            - compiler
+          ground_truth_content_opened: false
+          scorer_invoked: false
+        input:
+          path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros2
+          tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb926
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_materialization_v1_fixed10/receipt.json
+          receipt_sha256: 62defcf7a1b5cdadee666de44b09f71f8e011551ea93e37eec51b64a333cae9f
+          lidar_topic: /os1_cloud_node1/points
+          imu_topic: /imu/imu
+          eligible_lidar_count: 5793
+          imu_count: 225102
+          expected_consumer_count: 230895
+          image_count: 5792
+          image_consumer_scope: not_consumed_by_ours_direct_visual_frontend_false
+        execution:
+          image_tag: m6a10-v2a-fixed10-v2-lidarslam-ours:jazzy
+          image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          algorithm_revision: 866f733677e92ecb08d67126e463da99dd140d46
+          wrapper:
+            path: scripts/ours_container_gt_blind_run.sh
+            sha256: 806857afec65c16105446e75fb32450e2b0efe1116268ce4412ffb44559db8a6
+          runner:
+            path: scripts/run_rko_lio_graph_benchmark.sh
+            sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
+          launch:
+            path: lidarslam/launch/rko_lio_slam.launch.py
+            sha256: d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c
+            installed_path: /opt/ours_ws/install/lidarslam/share/lidarslam/launch/rko_lio_slam.launch.py
+            installed_sha256: d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c
+            image_label: benchmark.ours.launch_sha256
+          completion_contract:
+            path: scripts/m6a10_completion_contract.sh
+            sha256: 9e770dbd0f5c755a2271ec431e6018cf4614e58c3836812292f9977e31b9d3e1
+          phase_contract:
+            path: scripts/benchmark_phase_contract.py
+            sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+        command:
+          entrypoint: /runner/scripts/ours_container_gt_blind_run.sh
+          phase_mode: unpaced_ack
+          bag_path_in_container: /input/canonical_ros2
+          output_path_in_container: /out
+          lidar_topic: /os1_cloud_node1/points
+          imu_topic: /imu/imu
+          drain_timeout_seconds: 30
+          max_online_compute_rtf: 1.0
+          skip_map_save: true
+          benchmark_no_map_artifacts_env: M6A10_BENCHMARK_NO_MAP_ARTIFACTS=1
+          gt_blind: true
+          network: none
+          input_mount_read_only: true
+          image_mount_read_only: true
+        no_map_artifact_contract:
+          status: preregistered_not_executed
+          trigger: M6A10_SKIP_MAP_SAVE=1
+          forbidden_relative_paths:
+            - map.pcd
+            - map_bundle.yaml
+            - map_projector_info.yaml
+            - degeneracy_report.yaml
+            - pose_graph.g2o
+            - trajectory_optimized.tum
+            - loop_edges.csv
+            - pointcloud_map
+          require_absent: true
+        consumer_contract:
+          ack_source_kind: synchronous_processing
+          ack_backpressure_required: true
+          expected_messages: 230895
+          expected_lidar_messages: 5793
+          expected_imu_messages: 225102
+          expected_image_messages: 0
+          require_exact_counts: true
+          require_eof_observed: true
+          require_empty_drain_backlog: true
+          maximum_backlog_messages: 0
+          require_zero_dropped_messages: true
+          require_zero_queue_overflow: true
+          trajectory_completion_required: true
+          trajectory_hash_only: true
+        output:
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v3
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v3/out
+          planned_quiescence_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v3/quiescence.json
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v3/time-v.txt
+          required_artifacts:
+            - phase_evidence.json
+            - consumer_evidence.json
+            - container_process_rss.json
+            - container_memory.json
+            - gt_blind_run.json
+            - traj_raw.tum
+            - traj_corrected.tum
+          forbidden_on_pass:
+            - m6a10_drain_diagnostic.timeout.json
+            - '*.part'
+            - map.pcd
+            - map_bundle.yaml
+            - map_projector_info.yaml
+            - degeneracy_report.yaml
+            - pose_graph.g2o
+            - trajectory_optimized.tum
+            - loop_edges.csv
+            - pointcloud_map
+            - ground_truth
+            - scorer
+        quiescence_preflight:
+          schema_version: 1
+          contract_version: m6a10-quiescence-v1
+          status: preregistered_not_run
+          script:
+            path: scripts/check_m6a10_quiescence.py
+            sha256: acf8b2e65e7744dd9cfd4127ac5ec12fb381c5a7c1430910b3e769ea259fe85d
+          test:
+            path: graph_based_slam/test/test_m6a10_quiescence.py
+            sha256: 28e48940db957cc1ccb4455a84ea15d786a3de9460e6ff0b82dde78fcc78a5d1
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v3/quiescence.json
+          receipt_sha256: null
+          receipt_sha256_required: true
+          runner_start_requires_pass: true
+          sample_seconds: 5.0
+          max_cpu_busy_percent: 5.0
+          max_load1_per_cpu: 0.5
+          forbidden_process_classes:
+            - compiler
+            - docker_build
+            - colcon_build
+            - cmake_build
+            - cargo_build
+            - generic_build
+        safety:
+          input_read_only: true
+          ground_truth_content_opened: false
+          scorer_invoked: false
+          performance_comparison: false
+          wall_rtf_diagnostic_only: true
+      ours_m6a10_v2a_unpaced_ack_fixed10_v4:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v4
+        status: preregistered_not_executed
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        result: null
+        predecessor:
+          contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v3
+          status: PREFLIGHT_FAIL_CLOSED
+          preflight_receipt_sha256: 74732fbdeb9bb8da094bacde3518cc2475eaeb29a3f4fec5c39d7972dc97a5a6
+          retry_count: 0
+        quiescence_attempt:
+          status: FAIL_CLOSED
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v4/quiescence.json
+          receipt_sha256: b8c7b38debd07586f3af060e51b83a5fa94108ba2c80bf27f481ac16f291fb51
+          runner_start_allowed: false
+          retry_count: 0
+          cpu_busy_percent: 98.12312312312312
+          max_cpu_busy_percent: 5.0
+          load1: 6.88
+          load1_per_cpu: 0.86
+          max_load1_per_cpu: 0.5
+          nproc: 8
+          forbidden_process_count: 7
+          forbidden_process_classes:
+            - compiler
+          ground_truth_content_opened: false
+          scorer_invoked: false
+        input: &m6a10_fixed10_v4_input
+          path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros2
+          tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb926
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/synchronized_tail_materialization_v1_fixed10/receipt.json
+          receipt_sha256: 62defcf7a1b5cdadee666de44b09f71f8e011551ea93e37eec51b64a333cae9f
+          lidar_topic: /os1_cloud_node1/points
+          imu_topic: /imu/imu
+          eligible_lidar_count: 5793
+          imu_count: 225102
+          expected_consumer_count: 230895
+          image_count: 5792
+          image_consumer_scope: not_consumed_by_ours_direct_visual_frontend_false
+        execution: &m6a10_fixed10_v4_execution
+          image_tag: m6a10-v2a-fixed10-v2-lidarslam-ours:jazzy
+          image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          algorithm_revision: 866f733677e92ecb08d67126e463da99dd140d46
+          wrapper:
+            path: scripts/ours_container_gt_blind_run.sh
+            sha256: 806857afec65c16105446e75fb32450e2b0efe1116268ce4412ffb44559db8a6
+          runner:
+            path: scripts/run_rko_lio_graph_benchmark.sh
+            sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
+          launch:
+            path: lidarslam/launch/rko_lio_slam.launch.py
+            sha256: d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c
+            installed_path: /opt/ours_ws/install/lidarslam/share/lidarslam/launch/rko_lio_slam.launch.py
+            installed_sha256: d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c
+            image_label: benchmark.ours.launch_sha256
+          completion_contract:
+            path: scripts/m6a10_completion_contract.sh
+            sha256: 9e770dbd0f5c755a2271ec431e6018cf4614e58c3836812292f9977e31b9d3e1
+          phase_contract:
+            path: scripts/benchmark_phase_contract.py
+            sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+        command: &m6a10_fixed10_v4_command
+          entrypoint: /runner/scripts/ours_container_gt_blind_run.sh
+          phase_mode: unpaced_ack
+          bag_path_in_container: /input/canonical_ros2
+          output_path_in_container: /out
+          lidar_topic: /os1_cloud_node1/points
+          imu_topic: /imu/imu
+          drain_timeout_seconds: 30
+          max_online_compute_rtf: 1.0
+          skip_map_save: true
+          benchmark_no_map_artifacts_env: M6A10_BENCHMARK_NO_MAP_ARTIFACTS=1
+          gt_blind: true
+          network: none
+          input_mount_read_only: true
+          image_mount_read_only: true
+        no_map_artifact_contract: &m6a10_fixed10_v4_no_map
+          status: preregistered_not_executed
+          trigger: M6A10_SKIP_MAP_SAVE=1
+          forbidden_relative_paths:
+            - map.pcd
+            - map_bundle.yaml
+            - map_projector_info.yaml
+            - degeneracy_report.yaml
+            - pose_graph.g2o
+            - trajectory_optimized.tum
+            - loop_edges.csv
+            - pointcloud_map
+          require_absent: true
+        consumer_contract: &m6a10_fixed10_v4_consumer
+          ack_source_kind: synchronous_processing
+          ack_backpressure_required: true
+          expected_messages: 230895
+          expected_lidar_messages: 5793
+          expected_imu_messages: 225102
+          expected_image_messages: 0
+          require_exact_counts: true
+          require_eof_observed: true
+          require_empty_drain_backlog: true
+          maximum_backlog_messages: 0
+          require_zero_dropped_messages: true
+          require_zero_queue_overflow: true
+          trajectory_completion_required: true
+          trajectory_hash_only: true
+        output: &m6a10_fixed10_v4_output
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v4
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v4/out
+          planned_quiescence_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v4/quiescence.json
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v4/time-v.txt
+          required_artifacts:
+            - phase_evidence.json
+            - consumer_evidence.json
+            - container_process_rss.json
+            - container_memory.json
+            - gt_blind_run.json
+            - traj_raw.tum
+            - traj_corrected.tum
+          forbidden_on_pass:
+            - m6a10_drain_diagnostic.timeout.json
+            - '*.part'
+            - map.pcd
+            - map_bundle.yaml
+            - map_projector_info.yaml
+            - degeneracy_report.yaml
+            - pose_graph.g2o
+            - trajectory_optimized.tum
+            - loop_edges.csv
+            - pointcloud_map
+            - ground_truth
+            - scorer
+        quiescence_preflight: &m6a10_fixed10_v4_quiescence
+          schema_version: 1
+          contract_version: m6a10-quiescence-v1
+          status: preregistered_not_run
+          script:
+            path: scripts/check_m6a10_quiescence.py
+            sha256: acf8b2e65e7744dd9cfd4127ac5ec12fb381c5a7c1430910b3e769ea259fe85d
+          test:
+            path: graph_based_slam/test/test_m6a10_quiescence.py
+            sha256: 28e48940db957cc1ccb4455a84ea15d786a3de9460e6ff0b82dde78fcc78a5d1
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v4/quiescence.json
+          receipt_sha256: null
+          receipt_sha256_required: true
+          runner_start_requires_pass: true
+          sample_seconds: 5.0
+          max_cpu_busy_percent: 5.0
+          max_load1_per_cpu: 0.5
+          forbidden_process_classes:
+            - compiler
+            - docker_build
+            - colcon_build
+            - cmake_build
+            - cargo_build
+            - generic_build
+        safety: &m6a10_fixed10_v4_safety
+          input_read_only: true
+          ground_truth_content_opened: false
+          scorer_invoked: false
+          performance_comparison: false
+          wall_rtf_diagnostic_only: true
+      ours_m6a10_v2a_unpaced_ack_fixed10_v5:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v5
+        status: preregistered_not_executed
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        result: null
+        predecessor:
+          contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v4
+          status: PREFLIGHT_FAIL_CLOSED
+          preflight_receipt_sha256: b8c7b38debd07586f3af060e51b83a5fa94108ba2c80bf27f481ac16f291fb51
+          retry_count: 0
+        input:
+          <<: *m6a10_fixed10_v4_input
+        execution:
+          <<: *m6a10_fixed10_v4_execution
+          phase_contract:
+            path: scripts/benchmark_phase_contract.py
+            sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+        command:
+          <<: *m6a10_fixed10_v4_command
+        no_map_artifact_contract:
+          <<: *m6a10_fixed10_v4_no_map
+          status: preregistered_not_executed
+        consumer_contract:
+          <<: *m6a10_fixed10_v4_consumer
+        output:
+          <<: *m6a10_fixed10_v4_output
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v5
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v5/out
+          planned_quiescence_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v5/quiescence.json
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v5/time-v.txt
+        quiescence_preflight:
+          <<: *m6a10_fixed10_v4_quiescence
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v5/quiescence.json
+          receipt_sha256: null
+        quiescence_attempt:
+          status: FAIL_CLOSED
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v5/quiescence.json
+          receipt_sha256: dbf54a1a5a1fd9d527fef280f633e3710b9a79d04ac482bb13ac1278516b4dee
+          runner_start_allowed: false
+          retry_count: 0
+          cpu_busy_percent: 25.717884130982366
+          max_cpu_busy_percent: 5.0
+          load1: 2.06
+          load1_per_cpu: 0.2575
+          max_load1_per_cpu: 0.5
+          nproc: 8
+          forbidden_process_count: 1
+          forbidden_process_classes:
+            - compiler
+          ground_truth_content_opened: false
+          scorer_invoked: false
+        safety:
+          <<: *m6a10_fixed10_v4_safety
+      ours_m6a10_v2a_unpaced_ack_fixed10_v6:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v6
+        status: FAIL_CLOSED
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        result: null
+        failure_closure:
+          status: FAIL_CLOSED
+          failure_kind: runner_not_started_after_preflight
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v6/runner_not_started_after_preflight.json
+          receipt_sha256: ef04937fd7c17b2ed017902985502aa02b9349ccb63961dcd206c0370aea79ad
+          runner_start_attempted: false
+          retry_count: 0
+          ground_truth_content_opened: false
+          scorer_invoked: false
+        predecessor:
+          contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v5
+          status: PREFLIGHT_FAIL_CLOSED
+          preflight_receipt_sha256: dbf54a1a5a1fd9d527fef280f633e3710b9a79d04ac482bb13ac1278516b4dee
+          retry_count: 0
+        input:
+          <<: *m6a10_fixed10_v4_input
+        execution:
+          <<: *m6a10_fixed10_v4_execution
+        command:
+          <<: *m6a10_fixed10_v4_command
+        no_map_artifact_contract:
+          <<: *m6a10_fixed10_v4_no_map
+        consumer_contract:
+          <<: *m6a10_fixed10_v4_consumer
+        output:
+          <<: *m6a10_fixed10_v4_output
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v6
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v6/out
+          planned_quiescence_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v6/quiescence.json
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v6/time-v.txt
+        quiescence_preflight:
+          <<: *m6a10_fixed10_v4_quiescence
+          status: PASS
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v6/quiescence.json
+          receipt_sha256: d9cf50b07157a7da8655d672d7955a768676361735967e35e64367b6272cf3fa
+          runner_start_allowed: true
+        safety:
+          <<: *m6a10_fixed10_v4_safety
+      ours_m6a10_v2a_unpaced_ack_fixed10_v7:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v7
+        status: FAIL_CLOSED
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        result: null
+        failure_closure:
+          status: FAIL_CLOSED
+          failure_kind: IDENTITY_PREFLIGHT_FAIL_CLOSED
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/closure_receipt.json
+          receipt_sha256: fffba96d21721c5b811fb7710d3d77889e81e0c8bfb4ffcb8957f6c94bce57da
+          attempt_root_marker_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/attempt_root_marker.json
+          attempt_root_marker_sha256: 02aac87246c4e1792ce680c66245e1cefc7cad2fe673dadacebe9e760d77a4ec
+          runner_start_attempted: false
+          quiescence_started: false
+          retry_count: 0
+          expected_input_tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb926
+          observed_input_tree_sha256: bcbb4c86f568125104565fca3882695fab0b501a7ca9d9aa9aaa643f1b8ee6eb
+          observed_tree_hash_kind: launcher_relative_path_content_sha256_v1
+          canonical_profile_input_tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb926
+          canonical_profile_tree_hash_kind: relative_path_size_content_sha256_v1
+          canonical_profile_tree_hash_matches_expected: true
+          diagnosis: launcher_hash_omitted_file_size_field
+          ground_truth_content_opened: false
+          scorer_invoked: false
+        predecessor:
+          contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v6
+          status: FAIL_CLOSED
+          failure_kind: runner_not_started_after_preflight
+          closure_receipt_sha256: ef04937fd7c17b2ed017902985502aa02b9349ccb63961dcd206c0370aea79ad
+          retry_count: 0
+        input:
+          <<: *m6a10_fixed10_v4_input
+        execution:
+          <<: *m6a10_fixed10_v4_execution
+          phase_contract:
+            path: scripts/benchmark_phase_contract.py
+            sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+        command:
+          <<: *m6a10_fixed10_v4_command
+        no_map_artifact_contract:
+          <<: *m6a10_fixed10_v4_no_map
+        consumer_contract:
+          <<: *m6a10_fixed10_v4_consumer
+        launcher:
+          path: scripts/run_m6a10_fixed10_v7.py
+          sha256: 47ab6b059bc9736da5fa69933d7a1d1024db186b78b1c5d30b987544fb0d20d4
+          contract_id: m6a10-v2a-fixed10-v7-single-process-launcher-v1
+          test_path: graph_based_slam/test/test_m6a10_fixed10_v7_launcher.py
+          test_sha256: b998f83501c55cfe7a18b77ca15e614483c5eae5cb3c945228b6b749c8925f43
+          quiescence_invocations: 1
+          runner_start_same_process_tree: true
+          immediate_start_after_pass: true
+          shell_interpolation: false
+          taskset_or_cpuset: forbidden
+          launch_receipts:
+            marker: attempt_root_marker.json
+            start_attempt: launch_attempt.json
+            started: launch_started.json
+            closure: closure_receipt.json
+          preflight_to_runner_max_gap_seconds: 2.0
+          host_time_argv: [/usr/bin/time, -v, -o, time-v.txt]
+        output:
+          <<: *m6a10_fixed10_v4_output
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/out
+          planned_quiescence_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/quiescence.json
+          launch_attempt_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/launch_attempt.json
+          launch_started_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/launch_started.json
+          closure_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/closure_receipt.json
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/time-v.txt
+          required_completion_validation: host_phase_consumer_memory_rss_gt_blind
+        quiescence_preflight:
+          <<: *m6a10_fixed10_v4_quiescence
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v7/quiescence.json
+          receipt_sha256: null
+        safety:
+          <<: *m6a10_fixed10_v4_safety
+      ours_m6a10_v2a_unpaced_ack_fixed10_v8:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v8
+        status: FAIL_CLOSED
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        result: null
+        predecessor:
+          contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v7
+          status: FAIL_CLOSED
+          failure_kind: IDENTITY_PREFLIGHT_FAIL_CLOSED
+          closure_receipt_sha256: fffba96d21721c5b811fb7710d3d77889e81e0c8bfb4ffcb8957f6c94bce57da
+          retry_count: 0
+        failure_closure:
+          status: FAIL_CLOSED
+          failure_kind: IDENTITY_PREFLIGHT_FAIL_CLOSED
+          message: local image Id differs from pinned digest
+          marker_sha256: e062814e61d373e5bef77608b0c5a578cb7e7375d25b88b44d161a155493e889
+          closure_receipt_sha256: c302a50665e24ad1a7f2bd18b1e77a0cb2d2f0382ad18971d3040ce59ebd3d9e
+          launcher_adapter_image_digest: sha256:385b6eeda3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          observed_local_image_id: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          profile_image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          runner_start_attempted: false
+          quiescence_started: false
+          retry_count: 0
+          ground_truth_content_opened: false
+          scorer_invoked: false
+        input:
+          <<: *m6a10_fixed10_v4_input
+          tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263
+          tree_hash_kind: relative_path_size_content_sha256_v1
+        execution:
+          <<: *m6a10_fixed10_v4_execution
+          phase_contract:
+            path: scripts/benchmark_phase_contract.py
+            sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+        command:
+          <<: *m6a10_fixed10_v4_command
+        no_map_artifact_contract:
+          <<: *m6a10_fixed10_v4_no_map
+        consumer_contract:
+          <<: *m6a10_fixed10_v4_consumer
+        launcher:
+          path: scripts/run_m6a10_fixed10_v8.py
+          sha256: 90c1210fefb2983ed80cab2f655b814d7dde1a6c851a309dc384ecd850041c96
+          contract_id: m6a10-v2a-fixed10-v8-single-process-launcher-v1
+          test_path: graph_based_slam/test/test_m6a10_fixed10_v8_launcher.py
+          test_sha256: 7c5ad992060027642d38468f4b138dfa37bac8ab010536a4b93f85f9d2fd430d
+          tree_hash_kind: relative_path_size_content_sha256_v1
+          tree_hash_helper_path: scripts/materialize_m6a10_synchronized_tail.py
+          tree_hash_helper_sha256: 2a2ff6476c6996a20b3e27d375ef33528ad08f20ea8b9bb539c8359075a5ee2b
+          pinned_v7_launcher_sha256: 47ab6b059bc9736da5fa69933d7a1d1024db186b78b1c5d30b987544fb0d20d4
+          quiescence_invocations: 1
+          runner_start_same_process_tree: true
+          immediate_start_after_pass: true
+          shell_interpolation: false
+          taskset_or_cpuset: forbidden
+          launch_receipts:
+            marker: attempt_root_marker.json
+            start_attempt: launch_attempt.json
+            started: launch_started.json
+            closure: closure_receipt.json
+          preflight_to_runner_max_gap_seconds: 2.0
+          host_time_argv: [/usr/bin/time, -v, -o, time-v.txt]
+        output:
+          <<: *m6a10_fixed10_v4_output
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v8
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v8/out
+          planned_quiescence_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v8/quiescence.json
+          launch_attempt_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v8/launch_attempt.json
+          launch_started_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v8/launch_started.json
+          closure_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v8/closure_receipt.json
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v8/time-v.txt
+          required_completion_validation: host_phase_consumer_memory_rss_gt_blind
+        quiescence_preflight:
+          <<: *m6a10_fixed10_v4_quiescence
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v8/quiescence.json
+          receipt_sha256: null
+        safety:
+          <<: *m6a10_fixed10_v4_safety
+      ours_m6a10_v2a_unpaced_ack_fixed10_v9:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v9
+        status: FAIL_CLOSED
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        result: null
+        predecessor:
+          contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v8
+          status: FAIL_CLOSED
+          failure_kind: IDENTITY_PREFLIGHT_FAIL_CLOSED
+          closure_receipt_sha256: c302a50665e24ad1a7f2bd18b1e77a0cb2d2f0382ad18971d3040ce59ebd3d9e
+          retry_count: 0
+        failure_closure:
+          status: FAIL_CLOSED
+          failure_kind: PREFLIGHT_FAIL_CLOSED
+          message: quiescence did not authorize runner start
+          marker_sha256: 1dbbc03ec862553c55e3a63e9f215a802b30601855a40263494163743e3cd971
+          quiescence_receipt_sha256: 585be4f8da6fb1de8481139ee5a5497aaba8755e3225e56eb298faed3bb5d443
+          closure_receipt_sha256: 46bea8d754e14626aa48b705f07e8fc38a61caa097b582152e55694c5ab96d35
+          quiescence_returncode: 1
+          cpu_busy_percent: 2.4439405391786346
+          load1_per_cpu: 0.72375
+          max_load1_per_cpu: 0.5
+          forbidden_process_count: 0
+          runner_start_attempted: false
+          docker_run_started: false
+          retry_count: 0
+          ground_truth_content_opened: false
+          scorer_invoked: false
+        quiescence_attempt:
+          status: FAIL_CLOSED
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9/quiescence.json
+          receipt_sha256: 585be4f8da6fb1de8481139ee5a5497aaba8755e3225e56eb298faed3bb5d443
+          runner_start_allowed: false
+          retry_count: 0
+          cpu_busy_percent: 2.4439405391786346
+          max_cpu_busy_percent: 5.0
+          load1_per_cpu: 0.72375
+          max_load1_per_cpu: 0.5
+          forbidden_process_count: 0
+          forbidden_process_classes: []
+          ground_truth_content_opened: false
+          scorer_invoked: false
+        input:
+          <<: *m6a10_fixed10_v4_input
+          tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263
+          tree_hash_kind: relative_path_size_content_sha256_v1
+        execution:
+          <<: *m6a10_fixed10_v4_execution
+          image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          phase_contract:
+            path: scripts/benchmark_phase_contract.py
+            sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+        command:
+          <<: *m6a10_fixed10_v4_command
+        no_map_artifact_contract:
+          <<: *m6a10_fixed10_v4_no_map
+        consumer_contract:
+          <<: *m6a10_fixed10_v4_consumer
+        launcher:
+          path: scripts/run_m6a10_fixed10_v9.py
+          sha256: 45704d041e260942136bcaffa31f9d385ad3ebb3bbfd21c0482d7715ea86a10b
+          contract_id: m6a10-v2a-fixed10-v9-single-process-launcher-v1
+          test_path: graph_based_slam/test/test_m6a10_fixed10_v9_launcher.py
+          test_sha256: b26a0580db1eac88e6be4ba9620731533cd98b25ddeea7033bedf5bd1a0ea1b8
+          tree_hash_kind: relative_path_size_content_sha256_v1
+          tree_hash_helper_path: scripts/materialize_m6a10_synchronized_tail.py
+          tree_hash_helper_sha256: 2a2ff6476c6996a20b3e27d375ef33528ad08f20ea8b9bb539c8359075a5ee2b
+          pinned_v7_launcher_sha256: 47ab6b059bc9736da5fa69933d7a1d1024db186b78b1c5d30b987544fb0d20d4
+          image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          quiescence_invocations: 1
+          runner_start_same_process_tree: true
+          immediate_start_after_pass: true
+          shell_interpolation: false
+          taskset_or_cpuset: forbidden
+          launch_receipts:
+            marker: attempt_root_marker.json
+            start_attempt: launch_attempt.json
+            started: launch_started.json
+            closure: closure_receipt.json
+          preflight_to_runner_max_gap_seconds: 2.0
+          host_time_argv: [/usr/bin/time, -v, -o, time-v.txt]
+          identity_preflight_receipt:
+            path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9_identity_preflight_v2/identity_receipt.json
+            sha256: 042af3a3f791400b7c642e0d5aec06357527cc09e4590999bcc75c7d96a7973c
+            status: PASS
+            read_only: true
+            runner_start_attempted: false
+            quiescence_started: false
+            docker_run_started: false
+            image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+            input_tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263
+            tree_hash_kind: relative_path_size_content_sha256_v1
+            ground_truth_content_opened: false
+            scorer_invoked: false
+            superseded_identity_receipt:
+              path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9_identity_preflight/identity_receipt.json
+              sha256: 6f51e0ac64476daa3bbeca05a1bf8ec015a4960b8044a09dea3014f8207cd878
+              launcher_sha256: f6e10e00325f8520153d541b73692a285ca92e132d3ff40f4974d151f5422c65
+              status: superseded_not_promoted
+              reason: launcher_changed_before_preregistration
+        output:
+          <<: *m6a10_fixed10_v4_output
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9/out
+          planned_quiescence_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9/quiescence.json
+          launch_attempt_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9/launch_attempt.json
+          launch_started_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9/launch_started.json
+          closure_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9/closure_receipt.json
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9/time-v.txt
+          required_completion_validation: host_phase_consumer_memory_rss_gt_blind
+        quiescence_preflight:
+          <<: *m6a10_fixed10_v4_quiescence
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v9/quiescence.json
+          receipt_sha256: null
+        safety:
+          <<: *m6a10_fixed10_v4_safety
+      ours_m6a10_v2a_unpaced_ack_fixed10_v10:
+        schema_version: 1
+        contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v10
+        status: COMPLETED_GT_BLIND_FUNCTIONAL
+        scope: functional_gt_blind_training_validation_only
+        performance_comparison: false
+        wall_rtf_role: diagnostic_only
+        result:
+          status: PASS
+          execution_status: 0
+          runner_returncode: 0
+          retry_count: 0
+          closure_receipt_sha256: e7224eb29dc547a5119cb7ecc1d51d009ced43cfca8e23c6c6d2fc1977e2e82b
+          attempt_root_marker_sha256: e52cde9693ad53ecbabe8baa31bdad250af79dff61af5d7b17dd898e361efbca
+          launch_attempt_sha256: b51ea13ff5d79262258bc79b48df5c133350b642e378c93b9a65f2f3fcba80d1
+          launch_started_sha256: bc260381e3f82634ed879518c1ee25e92e323524705883c65a1db73e1af6284e
+          quiescence_receipt_sha256: 53a75c460a93985e1edf129222fa908d23e149cde39ad2f9ef293f4626a69498
+          phase_evidence_sha256: 6e2919c55121724b7a9221c3d345b8f57ba4e3e21d94486ba0fd41f8cbc5ff85
+          phase_events_sha256: 388ca644a9dfb74f3db5c672a7976c3d515ec08274371cbf4dfc09692508b07b
+          consumer_evidence_sha256: 58977eec54e59a8c13f01c3dc8258acbd4377c87c13ad14d5956a08ef72f703f
+          container_memory_sha256: 7c5ab7e2ee8b7911ec401117afb650100d0f347241a247763fcaac04c4fe42ee
+          container_process_rss_sha256: 9db94e808a2144911176366c91736122aed96c63da760ed729d3276723bc4b6f
+          gt_blind_run_sha256: d00240562573a8652f30a17b5618691432dc4fdd2a77d6fd40ad3375591b607f
+          host_time_report_sha256: 2a35f07125c14cb9f11a514c0ff57ad5b97ab6c4061b19e45e17f5e50e3470a9
+          trajectory_raw_sha256: 9e20cb96a4326eb41e26d20171a664133b4038e473c3ca0f89f1748892c323f7
+          trajectory_corrected_sha256: 9e20cb96a4326eb41e26d20171a664133b4038e473c3ca0f89f1748892c323f7
+          trajectory_byte_equivalent: true
+          expected_messages: 230895
+          received_messages: 230895
+          processed_messages: 230895
+          dropped_messages: 0
+          queue_overflow: 0
+          processing_failures: 0
+          eof_observed: true
+          drain_complete: true
+          backlog_at_drain: 0
+          maximum_callback_latency_seconds: 0.109221778
+          online_compute_rtf: 0.126860008821509
+          unpaced_throughput_gate_passed: true
+          phase_status: pass
+          consumer_status: pass
+          process_tree_peak_rss_bytes: 868278272
+          cgroup_total_peak_bytes: 2750537728
+          memory_max: max
+          oom_delta: 0
+          no_map_artifacts: true
+          ground_truth_content_opened: false
+          scorer_invoked: false
+          runner_start_gap_seconds: 0.007923466
+          output_tree_hash: ef2d9b9c0d59b9884ea45ca5443f47c71fc93c3653257d458c375f284855cf7b
+          output_tree_hash_kind: output_regular_file_content_sha256_v1
+          output_symlink_paths:
+            - out/ros_log/latest
+          output_tree_canonical_materializer_status: unavailable_symlink_rejected
+        predecessor:
+          contract_id: m6a10-v2a-ours-rko-unpaced-ack-fixed10-v9
+          status: FAIL_CLOSED
+          failure_kind: PREFLIGHT_FAIL_CLOSED
+          closure_receipt_sha256: 46bea8d754e14626aa48b705f07e8fc38a61caa097b582152e55694c5ab96d35
+          retry_count: 0
+        input:
+          <<: *m6a10_fixed10_v4_input
+          tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263
+          tree_hash_kind: relative_path_size_content_sha256_v1
+        execution:
+          <<: *m6a10_fixed10_v4_execution
+          image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          phase_contract:
+            path: scripts/benchmark_phase_contract.py
+            sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+        command:
+          <<: *m6a10_fixed10_v4_command
+        no_map_artifact_contract:
+          <<: *m6a10_fixed10_v4_no_map
+        consumer_contract:
+          <<: *m6a10_fixed10_v4_consumer
+        launcher:
+          path: scripts/run_m6a10_fixed10_v10.py
+          sha256: a892430b003f6c5d9c5beca7ccabb78c9a1a85517ab3f45ef5cd84c8f2b9bdb2
+          contract_id: m6a10-v2a-fixed10-v10-single-process-launcher-v1
+          test_path: graph_based_slam/test/test_m6a10_fixed10_v10_launcher.py
+          test_sha256: b89afc720fec4cc0af2d0736367407cbb6dc4b8789a26e3a0a3adf56530b2283
+          tree_hash_kind: relative_path_size_content_sha256_v1
+          tree_hash_helper_path: scripts/materialize_m6a10_synchronized_tail.py
+          tree_hash_helper_sha256: 2a2ff6476c6996a20b3e27d375ef33528ad08f20ea8b9bb539c8359075a5ee2b
+          pinned_v9_launcher_sha256: 45704d041e260942136bcaffa31f9d385ad3ebb3bbfd21c0482d7715ea86a10b
+          image_tag: m6a10-v2a-fixed10-v2-lidarslam-ours:jazzy
+          image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+          quiescence_invocations: 1
+          runner_start_same_process_tree: true
+          immediate_start_after_pass: true
+          shell_interpolation: false
+          taskset_or_cpuset: forbidden
+          launch_receipts:
+            marker: attempt_root_marker.json
+            start_attempt: launch_attempt.json
+            started: launch_started.json
+            closure: closure_receipt.json
+          preflight_to_runner_max_gap_seconds: 2.0
+          host_time_argv: [/usr/bin/time, -v, -o, time-v.txt]
+          identity_preflight_receipt:
+            path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10_identity_preflight/identity_receipt.json
+            sha256: 2211744e3691df3fc71f7b0a81248a2e75daa4c5b15a23c8a0f8acab4b360ab2
+            status: PASS
+            read_only: true
+            runner_start_attempted: false
+            quiescence_started: false
+            docker_run_started: false
+            image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
+            input_tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263
+            tree_hash_kind: relative_path_size_content_sha256_v1
+            ground_truth_content_opened: false
+            scorer_invoked: false
+        output:
+          <<: *m6a10_fixed10_v4_output
+          root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10
+          out_dir: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10/out
+          planned_quiescence_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10/quiescence.json
+          launch_attempt_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10/launch_attempt.json
+          launch_started_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10/launch_started.json
+          closure_receipt: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10/closure_receipt.json
+          host_time_report: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10/time-v.txt
+          required_completion_validation: host_phase_consumer_memory_rss_gt_blind
+        quiescence_preflight:
+          <<: *m6a10_fixed10_v4_quiescence
+          receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260822/ours_m6a10_v2a_unpaced_ack_fixed10_v10/quiescence.json
+          status: PASS
+          receipt_sha256: 53a75c460a93985e1edf129222fa908d23e149cde39ad2f9ef293f4626a69498
+        safety:
+          <<: *m6a10_fixed10_v4_safety
+  m6a10_glim_v2b: &m6a10_glim_v2b_base
+    schema_version: 1
+    contract_id: m6a10-v2b-glim-consumer-followability-v1
+    status: INVALID_SAFETY
+    result:
+      status: INVALID_SAFETY
+      closure_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-closure-20260823-v3/closure_receipt.json
+      closure_receipt_sha256: 492d39b1f7c4a1a2e86893dd979b0ed57b3f37267cb7f21849b990d95bcc32ff
+      output_tree_sha256: 3ab59eed2f20c3bf179bbfa05d0b5a4ffed723137ea81ebc2427619fd26306c5
+      failure_reason: phase_evidence_consumer_backlog_bound_exceeded
+      retry: 0
+    lineage:
+      prior_fixed10_v2:
+        status: INVALID_SAFETY
+        closure_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-closure-20260823/closure_receipt.json
+        closure_receipt_sha256: 72d8ef9cd2c8e26d4c2120463fdbff3057a75e3f81203863049c11028baa41d5
+        output_tree_sha256: f0db95c9c700b8c9650e9ce2751eb716c2cc271c664ee971f337ec6c01da2552
+        invalid_reason: gt_sibling_reachable_from_parent_mount
+        retry: 0
+    scope: functional_gt_blind_training_validation_only
+    performance_comparison: false
+    wall_rtf_role: diagnostic_only
+    input:
+      path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros2
+      tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263
+      lidar_topic: /os1_cloud_node1/points
+      imu_topic: /imu/imu
+      image_topic: /left/image_raw
+      lidar_messages: 5793
+      imu_messages: 225102
+      image_messages: 5792
+      expected_messages: 236687
+    source:
+      glim_repository: https://github.com/koide3/glim.git
+      glim_revision: faa264a1bce1bda406f73457e35511f56cdc2eaa
+      glim_ros2_repository: https://github.com/koide3/glim_ros2.git
+      glim_ros2_revision: 4a9e7a4cb084967c8525a1be529ad3ba2a118ae7
+      core_patch_path: docker/patches/glim.m6a10-v2b.patch
+      core_patch_sha256: f3e7549ee1730df37125f17c4be00b5643a6b9db9eacbc96c9ecb2f682b08867
+      ros2_patch_path: docker/patches/glim_ros2.m6a10-v2b.patch
+      ros2_patch_sha256: ede64c7a00f409a19138f41c19685f08d58b5c8c8d9d9ffa47b6c7dcb774c0f2
+    build: &m6a10_glim_v2b_build
+      status: PASS
+      dockerfile_path: docker/glim_cpu_benchmark.Dockerfile
+      dockerfile_sha256: dcd01d013eeb5cb50e2582646548c06f2c3b1a93820412b110b7fb25b769d70d
+      build_script_path: scripts/build_competitive_benchmark_images.sh
+      build_script_sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
+      build_with_cv_bridge: 'ON'
+      image_tag: m6a10-v2b-20260823-glim-cpu-benchmark:competitive-v1
+      image_id: sha256:010c0019a077116edf4d1e7462dfa28561c4fb17db3b5db52e3652c8a875eb41
+      image_digest: sha256:010c0019a077116edf4d1e7462dfa28561c4fb17db3b5db52e3652c8a875eb41
+      image_repo_digest: m6a10-v2b-20260823-glim-cpu-benchmark@sha256:010c0019a077116edf4d1e7462dfa28561c4fb17db3b5db52e3652c8a875eb41
+      build_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-glim-closure-20260823/build_receipt.json
+      build_receipt_sha256: fe4d7e3b3b3fec28185f5faa016b19dfb30bd9a52928b099a68d6679e0a09df2
+      input_manifest_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-glim-build-20260823/build_inputs_manifest.json
+      input_manifest_sha256: 395b6b03b3d8a16eecebaeee192b0cabd81163d6d6104a635031b6cccee41ff3
+      source_archive_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-glim-build-20260823/glim_v2b_recipe_context.tar
+      source_archive_sha256: 5582a5db0b7cfd5c8dbd4893b10693f98b0bc00131c2c741bae7d3ad70d2ecaa
+      image_inspect_sha256: 0c3f096fbb5193d6a3f93aabf5236bc3bf4eaf7eec3e069e6f0576dc33ae9d2a
+      labels_sha256: 9552988864421a8745132a01b0c4c519e9dddbccb378c2a6410c17d5408188d7
+      closure_receipt_verified_read_only: true
+      installed_verification_status: PASS
+      installed_verification_sha256: 17af1a7b3fbf55c5def2b02327acc3d6260d9fec887ab39092c0bca8678b15e2
+      marker_verification_sha256: bd209654a9be2fa9880fb7f8c28732013a25dc29bce72d908d121b71d1a3597c
+      entrypoint_verification_sha256: bd209654a9be2fa9880fb7f8c28732013a25dc29bce72d908d121b71d1a3597c
+      execution_identity_preflight_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-preflight-20260823-v3/execution_identity_preflight.json
+      execution_identity_preflight_sha256: 9b8cc1d089a73113930557c6558a32a5ded3725d386b20a78c61fc14e740e190
+      execution_identity_preflight_status: PASS
+    config:
+      path: configs/glim/ntu_viral_cpu
+      tree_sha256: 842be775f7ee4b555f60957cf9f4cc8c35eb790e3ffc3bca767170c6415bb942
+      topics: [/os1_cloud_node1/points, /imu/imu, /left/image_raw]
+    phase:
+      contract_version: m6a10-online-compute-v2
+      validator_path: scripts/benchmark_phase_contract.py
+      validator_sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+      modes: [paced_1x, unpaced_ack]
+      ack_source_kind: consumer_callback
+      ack_semantics: callback_acceptance_then_glim_wait_drain
+      maximum_callback_latency_seconds: 0.25
+      maximum_callback_latency_nanoseconds: 250000000
+      maximum_backlog_messages: 100000
+      require_final_queue_zero: true
+      require_queue_observability: true
+      require_exact_topic_counts: true
+      require_zero_dropped_messages: true
+      require_zero_queue_overflow: true
+      eof_sidecar_before_wait: true
+      final_evidence_before_save: true
+      single_message_buffer_verified: false
+    wrapper:
+      path: scripts/glim_container_run.sh
+      sha256: 6b9948a1319ba5eaeba1bd53fca9d35ae6b3f93cda41ebea3e8d79a2b467b19e
+      authoritative_boundary: atomic_consumer_evidence_and_eof_sidecar
+      log_text_is_not_evidence: true
+    runner:
+      path: scripts/run_glim_benchmark.py
+      sha256: fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5
+      phase_cli: '--phase-contract v2 --phase-mode {paced_1x,unpaced_ack}'
+    tests:
+      path: graph_based_slam/test/test_glim_m6a10_consumer_hook.py
+      sha256: 06da210913e73a78bb660537e53acdc6119bc089b60596d2e37c77ae45a274ce
+    output: &m6a10_glim_v2b_output
+      evidence_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v3
+      consumer_evidence_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v3/out/run_01/consumer_evidence.json
+      eof_sidecar_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v3/out/run_01/consumer_evidence.json.eof.json
+      phase_evidence_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v3/out/run_01/phase_evidence.json
+      memory_evidence_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v3/out/run_01/container_memory.json
+      process_rss_evidence_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v3/out/run_01/container_process_rss.json
+      closure_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-closure-20260823-v3/closure_receipt.json
+      closure_receipt_sha256: 492d39b1f7c4a1a2e86893dd979b0ed57b3f37267cb7f21849b990d95bcc32ff
+    safety:
+      ground_truth_content_opened: false
+      ground_truth_mount_exposed: false
+      scorer_invoked: false
+      benchmark_run_executed: true
+      strict_gt_blind_closure: false
+      retry: 0
+      docker_build_executed: true
+      new_build_executed: false
+  m6a10_glim_v2b_fixed10_v4:
+    <<: *m6a10_glim_v2b_base
+    contract_id: m6a10-v2b-glim-consumer-followability-fixed10-v4
+    status: PASS
+    result:
+      status: PASS
+      closure_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-closure-20260823-v4/closure_receipt.json
+      closure_receipt_sha256: f33953c4126939dfce841b030cdb2e5560615d42963ae4aaaf4ab0aad7a7f6c1
+      output_tree_sha256: 85de6ad890b3009cedac7720b5e795f764eafa2cde3cfb13bae3ebee7c04bc1c
+      expected_messages: 236687
+      received_messages: 236687
+      processed_messages: 236687
+      dropped_messages: 0
+      queue_overflow: 0
+      processing_failures: 0
+      eof_observed: true
+      drain_complete: true
+      backlog_at_drain: 0
+      maximum_backlog_messages: 275
+      maximum_callback_latency_seconds: 0.014094
+      online_compute_rtf: 0.28196761482694743
+      process_tree_peak_rss_bytes: 1323241472
+      cgroup_total_peak_bytes: 1443680256
+      memory_max: max
+      oom_delta: 0
+      retry: 0
+    predecessor:
+      contract_id: m6a10-v2b-glim-consumer-followability-v1
+      status: INVALID_SAFETY
+      closure_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-closure-20260823-v3/closure_receipt.json
+      closure_receipt_sha256: 492d39b1f7c4a1a2e86893dd979b0ed57b3f37267cb7f21849b990d95bcc32ff
+      retry: 0
+    build:
+      <<: *m6a10_glim_v2b_build
+      execution_identity_preflight_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-preflight-20260823-v4/execution_identity_preflight.json
+      execution_identity_preflight_sha256: fda87bce9af6c60a60fcc3523e3f64f4b0fba288f2eea53988432085ab95af8a
+      execution_identity_preflight_status: PASS
+    output:
+      <<: *m6a10_glim_v2b_output
+      evidence_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v4
+      consumer_evidence_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v4/out/run_01/consumer_evidence.json
+      eof_sidecar_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v4/out/run_01/consumer_evidence.json.eof.json
+      phase_evidence_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v4/out/run_01/phase_evidence.json
+      memory_evidence_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v4/out/run_01/container_memory.json
+      process_rss_evidence_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v4/out/run_01/container_process_rss.json
+      closure_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2b-execution-closure-20260823-v4/closure_receipt.json
+      closure_receipt_sha256: f33953c4126939dfce841b030cdb2e5560615d42963ae4aaaf4ab0aad7a7f6c1
+    quiescence_preflight:
+      script_path: scripts/check_m6a10_quiescence.py
+      script_sha256: acf8b2e65e7744dd9cfd4127ac5ec12fb381c5a7c1430910b3e769ea259fe85d
+      receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/glim_m6a10_v2b_unpaced_ack_fixed10_v4/quiescence.json
+      receipt_sha256: de015c5b7530c66ba222d1c9fcfdc20d486fbde8ee8cfec36a01c0a677814894
+      status: PASS
+      sample_seconds: 5
+      max_busy_percent: 5
+      max_load_per_cpu: 0.5
+      runner_start_requires_pass: true
+      retry_count: 0
+    safety:
+      input_read_only: true
+      ground_truth_content_opened: false
+      ground_truth_mount_exposed: false
+      scorer_invoked: false
+      benchmark_run_executed: true
+      strict_gt_blind_closure: true
+      retry: 0
+      docker_build_executed: false
+      new_build_executed: false
+  # FAST-LIVO2 ROS1 M6a10-v2c is additive.  Its pinned image has passed the
+  # build/identity gate, but replay remains unexecuted.  The raw bag is the
+  # only input mount; this block intentionally has no GT or scorer path.
+  m6a10_fast_livo2_v2c:
+    schema_version: 1
+    contract_id: m6a10-v2c-fast-livo2-single-inflight-v1
+    status: build_passed_not_executed
+    result: null
+    prior_failure_closure:
+      status: FAIL_CLOSED
+      failure_kind: quiescence_fail_closed
+      evidence_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_20260823
+      receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_20260823/quiescence.json
+      receipt_sha256: b3dc7ed143452e605f6315361fa7f3a909051bb05894b5e20c27737ffb754476
+      quiescence_script:
+        path: scripts/check_m6a10_quiescence.py
+        sha256: acf8b2e65e7744dd9cfd4127ac5ec12fb381c5a7c1430910b3e769ea259fe85d
+      quiescence_test:
+        path: graph_based_slam/test/test_m6a10_quiescence.py
+        sha256: 28e48940db957cc1ccb4455a84ea15d786a3de9460e6ff0b82dde78fcc78a5d1
+      runner_start_attempted: false
+      retry_count: 0
+      cpu_busy_percent: 98.04853640230172
+      max_cpu_busy_percent: 5.0
+      load1: 9.08
+      load1_per_cpu: 1.135
+      max_load1_per_cpu: 0.5
+      forbidden_process_classes: [compiler]
+      forbidden_process_count: 8
+      ground_truth_content_opened: false
+      scorer_invoked: false
+    retry_v2:
+      status: FAIL_CLOSED
+      failure_kind: runner_contract_validation
+      receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v2/closure_receipt.json
+      receipt_sha256: c76ce0a5d782336012f6c9ae897f9683792799ef92eba00a429fc024958ffdf0
+      runner_start_attempted: true
+      container_start_attempted: false
+      bag_replay_started: false
+      runner_exit_status: 1
+      error: missing_safety_ground_truth_mount_exposed
+      retry_count: 0
+      predecessor_receipt_sha256: b3dc7ed143452e605f6315361fa7f3a909051bb05894b5e20c27737ffb754476
+      predecessor_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_20260823
+    retry_v3:
+      status: FAIL_CLOSED
+      failure_kind: quiescence_fail_closed
+      receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v3/closure_receipt.json
+      receipt_sha256: eed5aa5072048ea77007a2f38a1440ca60af743d389a561b9aa89b5503bbc399
+      retry_count: 0
+      predecessor_receipt_sha256: c76ce0a5d782336012f6c9ae897f9683792799ef92eba00a429fc024958ffdf0
+      predecessor_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v2
+      output_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v3
+      quiescence_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v3/quiescence.json
+      quiescence_receipt_sha256: d27cefb4923848eed622829a9c802adb378f4e2d2f1078884593e246a8702cf7
+      runner_start_attempted: false
+      container_start_attempted: false
+      bag_replay_started: false
+      error: quiescence_cpu_load_forbidden_process_fail_closed
+      result: null
+    retry_v4:
+      status: FAIL_CLOSED
+      failure_kind: no_progress_evidence_under_bounded_supervision
+      receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v4/closure_receipt.json
+      receipt_sha256: 1292cbadf0eff2575f2df3014a73e54822d8d57f6703cba5832e3db91065bfd1
+      retry_count: 0
+      predecessor_receipt_sha256: eed5aa5072048ea77007a2f38a1440ca60af743d389a561b9aa89b5503bbc399
+      predecessor_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v3
+      output_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v4
+      quiescence_receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v4/quiescence.json
+      quiescence_receipt_sha256: 0f0110b203364b5e2c9bdfeb343bd96416c8d8d232bcfe2298e701f525606556
+      runner_start_attempted: true
+      container_start_attempted: true
+      bag_replay_started: true
+      runner_exit_status: 2
+      container_exit_status: 137
+      first_consumer_ack_observed: false
+      consumer_evidence_present: false
+      error: no_progress_evidence_under_bounded_supervision
+      diagnostic_correction_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v4/closure_correction.json
+      diagnostic_correction_sha256: 861585b554cee8240bd4cae811dbec46c7256b83ba40a30c4e28a91ca690c93f
+      stall_diagnostic_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v4/stall_diagnostic.json
+      stall_diagnostic_sha256: 4ee04e5771506ed0fc18a81d275dbb523207879b93ff4663b1f2b67ea176e367
+      result: null
+    retry_v5:
+      status: build_passed_not_executed
+      contract_id: m6a10-v2c-fast-livo2-observable-supervision-v1
+      failure_predecessor: retry_v4
+      predecessor_receipt_sha256: 861585b554cee8240bd4cae811dbec46c7256b83ba40a30c4e28a91ca690c93f
+      retry_count: 0
+      result: null
+      output_root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v5
+      runner_start_allowed_only_after_quiescence: true
+      runner_start_attempted: false
+      container_start_attempted: false
+      bag_replay_started: false
+      gt_content_opened: false
+      scorer_invoked: false
+      observability:
+        feeder_progress_path: feeder_progress.json
+        feeder_progress_authoritative: false
+        progress_checkpoint_after_first_ack: true
+        progress_checkpoint_interval_messages: 100
+        log_line_buffered: true
+        host_lifecycle_path: host_lifecycle.json
+        stable_container_name: true
+        cidfile_path: container.cid
+        docker_inspect_interval_seconds: 2.0
+        docker_stats_interval_seconds: 5.0
+        docker_stats_diagnostic_only: true
+        container_auto_remove: false
+        container_cleanup_after_receipt: true
+        interrupted_supervision_preserves_container: true
+        reconnect_command: [docker, inspect, '<container-name>']
+        supervision_is_non_destructive: true
+      feeder:
+        path: scripts/fast_livo2_m6a10_feeder.py
+        sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
+      runner:
+        path: scripts/run_fast_livo2_benchmark.py
+        sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f
+      container_entrypoint:
+        path: scripts/fast_livo2_container_run.sh
+        sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
+      image:
+        tag: m6a10-v2c-v5portable-fast-livo2-benchmark:ros1-pinned
+        image_id: sha256:98271cfa19056d985b982d1fe3af74ea807ab195137b00ba313f0d94f8387849
+        image_digest: sha256:98271cfa19056d985b982d1fe3af74ea807ab195137b00ba313f0d94f8387849
+        repo_digest: m6a10-v2c-v5portable-fast-livo2-benchmark@sha256:98271cfa19056d985b982d1fe3af74ea807ab195137b00ba313f0d94f8387849
+        status: build_passed_not_executed
+        build_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v5portable-20260823/build_receipt.json
+        build_receipt_sha256: ed212dd6b1560068bddc48140c313c24c635d8397160ad1b38d354ebf3ac2f76
+        image_inspect_sha256: 868df4814aa42687f86a98a799caec78953f9809247ca02964943027e98054f2
+        labels_sha256: bace4e8ddc3b1150e75504c0566f26524ee2645dee7ca0fcdfb846645163d2c5
+        labels_hash_kind: json_file_bytes_sha256
+        labels_canonical_sha256: efb4220c520259c9e7546c9441133c02eae33597cd9ee3bb1f15ea501ba8a04e
+        installed_probe_sha256: 11b0aca6ab1fadccc6399677dc311b505ba7af483f39526fcabb89f49f3e917e
+        feeder_label_sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
+        cpu_flags_policy: portable_x86_64_v1
+        active_forbidden_compile_flags: false
+      source:
+        revision: 0d2c0346107b75b59934975adec9a6eeeb913c64
+        rpg_revision: 6c886c8e5d83997806e00294826d528cea3581dd
+        patch_path: docker/patches/fast_livo2.m6a10-v2c.patch
+        patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+      build:
+        recipe:
+          path: docker/fast_livo2_benchmark.Dockerfile
+          sha256: 1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5
+        entrypoint:
+          path: scripts/build_competitive_benchmark_images.sh
+          sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
+        receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v5portable-20260823/build_receipt.json
+        receipt_sha256: ed212dd6b1560068bddc48140c313c24c635d8397160ad1b38d354ebf3ac2f76
+        log_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v5portable-20260823/build.log
+        log_sha256: 11b0aca6ab1fadccc6399677dc311b505ba7af483f39526fcabb89f49f3e917e
+      preflight:
+        status: PASS
+        script_path: scripts/preflight_fast_livo2_m6a10_v2c_v5.py
+        script_sha256: 68051e2e4ebea15e1be3841a94d41c782bc5b107713275f6f683be2730b99231
+        receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-execution-preflight-v5portable-fixed3-20260823/identity_preflight.json
+        receipt_sha256: 184cd387a567af610bab376d5ba445b347357470b97c98caea5a26fd1dde98cd
+      safety:
+        input_only_mount: true
+        ground_truth_mount_exposed: false
+        ground_truth_content_opened: false
+        scorer_invoked: false
+        map_save_enabled: false
+      output_contract:
+        root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v5
+        overwrite_existing: false
+        forbidden_globs:
+          - '*.pcd'
+          - 'map.pcd'
+          - 'map_bundle.yaml'
+          - 'map_projector_info.yaml'
+          - 'degeneracy_report.yaml'
+          - 'pose_graph.g2o'
+          - 'trajectory_optimized.tum'
+          - 'loop_edges.csv'
+          - 'pointcloud_map'
+          - '*.bag'
+          - '*.db3'
+          - '*.part'
+        diagnostic_names_allowed:
+          - mapper.log
+          - mapper_ready.txt
+        diagnostic_names_are_not_map_outputs: true
+    observability:
+      status: preregistered_not_executed
+      instrumentation_version: m6a10-fast-livo2-observable-supervision-v1
+      requires_new_image_label: true
+      source_identity:
+        feeder_sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
+        runner_sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f
+        wrapper_sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
+      no_authoritative_v5_run: true
+    quiescence_attempt:
+      status: PASS
+      receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v2/quiescence.json
+      receipt_sha256: cd6026de099adf1c422f4a25419b8fef1367b227a73ccd452839b8f894c14bcd
+      runner_start_allowed: true
+      retry_count: 0
+      cpu_busy_percent: 3.7616763443574857
+      max_cpu_busy_percent: 5.0
+      load1: 3.32
+      load1_per_cpu: 0.415
+      max_load1_per_cpu: 0.5
+      forbidden_processes: []
+    quiescence_attempt_v4:
+      status: PASS
+      receipt_path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v4/quiescence.json
+      receipt_sha256: 0f0110b203364b5e2c9bdfeb343bd96416c8d8d232bcfe2298e701f525606556
+      runner_start_allowed: true
+      retry_count: 0
+      cpu_busy_percent: 3.0815862591563525
+      max_cpu_busy_percent: 5.0
+      load1: 0.21
+      load1_per_cpu: 0.02625
+      max_load1_per_cpu: 0.5
+      forbidden_processes: []
+    quiescence_attempt_v5:
+      status: PASS
+      receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-v5-run-preflight-20260823/quiescence.json
+      receipt_sha256: 0f3ff871a69785d7052a7beefa7eb89ae49442b106542364972fae049fdcb710
+      runner_start_allowed: true
+      retry_count: 0
+      cpu_busy_percent: 3.3266129032258065
+      max_cpu_busy_percent: 5.0
+      load1: 0.3
+      load1_per_cpu: 0.0375
+      max_load1_per_cpu: 0.5
+      forbidden_processes: []
+    system: fast_livo2
+    phase:
+      contract_version: m6a10-online-compute-v2
+      modes: [paced_1x, unpaced_ack]
+      drain_timeout_seconds: 60
+      maximum_online_compute_rtf: 1.0
+      maximum_callback_latency_seconds: 0.25
+      require_input_end_before_eof: true
+      require_eof_sidecar_before_drain: true
+      require_final_backlog_zero: true
+      wall_rtf_role: diagnostic_only
+    input:
+      representation: ros1_bag
+      path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+      path_kind: fixed_external_read_only_file
+      bytes: 11290464091
+      sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+      canonical_ros2_tree_sha256: 0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263
+      semantic_equivalence_receipt_sha256: b71e7f5aa8f82a5711e6b25e42532caa8248a3fcf062d9b3b15a5c86460438ec
+      semantic_report_sha256: 0a64efb618c9bdbba4e762c350f21e36fb1244b4e2c2ffa17b3d7604cdd318ec
+      topics:
+        lidar: /os1_cloud_node1/points
+        imu: /imu/imu
+        image: /left/image_raw
+      expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+      expected_messages: 236687
+      note: ros1_equivalence_receipt_counts_are_5793_lidar_225102_5792_image
+    source:
+      repository: https://github.com/hku-mars/FAST-LIVO2.git
+      revision: 0d2c0346107b75b59934975adec9a6eeeb913c64
+      patch_path: docker/patches/fast_livo2.m6a10-v2c.patch
+      patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+      apply_check_required: true
+      build_required: true
+    image_labels:
+      patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+      feeder_sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
+      consumer_contract: m6a10-v2c-fast-livo2-single-inflight-v1
+      queue_overflow_capability: single_inflight_exact_count_observed
+      callback_capability: callback_acceptance_status_ack_eof_v2c
+    execution:
+      image_tag: m6a10-v2c-v5portable-fast-livo2-benchmark:ros1-pinned
+      image_id: sha256:98271cfa19056d985b982d1fe3af74ea807ab195137b00ba313f0d94f8387849
+      image_digest: sha256:98271cfa19056d985b982d1fe3af74ea807ab195137b00ba313f0d94f8387849
+      image_repo_digest: m6a10-v2c-v5portable-fast-livo2-benchmark@sha256:98271cfa19056d985b982d1fe3af74ea807ab195137b00ba313f0d94f8387849
+      image_status: build_passed_not_executed
+      recipe:
+        path: docker/fast_livo2_benchmark.Dockerfile
+        sha256: 1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5
+      build_entrypoint:
+        path: scripts/build_competitive_benchmark_images.sh
+        sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
+      build_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v5portable-20260823/build_receipt.json
+      build_receipt_sha256: ed212dd6b1560068bddc48140c313c24c635d8397160ad1b38d354ebf3ac2f76
+      image_inspect_sha256: 868df4814aa42687f86a98a799caec78953f9809247ca02964943027e98054f2
+      labels_sha256: bace4e8ddc3b1150e75504c0566f26524ee2645dee7ca0fcdfb846645163d2c5
+      installed_verification_sha256: 11b0aca6ab1fadccc6399677dc311b505ba7af483f39526fcabb89f49f3e917e
+      installed_toolchain_sha256: 11b0aca6ab1fadccc6399677dc311b505ba7af483f39526fcabb89f49f3e917e
+      execution_identity_preflight_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-execution-preflight-v5portable-fixed3-20260823/identity_preflight.json
+      execution_identity_preflight_sha256: 184cd387a567af610bab376d5ba445b347357470b97c98caea5a26fd1dde98cd
+      execution_identity_preflight_status: PASS
+      execution_identity_preflight_script_path: scripts/preflight_fast_livo2_m6a10_v2c_v5.py
+      execution_identity_preflight_script_sha256: 68051e2e4ebea15e1be3841a94d41c782bc5b107713275f6f683be2730b99231
+      network: none
+      rootfs: read_only
+      input_mount: /input/raw_input.bag:ro
+      parent_asset_mount_forbidden: true
+      gt_mount_forbidden: true
+      scorer_mount_forbidden: true
+      thread_environment: {OMP_NUM_THREADS: 8, OPENBLAS_NUM_THREADS: 8, MKL_NUM_THREADS: 8, TBB_NUM_THREADS: 8}
+    feeder:
+      path: scripts/fast_livo2_m6a10_feeder.py
+      sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
+      contract_id: m6a10-v2c-fast-livo2-single-inflight-feeder-v1
+      one_message_inflight: true
+      publisher_queue_size: 1
+      ack_service: /m6a10/consumer_ack
+      status_service: /m6a10/consumer_status
+      eof_service: /m6a10/consumer_eof
+      ack_backpressure_verified: true
+    runner:
+      path: scripts/run_fast_livo2_benchmark.py
+      sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f
+      phase_entrypoint_path: scripts/fast_livo2_container_run.sh
+      phase_entrypoint_sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
+      phase_input_only_command_required: true
+    config:
+      path: /opt/fast_livo_ws/src/FAST-LIVO2/config/NTU_VIRAL.yaml
+      path_kind: external_container_absolute_path
+      topics: [/os1_cloud_node1/points, /imu/imu, /left/image_raw]
+      image_enabled: true
+      lidar_enabled: true
+      map_save_enabled: false
+      source_config_sha256: c8f94f130e599b928c3f02c3f3d3b2009ae01df76aec32f6ac96b6a987311ef3
+      config_hash_observed_after_build: c8f94f130e599b928c3f02c3f3d3b2009ae01df76aec32f6ac96b6a987311ef3
+    consumer:
+      ack_source_kind: consumer_callback_status_service
+      ack_semantics: callback_return_then_ack_service
+      publisher_counts_are_not_consumer_acks: true
+      expected_messages: 236687
+      expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+      exact_counts_required: true
+      queue_type: std_deque_unbounded_internal_buffers
+      subscriber_queue_capacity_messages: 1
+      queue_overflow_observable: true
+      queue_drop_detection: exact_counts_plus_single_inflight_ack
+      ack_backpressure_verified: true
+      maximum_backlog_messages: 100000
+      final_backlog_messages: 0
+      maximum_callback_latency_seconds: 0.25
+      processing_failures_must_be_zero: true
+      eof_sidecar_before_drain: true
+      final_evidence_atomic: true
+    output:
+      root: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260823/fast_livo2_v2c_fixed10_v5
+      files:
+        - feeder_receipt.json
+        - consumer_evidence.json
+        - consumer_evidence.json.eof.json
+        - drain_receipt.json
+        - phase_evidence.json
+        - container_memory.json
+        - container_process_rss.json
+        - trajectory.tum
+      forbidden_globs: ["*.pcd", "*map*", "*.bag", "*.db3", "*.part"]
+      overwrite_existing: false
+    safety:
+      ground_truth_content_opened: false
+      ground_truth_mount_exposed: false
+      scorer_invoked: false
+      benchmark_input_only: true
+      retry: 0
+    status_reasons:
+      - pinned_image_build_and_read_only_identity_verification_passed
+      - execution_identity_preflight_passed_without_input_mount
+      - queue_overflow_capability_depends_on_single_inflight_exact_count
+      - prior_execution_quiescence_fail_closed_retained_immutable
+      - execution_quiescence_passed_retry_v2_runner_authorized
+      - retry_v2_runner_contract_validation_fail_closed_no_container_or_bag
+      - retry_v3_preregistered_after_v2_runner_contract_fail_closed
+      - retry_v3_quiescence_fail_closed_runner_not_started
+      - retry_v4_preregistered_after_retry_v3_quiescence_fail_closed
+      - retry_v4_quiescence_passed_runner_started_then_fail_closed_before_first_ack
+      - retry_v4_no_retry_after_deterministic_stall
+      - no_bag_replay_or_gt_or_scorer_execution
   repetition_aggregation:
     trajectory_accuracy: median
     processing_realtime_factor: median
@@ -44,7 +2027,8 @@ competitive_slam_profile:
     glim:
       repository: https://github.com/koide3/glim.git
       revision: faa264a1bce1bda406f73457e35511f56cdc2eaa
-      revision_kind: tag_v1.2.2
+      revision_kind: immutable_commit
+      upstream_ref: refs/tags/v1.2.2
       annotated_tag_object: 2044c47825cff7b508e5ea96c1d295e023b0e36c
       ros2_repository: https://github.com/koide3/glim_ros2.git
       ros2_revision: 4a9e7a4cb084967c8525a1be529ad3ba2a118ae7
@@ -52,7 +2036,8 @@ competitive_slam_profile:
     fast_livo2:
       repository: https://github.com/hku-mars/FAST-LIVO2.git
       revision: 0d2c0346107b75b59934975adec9a6eeeb913c64
-      revision_kind: main
+      revision_kind: immutable_commit
+      upstream_ref: refs/heads/main
       license: GPL-2.0
   tracks:
     glim_cpu_lidar_imu:
@@ -77,14 +2062,937 @@ competitive_slam_profile:
     maximum_visual_colour_regression_percent: 2.0
     tie_relative_tolerance: 0.01
     maximum_realtime_factor: 1.0
-    maximum_peak_rss_ratio_to_rival: 1.20
+    # Canonical RSS ratio source for both aggregate and per-sequence gates.
+    max_peak_rss_ratio_vs_best_rival: &max_peak_rss_ratio 1.20
+    maximum_peak_rss_ratio_to_rival: *max_peak_rss_ratio
     require_zero_incomplete_trajectories: true
     require_zero_catastrophic_failures: true
     require_zero_verified_false_loops: true
     require_geometry_non_regression: true
+  # Additive schema-v2 victory evidence gate.  The existing v1 bool gate and
+  # run_cross_repo_slam_benchmark.py remain report-only compatibility paths;
+  # only this section can produce a SOTA/victory receipt.
+  evidence_gate_v2:
+    schema_version: 2
+    required_systems: [ours, glim, fast_livo2]
+    # Every OSS rival and every source cloned by its recipe must be bound to
+    # an official immutable commit, a commit-addressed archive digest, a
+    # source-tree digest, an explicit recursive-submodule closure, license
+    # identity, ordered local patches, and the exact local build identity.
+    # This campaign is intentionally NOT_READY: the static audit found
+    # unresolved component-license provenance for the pinned rival closure.
+    # Recipe revision r2 binds the current worktree bytes; historical receipts
+    # are retained but explicitly superseded and ineligible.
+    rival_source_closure:
+      schema_version: 1
+      required: true
+      status: NOT_READY
+      status_reason:
+        - fast_livo2_component_license_provenance_requires_upstream_resolution
+        - glim_ros2_component_license_artifact_absent
+        - historical_selection_receipt_superseded_recipe_revision
+      closure_id: competitive-rival-source-closure-2026-08-r2
+      closure_revision: 2
+      closure_identity_hash_kind: canonical_rival_source_closure_identity_sha256_v1
+      active_selection:
+        selection_id: competitive-execution-selection-2026-08-r2
+        path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml
+        sha256: 1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed
+        status: CURRENT
+        supersedes:
+          - path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml
+            sha256: dd0ed7c5d80f22a279d18126c5df64dc0685c007e8343a89983c1a01df0089e5
+            status: SUPERSEDED_RECIPE_REVISION
+            claim_eligible: false
+            reason: historical receipt binds the pre-r2 Dockerfile/build-script recipe revision
+      legal_policy:
+        source_fetch_mode: SOURCE_FETCH_ONLY_NO_REDISTRIBUTION
+        redistribution_mode: PROHIBITED_UNPROVEN_LICENSE
+        image_publication_status: BLOCKED_PENDING_LICENSE_PROVENANCE
+        claim_eligibility: BLOCKED
+        nonredistributable_sources: [glim_ros2, fast_livo2, rpg_vikit, sophus]
+        warning: pinned upstream bytes may be fetched for reproducibility only; no source, binary, or image redistribution is permitted while component license provenance is unresolved
+      required_systems: [ours, glim, fast_livo2]
+      archive_hash_kind: downloaded_commit_archive_sha256_v1
+      source_tree_hash_kind: relative_path_content_sha256_v1
+      revision_policy: exact_40_hex_commit_only_no_branch_latest_or_tag_only
+      official_source_policy: github_primary_upstream_commit_and_archive_only
+      rivals:
+        glim:
+          status: NOT_READY
+          not_ready_reasons: [glim_ros2_component_license_artifact_absent]
+          sources:
+            - name: glim
+              status: READY
+              repository_url: https://github.com/koide3/glim.git
+              revision: faa264a1bce1bda406f73457e35511f56cdc2eaa
+              revision_kind: immutable_commit
+              observed_ref: refs/tags/v1.2.2
+              archive_url: https://github.com/koide3/glim/archive/faa264a1bce1bda406f73457e35511f56cdc2eaa.tar.gz
+              archive_sha256: d8176e85199a2297269d34fcfb57e4cb2c2d53e593439f665f614cae57972c25
+              source_tree_sha256: 2394e58c0c7fe218770b6db20cdab71395c885608783966ae94491e85899260e
+              source_tree_hash_kind: relative_path_content_sha256_v1
+              submodules: []
+              license:
+                status: READY
+                files:
+                  - path: LICENSE
+                    identity: MIT
+                    sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
+                components:
+                  - name: glim
+                    status: READY
+                    files:
+                      - path: LICENSE
+                        identity: MIT
+                        sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
+                    declarations: []
+              citation:
+                primary_upstream: true
+                commit_url: https://github.com/koide3/glim/commit/faa264a1bce1bda406f73457e35511f56cdc2eaa
+                compatibility_status: READY
+                compatibility_note: official GLIM v1.2.2 source used by the pinned ROS 2 Jazzy CPU recipe
+            - name: glim_ros2
+              status: NOT_READY
+              not_ready_reasons: [upstream_license_text_artifact_absent_package_xml_metadata_only]
+              repository_url: https://github.com/koide3/glim_ros2.git
+              revision: 4a9e7a4cb084967c8525a1be529ad3ba2a118ae7
+              revision_kind: immutable_commit
+              observed_ref: refs/heads/main
+              archive_url: https://github.com/koide3/glim_ros2/archive/4a9e7a4cb084967c8525a1be529ad3ba2a118ae7.tar.gz
+              archive_sha256: cdb99188e20c93b20ed86c4b95a42643c1a659cd4e9e06d7cc3ffb2639aeae17
+              source_tree_sha256: b5bc8504577d1fda52289e8e627da857f0834fa81b228ec9c8feaeb3118d9f52
+              source_tree_hash_kind: relative_path_content_sha256_v1
+              submodules: []
+              license:
+                status: NOT_READY_LEGAL_PROVENANCE
+                not_ready_reasons: [upstream_license_text_artifact_absent_package_xml_metadata_only]
+                files: []
+                components:
+                  - name: glim_ros2
+                    status: NOT_READY_LEGAL_PROVENANCE
+                    files: []
+                    declarations:
+                      - path: package.xml
+                        identity: MIT
+                        sha256: eb9505cc2aa44e11900f708c02d8364442cbe57666531e9d91e570e593abcbb1
+                    not_ready_reasons: [upstream_license_text_artifact_absent_package_xml_metadata_only]
+              citation:
+                primary_upstream: true
+                commit_url: https://github.com/koide3/glim_ros2/commit/4a9e7a4cb084967c8525a1be529ad3ba2a118ae7
+                compatibility_status: READY
+                compatibility_note: official GLIM ROS 2 bridge commit paired with the pinned GLIM source
+            - name: gtsam
+              status: READY
+              repository_url: https://github.com/borglab/gtsam.git
+              revision: 2f3e56c0ddbd3a1aa54ed043643b553d26a069f6
+              revision_kind: immutable_commit
+              observed_ref: refs/tags/4.3a1
+              archive_url: https://github.com/borglab/gtsam/archive/2f3e56c0ddbd3a1aa54ed043643b553d26a069f6.tar.gz
+              archive_sha256: 50bd99ddbb363f03f145d814995df234c83ad38f867080fba5b60f6c151b348a
+              source_tree_sha256: 324cb31256326ef4fb1306af7f7f1f5be062a04f23c227dd48eb49b6d538b4bd
+              source_tree_hash_kind: relative_path_content_sha256_v1
+              submodules: []
+              license:
+                status: READY
+                files:
+                  - path: LICENSE
+                    identity: BSD-3-Clause
+                    sha256: 38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775
+                  - path: LICENSE.BSD
+                    identity: BSD-3-Clause
+                    sha256: ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0
+                components:
+                  - name: gtsam
+                    status: READY
+                    files:
+                      - path: LICENSE
+                        identity: BSD-3-Clause
+                        sha256: 38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775
+                      - path: LICENSE.BSD
+                        identity: BSD-3-Clause
+                        sha256: ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0
+                    declarations:
+                      - path: package.xml
+                        identity: BSD-3-Clause
+                        sha256: d1a4ccac3af13c50f8d32d97ec4328f05fd19c9d2a0a9849c2a1173d449c37b5
+                  - name: gtsam_3rdparty_ccolamd
+                    status: READY
+                    files:
+                      - path: gtsam/3rdparty/CCOLAMD/Doc/License.txt
+                        identity: BSD-3-Clause
+                        sha256: 27e1fb1934109aec52982bea8cda801e3791c683690c2eb0c089c496ba394ac6
+                    declarations: []
+                  - name: gtsam_3rdparty_ceres
+                    status: READY
+                    files:
+                      - path: gtsam/3rdparty/ceres/jet.h
+                        identity: BSD-3-Clause
+                        sha256: 9c98af085ddc729768ca22879825cc95c875ac05e2b6dc268211bdff254011b7
+                    declarations: []
+                  - name: gtsam_3rdparty_eigen
+                    status: READY
+                    files:
+                      - path: gtsam/3rdparty/Eigen/COPYING.README
+                        identity: MPL-2.0
+                        sha256: c83230b770f17ef1386ea1fd3681271dd98aa93646bdbfb5bff3a1b7050fff9d
+                    declarations: []
+                  - name: gtsam_3rdparty_metis
+                    status: READY
+                    files:
+                      - path: gtsam/3rdparty/metis/LICENSE.txt
+                        identity: Apache-2.0
+                        sha256: 64ab947d7b289ad76e935adff51b31e4ac160df7dfad24480dbaa452e39bbe79
+                    declarations: []
+                  - name: gtsam_3rdparty_spectra
+                    status: READY
+                    files:
+                      - path: gtsam/3rdparty/Spectra/GenEigsSolver.h
+                        identity: MPL-2.0
+                        sha256: 328d5075d23d78d8d70a32bb8fa6d04a5d871236614c226f510a121a14398382
+                    declarations: []
+              citation:
+                primary_upstream: true
+                commit_url: https://github.com/borglab/gtsam/commit/2f3e56c0ddbd3a1aa54ed043643b553d26a069f6
+                compatibility_status: READY
+                compatibility_note: official GTSAM source pinned by the GLIM CPU recipe
+            - name: gtsam_points
+              status: READY
+              repository_url: https://github.com/koide3/gtsam_points.git
+              revision: 9d32e7dbecf6015560d84b4901d6b0a6f483ec46
+              revision_kind: immutable_commit
+              observed_ref: refs/tags/v1.2.2
+              archive_url: https://github.com/koide3/gtsam_points/archive/9d32e7dbecf6015560d84b4901d6b0a6f483ec46.tar.gz
+              archive_sha256: dc977a8b2a6aeda5d48107920e2cdd7e0e45e1478c3590e45f053335eb975479
+              source_tree_sha256: f3b3ac9b29a49a28e3f9e79fd36cc764caf2e46e961f229283507ff1cc8ffc00
+              source_tree_hash_kind: relative_path_content_sha256_v1
+              submodules: []
+              license:
+                status: READY
+                files:
+                  - path: LICENSE
+                    identity: MIT
+                    sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
+                components:
+                  - name: gtsam_points
+                    status: READY
+                    files:
+                      - path: LICENSE
+                        identity: MIT
+                        sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
+                    declarations: []
+              citation:
+                primary_upstream: true
+                commit_url: https://github.com/koide3/gtsam_points/commit/9d32e7dbecf6015560d84b4901d6b0a6f483ec46
+                compatibility_status: READY
+                compatibility_note: official GTSAM points source pinned by the GLIM CPU recipe
+          local_patches:
+            - order: 1
+              path: docker/patches/glim.m6a10-v2b.patch
+              sha256: f3e7549ee1730df37125f17c4be00b5643a6b9db9eacbc96c9ecb2f682b08867
+              applies_to: glim
+            - order: 2
+              path: docker/patches/glim_ros2.m6a10-v2b.patch
+              sha256: ede64c7a00f409a19138f41c19685f08d58b5c8c8d9d9ffa47b6c7dcb774c0f2
+              applies_to: glim_ros2
+          recipe:
+            dockerfile:
+              path: docker/glim_cpu_benchmark.Dockerfile
+              hash_kind: file_sha256
+              sha256: dcd01d013eeb5cb50e2582646548c06f2c3b1a93820412b110b7fb25b769d70d
+            build_script:
+              path: scripts/build_competitive_benchmark_images.sh
+              hash_kind: file_sha256
+              sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
+            runner:
+              path: scripts/run_glim_benchmark.py
+              hash_kind: file_sha256
+              sha256: 1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1
+            wrapper:
+              path: scripts/glim_container_run.sh
+              hash_kind: file_sha256
+              sha256: 6b9948a1319ba5eaeba1bd53fca9d35ae6b3f93cda41ebea3e8d79a2b467b19e
+            configs:
+              - path: configs/glim/hilti2022_cpu
+                hash_kind: canonical_tree_sha256
+                sha256: 844efce77c2c9bde697f2811e0c32441706b3c74a559a152bb04efeaf38c798d
+              - path: configs/glim/hilti2022_cpu/config_sensors.json
+                hash_kind: file_sha256
+                sha256: 8d998b97ffa2eea685be27b727e48a8269f0f630ba96a4f5e0133074fff62ac8
+              - path: configs/glim/hilti2022_cpu/config_ros.json
+                hash_kind: file_sha256
+                sha256: 50ca0b66110b35ee05d80530f38a8d61b8175743e6eb0b42907ee486bbf666cd
+            base_image:
+              name: docker.io/library/ros:jazzy-ros-base
+              digest: sha256:31daab66eef9139933379fb67159449944f4e2dcf2e22c2d12cc715f29873e0f
+            build_options:
+              release: Release
+              generator: Ninja
+              parallel: 2
+              gtsam: {examples: false, tests: false, tbb: false, system_eigen: true, march_native: false}
+              gtsam_points: {tests: false, cuda: false, march_native: false}
+              glim: {cuda: false, cv_bridge: true, viewer: false, march_native: false}
+              benchmark_cpu_threads: 8
+        fast_livo2:
+          status: NOT_READY
+          not_ready_reasons:
+            - fast_livo2_component_license_metadata_requires_upstream_resolution
+            - rpg_vikit_component_license_artifacts_are_absent_or_mixed
+            - sophus_component_has_no_upstream_license_artifact
+          sources:
+            - name: fast_livo2
+              status: NOT_READY
+              not_ready_reasons:
+                - package_xml_declares_BSD_while_LICENSE_and_README_declare_GPLv2
+              repository_url: https://github.com/hku-mars/FAST-LIVO2.git
+              revision: 0d2c0346107b75b59934975adec9a6eeeb913c64
+              revision_kind: immutable_commit
+              observed_ref: refs/heads/main
+              archive_url: https://github.com/hku-mars/FAST-LIVO2/archive/0d2c0346107b75b59934975adec9a6eeeb913c64.tar.gz
+              archive_sha256: 1da2652f835f2efb02c0992bc4d64e8dcde48571e538f35dddaf6ba6a61c17d1
+              source_tree_sha256: 4b7df0a03cbfb5c4d46eee86b408d61045e1f34db7187e65af751b97cd7dc14b
+              source_tree_hash_kind: relative_path_content_sha256_v1
+              submodules: []
+              archive_artifacts:
+                - role: benchmark_hilti22_config
+                  path: config/HILTI22.yaml
+                  hash_kind: upstream_archive_file_sha256
+                  sha256: efae9e702c71c770b19002b6e19d4e1b6f46c67df3727e984981d932258f0b4a
+                  status: READY
+              license:
+                status: NOT_READY_LEGAL_PROVENANCE
+                not_ready_reasons: [package_xml_declares_BSD_while_LICENSE_and_README_declare_GPLv2]
+                files:
+                  - path: LICENSE
+                    identity: GPL-2.0-only
+                    sha256: 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643
+                components:
+                  - name: fast_livo2
+                    status: NOT_READY_LEGAL_PROVENANCE
+                    files:
+                      - path: LICENSE
+                        identity: GPL-2.0-only
+                        sha256: 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643
+                    declarations:
+                      - path: package.xml
+                        identity: BSD
+                        sha256: 0839b4814f283626faafc65a9bed37da754fe04092fcfc1859e52330fe206bde
+                    not_ready_reasons: [package_xml_license_declaration_conflicts_with_upstream_LICENSE]
+              citation:
+                primary_upstream: true
+                commit_url: https://github.com/hku-mars/FAST-LIVO2/commit/0d2c0346107b75b59934975adec9a6eeeb913c64
+                compatibility_status: NOT_READY
+                compatibility_note: license identity must be resolved before a claim-eligible build
+            - name: rpg_vikit
+              status: NOT_READY
+              not_ready_reasons: [upstream_root_license_artifact_missing_and_package_declarations_mixed]
+              repository_url: https://github.com/xuankuzcr/rpg_vikit.git
+              revision: 6c886c8e5d83997806e00294826d528cea3581dd
+              revision_kind: immutable_commit
+              observed_ref: refs/heads/master
+              archive_url: https://github.com/xuankuzcr/rpg_vikit/archive/6c886c8e5d83997806e00294826d528cea3581dd.tar.gz
+              archive_sha256: 8162d0b616c443118a52e654394d3eb0807d6dac3b782f4dc3d6823c8815fede
+              source_tree_sha256: 3ae228148396236869cc8f64837431858f8d2ca333d39afdae649fd6f3114b5f
+              source_tree_hash_kind: relative_path_content_sha256_v1
+              submodules: []
+              license:
+                status: NOT_READY_LEGAL_PROVENANCE
+                not_ready_reasons: [upstream_component_license_text_artifacts_absent_and_package_declarations_mixed]
+                files: []
+                components:
+                  - name: vikit_common
+                    status: NOT_READY_LEGAL_PROVENANCE
+                    files: []
+                    declarations:
+                      - path: vikit_common/package.xml
+                        identity: GPL-3.0-only
+                        sha256: 557a69ea7c36a2b5a3142466fa8c392e0db6707d310d57447bb091f3085f7328
+                    not_ready_reasons: [upstream_license_text_artifact_absent]
+                  - name: vikit_py
+                    status: NOT_READY_LEGAL_PROVENANCE
+                    files: []
+                    declarations:
+                      - path: vikit_py/package.xml
+                        identity: BSD
+                        sha256: d91466ba0fc4814114f843b2020aae6853a46acca24cbb1c3844eae82e7a93ff
+                    not_ready_reasons: [upstream_license_text_artifact_absent]
+                  - name: vikit_ros
+                    status: NOT_READY_LEGAL_PROVENANCE
+                    files: []
+                    declarations:
+                      - path: vikit_ros/package.xml
+                        identity: GPL-3.0-only
+                        sha256: 52424cae1abfa5e5c7ad0109e636c1c287473a132a6fdd31bbd2629d2e78054f
+                    not_ready_reasons: [upstream_license_text_artifact_absent]
+              citation:
+                primary_upstream: true
+                commit_url: https://github.com/xuankuzcr/rpg_vikit/commit/6c886c8e5d83997806e00294826d528cea3581dd
+                compatibility_status: NOT_READY
+                compatibility_note: package license declarations require upstream clarification
+            - name: sophus
+              status: NOT_READY
+              not_ready_reasons: [pinned_legacy_commit_contains_no_license_or_copyright_artifact]
+              repository_url: https://github.com/strasdat/Sophus.git
+              revision: a621ff2e56c56c839a6c40418d42c3c254424b5c
+              revision_kind: immutable_commit
+              observed_ref: refs/heads/master
+              archive_url: https://github.com/strasdat/Sophus/archive/a621ff2e56c56c839a6c40418d42c3c254424b5c.tar.gz
+              archive_sha256: 67deb7b0ea38ac6a44967ceee2875507ea9d64a352195080223d5ca3e1584fa4
+              source_tree_sha256: 383fcd09914533085a82e7767790fa61c05c43f0d7973ba6b98b4111c40c2122
+              source_tree_hash_kind: relative_path_content_sha256_v1
+              submodules: []
+              license:
+                status: NOT_READY_LEGAL_PROVENANCE
+                not_ready_reasons: [no_license_copying_notice_or_package_license_in_pinned_upstream_tree]
+                files: []
+                components:
+                  - name: sophus
+                    status: NOT_READY_LEGAL_PROVENANCE
+                    files: []
+                    declarations: []
+                    not_ready_reasons: [no_license_copying_notice_or_package_license_in_pinned_upstream_tree]
+              citation:
+                primary_upstream: true
+                commit_url: https://github.com/strasdat/Sophus/commit/a621ff2e56c56c839a6c40418d42c3c254424b5c
+                compatibility_status: NOT_READY
+                compatibility_note: legacy compatibility edits are declared but license identity is unresolved
+          local_patches:
+            - order: 1
+              path: docker/patches/fast_livo2.m6a10-v2c.patch
+              sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
+              applies_to: fast_livo2
+          recipe:
+            dockerfile:
+              path: docker/fast_livo2_benchmark.Dockerfile
+              hash_kind: file_sha256
+              sha256: 1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5
+            build_script:
+              path: scripts/build_competitive_benchmark_images.sh
+              hash_kind: file_sha256
+              sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
+            runner:
+              path: scripts/run_fast_livo2_benchmark.py
+              hash_kind: file_sha256
+              sha256: b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30
+            wrapper:
+              path: scripts/fast_livo2_container_run.sh
+              hash_kind: file_sha256
+              sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
+            configs:
+              - path: configs/fast_livo2/mapping_hesaixt32_hilti22_benchmark_map.launch
+                hash_kind: file_sha256
+                sha256: 5d1f213d48488161da438e76d9fb359278fa5993e99247a94f52b9c09e2bf742
+              - path: config/HILTI22.yaml
+                path_kind: pinned_upstream_archive_relative_path
+                hash_kind: upstream_archive_file_sha256
+                sha256: efae9e702c71c770b19002b6e19d4e1b6f46c67df3727e984981d932258f0b4a
+                source: fast_livo2
+                role: benchmark_hilti22_config
+                status: READY
+            base_image:
+              name: docker.io/library/ros:noetic-ros-base
+              digest: sha256:72b8bc59035dc0a5b8e07aae28c16caa84192971d72d207c72ed734fb1d5e97d
+            build_options:
+              release: Release
+              generator: Ninja
+              parallel: 2
+              cpu_flags_policy: portable_x86_64_v1
+              rpg_vikit_native_flags: disabled_and_replaced_with_x86_64_generic
+              sophus_compatibility_edits: [real_setter_call, imag_setter_call]
+              fast_livo2_native_flags: disabled
+              fast_math: disabled
+              catkin_jobs: 2
+    # Resource evidence is a separate identity gate from the runtime metric.
+    # One canonical ratio is used for the aggregate best-rival comparison,
+    # every pinned rival, and each sequence; no RSS threshold is invented.
+    memory_gate:
+      schema_version: 1
+      status: READY
+      source_kind: benchmark_process_rss_authoritative_v1
+      measurement_version: m6a7-container-memory-v2
+      measurement_scope: container_cgroup_v2_with_pid_rss
+      primary_metric: aggregate_process_tree_peak_rss_bytes
+      primary_metric_definition: sum_of_per_process_vmrss_peaks_shared_pages_may_be_recounted
+      max_peak_rss_ratio_vs_best_rival: *max_peak_rss_ratio
+      minimum_matched_complete_runs: 3
+      aggregate:
+        rival_selection: best_rival
+        compare_every_pinned_rival: true
+        threshold_source: max_peak_rss_ratio_vs_best_rival
+        aggregation: max_peak_over_repetitions_and_sequences_v1
+      per_sequence:
+        status: READY
+        serious_regression_ceiling_ratio: *max_peak_rss_ratio
+        threshold_source: max_peak_rss_ratio_vs_best_rival
+      uncertainty:
+        status: NOT_APPLICABLE
+        required: false
+        scope: APE_ONLY
+        rss_ci_claim: false
+        method: null
+        reason: 95% bootstrap/CI is required for APE only; RSS uses deterministic maxima
+      resource_identity:
+        required_fields:
+          - tool_revision
+          - sampler_script_sha256
+          - memory_helper_script_sha256
+          - config_sha256
+          - thread_policy_sha256
+          - hardware_fingerprint
+          - machine_id
+          - release
+        tool_revision: m6a7-container-process-rss-v1
+        sampler_script_path: scripts/sample_container_process_rss.py
+        sampler_script_sha256: b8ad4c0d016710a17349773df0e115ca7a6c2bc1fce2054c77d9991c61bb11ee
+        memory_helper_script_path: scripts/container_memory_evidence.py
+        memory_helper_script_sha256: f526cd3e526d870982ccf12657e09397f6b048c0b446c5b57b9e5c63433ef9cf
+        gate_script_path: scripts/competitive_memory_gate.py
+        gate_script_sha256: ec4e316f33acd253565fef7ccbbaa04401be87b9d21c575018871b0ea0f2ac04
+      forbidden_source_kinds:
+        - registration-plugin-functional-resource-policy-v1
+        - functional_non_authoritative_v1
+        - non_authoritative_contaminated
+    # Fresh-holdout authorization is a separate claim gate.  The current
+    # campaign has no independent custodian signature, so this remains
+    # NOT_READY and cannot be promoted by a runner/scorer receipt.
+    fresh_holdout_authorization:
+      schema_version: 1
+      required: true
+      status: NOT_READY
+      status_reason: independent_external_custodian_attestation_absent
+      required_chain_kinds:
+        - precommit
+        - holdout_seal
+        - replay_authorization
+        - leakage_audit
+        - failure_record
+      receipt_hash_kind: canonical_authorization_receipt_sha256_v1
+      required_precommit_fields:
+        - dataset_ids
+        - holdout_slots
+        - systems
+        - run_count
+        - scorer
+        - metric_gate_sha256
+        - profile_sha256
+        - hardware_fingerprint
+        - thread_policy_sha256
+        - release
+      required_systems: [ours, glim, fast_livo2]
+      run_count: 3
+      release: Release
+      gt_manifest:
+        identity_only: true
+        allowed_fields:
+          - slot_id
+          - sequence
+          - ground_truth_sha256
+          - ground_truth_size_bytes
+          - hash_kind
+        forbidden_fields:
+          - ground_truth_path
+          - ground_truth_url
+          - ground_truth_uri
+          - ground_truth_content
+          - decoded_ground_truth
+      role_separation:
+        replay_role: replay_only
+        scoring_role: scoring_only
+        distinct_process_identities: true
+        runner_gt_mount_forbidden: true
+      scoring:
+        exactly_one_authorized_event_per_sealed_bundle: true
+        explicit_invalidation_allowed: true
+        overwrite_or_retry_forbidden: true
+      leakage_audit:
+        require_prior_gt_access_false: true
+        require_development_tuning_false: true
+        require_result_dependent_selection_false: true
+        require_reused_holdout_false: true
+        require_partition_disjointness: true
+      external_attestation:
+        required: true
+        status: NOT_READY
+        requirement: independent_custodian_signature_over_sealed_authorization_chain
+    # Dataset provenance is a separate, metadata-only closure.  The recorded
+    # bag/GT/calibration values below are historical identities; while the
+    # evidence volume is unavailable they must remain RECORDED_ONLY and cannot
+    # be represented as byte-revalidated claim evidence.
+    dataset_source_closure:
+      schema_version: 1
+      required: true
+      status: NOT_READY
+      status_reason:
+        - fewer_than_two_revalidated_gt_dataset_families_are_claim_eligible
+        - recorded_hashes_require_verified_evidence_volume_revalidation
+        - ntu_viral_selection_is_precommitted_but_unacquired_and_unrevalidated
+      minimum_gt_dataset_families: 2
+      require_fresh_holdout: true
+      require_historical_partition: true
+      required_partitions: [bringup, development, regression_only, historical, fresh]
+      required_systems: [ours, glim, fast_livo2]
+      schema_path: configs/slam_benchmark_profiles/competitive_dataset_source_closure_v1.schema.json
+      schema_sha256: b624465af5313d1e358c945271328353e43fd68e4cef7ca81f0a8872b9422724
+      auditor_path: scripts/check_competitive_dataset_source_closure.py
+      auditor_sha256: ba76203638dfecd85b1bc87372f6d0fda0e40022f21e778e0531e541f3ef1824
+      selection_id: ntu-viral-historical-selection-2026-08-v1
+      selection_path: configs/slam_benchmark_profiles/ntu_viral_selection_2026-08.yaml
+      selection_sha256: 51b81f5bb10d660f3a99ee44be559e088e206ea78339b95c713f0d2eb0838d8c
+      selection_schema_path: configs/slam_benchmark_profiles/ntu_viral_selection_v1.schema.json
+      selection_schema_sha256: 6a967132cfdba8e282e8939d4ab14a78952ae0b07324d6a52e59f6b7b0ad2500
+      reviewed_pin_required: true
+      reviewed_pin_manifest_status: NOT_CONFIGURED
+      reviewed_pin_manifest_path: null
+      reviewed_pin_manifest_sha256: null
+      hash_policy:
+        recorded_status: RECORDED_ONLY
+        revalidated_status: REVALIDATED
+        revalidation_requires_mount_identity: true
+        ground_truth_content_opened: false
+      datasets:
+        - profile_partition: bringup
+          profile_key: rtkslam_construction_seq2
+          dataset_id: rtkslam_construction_seq2
+          sequence_id: rtkslam_construction_seq2
+        - profile_partition: development
+          profile_key: hilti_exp01
+          dataset_id: hilti_exp01
+          sequence_id: hilti_exp01
+        - profile_partition: development
+          profile_key: ntu_viral_tnp_01
+          dataset_id: ntu_viral_tnp_01_development
+          sequence_id: tnp_01
+          family_id: ntu_viral
+          evaluation_eligible: false
+          fresh_eligible: false
+          exclusion_reason: development_training_exposed_by_existing_m6a10_work
+          source:
+            project_name: NTU VIRAL
+            publisher: NTU ARIS
+            project_url: https://ntu-aris.github.io/ntu_viral_dataset/
+            official_primary: true
+            download_refs:
+              input: {url: https://ntu-aris.github.io/ntu_viral_dataset/, immutable: false, primary: true}
+              ground_truth: {url: https://github.com/ntu-aris/ntuviral_gt, immutable: false, primary: true}
+              calibration: {url: https://ntu-aris.github.io/ntu_viral_dataset/, immutable: false, primary: true}
+          license_terms:
+            status: READY
+            license_id: CC-BY-NC-SA-4.0
+            terms_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+            citation: Nguyen et al., NTU VIRAL, IJRR 41(3), 270-280, 2022
+          ground_truth: {role: ground_truth, source_url: https://github.com/ntu-aris/ntuviral_gt}
+          sensor_contract:
+            modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+          sequence: {duration_seconds: 583.0}
+          supported_systems: [ours, glim, fast_livo2]
+        - profile_partition: regression_only
+          profile_key: hilti_exp04
+          dataset_id: hilti_exp04
+          sequence_id: hilti_exp04
+        - profile_partition: regression_only
+          profile_key: hilti_exp07
+          dataset_id: hilti_exp07
+          sequence_id: hilti_exp07
+        - profile_partition: regression_only
+          profile_key: mid360_public
+          dataset_id: mid360_public
+          sequence_id: mid360_public
+          ground_truth: {role: not_applicable}
+        - profile_partition: historical
+          profile_key: holdout_1
+          dataset_id: hilti_exp02_construction_multilevel
+          sequence_id: exp02
+          family_id: hilti_slam_challenge_2022
+          source:
+            project_name: Hilti SLAM Challenge 2022
+            publisher: Hilti Research
+            project_url: https://hilti-challenge.com/
+            official_primary: true
+            download_refs:
+              input: {url: https://tp-public-facing.s3.eu-north-1.amazonaws.com/Challenges/2022/exp02_construction_multilevel.bag, immutable: false, primary: true}
+              ground_truth: {url: https://hilti-challenge.com/assets/2022/ground_truth/exp02_construction_multilevel.txt, immutable: false, primary: true}
+          input: {hash_kind: lfs_content_sha256, validation_status: RECORDED_ONLY}
+          calibration: {hash_kind: canonical_calibration_tree_sha256_v1, validation_status: RECORDED_ONLY}
+          ground_truth: {role: ground_truth, method: dense_6dof, hash_kind: opaque_file_sha256_only_no_parser, validation_status: RECORDED_ONLY}
+          sensor_contract: {modalities: [lidar, imu, monocular_camera]}
+          supported_systems: [ours, glim, fast_livo2]
+        - profile_partition: historical
+          profile_key: holdout_2
+          dataset_id: hilti_exp03_construction_stairs
+          sequence_id: exp03
+          family_id: hilti_slam_challenge_2022
+          source:
+            project_name: Hilti SLAM Challenge 2022
+            publisher: Hilti Research
+            project_url: https://hilti-challenge.com/
+            official_primary: true
+            download_refs:
+              input: {url: https://tp-public-facing.s3.eu-north-1.amazonaws.com/Challenges/2022/exp03_construction_stairs.bag, immutable: false, primary: true}
+              ground_truth: {url: https://hilti-challenge.com/assets/2022/ground_truth/exp03_construction_stairs.txt, immutable: false, primary: true}
+          input: {hash_kind: lfs_content_sha256, validation_status: RECORDED_ONLY}
+          calibration: {hash_kind: canonical_calibration_tree_sha256_v1, validation_status: RECORDED_ONLY}
+          ground_truth: {role: ground_truth, method: dense_6dof, hash_kind: opaque_file_sha256_only_no_parser, validation_status: RECORDED_ONLY}
+          sensor_contract: {modalities: [lidar, imu, monocular_camera]}
+          supported_systems: [ours, glim, fast_livo2]
+        - profile_partition: historical
+          profile_key: holdout_3
+          dataset_id: hilti_exp21_outside_building
+          sequence_id: exp21
+          family_id: hilti_slam_challenge_2022
+          source:
+            project_name: Hilti SLAM Challenge 2022
+            publisher: Hilti Research
+            project_url: https://hilti-challenge.com/
+            official_primary: true
+            download_refs:
+              input: {url: https://tp-public-facing.s3.eu-north-1.amazonaws.com/Challenges/2022/exp21_outside_building.bag, immutable: false, primary: true}
+              ground_truth: {url: https://hilti-challenge.com/assets/2022/ground_truth/exp21_outside_building.txt, immutable: false, primary: true}
+          input: {hash_kind: lfs_content_sha256, validation_status: RECORDED_ONLY}
+          calibration: {hash_kind: canonical_calibration_tree_sha256_v1, validation_status: RECORDED_ONLY}
+          ground_truth: {role: ground_truth, method: dense_6dof, hash_kind: opaque_file_sha256_only_no_parser, validation_status: RECORDED_ONLY}
+          sensor_contract: {modalities: [lidar, imu, monocular_camera]}
+          supported_systems: [ours, glim, fast_livo2]
+        - profile_partition: historical
+          profile_key: ntu_viral_eee_01
+          dataset_id: ntu_viral_eee_01
+          sequence_id: eee_01
+          family_id: ntu_viral
+          evaluation_eligible: true
+          fresh_eligible: false
+          source:
+            project_name: NTU VIRAL
+            publisher: NTU ARIS
+            project_url: https://ntu-aris.github.io/ntu_viral_dataset/
+            official_primary: true
+            download_refs:
+              input: {url: https://ntu-aris.github.io/ntu_viral_dataset/, immutable: false, primary: true}
+              ground_truth: {url: https://github.com/ntu-aris/ntuviral_gt, immutable: false, primary: true}
+              calibration: {url: https://ntu-aris.github.io/ntu_viral_dataset/, immutable: false, primary: true}
+          license_terms:
+            status: READY
+            license_id: CC-BY-NC-SA-4.0
+            terms_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+            citation: Nguyen et al., NTU VIRAL, IJRR 41(3), 270-280, 2022
+          ground_truth: {role: ground_truth, source_url: https://github.com/ntu-aris/ntuviral_gt}
+          sensor_contract:
+            modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+          sequence: {duration_seconds: 398.7}
+          supported_systems: [ours, glim, fast_livo2]
+        - profile_partition: historical
+          profile_key: ntu_viral_nya_01
+          dataset_id: ntu_viral_nya_01
+          sequence_id: nya_01
+          family_id: ntu_viral
+          evaluation_eligible: true
+          fresh_eligible: false
+          source:
+            project_name: NTU VIRAL
+            publisher: NTU ARIS
+            project_url: https://ntu-aris.github.io/ntu_viral_dataset/
+            official_primary: true
+            download_refs:
+              input: {url: https://ntu-aris.github.io/ntu_viral_dataset/, immutable: false, primary: true}
+              ground_truth: {url: https://github.com/ntu-aris/ntuviral_gt, immutable: false, primary: true}
+              calibration: {url: https://ntu-aris.github.io/ntu_viral_dataset/, immutable: false, primary: true}
+          license_terms:
+            status: READY
+            license_id: CC-BY-NC-SA-4.0
+            terms_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+            citation: Nguyen et al., NTU VIRAL, IJRR 41(3), 270-280, 2022
+          ground_truth: {role: ground_truth, source_url: https://github.com/ntu-aris/ntuviral_gt}
+          sensor_contract:
+            modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+          sequence: {duration_seconds: 396.3}
+          supported_systems: [ours, glim, fast_livo2]
+        - profile_partition: historical
+          profile_key: ntu_viral_spms_01
+          dataset_id: ntu_viral_spms_01
+          sequence_id: spms_01
+          family_id: ntu_viral
+          evaluation_eligible: true
+          fresh_eligible: false
+          source:
+            project_name: NTU VIRAL
+            publisher: NTU ARIS
+            project_url: https://ntu-aris.github.io/ntu_viral_dataset/
+            official_primary: true
+            download_refs:
+              input: {url: https://ntu-aris.github.io/ntu_viral_dataset/, immutable: false, primary: true}
+              ground_truth: {url: https://github.com/ntu-aris/ntuviral_gt, immutable: false, primary: true}
+              calibration: {url: https://ntu-aris.github.io/ntu_viral_dataset/, immutable: false, primary: true}
+          license_terms:
+            status: READY
+            license_id: CC-BY-NC-SA-4.0
+            terms_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+            citation: Nguyen et al., NTU VIRAL, IJRR 41(3), 270-280, 2022
+          ground_truth: {role: ground_truth, source_url: https://github.com/ntu-aris/ntuviral_gt}
+          sensor_contract:
+            modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+          sequence: {duration_seconds: 446.0}
+          supported_systems: [ours, glim, fast_livo2]
+        - profile_partition: fresh
+          profile_key: fresh_1
+          dataset_id: hilti_exp14_basement_2
+          sequence_id: exp14
+          family_id: hilti_slam_challenge_2022
+          source:
+            project_name: Hilti SLAM Challenge 2022
+            publisher: Hilti Research
+            project_url: https://hilti-challenge.com/
+            official_primary: true
+            immutable_version: e62017f907007fdc5ab8c721842e4ae7359d7f49
+            download_refs:
+              input: {url: https://huggingface.co/datasets/Hilti-Research/hilti-slam-challenge-2022/blob/e62017f907007fdc5ab8c721842e4ae7359d7f49/rosbags/exp14_basement_2.bag, immutable: true, primary: true}
+              ground_truth: {url: https://huggingface.co/datasets/Hilti-Research/hilti-slam-challenge-2022/blob/e62017f907007fdc5ab8c721842e4ae7359d7f49/ground_truth/exp14_basement_2_imu.txt, immutable: true, primary: true}
+          input: {hash_kind: lfs_content_sha256, validation_status: RECORDED_ONLY}
+          calibration: {hash_kind: canonical_calibration_tree_sha256_v1, validation_status: RECORDED_ONLY}
+          ground_truth: {role: ground_truth, method: dense_6dof, frame: imu, hash_kind: opaque_file_sha256_only_no_parser, validation_status: RECORDED_ONLY}
+          sensor_contract: {modalities: [lidar, imu, monocular_camera]}
+          supported_systems: [ours, glim, fast_livo2]
+        - profile_partition: fresh
+          profile_key: fresh_2
+          dataset_id: hilti_exp16_attic_to_upper_gallery_2
+          sequence_id: exp16
+          family_id: hilti_slam_challenge_2022
+          source:
+            project_name: Hilti SLAM Challenge 2022
+            publisher: Hilti Research
+            project_url: https://hilti-challenge.com/
+            official_primary: true
+            immutable_version: e62017f907007fdc5ab8c721842e4ae7359d7f49
+            download_refs:
+              input: {url: https://huggingface.co/datasets/Hilti-Research/hilti-slam-challenge-2022/blob/e62017f907007fdc5ab8c721842e4ae7359d7f49/rosbags/exp16_attic_to_upper_gallery_2.bag, immutable: true, primary: true}
+              ground_truth: {url: https://huggingface.co/datasets/Hilti-Research/hilti-slam-challenge-2022/blob/e62017f907007fdc5ab8c721842e4ae7359d7f49/ground_truth/exp16_attic_to_upper_gallery_2_imu.txt, immutable: true, primary: true}
+          input: {hash_kind: lfs_content_sha256, validation_status: RECORDED_ONLY}
+          calibration: {hash_kind: canonical_calibration_tree_sha256_v1, validation_status: RECORDED_ONLY}
+          ground_truth: {role: ground_truth, method: dense_6dof, frame: imu, hash_kind: opaque_file_sha256_only_no_parser, validation_status: RECORDED_ONLY}
+          sensor_contract: {modalities: [lidar, imu, monocular_camera]}
+          supported_systems: [ours, glim, fast_livo2]
+        - profile_partition: fresh
+          profile_key: fresh_3
+          dataset_id: hilti_exp18_corridor_lower_gallery_2
+          sequence_id: exp18
+          family_id: hilti_slam_challenge_2022
+          source:
+            project_name: Hilti SLAM Challenge 2022
+            publisher: Hilti Research
+            project_url: https://hilti-challenge.com/
+            official_primary: true
+            immutable_version: e62017f907007fdc5ab8c721842e4ae7359d7f49
+            download_refs:
+              input: {url: https://huggingface.co/datasets/Hilti-Research/hilti-slam-challenge-2022/blob/e62017f907007fdc5ab8c721842e4ae7359d7f49/rosbags/exp18_corridor_lower_gallery_2.bag, immutable: true, primary: true}
+              ground_truth: {url: https://huggingface.co/datasets/Hilti-Research/hilti-slam-challenge-2022/blob/e62017f907007fdc5ab8c721842e4ae7359d7f49/ground_truth/exp18_corridor_lower_gallery_2_imu.txt, immutable: true, primary: true}
+          input: {hash_kind: lfs_content_sha256, validation_status: RECORDED_ONLY}
+          calibration: {hash_kind: canonical_calibration_tree_sha256_v1, validation_status: RECORDED_ONLY}
+          ground_truth: {role: ground_truth, method: dense_6dof, frame: imu, hash_kind: opaque_file_sha256_only_no_parser, validation_status: RECORDED_ONLY}
+          sensor_contract: {modalities: [lidar, imu, monocular_camera]}
+          supported_systems: [ours, glim, fast_livo2]
+    partitions:
+      historical: regression
+      fresh: primary_fresh
+    repetitions: 3
+    minimum_aggregate_ape_improvement_percent: 10.0
+    maximum_processing_rtf: 1.0
+    maximum_online_compute_rtf: 1.0
+    online_phase_contract:
+      version: m6a10-online-compute-v1
+      schema_version: 1
+      primary_metric: runtime.online_compute_rtf
+      wall_metric: runtime.wall_realtime_factor
+      wall_metric_role: diagnostic_only
+      coverage_proof_modes:
+        - trajectory_timestamp_coverage
+        - processed_message_counts
+      require_zero_dropped_messages: true
+      require_zero_queue_overflow: true
+      exclude:
+        - container_startup
+        - map_save
+        - postprocess
+        - fixed_shutdown_grace
+    online_phase_contract_v2:
+      version: m6a10-online-compute-v2
+      schema_version: 2
+      primary_modes: [paced_1x, unpaced_ack]
+      paced_primary_metric: runtime.paced_followability_passed
+      unpaced_primary_metric: runtime.unpaced_throughput_gate_passed
+      maximum_unpaced_throughput_rtf: 1.0
+      maximum_timestamp_end_gap_seconds: 0.25
+      maximum_callback_latency_seconds: 0.25
+      maximum_backlog_messages: 0
+      require_exact_consumer_counts: true
+      require_eof_observed: true
+      require_zero_dropped_messages: true
+      require_zero_queue_overflow: true
+      require_ack_backpressure_for_unpaced: true
+      publisher_counts_are_not_consumer_acks: true
+      wall_metric_role: diagnostic_only
+    maximum_primary_regression_percent: 2.0
+    maximum_peak_rss_ratio_to_rival: *max_peak_rss_ratio
+    maximum_mapping_regression_percent: 2.0
+    minimum_fresh_holdout_slots: 3
+    require_fresh_holdout: true
+    thread_policy_required_keys:
+      - cpu_affinity
+      - max_threads
+      - omp_num_threads
+      - openblas_num_threads
+      - mkl_num_threads
+      - tbb_num_threads
+      - accelerator_policy
+    bootstrap_method: fixed_seed_hierarchical_dataset_cluster_bootstrap
+    bootstrap_seed: 20260821
+    bootstrap_samples: 10000
+    common_identity_fields:
+      - input_sha256
+      - reference_sha256
+      - calibration_sha256
+      - machine_id
+      - hardware_fingerprint
+      - thread_policy
+      - release
+      - scorer_fingerprint
+    pinned_identity_fields:
+      - revision
+      - container_digest
+      - toolchain_fingerprint
+      - config_sha256
+    execution_selection_receipt_path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml
+    execution_selection_receipt_sha256: f2f9aefc368a1ce627574b514f65f9cbadd17042716ba7915aee908c199d6b0e
+    require_execution_selection_receipt: true
+    # M6a7 fixes the comparable memory metric before campaign4.  This is a
+    # process-tree RSS contract; cgroup total and Docker-client RSS remain
+    # diagnostics and cannot satisfy the gate.
+    m6a7_process_rss_contract:
+      schema_version: 1
+      measurement_version: m6a7-container-process-rss-v1
+      measurement_scope: container_pid_namespace_proc_status
+      primary_metric: aggregate_process_tree_peak_rss_bytes
+      primary_metric_definition: sum_of_per_process_vmrss_peaks_shared_pages_may_be_recounted
+      sampler_interval_ms: 250
+      sampler_scheduler_nice: 10
+      memory_max: max
+      oom_delta_required: 0
+      docker_client_comparable: false
+      final_audit_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a7_20260822/v3_final_audit_tool_final_20260822/v3_run_audit.json
+      final_audit_sha256: bd7f57cd2cb6fe8b93a9c28d7b193968d3e865180f2985fb66c44c736e7cd818
+      final_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a7_20260822/v3_final_audit_tool_final_20260822/m6a7_v3_final_receipt.json
+      final_receipt_sha256: 06985d4c4900dbe1aa27687c023c4b6c2ddd3c362ed6782c92a048f5e1eae62e
+      summary_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a7_20260822/revalidation_v3_retry2_20260822/external_validation_summary.json
+      summary_sha256: 0d8458abe71644f30ed0dde683721dc3861efafaf8202e40409f0f63d4e8bcb2
+      summary_status: PASS
+      schedule_pairs: 20
+      schedule_runs: 40
+      schedule_order: AB_BA_alternating
+      gt_content_opened: false
+      scorer_invoked: false
+      prior_failed_audit_lineage_required: true
   required_metrics:
     common:
       - trajectory.ape_rmse_m
+      - runtime.realtime_factor
+      - runtime.online_compute_rtf
+      - runtime.wall_realtime_factor
       - runtime.processing_realtime_factor
       - runtime.peak_rss_mb
       - completion.trajectory_complete
@@ -113,6 +3021,53 @@ competitive_slam_profile:
         modalities: [lidar, imu, monocular_camera]
         reference: sparse_total_station_position
         tuning_allowed: true
+    # NTU VIRAL is tracked in dedicated groups so the known m6a10 development
+    # replay cannot be mistaken for a fresh or competitive evaluation input.
+    # The historical entries are precommitted metadata only; their source bytes
+    # and calibration/GT identities must be acquired and revalidated before
+    # any runner is allowed to consume them.
+    ntu_viral_development:
+      tnp_01:
+        dataset: ntu_viral_tnp_01_development
+        sequence: tnp_01
+        family: ntu_viral
+        evaluation_eligible: false
+        fresh_eligible: false
+        status: development_training_exposed
+        selection_reason: existing_m6a10_development_and_training_exposure
+        modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+        tuning_allowed: true
+    ntu_viral_historical:
+      eee_01:
+        dataset: ntu_viral_eee_01
+        sequence: eee_01
+        family: ntu_viral
+        evaluation_eligible: true
+        fresh_eligible: false
+        status: preregistered_not_ready
+        selection_reason: official_outdoor_eee_carpark_contrast
+        modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+        tuning_allowed: false
+      nya_01:
+        dataset: ntu_viral_nya_01
+        sequence: nya_01
+        family: ntu_viral
+        evaluation_eligible: true
+        fresh_eligible: false
+        status: preregistered_not_ready
+        selection_reason: official_indoor_nanyang_auditorium_contrast
+        modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+        tuning_allowed: false
+      spms_01:
+        dataset: ntu_viral_spms_01
+        sequence: spms_01
+        family: ntu_viral
+        evaluation_eligible: true
+        fresh_eligible: false
+        status: preregistered_not_ready
+        selection_reason: official_outdoor_spms_facade_contrast
+        modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+        tuning_allowed: false
     regression_only:
       hilti_exp04:
         modalities: [lidar, imu, monocular_camera]

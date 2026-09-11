@@ -8,7 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
-from lidarslam_tools.report_charts import GLIM_COLOR, LIDAR_COLOR
+from lidarslam_benchmark_tools.lidarslam_tools.report_charts import GLIM_COLOR, LIDAR_COLOR
+from lidarslam_benchmark_tools.lidarslam_tools.report_model import slugify
 
 
 def render_page(
@@ -72,7 +73,31 @@ def render_page(
             """
         )
 
-    sections_html = "\n".join(render_section(group, output_root) for group in groups[:8])
+    shown_groups = groups[:8]
+    sections_html = "\n".join(
+        render_section(group, output_root) for group in shown_groups)
+    if len(groups) > len(shown_groups):
+        sections_html += (
+            "\n<p class=\"muted\">Showing the 8 most recent of "
+            f"{len(groups)} experiment groups (latest first).</p>"
+        )
+    spotlights_html = (
+        f"\n        <div class=\"spotlights\">\n"
+        f"          {''.join(spotlight)}\n"
+        f"        </div>"
+        if spotlight else ""
+    )
+    hero_grid_class = "hero-grid" if spotlight else "hero-grid solo"
+    toc_items = "\n".join(
+        f"<li><a href=\"#group-{slugify(group['group'])}\">"
+        f"{html.escape(group['group'])}</a></li>"
+        for group in shown_groups
+    )
+    toc_html = (
+        f"\n    <nav class=\"toc\" aria-label=\"Experiment groups\">"
+        f"<ul>\n{toc_items}\n</ul></nav>"
+        if len(shown_groups) > 1 else ""
+    )
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     return f"""<!doctype html>
@@ -156,6 +181,28 @@ def render_page(
       grid-template-columns: 1.2fr 1fr;
       gap: 20px;
       margin-top: 26px;
+    }}
+    .hero-grid.solo {{
+      grid-template-columns: 1fr;
+    }}
+    .toc {{
+      margin-top: 18px;
+      padding: 12px 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 252, 247, 0.84);
+    }}
+    .toc ul {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }}
+    .toc a {{
+      font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
     }}
     .hero-cards, .spotlights {{
       display: grid;
@@ -446,15 +493,12 @@ def render_page(
       <p class="eyebrow">SLAM Experiment Report</p>
       <h1>Trajectory overlays and axis-by-axis drift, side by side.</h1>
       <p class="sub">Generated from <code>output/**/metrics.json</code> and the paired trajectory files. Each run includes an interactive <code>3D XYZ</code> trajectory view, an <code>XY</code> overlay, <code>X/Y/Z/Roll/Pitch/Yaw</code> time-series plots, signed error traces against GLIM, an auto-extracted peak window, and local log warnings so bad runs are easier to classify and debug from one page.</p>
-      <div class="hero-grid">
+      <div class="{hero_grid_class}">
         <div class="hero-cards">
           {''.join(f"<article class='card'><span>{html.escape(title)}</span><strong>{html.escape(value)}</strong><span>{html.escape(note)}</span></article>" for title, value, note in hero_cards)}
-        </div>
-        <div class="spotlights">
-          {''.join(spotlight)}
-        </div>
+        </div>{spotlights_html}
       </div>
-    </section>
+    </section>{toc_html}
     {sections_html}
     <footer>Generated at {html.escape(generated_at)} from {len(groups)} experiment groups.</footer>
   </div>

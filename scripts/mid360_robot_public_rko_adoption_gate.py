@@ -9,23 +9,23 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_public_rko_quality_report import (
+from lidarslam_benchmark_tools.mid360_robot_public_rko_quality_report import (
     RkoQualityGateThresholds,
     RkoQualityReportBuilder,
     write_rko_quality_report,
 )
-from mid360_robot_public_rko_sweep import (
+from lidarslam_benchmark_tools.mid360_robot_public_rko_sweep import (
     RKO_SWEEP_JSON,
     RkoSweepBuilder,
     RkoSweepCase,
     RkoSweepOptions,
     RkoSweepRunOptions,
 )
-from mid360_robot_rko_config_adoption import (
+from lidarslam_benchmark_tools.mid360_robot_rko_config_adoption import (
     RkoConfigAdoptionChecker,
     write_rko_config_adoption_report,
 )
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 RKO_ADOPTION_GATE_JSON = 'mid360_robot_public_rko_adoption_gate.json'
@@ -307,3 +307,7 @@ def _sweep_markdown_path(sweep_path: Path) -> str:
         return str(markdown_path)
     candidate = sweep_path.parent / RKO_SWEEP_JSON.replace('.json', '.md')
     return str(candidate) if candidate.is_file() else ''
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_rko_adoption_gate is a library module; import it instead of running it directly.")

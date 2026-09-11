@@ -397,6 +397,38 @@ install(
   PROGRAMS ${PRODUCT_CLI_SCRIPTS}
   DESTINATION share/${PROJECT_NAME}/product/scripts
 )
+# The installed product scripts import the canonical benchmark Python
+# surface (lidarslam_benchmark_tools), so project that source tree into the
+# install prefix.  The Gaussian-splatting canonical sources live in
+# tools/colored_map/ (tools/gaussian_splatting/ holds deprecation shims).
+set(_BENCHMARK_PYTHON_DIR
+    "lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages")
+install(
+  FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lidarslam_benchmark_tools/__init__.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lidarslam_benchmark_tools/gaussian_splatting/__init__.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lidarslam_benchmark_tools/lidarslam_tools/__init__.py
+  DESTINATION ${_BENCHMARK_PYTHON_DIR}/lidarslam_benchmark_tools
+)
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/
+  DESTINATION ${_BENCHMARK_PYTHON_DIR}/lidarslam_benchmark_tools
+  FILES_MATCHING
+  PATTERN "*.py"
+  PATTERN "lidarslam_tools" EXCLUDE
+)
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/lidarslam_tools/
+  DESTINATION ${_BENCHMARK_PYTHON_DIR}/lidarslam_benchmark_tools/lidarslam_tools
+  FILES_MATCHING
+  PATTERN "*.py"
+)
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../tools/colored_map/
+  DESTINATION ${_BENCHMARK_PYTHON_DIR}/lidarslam_benchmark_tools/gaussian_splatting
+  FILES_MATCHING
+  PATTERN "*.py"
+)
 install(
   FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../VERSION

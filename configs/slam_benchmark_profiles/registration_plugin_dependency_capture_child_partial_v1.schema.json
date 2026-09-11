@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lidarslam.example.invalid/schema/registration-plugin-dependency-capture-child-partial-v1.json",
+  "title": "Registration-plugin dependency capture child partial receipt v1",
+  "description": "A sealed, non-promoting reference for a started child that did not complete.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "benchmark_eligible",
+    "execution_started", "campaign_id", "campaign_set", "row_count",
+    "row_order", "row", "profile", "identity", "cardinality",
+    "child_receipt", "failure", "started_at_unix", "ended_at_unix",
+    "canonical_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "registration-plugin-dependency-capture-child-partial-v1"},
+    "schema_version": {"const": 1},
+    "status": {"const": "FAIL_CLOSED"},
+    "benchmark_eligible": {"const": false},
+    "execution_started": {"const": true},
+    "campaign_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{7,127}$"},
+    "campaign_set": {"$ref": "#/$defs/campaign_set"},
+    "row_count": {"const": 4},
+    "row_order": {"const": [["humble", "absent"], ["humble", "present"], ["jazzy", "absent"], ["jazzy", "present"]]},
+    "row": {"$ref": "#/$defs/row"},
+    "profile": {"$ref": "#/$defs/profile"},
+    "identity": {"$ref": "#/$defs/identity"},
+    "cardinality": {"$ref": "#/$defs/cardinality"},
+    "child_receipt": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/child_receipt"}]},
+    "failure": {"$ref": "#/$defs/failure"},
+    "started_at_unix": {"type": "integer", "minimum": 0},
+    "ended_at_unix": {"type": "integer", "minimum": 0},
+    "canonical_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "absolute": {"type": "string", "pattern": "^/[^\\u0000\\r\\n]*$"},
+    "relative": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)[^\\u0000\\r\\n]+$"},
+    "campaign_set": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "campaign_id", "rows", "row_set_sha256", "identity_sha256"],
+      "properties": {
+        "schema": {"const": "registration-plugin-campaign-set-v1"},
+        "schema_version": {"const": 1},
+        "campaign_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{7,127}$"},
+        "rows": {"type": "array", "minItems": 4, "maxItems": 4, "prefixItems": [
+          {"$ref": "#/$defs/humble_absent"},
+          {"$ref": "#/$defs/humble_present"},
+          {"$ref": "#/$defs/jazzy_absent"},
+          {"$ref": "#/$defs/jazzy_present"}
+        ], "items": false},
+        "row_set_sha256": {"$ref": "#/$defs/sha"},
+        "identity_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "humble_absent": {"type": "object", "additionalProperties": false, "required": ["distro", "dependency_leg"], "properties": {"distro": {"const": "humble"}, "dependency_leg": {"const": "absent"}}},
+    "humble_present": {"type": "object", "additionalProperties": false, "required": ["distro", "dependency_leg"], "properties": {"distro": {"const": "humble"}, "dependency_leg": {"const": "present"}}},
+    "jazzy_absent": {"type": "object", "additionalProperties": false, "required": ["distro", "dependency_leg"], "properties": {"distro": {"const": "jazzy"}, "dependency_leg": {"const": "absent"}}},
+    "jazzy_present": {"type": "object", "additionalProperties": false, "required": ["distro", "dependency_leg"], "properties": {"distro": {"const": "jazzy"}, "dependency_leg": {"const": "present"}}},
+    "profile": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"$ref": "#/$defs/absolute"}, "sha256": {"$ref": "#/$defs/sha"}}},
+    "row": {
+      "type": "object", "additionalProperties": false,
+      "required": ["index", "distro", "dependency_leg", "child_root", "container_name"],
+      "properties": {
+        "index": {"type": "integer", "minimum": 0, "maximum": 3},
+        "distro": {"enum": ["humble", "jazzy"]},
+        "dependency_leg": {"enum": ["absent", "present"]},
+        "child_root": {"$ref": "#/$defs/absolute"},
+        "container_name": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{0,62}$"}
+      }
+    },
+    "identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["campaign_id", "campaign_set_identity_sha256", "profile", "distro", "dependency_leg", "image_digest", "container_name"],
+      "properties": {
+        "campaign_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{7,127}$"},
+        "campaign_set_identity_sha256": {"$ref": "#/$defs/sha"},
+        "profile": {"$ref": "#/$defs/profile"},
+        "distro": {"enum": ["humble", "jazzy"]},
+        "dependency_leg": {"enum": ["absent", "present"]},
+        "image_digest": {"$ref": "#/$defs/digest"},
+        "container_name": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{0,62}$"}
+      }
+    },
+    "cardinality": {
+      "type": "object", "additionalProperties": false,
+      "required": ["started", "phase_count", "expected_phase_count", "release_evidence_count", "package_evidence_count", "signature_reference_count"],
+      "properties": {
+        "started": {"const": true},
+        "phase_count": {"type": "integer", "minimum": 0, "maximum": 19},
+        "expected_phase_count": {"const": 19},
+        "release_evidence_count": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "package_evidence_count": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "signature_reference_count": {"type": "integer", "minimum": 0, "maximum": 4096}
+      }
+    },
+    "child_receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path_relative", "file_bytes", "file_sha256", "canonical_sha256", "sidecar_path_relative", "sidecar_sha256"],
+      "properties": {
+        "path_relative": {"const": "registration_plugin_dependency_capture.receipt.json"},
+        "file_bytes": {"type": "integer", "minimum": 1, "maximum": 8388608},
+        "file_sha256": {"$ref": "#/$defs/sha"},
+        "canonical_sha256": {"$ref": "#/$defs/sha"},
+        "sidecar_path_relative": {"const": "registration_plugin_dependency_capture.receipt.json.sha256"},
+        "sidecar_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "failure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "phase", "row", "message"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1, "maxLength": 256},
+        "phase": {"type": "string", "minLength": 1, "maxLength": 128},
+        "row": {"type": "integer", "minimum": 0, "maximum": 3},
+        "message": {"type": "string", "maxLength": 4096}
+      }
+    }
+  }
+}

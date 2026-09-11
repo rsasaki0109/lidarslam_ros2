@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mid360_robot_recording_check_tools import (
+from lidarslam_benchmark_tools.mid360_robot_recording_check_tools import (
     Mid360RecordingCheckReporter,
     RecordingCheckInputs,
     auto_profile_snapshot_path,
@@ -16,7 +16,7 @@ from mid360_robot_recording_check_tools import (
     load_recording_plan,
     write_readiness_artifacts,
 )
-from mid360_robot_tools import (
+from lidarslam_benchmark_tools.mid360_robot_tools import (
     Mid360ReadinessReporter,
     RobotProfileLoader,
     payload_to_json,

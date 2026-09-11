@@ -14,6 +14,9 @@ from typing import Any
 
 import yaml
 
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
+
+
 LOOP_ALIGNMENT_JSON = 'mid360_robot_loop_alignment.json'
 LOOP_ALIGNMENT_MARKDOWN = 'mid360_robot_loop_alignment.md'
 
@@ -327,7 +330,7 @@ def _read_pcd_xyz(path: Path, *, max_points: int) -> dict[str, Any]:
     if not path.is_file():
         return {'points': 0, 'data': '', 'xyz': [], 'error': 'missing'}
     try:
-        from verify_autoware_map import parse_pcd_header, read_xyz_from_pcd
+        from lidarslam_benchmark_tools.verify_autoware_map import parse_pcd_header, read_xyz_from_pcd
 
         header = parse_pcd_header(str(path))
         data_kind = str(header.get('data') or '')
@@ -788,3 +791,7 @@ def _fmt(value: Any) -> str:
         return f'{float(value):.3f}'
     except Exception:
         return ''
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_loop_alignment_analyzer is a library module; import it instead of running it directly.")

@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from mid360_robot_sample_session import (
+from lidarslam_benchmark_tools.mid360_robot_sample_session import (
     Mid360SampleSessionRunner,
     SAMPLE_SESSION_SCENARIOS,
     SampleSessionOptions,

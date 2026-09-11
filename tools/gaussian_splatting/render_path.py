@@ -19,8 +19,8 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-import posed_images as pi
-from train_gsplat import load_transforms, SH_C0
+import lidarslam_benchmark_tools.gaussian_splatting.posed_images as pi
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import load_transforms, SH_C0
 
 
 # --------------------------------------------------------------------------- #

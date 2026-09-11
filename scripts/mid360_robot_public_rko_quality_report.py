@@ -13,7 +13,7 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 RKO_QUALITY_JSON = 'mid360_robot_public_rko_quality_report.json'
@@ -373,7 +373,7 @@ def _pcd_stats(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {'name': path.name, 'exists': False, 'points': 0, 'size_bytes': 0, 'error': ''}
     try:
-        from verify_autoware_map import parse_pcd_header
+        from lidarslam_benchmark_tools.verify_autoware_map import parse_pcd_header
 
         header = parse_pcd_header(str(path))
         return {
@@ -882,3 +882,7 @@ code {
   table { display: block; overflow-x: auto; white-space: nowrap; }
 }
 """
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_rko_quality_report is a library module; import it instead of running it directly.")

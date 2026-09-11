@@ -11,15 +11,24 @@ import subprocess
 import sys
 from typing import Any
 
-from run_fast_livo2_benchmark import (
+# Direct ``python scripts/<tool>.py`` execution puts only ``scripts/`` on
+# sys.path.  Add the checkout root so the canonical source package can project
+# that scripts tree as ``lidarslam_benchmark_tools``.
+_SCRIPT_SOURCE_ROOT = Path(__file__).resolve().parent.parent
+if (
+        (_SCRIPT_SOURCE_ROOT / 'lidarslam_benchmark_tools' / '__init__.py').is_file()
+        and str(_SCRIPT_SOURCE_ROOT) not in sys.path):
+    sys.path.insert(0, str(_SCRIPT_SOURCE_ROOT))
+
+from lidarslam_benchmark_tools.run_fast_livo2_benchmark import (
     benchmark_machine_fingerprint, evaluate_map_quality, parse_time_report,
-    validate_frozen_input_manifest)
-from run_glim_benchmark import bag_bounds, sha256_tree, trajectory_info
-from competitive_candidate_provenance import verify_candidate_manifest
+    current_competitive_closure_identity, validate_frozen_input_manifest)
+from lidarslam_benchmark_tools.run_glim_benchmark import bag_bounds, sha256_tree, trajectory_info
+from lidarslam_benchmark_tools.competitive_candidate_provenance import verify_candidate_manifest
 import yaml
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = _SCRIPT_SOURCE_ROOT
 DEFAULT_PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
 
 
@@ -183,6 +192,7 @@ def main() -> int:
     visual_interface = visual_sensor_contract(args.rko_param, args.camera_topic)
     args.trajectory_contract = base_to_prism_contract(args.reference_meta)
     contract = yaml.safe_load(args.profile.read_text())['competitive_slam_profile']
+    closure_identity = current_competitive_closure_identity(contract)
     runs = contract['repetitions'] if args.runs is None else args.runs
     if runs < 1 or not (args.bag / 'metadata.yaml').exists():
         raise ValueError('positive runs and a ROS2 bag directory are required')
@@ -195,6 +205,7 @@ def main() -> int:
                  verify_candidate_manifest(ROOT, args.candidate_manifest))
     shared = {
         'profile': contract['name'], 'repository': git_provenance(),
+        'rival_source_closure': closure_identity,
         'machine': benchmark_machine_fingerprint(),
         'bag_path': str(args.bag), 'bag_sha256': bag_hash,
         'input_manifest': manifest,

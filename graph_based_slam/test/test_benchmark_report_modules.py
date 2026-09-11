@@ -33,25 +33,23 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
-import sys
 
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / 'scripts'))
-
-from lidarslam_tools.report_charts import line_chart_svg  # noqa: E402
-from lidarslam_tools.report_diagnostics import collect_log_alerts  # noqa: E402
-from lidarslam_tools.report_model import (  # noqa: E402,I101
+from lidarslam_benchmark_tools.lidarslam_tools.report_charts import line_chart_svg
+from lidarslam_benchmark_tools.lidarslam_tools.report_diagnostics import collect_log_alerts
+from lidarslam_benchmark_tools.lidarslam_tools.report_model import (
     as_bool,
     infer_reference_kind,
     run_quality,
     RunRecord,
 )
-from lidarslam_tools.trajectory_analysis import (  # noqa: E402,I101
+from lidarslam_benchmark_tools.lidarslam_tools.trajectory_analysis import (
     associate_poses,
     Pose,
     unwrap_degrees,
 )
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_legacy_entrypoint_exports_the_public_helpers():

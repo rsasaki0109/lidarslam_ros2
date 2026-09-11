@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-phase3d-r3-offline-build-plan-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "plan_kind", "status", "execute", "argv", "identity"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "plan_kind": {"const": "glim_clean_room_r3_offline_build_plan_v1"},
+    "status": {"const": "PASS"},
+    "execute": {"const": false},
+    "argv": {"type": "array", "minItems": 12, "items": {"type": "string"}},
+    "identity": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "candidate_id", "candidate_manifest_sha256", "offline_dependency_manifest_sha256",
+        "recipe_sha256", "prefetch_tool_sha256", "prefetch_receipt_sha256",
+        "build_argv_sha256", "network", "pull", "benchmark_eligible"
+      ],
+      "properties": {
+        "candidate_id": {"const": "glim-clean-room-phase3d-r3-candidate-v1"},
+        "candidate_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "offline_dependency_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "recipe_sha256": {"$ref": "#/$defs/sha256"},
+        "prefetch_tool_sha256": {"$ref": "#/$defs/sha256"},
+        "prefetch_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "build_argv_sha256": {"$ref": "#/$defs/sha256"},
+        "network": {"const": "none"},
+        "pull": {"const": false},
+        "benchmark_eligible": {"const": false}
+      }
+    }
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

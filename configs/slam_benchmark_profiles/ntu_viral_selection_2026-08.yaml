@@ -1,0 +1,255 @@
+schema_version: 1
+selection_id: ntu-viral-historical-selection-2026-08-v1
+status: NOT_READY
+family_id: ntu_viral
+partition: historical
+selection_basis: >-
+  Three officially named sequences are precommitted before acquisition to span
+  materially different NTU VIRAL environments: an outdoor carpark (eee_01), an
+  indoor auditorium (nya_01), and a building facade (spms_01).  tnp_01 is
+  explicitly development/training-exposed by existing m6a10 work and is not an
+  evaluation or fresh sequence.
+official_sources:
+  project_url: https://ntu-aris.github.io/ntu_viral_dataset/
+  dataset_repository_url: https://github.com/ntu-aris/ntu_viral_dataset
+  ground_truth_repository_url: https://github.com/ntu-aris/ntuviral_gt
+  evaluation_tutorial_url: https://ntu-aris.github.io/ntu_viral_dataset/evaluation_tutorial.html
+  terms_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+  license_id: CC-BY-NC-SA-4.0
+  citation: >-
+    Nguyen, Thien-Minh, Shenghai Yuan, Muqing Cao, Yang Lyu, Thien Hoang
+    Nguyen, and Lihua Xie. NTU VIRAL: A Visual-Inertial-Ranging-Lidar Dataset,
+    From an Aerial Vehicle Viewpoint. The International Journal of Robotics
+    Research 41(3), 270-280, 2022.
+  download_reference_status: MOVING_OFFICIAL_REFERENCE
+acquisition:
+  recipe_id: ntu-viral-official-materialization-v1
+  recipe_revision: preacquisition-metadata-only-2026-08
+  materialization: >-
+    Resolve the official sequence archive into a canonical read-only bag and
+    metadata/calibration tree, retain the official GT-in-bag or ntuviral_gt CSV
+    as a separate identity, then record SHA-256 and byte size for every role.
+  status: NOT_READY
+  required_before_execution:
+    - input_sha256
+    - input_size_bytes
+    - ground_truth_sha256
+    - ground_truth_size_bytes
+    - calibration_sha256
+    - calibration_size_bytes
+    - recorded_and_revalidated_mount_identity
+    - immutable_source_revision_or_archive_digest
+    - all_system_runner_support_receipt
+  evidence_mount:
+    path: /media/sasaki/aiueo1
+    uuid: 3b5dc9b7-c4de-4cf2-a892-00b2c063f34e
+    filesystem: ext4
+    label: aiueo
+    require_rw: true
+  candidate_root_relative: datasets/ntu_viral_candidates/ntu-viral-historical-selection-2026-08-v1
+  calibration_roles:
+    calib_stereo:
+      url: null
+      official_primary: true
+      allowed_hosts: [researchdata.ntu.edu.sg, entuedu-my.sharepoint.com]
+      expected_filename: null
+      archive: true
+      expected_member_paths: []
+    calib_stereo_imu:
+      url: null
+      official_primary: true
+      allowed_hosts: [researchdata.ntu.edu.sg, entuedu-my.sharepoint.com]
+      expected_filename: null
+      archive: false
+      expected_member_paths: []
+selected_sequences:
+  - sequence_id: eee_01
+    profile_key: ntu_viral_eee_01
+    selection_rationale: >-
+      Official first EEE sequence; selected as an outdoor open-carpark flight
+      to contrast with the indoor and facade selections.
+    environment: School of EEE central carpark (outdoor)
+    official_size_label: 8.7 GB
+    official_duration_seconds: 398.7
+    expected_files:
+      - official_sequence_archive_zip
+      - materialized_rosbag_with_ground_truth
+      - official_ntuviral_gt_csv_or_bag_ground_truth
+      - calib_stereo.zip
+      - calib_stereo_imu.bag
+      - canonical_calibration_and_sensor_metadata_tree
+    supported_systems: [ours, glim, fast_livo2]
+    evaluation_eligible: true
+    fresh_eligible: false
+    sensor_contract:
+      official_modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+      topics: null
+      formats: null
+      timestamp_basis: null
+      status: NOT_READY
+    ground_truth_contract:
+      official_method: Leica prism pose in the official bag/CSV release
+      frame_convention: prism coordinates require the official body-to-prism transform
+      timestamp_basis: nanosecond CSV timestamps normalized from the first sample per the official tutorial
+      status: NOT_READY
+    calibration_contract:
+      expected_artifacts: [calib_stereo.zip, calib_stereo_imu.bag]
+      frame_convention: exact extracted camera/IMU frame binding to be revalidated
+      timestamp_basis: exact materialized calibration timestamp basis to be revalidated
+      status: NOT_READY
+    byte_identity:
+      input_sha256: null
+      input_size_bytes: null
+      ground_truth_sha256: null
+      ground_truth_size_bytes: null
+      calibration_sha256: null
+      calibration_size_bytes: null
+      validation_status: NOT_READY
+    download_refs:
+      sequence_archive:
+        url: null
+        official_primary: true
+        allowed_hosts: [researchdata.ntu.edu.sg, entuedu-my.sharepoint.com]
+        expected_filename: null
+        archive: true
+        expected_member_paths: []
+      ground_truth_csv:
+        url: null
+        official_primary: true
+        allowed_hosts: [github.com]
+        expected_filename: null
+        archive: false
+        expected_member_paths: []
+  - sequence_id: nya_01
+    profile_key: ntu_viral_nya_01
+    selection_rationale: >-
+      Official first NYA sequence; selected as an indoor auditorium flight to
+      provide a materially different environment from EEE and SPMS.
+    environment: inside Nanyang Auditorium (indoor)
+    official_size_label: 8.6 GB
+    official_duration_seconds: 396.3
+    expected_files:
+      - official_sequence_archive_zip
+      - materialized_rosbag_with_ground_truth
+      - official_ntuviral_gt_csv_or_bag_ground_truth
+      - calib_stereo.zip
+      - calib_stereo_imu.bag
+      - canonical_calibration_and_sensor_metadata_tree
+    supported_systems: [ours, glim, fast_livo2]
+    evaluation_eligible: true
+    fresh_eligible: false
+    sensor_contract:
+      official_modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+      topics: null
+      formats: null
+      timestamp_basis: null
+      status: NOT_READY
+    ground_truth_contract:
+      official_method: Leica prism pose in the official bag/CSV release
+      frame_convention: prism coordinates require the official body-to-prism transform
+      timestamp_basis: nanosecond CSV timestamps normalized from the first sample per the official tutorial
+      status: NOT_READY
+    calibration_contract:
+      expected_artifacts: [calib_stereo.zip, calib_stereo_imu.bag]
+      frame_convention: exact extracted camera/IMU frame binding to be revalidated
+      timestamp_basis: exact materialized calibration timestamp basis to be revalidated
+      status: NOT_READY
+    byte_identity:
+      input_sha256: null
+      input_size_bytes: null
+      ground_truth_sha256: null
+      ground_truth_size_bytes: null
+      calibration_sha256: null
+      calibration_size_bytes: null
+      validation_status: NOT_READY
+    download_refs:
+      sequence_archive:
+        url: null
+        official_primary: true
+        allowed_hosts: [researchdata.ntu.edu.sg, entuedu-my.sharepoint.com]
+        expected_filename: null
+        archive: true
+        expected_member_paths: []
+      ground_truth_csv:
+        url: null
+        official_primary: true
+        allowed_hosts: [github.com]
+        expected_filename: null
+        archive: false
+        expected_member_paths: []
+  - sequence_id: spms_01
+    profile_key: ntu_viral_spms_01
+    selection_rationale: >-
+      Official first SPMS sequence; selected at a building facade to add a
+      facade/outdoor geometry regime distinct from the EEE carpark and NYA hall.
+    environment: School of Physical and Mathematical Sciences facade (outdoor)
+    official_size_label: 5.5 GB
+    official_duration_seconds: 446.0
+    expected_files:
+      - official_sequence_archive_zip
+      - materialized_rosbag_with_ground_truth
+      - official_ntuviral_gt_csv_or_bag_ground_truth
+      - calib_stereo.zip
+      - calib_stereo_imu.bag
+      - canonical_calibration_and_sensor_metadata_tree
+    supported_systems: [ours, glim, fast_livo2]
+    evaluation_eligible: true
+    fresh_eligible: false
+    sensor_contract:
+      official_modalities: [two_3d_lidars, two_time_synchronized_cameras, multiple_imus, uwb]
+      topics: null
+      formats: null
+      timestamp_basis: null
+      status: NOT_READY
+    ground_truth_contract:
+      official_method: Leica prism pose in the official bag/CSV release
+      frame_convention: prism coordinates require the official body-to-prism transform
+      timestamp_basis: nanosecond CSV timestamps normalized from the first sample per the official tutorial
+      status: NOT_READY
+    calibration_contract:
+      expected_artifacts: [calib_stereo.zip, calib_stereo_imu.bag]
+      frame_convention: exact extracted camera/IMU frame binding to be revalidated
+      timestamp_basis: exact materialized calibration timestamp basis to be revalidated
+      status: NOT_READY
+    byte_identity:
+      input_sha256: null
+      input_size_bytes: null
+      ground_truth_sha256: null
+      ground_truth_size_bytes: null
+      calibration_sha256: null
+      calibration_size_bytes: null
+      validation_status: NOT_READY
+    download_refs:
+      sequence_archive:
+        url: null
+        official_primary: true
+        allowed_hosts: [researchdata.ntu.edu.sg, entuedu-my.sharepoint.com]
+        expected_filename: null
+        archive: true
+        expected_member_paths: []
+      ground_truth_csv:
+        url: null
+        official_primary: true
+        allowed_hosts: [github.com]
+        expected_filename: null
+        archive: false
+        expected_member_paths: []
+excluded_sequences:
+  - sequence_id: tnp_01
+    profile_key: ntu_viral_tnp_01
+    reason: >-
+      Development/training-exposed by existing m6a10 work; excluded from both
+      evaluation and fresh eligibility and never counted as an independent
+      holdout family.
+    evaluation_eligible: false
+    fresh_eligible: false
+disjointness:
+  excluded_training_sequences: [tnp_01]
+  excluded_historical_families: [hilti_slam_challenge_2022]
+  required_immutable_ids:
+    - input_sha256
+    - input_size_bytes
+    - ground_truth_sha256
+    - ground_truth_size_bytes
+    - calibration_sha256
+    - calibration_size_bytes

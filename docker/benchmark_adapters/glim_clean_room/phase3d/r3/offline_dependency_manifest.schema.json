@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-phase3d-r3-offline-dependency-manifest-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "manifest_kind", "candidate_id", "status", "base_image",
+    "source_archive_policy", "archives", "apt_deb_closure", "prefetch_contract"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "manifest_kind": {"const": "glim_clean_room_phase3d_r3_offline_dependency_manifest_v1"},
+    "candidate_id": {"const": "glim-clean-room-phase3d-r3-candidate-v1"},
+    "status": {"enum": ["NOT_READY_APT_CLOSURE_UNSEALED", "READY"]},
+    "base_image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reference", "distribution", "architecture", "pull_policy", "build_network"],
+      "properties": {
+        "reference": {"pattern": "^ros@sha256:[0-9a-f]{64}$"},
+        "distribution": {"const": "jazzy"},
+        "architecture": {"const": "linux/amd64"},
+        "pull_policy": {"const": "never"},
+        "build_network": {"const": "none"}
+      }
+    },
+    "source_archive_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fetch_phase", "build_phase", "network_during_build", "url_policy", "archive_root_hash_kind"],
+      "properties": {
+        "fetch_phase": {"const": "host_prefetch_only"},
+        "build_phase": {"const": "copy_only_from_verified_prefetch_root"},
+        "network_during_build": {"const": "none"},
+        "url_policy": {"type": "string", "minLength": 1},
+        "archive_root_hash_kind": {"const": "relative_path_content_sha256_v1_excluding_git_metadata"}
+      }
+    },
+    "archives": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name", "role", "filename", "url", "bytes", "sha256", "source_root", "source_tree_sha256", "license_files"],
+        "properties": {
+          "name": {"enum": ["boost", "glim", "gtsam", "gtsam_points"]},
+          "role": {"type": "string", "minLength": 1},
+          "filename": {"pattern": "^[A-Za-z0-9_.-]+\\.(?:tar\\.gz|tar\\.bz2)$"},
+          "url": {"pattern": "^https://"},
+          "repository_url": {"pattern": "^https://"},
+          "commit": {"pattern": "^[0-9a-f]{40}$"},
+          "bytes": {"type": "integer", "minimum": 1},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "source_root": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$"},
+          "source_tree_sha256": {"$ref": "#/$defs/sha256"},
+          "license_files": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["path", "identity", "sha256"],
+              "properties": {
+                "path": {"type": "string", "minLength": 1},
+                "identity": {"type": "string", "minLength": 1},
+                "bytes": {"type": "integer", "minimum": 1},
+                "sha256": {"$ref": "#/$defs/sha256"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "apt_deb_closure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "status", "base_image_reference", "provenance_policy", "required_fields", "dpkg_packages_sorted", "repositories"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "status": {"enum": ["NOT_READY_APT_CAPTURE_REQUIRED", "READY"]},
+        "base_image_reference": {"pattern": "^ros@sha256:[0-9a-f]{64}$"},
+        "base_image_digest": {"pattern": "^ros@sha256:[0-9a-f]{64}$"},
+        "platform": {"const": "linux/amd64"},
+        "ros_distribution": {"const": "jazzy"},
+        "provenance_policy": {"type": "string", "minLength": 1},
+        "required_fields": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "dpkg_packages_sorted": {"type": "array", "items": {"$ref": "#/$defs/package"}},
+        "repositories": {"type": "array", "items": {"$ref": "#/$defs/repository"}},
+        "apt_source_files_sha256": {"type": "array", "items": {"$ref": "#/$defs/source_file"}},
+        "apt_release_or_inrelease": {"type": "array", "items": {"$ref": "#/$defs/release"}},
+        "rosdep_sources_sha256": {"type": "array", "items": {"$ref": "#/$defs/rosdep_source"}},
+        "rosdep_cache_sha256": {"$ref": "#/$defs/sha256"},
+        "install_command_sha256": {"$ref": "#/$defs/sha256"},
+        "install_exit_status": {"const": 0},
+        "archive_set_identity_sha256": {"$ref": "#/$defs/sha256"},
+        "dpkg_set_identity_sha256": {"$ref": "#/$defs/sha256"},
+        "repository_set_identity_sha256": {"$ref": "#/$defs/sha256"},
+        "closure_identity_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "allOf": [{
+        "if": {"properties": {"status": {"const": "READY"}}},
+        "then": {
+          "required": [
+            "base_image_digest", "platform", "ros_distribution", "apt_source_files_sha256",
+            "apt_release_or_inrelease", "rosdep_sources_sha256", "rosdep_cache_sha256",
+            "install_command_sha256", "install_exit_status", "archive_set_identity_sha256",
+            "dpkg_set_identity_sha256", "repository_set_identity_sha256", "closure_identity_sha256"
+          ],
+          "properties": {
+            "dpkg_packages_sorted": {"minItems": 1},
+            "repositories": {"minItems": 1},
+            "apt_source_files_sha256": {"minItems": 1},
+            "apt_release_or_inrelease": {"minItems": 1},
+            "rosdep_sources_sha256": {"minItems": 1},
+            "required_fields": {"minItems": 17}
+          }
+        }
+      }]
+    },
+    "prefetch_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_root_must_be", "output_root_must_be", "expected_input_names", "receipt_kind", "network_used"],
+      "properties": {
+        "source_root_must_be": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "output_root_must_be": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "expected_input_names": {"type": "array", "minItems": 5, "items": {"type": "string"}},
+        "receipt_kind": {"const": "glim_clean_room_r3_prefetch_receipt_v1"},
+        "network_used": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "package": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "architecture", "status", "filename", "url", "sha256", "bytes", "license"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "architecture": {"type": "string", "minLength": 1},
+        "status": {"const": "installed"},
+        "filename": {"type": "string", "pattern": "^[A-Za-z0-9_.+~-]+\\.deb$"},
+        "url": {"pattern": "^https://"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "license": {"$ref": "#/$defs/license"}
+      }
+    },
+    "repository": {
+      "type": "object", "additionalProperties": false,
+      "required": ["url", "release_or_inrelease_url", "release_or_inrelease_sha256", "release_or_inrelease_bytes"],
+      "properties": {
+        "url": {"pattern": "^https://"},
+        "release_or_inrelease_url": {"pattern": "^https://"},
+        "release_or_inrelease_sha256": {"$ref": "#/$defs/sha256"},
+        "release_or_inrelease_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "license": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "identity", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "identity": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "source_file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "bytes"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "release": {
+      "type": "object", "additionalProperties": false,
+      "required": ["url", "sha256", "bytes"],
+      "properties": {
+        "url": {"pattern": "^https://"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "rosdep_source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["url", "sha256", "bytes"],
+      "properties": {
+        "url": {"pattern": "^https://"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

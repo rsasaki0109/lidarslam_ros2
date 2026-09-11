@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-r3-apt-allowlist-review-v1",
+  "title": "Independent custodian review binding",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "proposal_sha256", "custodian_key_id", "signature", "signature_receipt_index_path", "signature_receipt_index_sha256", "canonical_sha256"],
+  "properties": {
+    "schema": {"const": "glim_clean_room_r3_apt_allowlist_review_v1"}, "schema_version": {"const": 1},
+    "status": {"const": "REVIEWED_FOR_COLLECTOR"}, "proposal_sha256": {"$ref": "#/$defs/sha256"},
+    "custodian_key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"},
+    "signature": {"type": "string", "minLength": 1},
+    "signature_receipt_index_path": {"type": "string", "pattern": "^/[^\\x00]*$"},
+    "signature_receipt_index_sha256": {"$ref": "#/$defs/sha256"},
+    "canonical_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

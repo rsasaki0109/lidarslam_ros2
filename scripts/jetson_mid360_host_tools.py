@@ -525,3 +525,7 @@ class JetsonHostReadiness:
 def payload_to_json(payload: dict[str, Any]) -> str:
     """Serialize report payloads consistently."""
     return json.dumps(payload, indent=2, sort_keys=True)
+
+
+if __name__ == "__main__":
+    raise SystemExit("jetson_mid360_host_tools is a library module; import it instead of running it directly.")

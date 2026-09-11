@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-rival-legal-provenance-capture-v1",
+  "title": "Competitive rival legal provenance capture v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "capture_kind", "status", "review_status",
+    "benchmark_eligible", "claim_eligible", "captured_at",
+    "closure_binding", "profile_binding", "checker", "systems",
+    "remote_policy", "source_policy", "producer", "blockers",
+    "capture_identity_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "capture_kind": {"const": "competitive_rival_legal_provenance_capture_v1"},
+    "status": {"const": "REVIEW_REQUIRED"},
+    "review_status": {"const": "UNSIGNED_REVIEW_REQUIRED"},
+    "benchmark_eligible": {"const": false},
+    "claim_eligible": {"const": false},
+    "captured_at": {"$ref": "#/$defs/timestamp"},
+    "closure_binding": {"$ref": "#/$defs/closureBinding"},
+    "profile_binding": {"$ref": "#/$defs/fileBinding"},
+    "checker": {"$ref": "#/$defs/checker"},
+    "systems": {
+      "type": "object", "additionalProperties": false,
+      "required": ["glim", "fast_livo2"],
+      "properties": {
+        "glim": {"$ref": "#/$defs/system"},
+        "fast_livo2": {"$ref": "#/$defs/system"}
+      }
+    },
+    "remote_policy": {"$ref": "#/$defs/remotePolicy"},
+    "source_policy": {"$ref": "#/$defs/sourcePolicy"},
+    "producer": {"$ref": "#/$defs/producer"},
+    "blockers": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "capture_identity_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "relativePath": {
+      "type": "string", "minLength": 1,
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(?:/|$)).+$"
+    },
+    "nullableSha": {
+      "oneOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]
+    },
+    "fileBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "size"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "size": {"type": "integer", "minimum": 1}
+      }
+    },
+    "closureBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "closure_id", "closure_revision", "closure_identity_hash_kind",
+        "closure_identity_sha256", "selection_id", "selection_path",
+        "selection_sha256", "selection_file_size"
+      ],
+      "properties": {
+        "closure_id": {"type": "string", "minLength": 1},
+        "closure_revision": {"type": "integer", "minimum": 1},
+        "closure_identity_hash_kind": {
+          "const": "canonical_rival_source_closure_identity_sha256_v1"
+        },
+        "closure_identity_sha256": {"$ref": "#/$defs/sha"},
+        "selection_id": {"type": "string", "minLength": 1},
+        "selection_path": {"$ref": "#/$defs/relativePath"},
+        "selection_sha256": {"$ref": "#/$defs/sha"},
+        "selection_file_size": {"type": "integer", "minimum": 1}
+      }
+    },
+    "checker": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "pass", "errors", "incomplete", "not_ready", "checker_source_sha256"],
+      "properties": {
+        "status": {"enum": ["PASS", "INVALID", "NOT_READY"]},
+        "pass": {"type": "boolean"},
+        "errors": {"type": "array", "items": {"type": "string"}},
+        "incomplete": {"type": "array", "items": {"type": "string"}},
+        "not_ready": {"type": "array", "items": {"type": "string"}},
+        "checker_source_sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "remotePolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "allowed_hosts", "require_https", "require_exact_commit_urls",
+        "redirects_allowed", "max_response_bytes", "network_used",
+        "responses_status"
+      ],
+      "properties": {
+        "allowed_hosts": {
+          "type": "array", "const": ["api.github.com", "github.com", "raw.githubusercontent.com"]
+        },
+        "require_https": {"const": true},
+        "require_exact_commit_urls": {"const": true},
+        "redirects_allowed": {"const": false},
+        "max_response_bytes": {"const": 2097152},
+        "network_used": {"const": false},
+        "responses_status": {"const": "NOT_RUN"}
+      }
+    },
+    "sourcePolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["official_source_policy", "archive_hash_kind", "source_tree_hash_kind", "legal_policy"],
+      "properties": {
+        "official_source_policy": {"type": "string", "minLength": 1},
+        "archive_hash_kind": {"type": "string", "minLength": 1},
+        "source_tree_hash_kind": {"type": "string", "minLength": 1},
+        "legal_policy": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "source_fetch_mode", "redistribution_mode",
+            "image_publication_status", "claim_eligibility",
+            "nonredistributable_sources", "warning"
+          ],
+          "properties": {
+            "source_fetch_mode": {"type": "string", "minLength": 1},
+            "redistribution_mode": {"type": "string", "minLength": 1},
+            "image_publication_status": {"type": "string", "minLength": 1},
+            "claim_eligibility": {"type": "string", "minLength": 1},
+            "nonredistributable_sources": {
+              "type": "array", "items": {"type": "string", "minLength": 1}
+            },
+            "warning": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "producer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"const": "scripts/capture_competitive_rival_legal_provenance.py"},
+        "sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "system": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "source_count", "sources", "recipe"],
+      "properties": {
+        "status": {"enum": ["NOT_READY_LEGAL_PROVENANCE", "REVIEW_REQUIRED"]},
+        "source_count": {"type": "integer", "minimum": 1},
+        "sources": {
+          "type": "array", "minItems": 1,
+          "items": {"$ref": "#/$defs/source"}
+        },
+        "recipe": {"$ref": "#/$defs/recipe"}
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "name", "status", "repository_url", "revision", "revision_kind",
+        "archive_url", "archive_sha256", "source_tree_sha256",
+        "source_tree_hash_kind", "license_status", "license_not_ready_reasons",
+        "license_paths", "citation", "remote_requests"
+      ],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
+        "repository_url": {"type": "string", "pattern": "^https://github\\.com/[^/]+/[^/]+\\.git$"},
+        "revision": {"$ref": "#/$defs/revision"},
+        "revision_kind": {"const": "immutable_commit"},
+        "archive_url": {"type": "string", "pattern": "^https://github\\.com/[^/]+/[^/]+/archive/[0-9a-f]{40}\\.tar\\.gz$"},
+        "archive_sha256": {"$ref": "#/$defs/nullableSha"},
+        "source_tree_sha256": {"$ref": "#/$defs/nullableSha"},
+        "source_tree_hash_kind": {"type": "string", "minLength": 1},
+        "license_status": {
+          "enum": ["READY", "NOT_READY", "NOT_READY_LEGAL_PROVENANCE", null]
+        },
+        "license_not_ready_reasons": {
+          "type": "array", "items": {"type": "string"}
+        },
+        "license_paths": {
+          "type": "array", "items": {"$ref": "#/$defs/licensePath"}
+        },
+        "citation": {"$ref": "#/$defs/citation"},
+        "remote_requests": {
+          "type": "array", "minItems": 1,
+          "items": {"$ref": "#/$defs/remoteRequest"}
+        }
+      }
+    },
+    "licensePath": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "path", "sha256"],
+      "properties": {
+        "kind": {"enum": ["license_file", "license_declaration"]},
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/nullableSha"}
+      }
+    },
+    "citation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["primary_upstream", "commit_url", "compatibility_status"],
+      "properties": {
+        "primary_upstream": {"const": true},
+        "commit_url": {"type": "string", "pattern": "^https://github\\.com/[^/]+/[^/]+/commit/[0-9a-f]{40}$"},
+        "compatibility_status": {"type": "string", "minLength": 1}
+      }
+    },
+    "remoteRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "kind", "url", "expected_sha256", "response_status", "final_url",
+        "http_status", "redirect_count", "body_size", "body_sha256",
+        "headers", "reason"
+      ],
+      "properties": {
+        "kind": {"enum": ["repository", "commit", "archive", "raw", "tree_api"]},
+        "url": {"type": "string", "format": "uri", "maxLength": 2048},
+        "expected_sha256": {"$ref": "#/$defs/nullableSha"},
+        "response_status": {"enum": ["NOT_RUN", "OBSERVED", "PENDING"]},
+        "final_url": {"oneOf": [{"type": "string", "format": "uri"}, {"type": "null"}]},
+        "http_status": {"oneOf": [{"type": "integer", "minimum": 100, "maximum": 599}, {"type": "null"}]},
+        "redirect_count": {"type": "integer", "minimum": 0},
+        "body_size": {"oneOf": [{"type": "integer", "minimum": 0, "maximum": 2097152}, {"type": "null"}]},
+        "body_sha256": {"$ref": "#/$defs/nullableSha"},
+        "headers": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "content-length": {"type": "string", "maxLength": 256},
+            "content-type": {"type": "string", "maxLength": 256},
+            "etag": {"type": "string", "maxLength": 256},
+            "last-modified": {"type": "string", "maxLength": 256}
+          },
+          "propertyNames": {"pattern": "^(content-length|content-type|etag|last-modified)$"}
+        },
+        "reason": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
+      }
+    },
+    "recipe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "artifacts", "base_image"],
+      "properties": {
+        "status": {"enum": ["CURRENT_BYTES_MATCH_DECLARATIONS", "DRIFT_OR_MISSING", "INVALID"]},
+        "artifacts": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "oneOf": [
+              {"$ref": "#/$defs/localArtifact"},
+              {"$ref": "#/$defs/pinnedArchiveArtifact"}
+            ]
+          }
+        },
+        "base_image": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["name", "digest"],
+              "properties": {
+                "name": {"type": "string", "minLength": 1},
+                "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+              }
+            }
+          ]
+        }
+      }
+    },
+    "localArtifact": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "role", "path", "hash_kind", "declared_sha256", "actual_sha256", "status"
+      ],
+      "properties": {
+        "role": {"type": "string", "minLength": 1},
+        "path": {"type": "string"},
+        "hash_kind": {"type": "string", "minLength": 1},
+        "declared_sha256": {"$ref": "#/$defs/nullableSha"},
+        "actual_sha256": {"$ref": "#/$defs/nullableSha"},
+        "status": {"enum": ["MATCH", "DRIFT", "MISSING", "INVALID_PATH"]},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "pinnedArchiveArtifact": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "path", "path_kind", "hash_kind", "declared_sha256",
+        "actual_sha256", "status", "role", "source", "source_revision",
+        "source_archive_url", "source_archive_sha256", "observation"
+      ],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "path_kind": {"const": "pinned_upstream_archive_relative_path"},
+        "hash_kind": {"const": "upstream_archive_file_sha256"},
+        "declared_sha256": {"$ref": "#/$defs/sha"},
+        "actual_sha256": {"const": null},
+        "status": {"const": "PINNED_UPSTREAM_ARCHIVE_BOUND"},
+        "role": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "source_revision": {"$ref": "#/$defs/revision"},
+        "source_archive_url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[^/]+/[^/]+/archive/[0-9a-f]{40}\\.tar\\.gz$"
+        },
+        "source_archive_sha256": {"$ref": "#/$defs/sha"},
+        "observation": {"const": "NOT_LOCALLY_OBSERVED"}
+      }
+    }
+  }
+}

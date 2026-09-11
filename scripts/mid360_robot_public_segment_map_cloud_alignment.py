@@ -12,14 +12,14 @@ from typing import Any
 
 import numpy as np
 
-from mid360_robot_loop_alignment_analyzer import (
+from lidarslam_benchmark_tools.mid360_robot_loop_alignment_analyzer import (
     load_tum_trajectory,
     load_pointcloud_map_points,
     resolve_pointcloud_map_dir,
     resolve_trajectory_path,
 )
-from mid360_robot_public_loop_cloud_analyzer import cloud_overlap_metrics, voxel_downsample
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_public_loop_cloud_analyzer import cloud_overlap_metrics, voxel_downsample
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 PUBLIC_SEGMENT_MAP_CLOUD_ALIGNMENT_JSON = 'mid360_robot_public_segment_map_cloud_alignment.json'
@@ -693,3 +693,7 @@ def _render_alignment_ply(aligned_start: np.ndarray, end_points: np.ndarray) -> 
             f'{red} {green} {blue}'
         )
     return '\n'.join(lines) + '\n'
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_segment_map_cloud_alignment is a library module; import it instead of running it directly.")

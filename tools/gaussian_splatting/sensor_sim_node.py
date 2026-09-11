@@ -25,15 +25,12 @@ Run (after sourcing the workspace and with a CUDA GPU):
 from __future__ import annotations
 
 from pathlib import Path
-import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-from gaussian_renderer import (  # noqa: E402
+from lidarslam_benchmark_tools.gaussian_splatting.gaussian_renderer import (
     GaussianRenderer, pose_to_viewmat, transform_from_pos_quat)
-import numpy as np  # noqa: E402
-from render_path import scale_intrinsics  # noqa: E402
-from train_gsplat import load_transforms  # noqa: E402
+import numpy as np
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import scale_intrinsics  # noqa: E402
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import load_transforms  # noqa: E402
 
 
 def _mat4(values, name: str) -> np.ndarray:

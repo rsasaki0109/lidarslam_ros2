@@ -34,6 +34,10 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+import yaml
+
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / 'scripts' / 'compose_competitive_result.py'
 PROFILE = ROOT / 'configs/slam_benchmark_profiles/competitive_slam_v1.yaml'
@@ -64,6 +68,8 @@ def _inputs(tmp_path, map_valid=True):
             {'completion': {'trajectory_complete': True,
                             'process_exit_status': 0},
              'runtime': {'processing_realtime_factor': value,
+                         'online_compute_rtf': value - 0.1,
+                         'wall_realtime_factor': value + 0.2,
                          'peak_rss_mb': rss}}
             for value, rss in ((0.8, 100), (0.9, 110), (0.7, 105))],
     })
@@ -89,6 +95,8 @@ def test_compose_preserves_identity_and_conservative_aggregates(tmp_path):
     assert result['machine_id'] == 'a' * 64
     assert result['repetitions'] == {'valid': 3, 'failures': 0}
     assert result['runtime']['processing_rtf_median'] == 0.8
+    assert result['runtime']['online_compute_rtf_median'] == pytest.approx(0.7)
+    assert result['runtime']['wall_realtime_factor_median'] == 1.0
     assert result['runtime']['peak_rss_max_mb'] == 110
     assert result['mapping']['aggregation_valid'] is True
 
@@ -128,6 +136,16 @@ def test_unfrozen_manifest_is_rejected(tmp_path):
         raise AssertionError('unfrozen manifest was accepted')
 
 
+def test_compose_propagates_two_layer_execution_identity(tmp_path):
+    manifest, reference, machine, trajectory, mapping = _inputs(tmp_path)
+    document = json.loads(trajectory.read_text())
+    for index, run in enumerate(document['runs'], 1):
+        run.update({
+            'campaign_id': 'c' * 64,
+            'execution_receipt_sha256': ('a' * 63) + str(index),
+            'execution_receipt_file_sha256': ('b' * 63) + str(index),
+        })
+    trajectory.write_text(json.dumps(document))
 def test_legacy_calibration_archive_hash_remains_explicitly_supported(tmp_path):
     manifest, reference, machine, trajectory, mapping = _inputs(tmp_path)
     document = json.loads(manifest.read_text())
@@ -139,6 +157,9 @@ def test_legacy_calibration_archive_hash_remains_explicitly_supported(tmp_path):
         manifest_path=manifest, reference_path=reference,
         machine_path=machine, trajectory_path=trajectory,
         map_path=mapping, profile_path=PROFILE)
+    assert len(result['execution_evidence']) == 3
+    assert result['execution_evidence'][0]['execution_receipt_sha256'].endswith('1')
+    assert result['execution_evidence'][0]['execution_receipt_file_sha256'].endswith('1')
     assert result['calibration_sha256'] == value
 
 

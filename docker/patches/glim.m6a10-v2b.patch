@@ -1,0 +1,121 @@
+diff --git a/include/glim/util/concurrent_vector.hpp b/include/glim/util/concurrent_vector.hpp
+--- a/include/glim/util/concurrent_vector.hpp
++++ b/include/glim/util/concurrent_vector.hpp
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
++#include <cstdint>
+ #include <deque>
+ #include <vector>
+ #include <mutex>
+@@ -71,9 +72,15 @@ class ConcurrentVector {
+ 
+   void push_back(const T& value) {
+     std::lock_guard<std::mutex> lock(mutex);
++    const auto expected_size = values.size() + 1;
+     values.push_back(value);
++    update_peak_size();
+     policy.regulate(values);
++    update_peak_size();
++    if (values.size() < expected_size) {
++      dropped_values.fetch_add(expected_size - values.size(), std::memory_order_relaxed);
++    }
+     cond.notify_one();
+   }
+@@ -91,9 +96,15 @@ class ConcurrentVector {
+ 
+     std::lock_guard<std::mutex> lock(mutex);
++    const auto expected_size = values.size() + new_values.size();
+     values.insert(values.end(), new_values.begin(), new_values.end());
++    update_peak_size();
+     policy.regulate(values);
++    update_peak_size();
++    if (values.size() < expected_size) {
++      dropped_values.fetch_add(expected_size - values.size(), std::memory_order_relaxed);
++    }
+     cond.notify_all();
+   }
+@@ -184,6 +193,10 @@ class ConcurrentVector {
+     return buffer;
+   }
+ 
++  std::uint64_t dropped_count() const {
++    return dropped_values.load(std::memory_order_relaxed);
++  }
++
++  std::size_t max_size_observed() const {
++    return peak_size.load(std::memory_order_relaxed);
++  }
++
+ private:
++  void update_peak_size() {
++    const auto current_size = values.size();
++    auto peak = peak_size.load(std::memory_order_relaxed);
++    while (peak < current_size && !peak_size.compare_exchange_weak(peak, current_size, std::memory_order_relaxed)) {
++    }
++  }
++
+   const DataStorePolicy policy;
+ 
+   std::atomic_bool end_of_data;
++  std::atomic<std::uint64_t> dropped_values{0};
++  std::atomic<std::size_t> peak_size{0};
+   std::condition_variable cond;
+ 
+diff --git a/include/glim/odometry/async_odometry_estimation.hpp b/include/glim/odometry/async_odometry_estimation.hpp
+--- a/include/glim/odometry/async_odometry_estimation.hpp
++++ b/include/glim/odometry/async_odometry_estimation.hpp
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <cstdint>
+ #include <mutex>
+ #include <thread>
+ #include <atomic>
+@@ -59,6 +60,12 @@ public:
+   int workload() const;
+ 
++  // Benchmark-only observability.  A non-zero count is a hard failure;
++  // callers must not infer zero when this capability is absent.
++  std::size_t input_queue_size() const;
++  std::uint64_t dropped_input_count() const;
++  std::size_t max_input_queue_size() const;
++
+   /**
+    * @brief Get the estimation results
+    * @param estimation_results    Estimation results
+diff --git a/src/glim/odometry/async_odometry_estimation.cpp b/src/glim/odometry/async_odometry_estimation.cpp
+--- a/src/glim/odometry/async_odometry_estimation.cpp
++++ b/src/glim/odometry/async_odometry_estimation.cpp
+@@ -44,6 +44,20 @@ int AsyncOdometryEstimation::workload() const {
+   return input_frame_queue.size() + internal_frame_queue_size;
+ }
+ 
++std::size_t AsyncOdometryEstimation::input_queue_size() const {
++  std::size_t size = static_cast<std::size_t>(input_imu_queue.size()) + static_cast<std::size_t>(input_frame_queue.size());
++#ifdef GLIM_USE_OPENCV
++  size += static_cast<std::size_t>(input_image_queue.size());
++#endif
++  return size;
++}
++
++std::uint64_t AsyncOdometryEstimation::dropped_input_count() const {
++  std::uint64_t count = input_imu_queue.dropped_count() + input_frame_queue.dropped_count();
++#ifdef GLIM_USE_OPENCV
++  count += input_image_queue.dropped_count();
++#endif
++  return count;
++}
++
++std::size_t AsyncOdometryEstimation::max_input_queue_size() const {
++  std::size_t size = input_imu_queue.max_size_observed() + input_frame_queue.max_size_observed();
++#ifdef GLIM_USE_OPENCV
++  size += input_image_queue.max_size_observed();
++#endif
++  return size;
++}
++
+ void AsyncOdometryEstimation::get_results(std::vector<EstimationFrame::ConstPtr>& estimation_results, std::vector<EstimationFrame::ConstPtr>& marginalized_frames) {
+   estimation_results = output_estimation_results.get_all_and_clear();
+   marginalized_frames = output_marginalized_frames.get_all_and_clear();
+ }

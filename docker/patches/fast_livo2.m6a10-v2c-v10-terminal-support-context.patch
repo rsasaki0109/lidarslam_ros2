@@ -1,0 +1,1287 @@
+diff --git a/include/m6a10_terminal_support_context.h b/include/m6a10_terminal_support_context.h
+new file mode 100644
+--- /dev/null
++++ b/include/m6a10_terminal_support_context.h
+@@ -0,0 +1,780 @@
++/*
++ * FAST-LIVO2 M6a10 v10 terminal support-context evidence.
++ *
++ * This is an additive, opt-in observation layer.  It does not alter the
++ * estimator, synchronization, image, or map code paths.  A terminal
++ * document can pass only after the source supplies exact received,
++ * completed, disposition, and per-topic residual records. Feeder publish/
++ * ACK observations are bound later by the host compositor.
++ * Residual records are deliberately not called processed or dropped.
++ */
++#ifndef M6A10_TERMINAL_SUPPORT_CONTEXT_H
++#define M6A10_TERMINAL_SUPPORT_CONTEXT_H
++
++#include <ros/ros.h>
++#include <std_srvs/Trigger.h>
++
++#include <algorithm>
++#include <cmath>
++#include <cstdint>
++#include <cstdio>
++#include <cstdlib>
++#include <deque>
++#include <fstream>
++#include <iomanip>
++#include <map>
++#include <mutex>
++#include <limits>
++#include <sstream>
++#include <string>
++#include <utility>
++#include <vector>
++
++class M6A10TerminalSupportContext
++{
++public:
++  static const int kSchemaVersion = 3;
++  static const char *contract_version()
++  {
++    return "m6a10-online-compute-v3-terminal-support-context";
++  }
++  enum class Topic { Lidar, Imu, Image };
++
++  class CallbackScope
++  {
++  public:
++    CallbackScope(M6A10TerminalSupportContext *owner, Topic topic)
++      : owner_(owner), topic_(topic) {}
++    CallbackScope(const CallbackScope &) = delete;
++    CallbackScope &operator=(const CallbackScope &) = delete;
++    CallbackScope(CallbackScope &&other) noexcept
++      : owner_(other.owner_), topic_(other.topic_), accepted_(other.accepted_),
++        timestamp_seconds_(other.timestamp_seconds_)
++    {
++      other.owner_ = nullptr;
++    }
++    ~CallbackScope()
++    {
++      if (owner_ != nullptr)
++        owner_->finish_callback(topic_, accepted_, timestamp_seconds_);
++    }
++    void accept(double timestamp_seconds)
++    {
++      accepted_ = true;
++      timestamp_seconds_ = timestamp_seconds;
++    }
++  private:
++    M6A10TerminalSupportContext *owner_;
++    Topic topic_;
++    bool accepted_ = false;
++    double timestamp_seconds_ = std::numeric_limits<double>::quiet_NaN();
++  };
++
++  struct TopicCounts
++  {
++    TopicCounts() = default;
++    TopicCounts(long long lidar_value, long long imu_value, long long image_value)
++      : lidar(lidar_value), imu(imu_value), image(image_value) {}
++    long long lidar = -1;
++    long long imu = -1;
++    long long image = -1;
++  };
++
++  struct Record
++  {
++    Record() = default;
++    Record(std::string id, Topic record_topic, double timestamp,
++           bool support, bool post, bool predicate, bool can_form,
++           std::string reason)
++      : record_id(std::move(id)), topic(record_topic),
++        timestamp_seconds(timestamp), support_context_proven(support),
++        post_boundary(post), sync_predicate_evaluated(predicate),
++        can_form_synchronization_unit(can_form),
++        reason_code(std::move(reason)) {}
++    std::string record_id;
++    Topic topic = Topic::Lidar;
++    double timestamp_seconds = std::numeric_limits<double>::quiet_NaN();
++    bool support_context_proven = false;
++    bool post_boundary = false;
++    bool sync_predicate_evaluated = false;
++    bool can_form_synchronization_unit = true;
++    std::string reason_code;
++  };
++
++  struct BufferSnapshot
++  {
++    long long count = -1;
++    double oldest_timestamp_seconds = std::numeric_limits<double>::quiet_NaN();
++    double newest_timestamp_seconds = std::numeric_limits<double>::quiet_NaN();
++    std::vector<Record> records;
++  };
++
++  struct CompletedBoundary
++  {
++    bool observed = false;
++    double timestamp_seconds = std::numeric_limits<double>::quiet_NaN();
++    long long sequence = -1;
++    std::string source;
++    TopicCounts completed_counts;
++    long long completed_synchronization_units = -1;
++    bool quiescent = false;
++    bool quiescence_observed = false;
++    bool in_flight = true;
++  };
++
++  M6A10TerminalSupportContext()
++  {
++    enabled_ = env_string("M6A10_PHASE_CONTRACT_VERSION") == contract_version();
++    if (!enabled_) return;
++    phase_mode_ = env_string("M6A10_PHASE_MODE");
++    evidence_path_ = env_string("M6A10_TERMINAL_SUPPORT_CONTEXT_EVIDENCE");
++    required_end_timestamp_seconds_ = env_double(
++      "M6A10_FAST_REQUIRED_END_TIMESTAMP_SECONDS");
++    maximum_end_gap_seconds_ = env_double(
++      "M6A10_FAST_MAX_END_GAP_SECONDS", 0.25);
++    minimum_poll_wall_seconds_ = env_double(
++      "M6A10_FAST_MIN_TERMINAL_POLL_WALL_SECONDS", 0.05);
++    // Keep invalid, empty snapshots materializable so a missing source
++    // adapter produces a diagnostic document instead of dereferencing a
++    // missing map entry.
++    buffers_["lidar"] = BufferSnapshot();
++    buffers_["imu"] = BufferSnapshot();
++    buffers_["image"] = BufferSnapshot();
++    pending_records_["lidar"] = std::deque<Record>();
++    pending_records_["imu"] = std::deque<Record>();
++    pending_records_["image"] = std::deque<Record>();
++  }
++
++  bool enabled() const { return enabled_; }
++
++  CallbackScope begin(Topic topic)
++  {
++    return CallbackScope(this, topic);
++  }
++
++  void begin_synchronization_unit()
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (unit_open_ || estimator_in_flight_)
++    {
++      ++processing_failures_;
++      completion_disposition_valid_ = false;
++    }
++    unit_open_ = true;
++    unit_records_.clear();
++  }
++
++  void abort_synchronization_unit()
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    discard_unit_locked("synchronization_unit_aborted");
++    unit_open_ = false;
++    estimator_in_flight_ = false;
++  }
++
++  void begin_estimator()
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (!unit_open_ || unit_records_.empty() || estimator_in_flight_)
++    {
++      ++processing_failures_;
++      completion_disposition_valid_ = false;
++      return;
++    }
++    estimator_in_flight_ = true;
++    boundary_.in_flight = true;
++    boundary_.quiescent = false;
++    boundary_.quiescence_observed = false;
++  }
++
++  // A queue pop is either a candidate for the current unit or an explicit
++  // discard.  It is never silently removed from the FIFO ledger.
++  bool observe_queue_pop(Topic topic, bool incorporated_candidate)
++  {
++    if (!enabled_) return true;
++    std::lock_guard<std::mutex> guard(mutex_);
++    std::deque<Record> &pending = pending_records_[topic_name(topic)];
++    if (pending.empty())
++    {
++      ++processing_failures_;
++      completion_disposition_valid_ = false;
++      return false;
++    }
++    Record record = pending.front();
++    pending.pop_front();
++    if (incorporated_candidate && unit_open_)
++    {
++      unit_records_.push_back(record);
++      return true;
++    }
++    ++processing_failures_;
++    increment(dropped_, topic);
++    return false;
++  }
++
++  // A source clear operation is an observed discard for every accepted
++  // record in that topic.  It is deliberately fatal to a PASS.
++  void observe_queue_clear(Topic topic)
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    std::deque<Record> &pending = pending_records_[topic_name(topic)];
++    while (!pending.empty())
++    {
++      pending.pop_front();
++      increment(dropped_, topic);
++      ++processing_failures_;
++    }
++  }
++
++  // Called only after stateEstimationAndMapping() returns.  The completed
++  // measurement timestamp comes from LidarMeasures/MeasureGroup, not ROS
++  // wall time or the last received callback.
++  void observe_completed_estimator(double sensor_timestamp_seconds)
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (!estimator_in_flight_ || !std::isfinite(sensor_timestamp_seconds))
++    {
++      ++processing_failures_;
++      completed_boundary_valid_ = false;
++      return;
++    }
++    for (const Record &record : unit_records_)
++      increment(completed_counts_, record.topic);
++    ++completed_synchronization_units_;
++    boundary_.observed = true;
++    boundary_.timestamp_seconds = sensor_timestamp_seconds;
++    boundary_.sequence = ++completed_sequence_;
++    boundary_.source = "LIVMapper::stateEstimationAndMapping";
++    boundary_.completed_counts = completed_counts_;
++    boundary_.completed_synchronization_units =
++      completed_synchronization_units_;
++    boundary_.quiescent = true;
++    boundary_.quiescence_observed = true;
++    boundary_.in_flight = false;
++    unit_records_.clear();
++    unit_open_ = false;
++    estimator_in_flight_ = false;
++    completed_boundary_valid_ = true;
++  }
++
++  double completed_boundary_timestamp() const
++  {
++    std::lock_guard<std::mutex> guard(mutex_);
++    return completed_boundary_valid_ ? boundary_.timestamp_seconds :
++      std::numeric_limits<double>::quiet_NaN();
++  }
++
++  ros::Time benchmark_sensor_stamp() const
++  {
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (!enabled_) return ros::Time::now();
++    if (!completed_boundary_valid_ ||
++        !std::isfinite(boundary_.timestamp_seconds)) return ros::Time(0);
++    return ros::Time().fromSec(boundary_.timestamp_seconds);
++  }
++
++  void observe_terminal_eof()
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    eof_observed_ = true;
++    eof_wall_seconds_ = ros::WallTime::now().toSec();
++  }
++
++  // Record the exact sync_packages top-level precondition while the mapper
++  // owns mtx_buffer. Residual records cannot be labeled before EOF-bound
++  // predicate evaluation.
++  bool observe_terminal_sync_predicate(bool can_form_synchronization_unit)
++  {
++    if (!enabled_) return true;
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (!eof_observed_ || estimator_in_flight_ || unit_open_)
++    {
++      ++processing_failures_;
++      terminal_sync_predicate_evaluated_ = false;
++      return false;
++    }
++    terminal_sync_predicate_evaluated_ = true;
++    terminal_can_form_synchronization_unit_ = can_form_synchronization_unit;
++    return true;
++  }
++
++  std::vector<std::string> pending_record_ids() const
++  {
++    std::lock_guard<std::mutex> guard(mutex_);
++    std::vector<std::string> ids;
++    for (const char *topic : {"lidar", "imu", "image"})
++      for (const Record &record : pending_records_.find(topic)->second)
++        ids.push_back(record.record_id);
++    return ids;
++  }
++
++  Topic pending_record_topic(const std::string &record_id) const
++  {
++    std::lock_guard<std::mutex> guard(mutex_);
++    for (const char *topic : {"lidar", "imu", "image"})
++      for (const Record &record : pending_records_.find(topic)->second)
++        if (record.record_id == record_id) return record.topic;
++    return Topic::Lidar;
++  }
++
++  // The caller supplies the result of FAST-LIVO2's actual top-level
++  // synchronization predicate while holding mtx_buffer.  Topic/type alone
++  // never proves support context.
++  bool prove_terminal_record(const std::string &record_id,
++                             bool sync_predicate_evaluated,
++                             bool can_form_synchronization_unit,
++                             const std::string &reason_code)
++  {
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (!eof_observed_ || !terminal_sync_predicate_evaluated_ ||
++        !sync_predicate_evaluated ||
++        can_form_synchronization_unit != terminal_can_form_synchronization_unit_)
++    {
++      ++processing_failures_;
++      return false;
++    }
++    for (const char *topic : {"lidar", "imu", "image"})
++      for (Record &record : pending_records_.find(topic)->second)
++      {
++        if (record.record_id != record_id) continue;
++        record.post_boundary = completed_boundary_valid_ &&
++          std::isfinite(boundary_.timestamp_seconds) &&
++          record.timestamp_seconds > boundary_.timestamp_seconds;
++        record.sync_predicate_evaluated = sync_predicate_evaluated;
++        record.can_form_synchronization_unit = can_form_synchronization_unit;
++        record.support_context_proven = record.topic != Topic::Lidar &&
++          record.post_boundary && sync_predicate_evaluated &&
++          !can_form_synchronization_unit;
++        record.reason_code = reason_code;
++        return true;
++      }
++    ++processing_failures_;
++    return false;
++  }
++
++  // Build a record-level snapshot from the accepted callback ledger only
++  // after the source has reached its terminal boundary.  Exactly one call is
++  // made by each terminal status RPC; two distinct polls are required.
++  void snapshot_pending_buffers()
++  {
++    if (!enabled_) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (!eof_observed_ || !terminal_sync_predicate_evaluated_ ||
++        estimator_in_flight_ || unit_open_)
++    {
++      ++processing_failures_;
++      buffers_observed_ = false;
++      return;
++    }
++    BufferSnapshot snapshots[3];
++    const char *topics[3] = {"lidar", "imu", "image"};
++    for (int index = 0; index < 3; ++index)
++    {
++      std::deque<Record> &pending = pending_records_[topics[index]];
++      snapshots[index].count = static_cast<long long>(pending.size());
++      snapshots[index].records.assign(pending.begin(), pending.end());
++      if (!pending.empty())
++      {
++        snapshots[index].oldest_timestamp_seconds = pending.front().timestamp_seconds;
++        snapshots[index].newest_timestamp_seconds = pending.back().timestamp_seconds;
++      }
++    }
++    std::map<std::string, BufferSnapshot> snapshot{
++      {"lidar", snapshots[0]}, {"imu", snapshots[1]}, {"image", snapshots[2]}};
++    const double now = ros::WallTime::now().toSec();
++    const bool identical = pending_snapshot_valid_ &&
++      same_snapshot(pending_buffers_, snapshot) &&
++      pending_boundary_sequence_ == boundary_.sequence &&
++      !estimator_in_flight_;
++    ++terminal_status_polls_;
++    if (identical && now - pending_snapshot_wall_seconds_ >= minimum_poll_wall_seconds_)
++    {
++      buffers_ = snapshot;
++      trajectory_last_timestamp_seconds_ = boundary_.timestamp_seconds;
++      trajectory_end_gap_seconds_ = required_end_timestamp_seconds_ -
++        trajectory_last_timestamp_seconds_;
++      buffers_observed_ = true;
++      stable_poll_count_ = 2;
++      stable_snapshot_wall_seconds_ = now;
++    }
++    else
++    {
++      pending_buffers_ = snapshot;
++      pending_boundary_sequence_ = boundary_.sequence;
++      pending_snapshot_wall_seconds_ = now;
++      pending_snapshot_valid_ = true;
++      buffers_observed_ = false;
++      stable_poll_count_ = 1;
++    }
++  }
++
++  bool finalize_service(std_srvs::Trigger::Request &,
++                        std_srvs::Trigger::Response &response)
++  {
++    std::lock_guard<std::mutex> guard(mutex_);
++    if (!enabled_)
++    {
++      response.success = false;
++      response.message = "M6a10 v10 phase is disabled";
++      return true;
++    }
++    const bool pass = valid_locked();
++    response.success = write_locked(pass);
++    response.message = response.success ? (pass ?
++      "terminal support-context evidence PASS" :
++      "terminal support-context evidence invalid; no completion claim") :
++      "terminal support-context evidence write failed";
++    return true;
++  }
++
++  bool status_service(std_srvs::Trigger::Request &request,
++                      std_srvs::Trigger::Response &response)
++  {
++    (void)request;
++    std::lock_guard<std::mutex> guard(mutex_);
++    response.success = enabled_ && terminal_status_polls_ > 0;
++    response.message = response.success ?
++      "terminal support-context status observed" :
++      "terminal support-context status pending or invalid";
++    return true;
++  }
++
++private:
++  void discard_unit_locked(const char *reason)
++  {
++    (void)reason;
++    for (const Record &record : unit_records_)
++    {
++      increment(dropped_, record.topic);
++      ++processing_failures_;
++    }
++    unit_records_.clear();
++    completion_disposition_valid_ = false;
++  }
++
++  void finish_callback(Topic topic, bool accepted, double timestamp_seconds)
++  {
++    if (!enabled_ || !accepted) return;
++    std::lock_guard<std::mutex> guard(mutex_);
++    increment(received_, topic);
++    const std::string record_id = std::string(topic_name(topic)) + "-" +
++      std::to_string(next_record_id_++);
++    if (!std::isfinite(timestamp_seconds))
++    {
++      ++processing_failures_;
++      return;
++    }
++    pending_records_[topic_name(topic)].push_back(Record{
++      record_id, topic, timestamp_seconds, false, false, false, true, ""});
++  }
++
++  static std::string env_string(const char *name)
++  {
++    const char *value = std::getenv(name);
++    return value == nullptr ? std::string() : std::string(value);
++  }
++
++  static double env_double(const char *name, double fallback = -1.0)
++  {
++    const std::string value = env_string(name);
++    if (value.empty()) return fallback;
++    char *end = nullptr;
++    const double parsed = std::strtod(value.c_str(), &end);
++    return end != value.c_str() && *end == '\0' ? parsed : fallback;
++  }
++
++  static void increment(TopicCounts &counts, Topic topic)
++  {
++    if (topic == Topic::Lidar) ++counts.lidar;
++    else if (topic == Topic::Imu) ++counts.imu;
++    else ++counts.image;
++  }
++
++  static bool same_record(const Record &left, const Record &right)
++  {
++    return left.record_id == right.record_id && left.topic == right.topic &&
++      left.timestamp_seconds == right.timestamp_seconds &&
++      left.support_context_proven == right.support_context_proven &&
++      left.post_boundary == right.post_boundary &&
++      left.sync_predicate_evaluated == right.sync_predicate_evaluated &&
++      left.can_form_synchronization_unit ==
++        right.can_form_synchronization_unit &&
++      left.reason_code == right.reason_code;
++  }
++
++  static bool same_real(double left, double right)
++  {
++    return (std::isnan(left) && std::isnan(right)) || left == right;
++  }
++
++  static bool same_snapshot(
++      const std::map<std::string, BufferSnapshot> &left,
++      const std::map<std::string, BufferSnapshot> &right)
++  {
++    for (const char *topic : {"lidar", "imu", "image"})
++    {
++      const BufferSnapshot &a = left.find(topic)->second;
++      const BufferSnapshot &b = right.find(topic)->second;
++      if (a.count != b.count ||
++          !same_real(a.oldest_timestamp_seconds, b.oldest_timestamp_seconds) ||
++          !same_real(a.newest_timestamp_seconds, b.newest_timestamp_seconds) ||
++          a.records.size() != b.records.size())
++        return false;
++      for (std::size_t index = 0; index < a.records.size(); ++index)
++        if (!same_record(a.records[index], b.records[index])) return false;
++    }
++    return true;
++  }
++
++  static std::string number(long long value)
++  {
++    return value < 0 ? "null" : std::to_string(value);
++  }
++
++  static std::string real(double value)
++  {
++    if (!std::isfinite(value)) return "null";
++    std::ostringstream stream;
++    stream << std::setprecision(17) << value;
++    return stream.str();
++  }
++
++  static std::string quote(const std::string &value)
++  {
++    std::ostringstream stream;
++    stream << '"';
++    for (char character : value)
++    {
++      if (character == '\\' || character == '"') stream << '\\';
++      if (character == '\n') stream << "\\n";
++      else if (character == '\r') stream << "\\r";
++      else if (character == '\t') stream << "\\t";
++      else stream << character;
++    }
++    stream << '"';
++    return stream.str();
++  }
++
++  static const char *topic_name(Topic topic)
++  {
++    if (topic == Topic::Lidar) return "lidar";
++    if (topic == Topic::Imu) return "imu";
++    return "image";
++  }
++
++  static bool support_record(const Record &record, double boundary)
++  {
++    return record.topic != Topic::Lidar &&
++      std::isfinite(record.timestamp_seconds) &&
++      record.timestamp_seconds > boundary &&
++      record.support_context_proven && record.post_boundary &&
++      record.sync_predicate_evaluated &&
++      !record.can_form_synchronization_unit &&
++      record.reason_code == "strictly_after_completed_boundary";
++  }
++
++  bool valid_locked() const
++  {
++    if (!std::isfinite(required_end_timestamp_seconds_) ||
++        !std::isfinite(maximum_end_gap_seconds_) || !buffers_observed_ ||
++        !eof_observed_ || !terminal_sync_predicate_evaluated_ ||
++        stable_poll_count_ < 2 ||
++        terminal_status_polls_ < 2 || !std::isfinite(pending_snapshot_wall_seconds_) ||
++        !std::isfinite(stable_snapshot_wall_seconds_) ||
++        stable_snapshot_wall_seconds_ - pending_snapshot_wall_seconds_ <
++          minimum_poll_wall_seconds_)
++      return false;
++    if (!completion_disposition_valid_ || !completed_boundary_valid_ ||
++        !boundary_.observed || !boundary_.quiescent ||
++        !boundary_.quiescence_observed || boundary_.in_flight ||
++        estimator_in_flight_ || unit_open_ ||
++        !std::isfinite(boundary_.timestamp_seconds) ||
++        boundary_.timestamp_seconds < required_end_timestamp_seconds_ ||
++        boundary_.sequence < 0 || boundary_.source.empty())
++      return false;
++    if (boundary_.completed_counts.lidar + buffers_.find("lidar")->second.count != received_.lidar ||
++        boundary_.completed_counts.imu + buffers_.find("imu")->second.count != received_.imu ||
++        boundary_.completed_counts.image + buffers_.find("image")->second.count != received_.image)
++      return false;
++    if (processing_failures_ != 0 || dropped_.lidar != 0 ||
++        dropped_.imu != 0 || dropped_.image != 0 ||
++        overflow_.lidar != 0 || overflow_.imu != 0 || overflow_.image != 0)
++      return false;
++    if (buffers_.find("lidar")->second.count != 0 ||
++        !std::isfinite(trajectory_last_timestamp_seconds_) ||
++        !std::isfinite(trajectory_end_gap_seconds_) ||
++        trajectory_end_gap_seconds_ < 0.0 ||
++        trajectory_end_gap_seconds_ > maximum_end_gap_seconds_ ||
++        std::fabs((required_end_timestamp_seconds_ - trajectory_last_timestamp_seconds_) -
++                  trajectory_end_gap_seconds_) > 1e-9)
++      return false;
++    for (const char *topic : {"lidar", "imu", "image"})
++    {
++      const BufferSnapshot &buffer = buffers_.find(topic)->second;
++      if (buffer.count < 0 || static_cast<long long>(buffer.records.size()) != buffer.count)
++        return false;
++      for (const Record &record : buffer.records)
++        if (record.topic == Topic::Lidar ||
++            !support_record(record, boundary_.timestamp_seconds)) return false;
++    }
++    return true;
++  }
++
++  std::string counts_json(const TopicCounts &counts) const
++  {
++    std::ostringstream out;
++    out << "{\"lidar\": " << number(counts.lidar)
++        << ", \"imu\": " << number(counts.imu)
++        << ", \"image\": " << number(counts.image) << "}";
++    return out.str();
++  }
++
++  std::string records_json(const std::vector<Record> &records) const
++  {
++    std::ostringstream out;
++    out << "[";
++    for (std::size_t index = 0; index < records.size(); ++index)
++    {
++      const Record &record = records[index];
++      if (index != 0) out << ",";
++      out << "{\"record_id\": " << quote(record.record_id)
++          << ", \"topic\": " << quote(topic_name(record.topic))
++          << ", \"timestamp_seconds\": " << real(record.timestamp_seconds)
++          << ", \"support_context_proven\": "
++          << (record.support_context_proven ? "true" : "false")
++          << ", \"post_boundary\": " << (record.post_boundary ? "true" : "false")
++          << ", \"sync_predicate_evaluated\": "
++          << (record.sync_predicate_evaluated ? "true" : "false")
++          << ", \"can_form_synchronization_unit\": "
++          << (record.can_form_synchronization_unit ? "true" : "false")
++          << ", \"reason_code\": " << quote(record.reason_code) << "}";
++    }
++    out << "]";
++    return out.str();
++  }
++
++  std::string document_locked(bool pass) const
++  {
++    std::ostringstream out;
++    out << "{\n  \"schema_version\": 1"
++        << ",\n  \"contract_id\": \"m6a10-fast-livo2-consumer-terminal-v1\""
++        << ",\n  \"phase_mode\": " << quote(phase_mode_)
++        << ",\n  \"system\": \"fast_livo2\""
++        << ",\n  \"status\": " << quote(pass ? "pass" : "invalid")
++        << ",\n  \"received_topic_counts\": " << counts_json(received_)
++        << ",\n  \"completed_counts\": " << counts_json(completed_counts_)
++        << ",\n  \"dropped_counts\": " << counts_json(dropped_)
++        << ",\n  \"overflow_counts\": " << counts_json(overflow_)
++        << ",\n  \"processing_failures\": " << number(processing_failures_)
++        << ",\n  \"backend\": {\"quiescent\": "
++        << (boundary_.quiescent ? "true" : "false")
++        << ", \"quiescence_observed\": "
++        << (boundary_.quiescence_observed ? "true" : "false")
++        << ", \"completed_boundary\": {\"observed\": "
++        << (boundary_.observed ? "true" : "false")
++        << ", \"timestamp_seconds\": " << real(boundary_.timestamp_seconds)
++        << ", \"sequence\": " << number(boundary_.sequence)
++        << ", \"source\": " << quote(boundary_.source) << "}"
++        << ", \"completed_counts\": " << counts_json(boundary_.completed_counts)
++        << ", \"completed_synchronization_units\": "
++        << number(boundary_.completed_synchronization_units)
++        << ", \"dropped_counts\": " << counts_json(dropped_)
++        << ", \"overflow_counts\": " << counts_json(overflow_)
++        << ", \"processing_failures\": " << number(processing_failures_)
++        << ", \"in_flight\": {\"active\": "
++        << (boundary_.in_flight ? "true" : "false") << "}}"
++        << ",\n  \"buffers\": {";
++    for (std::size_t index = 0; index < 3; ++index)
++    {
++      const char *topic = index == 0 ? "lidar" : index == 1 ? "imu" : "image";
++      if (index != 0) out << ",";
++      const BufferSnapshot &buffer = buffers_.find(topic)->second;
++      out << quote(topic) << ": {\"count\": " << number(buffer.count)
++          << ", \"oldest_timestamp_seconds\": " << real(buffer.oldest_timestamp_seconds)
++          << ", \"newest_timestamp_seconds\": " << real(buffer.newest_timestamp_seconds)
++          << ", \"records\": " << records_json(buffer.records) << "}";
++    }
++    const BufferSnapshot &support_imu = buffers_.find("imu")->second;
++    const BufferSnapshot &support_image = buffers_.find("image")->second;
++    out << "},\n  \"terminal_support_context\": {\"classification\": "
++        << "\"post_boundary_support_context_only\", \"total_count\": "
++        << number(support_imu.count + support_image.count)
++        << ", \"by_topic\": {\"lidar\": 0, \"imu\": "
++        << number(support_imu.count) << ", \"image\": "
++        << number(support_image.count) << "}, \"records\": ";
++    std::vector<Record> support_records;
++    for (const char *topic : {"imu", "image"})
++      support_records.insert(support_records.end(), buffers_.find(topic)->second.records.begin(),
++                             buffers_.find(topic)->second.records.end());
++    out << records_json(support_records) << "},\n  \"terminal_observation\": {\"eof_observed\": "
++        << (eof_observed_ ? "true" : "false")
++        << ", \"stable\": " << (buffers_observed_ ? "true" : "false")
++        << ", \"poll_count\": " << number(terminal_status_polls_)
++        << ", \"stable_poll_count\": " << number(stable_poll_count_)
++        << ", \"minimum_poll_wall_seconds\": " << real(minimum_poll_wall_seconds_)
++        << ", \"first_poll_wall_seconds\": " << real(pending_snapshot_wall_seconds_)
++        << ", \"stable_poll_wall_seconds\": " << real(stable_snapshot_wall_seconds_)
++        << ", \"identical_snapshot\": " << (buffers_observed_ ? "true" : "false")
++        << ", \"sync_predicate_evaluated\": " << (buffers_observed_ ? "true" : "false") << "}"
++        << ",\n  \"trajectory\": {\"coverage_verified\": "
++        << (buffers_observed_ ? "true" : "false")
++        << ", \"last_timestamp_seconds\": " << real(trajectory_last_timestamp_seconds_)
++        << ", \"end_gap_seconds\": " << real(trajectory_end_gap_seconds_) << "}"
++        << ",\n  \"ground_truth_content_opened\": false,\n  \"scorer_invoked\": false\n}\n";
++    return out.str();
++  }
++
++  bool write_locked(bool pass) const
++  {
++    if (evidence_path_.empty() || std::ifstream(evidence_path_).good()) return false;
++    const std::string part = evidence_path_ + ".part";
++    if (std::ifstream(part).good()) return false;
++    std::ofstream stream(part, std::ios::out | std::ios::trunc);
++    if (!stream) return false;
++    stream << document_locked(pass);
++    stream.flush();
++    stream.close();
++    return std::rename(part.c_str(), evidence_path_.c_str()) == 0;
++  }
++
++  bool enabled_ = false;
++  bool buffers_observed_ = false;
++  CompletedBoundary boundary_;
++  std::string phase_mode_;
++  std::string evidence_path_;
++  double required_end_timestamp_seconds_ = -1.0;
++  double maximum_end_gap_seconds_ = -1.0;
++  double minimum_poll_wall_seconds_ = 0.05;
++  double trajectory_last_timestamp_seconds_ =
++    std::numeric_limits<double>::quiet_NaN();
++  double trajectory_end_gap_seconds_ = std::numeric_limits<double>::quiet_NaN();
++  TopicCounts received_{0, 0, 0};
++  TopicCounts dropped_{0, 0, 0};
++  TopicCounts overflow_{0, 0, 0};
++  TopicCounts completed_counts_{0, 0, 0};
++  long long processing_failures_ = 0;
++  long long completed_synchronization_units_ = 0;
++  long long completed_sequence_ = -1;
++  bool completed_boundary_valid_ = false;
++  bool completion_disposition_valid_ = true;
++  bool unit_open_ = false;
++  bool estimator_in_flight_ = false;
++  bool eof_observed_ = false;
++  bool terminal_sync_predicate_evaluated_ = false;
++  bool terminal_can_form_synchronization_unit_ = true;
++  bool pending_snapshot_valid_ = false;
++  long long terminal_status_polls_ = 0;
++  long long stable_poll_count_ = 0;
++  double eof_wall_seconds_ = std::numeric_limits<double>::quiet_NaN();
++  double pending_snapshot_wall_seconds_ =
++    std::numeric_limits<double>::quiet_NaN();
++  double stable_snapshot_wall_seconds_ =
++    std::numeric_limits<double>::quiet_NaN();
++  long long pending_boundary_sequence_ = -2;
++  std::map<std::string, BufferSnapshot> buffers_;
++  std::map<std::string, BufferSnapshot> pending_buffers_;
++  std::map<std::string, std::deque<Record>> pending_records_;
++  std::deque<Record> unit_records_;
++  std::uint64_t next_record_id_ = 0;
++  mutable std::mutex mutex_;
++};
++#endif  // M6A10_TERMINAL_SUPPORT_CONTEXT_H
+diff --git a/include/LIVMapper.h b/include/LIVMapper.h
+--- a/include/LIVMapper.h
++++ b/include/LIVMapper.h
+@@ -16,5 +16,6 @@
+ #include "IMU_Processing.h"
+ #include "m6a10_consumer_evidence.h"
+ #include <ros/callback_queue.h>
+ #include <ros/spinner.h>
++#include "m6a10_terminal_support_context.h"
+ #include "vio.h"
+@@ -42,6 +43,15 @@
+   bool m6a10_status_service(std_srvs::Trigger::Request &request,
+                             std_srvs::Trigger::Response &response);
+   bool m6a10_ack_service(std_srvs::Trigger::Request &request,
+                          std_srvs::Trigger::Response &response);
++  bool m6a10_terminal_eof_service(
++      std_srvs::Trigger::Request &request,
++      std_srvs::Trigger::Response &response);
++  bool m6a10_terminal_status_service(
++      std_srvs::Trigger::Request &request,
++      std_srvs::Trigger::Response &response);
++  bool m6a10_terminal_finalize_service(
++      std_srvs::Trigger::Request &request,
++      std_srvs::Trigger::Response &response);
+   void gravityAlignment();
+   void handleFirstFrame();
+@@ -174,8 +174,9 @@
+   M6A10ConsumerEvidence m6a10_consumer_evidence;
+   // Keep benchmark service callbacks independent from the algorithm's
+   // global callback queue.  run() may block in simulated-time sleep before
+   // the first /clock message exists.
++  M6A10TerminalSupportContext m6a10_terminal_support_context;
+   ros::CallbackQueue m6a10_service_callback_queue;
+   std::unique_ptr<ros::NodeHandle> m6a10_service_node;
+   std::unique_ptr<ros::AsyncSpinner> m6a10_service_spinner;
+   ros::Publisher plane_pub;
+@@ -187,6 +198,9 @@
+   ros::ServiceServer m6a10_eof_server;
+   ros::ServiceServer m6a10_finalize_server;
+   ros::ServiceServer m6a10_status_server;
+   ros::ServiceServer m6a10_ack_server;
++  ros::ServiceServer m6a10_terminal_eof_server;
++  ros::ServiceServer m6a10_terminal_status_server;
++  ros::ServiceServer m6a10_terminal_finalize_server;
+   ros::Publisher pubLaserCloudFullRes;
+   ros::Publisher pubNormal;
+diff --git a/src/LIVMapper.cpp b/src/LIVMapper.cpp
+--- a/src/LIVMapper.cpp
++++ b/src/LIVMapper.cpp
+@@ -53,6 +53,9 @@
+   m6a10_finalize_server.shutdown();
+   m6a10_status_server.shutdown();
+   m6a10_ack_server.shutdown();
++  m6a10_terminal_eof_server.shutdown();
++  m6a10_terminal_status_server.shutdown();
++  m6a10_terminal_finalize_server.shutdown();
+   if (m6a10_service_spinner) m6a10_service_spinner->stop();
+ }
+ 
+@@ -200,24 +203,39 @@
+ 
+ void LIVMapper::initializeSubscribersAndPublishers(ros::NodeHandle &nh, image_transport::ImageTransport &it) 
+ {
+-  const uint32_t m6a10_queue_size = m6a10_consumer_evidence.enabled() ? 1U : 200000U;
++  const uint32_t m6a10_queue_size =
++    (m6a10_consumer_evidence.enabled() ||
++     m6a10_terminal_support_context.enabled()) ? 1U : 200000U;
+   sub_pcl = p_pre->lidar_type == AVIA ?
+             nh.subscribe(lid_topic, m6a10_queue_size, &LIVMapper::livox_pcl_cbk, this):
+             nh.subscribe(lid_topic, m6a10_queue_size, &LIVMapper::standard_pcl_cbk, this);
+   sub_imu = nh.subscribe(imu_topic, m6a10_queue_size, &LIVMapper::imu_cbk, this);
+   sub_img = nh.subscribe(img_topic, m6a10_queue_size, &LIVMapper::img_cbk, this);
+-  if (m6a10_consumer_evidence.enabled())
++  if (m6a10_consumer_evidence.enabled() ||
++      m6a10_terminal_support_context.enabled())
+   {
+     m6a10_service_node.reset(new ros::NodeHandle(nh));
+     m6a10_service_node->setCallbackQueue(&m6a10_service_callback_queue);
+-    m6a10_eof_server = m6a10_service_node->advertiseService(
+-      "/m6a10/consumer_eof", &LIVMapper::m6a10_eof_service, this);
+-    m6a10_finalize_server = m6a10_service_node->advertiseService(
+-      "/m6a10/consumer_finalize", &LIVMapper::m6a10_finalize_service, this);
+-    m6a10_status_server = m6a10_service_node->advertiseService(
+-      "/m6a10/consumer_status", &LIVMapper::m6a10_status_service, this);
+-    m6a10_ack_server = m6a10_service_node->advertiseService(
+-      "/m6a10/consumer_ack", &LIVMapper::m6a10_ack_service, this);
++    if (m6a10_consumer_evidence.enabled())
++    {
++      m6a10_eof_server = m6a10_service_node->advertiseService(
++        "/m6a10/consumer_eof", &LIVMapper::m6a10_eof_service, this);
++      m6a10_finalize_server = m6a10_service_node->advertiseService(
++        "/m6a10/consumer_finalize", &LIVMapper::m6a10_finalize_service, this);
++      m6a10_status_server = m6a10_service_node->advertiseService(
++        "/m6a10/consumer_status", &LIVMapper::m6a10_status_service, this);
++      m6a10_ack_server = m6a10_service_node->advertiseService(
++        "/m6a10/consumer_ack", &LIVMapper::m6a10_ack_service, this);
++    }
++    if (m6a10_terminal_support_context.enabled())
++    {
++      m6a10_terminal_eof_server = m6a10_service_node->advertiseService(
++        "/m6a10/terminal_eof", &LIVMapper::m6a10_terminal_eof_service, this);
++      m6a10_terminal_status_server = m6a10_service_node->advertiseService(
++        "/m6a10/terminal_status", &LIVMapper::m6a10_terminal_status_service, this);
++      m6a10_terminal_finalize_server = m6a10_service_node->advertiseService(
++        "/m6a10/terminal_finalize", &LIVMapper::m6a10_terminal_finalize_service, this);
++    }
+     // One deterministic service thread is enough.  Sensor callbacks and the
+     // algorithm remain on the original queue and therefore retain semantics.
+     m6a10_service_spinner.reset(new ros::AsyncSpinner(
+@@ -585,7 +603,26 @@
+ 
+     // if (!p_imu->imu_time_init) continue;
+ 
+-    stateEstimationAndMapping();
++    m6a10_terminal_support_context.begin_estimator();
++    try
++    {
++      stateEstimationAndMapping();
++    }
++    catch (...)
++    {
++      m6a10_terminal_support_context.abort_synchronization_unit();
++      throw;
++    }
++    double completed_sensor_timestamp =
++      std::numeric_limits<double>::quiet_NaN();
++    if (!LidarMeasures.measures.empty())
++    {
++      completed_sensor_timestamp = LidarMeasures.lio_vio_flg == VIO ?
++        LidarMeasures.measures.back().vio_time :
++        LidarMeasures.measures.back().lio_time;
++    }
++    m6a10_terminal_support_context.observe_completed_estimator(
++      completed_sensor_timestamp);
+     {
+       std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
+       m6a10_consumer_evidence.observe_queue(
+@@ -628,6 +665,53 @@
+   return m6a10_consumer_evidence.ack_service(request, response);
+ }
+ 
++bool LIVMapper::m6a10_terminal_eof_service(
++  std_srvs::Trigger::Request &, std_srvs::Trigger::Response &response)
++{
++  std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++  m6a10_terminal_support_context.observe_terminal_eof();
++  response.success = true;
++  response.message = "terminal EOF observed; status polling required";
++  return true;
++}
++
++bool LIVMapper::m6a10_terminal_status_service(
++  std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response)
++{
++  std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++  const bool can_form_synchronization_unit =
++    !((lid_raw_data_buffer.empty() && lidar_en) ||
++      (img_buffer.empty() && img_en) ||
++      (imu_buffer.empty() && imu_en));
++  const bool predicate_observed =
++    m6a10_terminal_support_context.observe_terminal_sync_predicate(
++      can_form_synchronization_unit);
++  if (predicate_observed)
++  {
++    for (const std::string &record_id :
++         m6a10_terminal_support_context.pending_record_ids())
++    {
++      const M6A10TerminalSupportContext::Topic topic =
++        m6a10_terminal_support_context.pending_record_topic(record_id);
++      const std::string reason = topic == M6A10TerminalSupportContext::Topic::Lidar ?
++        "residual_lidar_rejected" : "strictly_after_completed_boundary";
++      m6a10_terminal_support_context.prove_terminal_record(
++        record_id, true, can_form_synchronization_unit, reason);
++    }
++  }
++  // Exactly one locked snapshot belongs to this RPC. Stability requires a
++  // second distinct terminal_status request after the configured wall gap.
++  m6a10_terminal_support_context.snapshot_pending_buffers();
++  return m6a10_terminal_support_context.status_service(request, response);
++}
++
++bool LIVMapper::m6a10_terminal_finalize_service(
++  std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response)
++{
++  std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++  return m6a10_terminal_support_context.finalize_service(request, response);
++}
++
+ void LIVMapper::prop_imu_once(StatesGroup &imu_prop_state, const double dt, V3D acc_avr, V3D angvel_avr)
+ {
+   double mean_acc_norm = p_imu->IMU_mean_acc_norm;
+@@ -779,6 +863,8 @@
+ {
+   auto m6a10_callback = m6a10_consumer_evidence.begin(
+     M6A10ConsumerEvidence::Topic::Lidar);
++  auto m6a10_terminal_callback = m6a10_terminal_support_context.begin(
++    M6A10TerminalSupportContext::Topic::Lidar);
+   if (!lidar_en) return;
+   mtx_buffer.lock();
+ 
+@@ -787,6 +873,8 @@
+   if (cur_head_time < last_timestamp_lidar)
+   {
+     ROS_ERROR("lidar loop back, clear buffer");
++    m6a10_terminal_support_context.observe_queue_clear(
++      M6A10TerminalSupportContext::Topic::Lidar);
+     lid_raw_data_buffer.clear();
+   }
+   // ROS_INFO("get point cloud at time: %.6f", msg->header.stamp.toSec());
+@@ -794,6 +882,7 @@
+   p_pre->process(msg, ptr);
+   lid_raw_data_buffer.push_back(ptr);
+   lid_header_time_buffer.push_back(cur_head_time);
++  m6a10_terminal_callback.accept(msg->header.stamp.toSec());
+   last_timestamp_lidar = cur_head_time;
+   m6a10_consumer_evidence.observe_queue(
+     lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
+@@ -807,6 +896,8 @@
+ {
+   auto m6a10_callback = m6a10_consumer_evidence.begin(
+     M6A10ConsumerEvidence::Topic::Lidar);
++  auto m6a10_terminal_callback = m6a10_terminal_support_context.begin(
++    M6A10TerminalSupportContext::Topic::Lidar);
+   if (!lidar_en) return;
+   mtx_buffer.lock();
+   livox_ros_driver::CustomMsg::Ptr msg(new livox_ros_driver::CustomMsg(*msg_in));
+@@ -828,6 +919,8 @@
+   if (cur_head_time < last_timestamp_lidar)
+   {
+     ROS_ERROR("lidar loop back, clear buffer");
++    m6a10_terminal_support_context.observe_queue_clear(
++      M6A10TerminalSupportContext::Topic::Lidar);
+     lid_raw_data_buffer.clear();
+   }
+   // ROS_INFO("get point cloud at time: %.6f", msg->header.stamp.toSec());
+@@ -842,6 +935,7 @@
+ 
+   lid_raw_data_buffer.push_back(ptr);
+   lid_header_time_buffer.push_back(cur_head_time);
++  m6a10_terminal_callback.accept(msg_in->header.stamp.toSec());
+   last_timestamp_lidar = cur_head_time;
+   m6a10_consumer_evidence.observe_queue(
+     lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
+@@ -855,6 +949,8 @@
+ {
+   auto m6a10_callback = m6a10_consumer_evidence.begin(
+     M6A10ConsumerEvidence::Topic::Imu);
++  auto m6a10_terminal_callback = m6a10_terminal_support_context.begin(
++    M6A10TerminalSupportContext::Topic::Imu);
+   if (!imu_en) return;
+ 
+   if (last_timestamp_lidar < 0.0) return;
+@@ -893,6 +989,7 @@
+   last_timestamp_imu = timestamp;
+ 
+   imu_buffer.push_back(msg);
++  m6a10_terminal_callback.accept(timestamp);
+   m6a10_consumer_evidence.observe_queue(
+     lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
+   // cout<<"got imu: "<<timestamp<<" imu size "<<imu_buffer.size()<<endl;
+@@ -920,6 +1017,8 @@
+ {
+   auto m6a10_callback = m6a10_consumer_evidence.begin(
+     M6A10ConsumerEvidence::Topic::Image);
++  auto m6a10_terminal_callback = m6a10_terminal_support_context.begin(
++    M6A10TerminalSupportContext::Topic::Image);
+   if (!img_en) return;
+   sensor_msgs::Image::Ptr msg(new sensor_msgs::Image(*msg_in));
+   // if ((abs(msg->header.stamp.toSec() - last_timestamp_img) > 0.2 && last_timestamp_img > 0) || sync_jump_flag)
+@@ -962,6 +1061,7 @@
+   cv::Mat img_cur = getImageFromMsg(msg);
+   img_buffer.push_back(img_cur);
+   img_time_buffer.push_back(img_time_correct);
++  m6a10_terminal_callback.accept(img_time_correct);
+   m6a10_consumer_evidence.observe_queue(
+     lid_raw_data_buffer.size(), imu_buffer.size(), img_buffer.size());
+ 
+@@ -981,6 +1081,7 @@
+   if (lid_raw_data_buffer.empty() && lidar_en) return false;
+   if (img_buffer.empty() && img_en) return false;
+   if (imu_buffer.empty() && imu_en) return false;
++  m6a10_terminal_support_context.begin_synchronization_unit();
+ 
+   switch (slam_mode_)
+   {
+@@ -991,7 +1092,11 @@
+     {
+       // If not push the lidar into measurement data buffer
+       meas.lidar = lid_raw_data_buffer.front(); // push the first lidar topic
+-      if (meas.lidar->points.size() <= 1) return false;
++      if (meas.lidar->points.size() <= 1)
++      {
++        m6a10_terminal_support_context.abort_synchronization_unit();
++        return false;
++      }
+ 
+       meas.lidar_frame_beg_time = lid_header_time_buffer.front();                                                // generate lidar_frame_beg_time
+       meas.lidar_frame_end_time = meas.lidar_frame_beg_time + meas.lidar->points.back().curvature / double(1000); // calc lidar scan end time
+@@ -1004,6 +1109,7 @@
+       // larger than _lidar_frame_end_time,
+       // make sure complete propagate.
+       // ROS_ERROR("out sync");
++      m6a10_terminal_support_context.abort_synchronization_unit();
+       return false;
+     }
+ 
+@@ -1016,8 +1122,12 @@
+     {
+       if (imu_buffer.front()->header.stamp.toSec() > meas.lidar_frame_end_time) break;
+       m.imu.push_back(imu_buffer.front());
++      m6a10_terminal_support_context.observe_queue_pop(
++        M6A10TerminalSupportContext::Topic::Imu, true);
+       imu_buffer.pop_front();
+     }
++    m6a10_terminal_support_context.observe_queue_pop(
++      M6A10TerminalSupportContext::Topic::Lidar, true);
+     lid_raw_data_buffer.pop_front();
+     lid_header_time_buffer.pop_front();
+     mtx_buffer.unlock();
+@@ -1059,9 +1169,13 @@
+ 
+       if (img_capture_time < meas.last_lio_update_time + 0.00001)
+       {
++        std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++        m6a10_terminal_support_context.observe_queue_pop(
++          M6A10TerminalSupportContext::Topic::Image, false);
+         img_buffer.pop_front();
+         img_time_buffer.pop_front();
+         ROS_ERROR("[ Data Cut ] Throw one image frame! \n");
++        m6a10_terminal_support_context.abort_synchronization_unit();
+         return false;
+       }
+ 
+@@ -1070,6 +1184,7 @@
+         // ROS_ERROR("lost first camera frame");
+         // printf("img_capture_time, lid_newest_time, imu_newest_time: %lf , %lf
+         // , %lf \n", img_capture_time, lid_newest_time, imu_newest_time);
++        m6a10_terminal_support_context.abort_synchronization_unit();
+         return false;
+       }
+ 
+@@ -1086,6 +1201,9 @@
+ 
+         if (imu_buffer.front()->header.stamp.toSec() > meas.last_lio_update_time) m.imu.push_back(imu_buffer.front());
+ 
++        m6a10_terminal_support_context.observe_queue_pop(
++          M6A10TerminalSupportContext::Topic::Imu,
++          imu_buffer.front()->header.stamp.toSec() > meas.last_lio_update_time);
+         imu_buffer.pop_front();
+         // printf("[ Data Cut ] imu time: %lf \n",
+         // imu_buffer.front()->header.stamp.toSec());
+@@ -1102,29 +1220,34 @@
+       meas.pcl_proc_next->reserve(max_size);
+       // deque<PointCloudXYZI::Ptr> lidar_buffer_tmp;
+ 
+-      while (!lid_raw_data_buffer.empty())
+       {
+-        if (lid_header_time_buffer.front() > img_capture_time) break;
+-        auto pcl(lid_raw_data_buffer.front()->points);
+-        double frame_header_time(lid_header_time_buffer.front());
+-        float max_offs_time_ms = (m.lio_time - frame_header_time) * 1000.0f;
+-
+-        for (int i = 0; i < pcl.size(); i++)
++        std::lock_guard<std::mutex> buffer_guard(mtx_buffer);
++        while (!lid_raw_data_buffer.empty())
+         {
+-          auto pt = pcl[i];
+-          if (pcl[i].curvature < max_offs_time_ms)
+-          {
+-            pt.curvature += (frame_header_time - meas.last_lio_update_time) * 1000.0f;
+-            meas.pcl_proc_cur->points.push_back(pt);
+-          }
+-          else
++          if (lid_header_time_buffer.front() > img_capture_time) break;
++          auto pcl(lid_raw_data_buffer.front()->points);
++          double frame_header_time(lid_header_time_buffer.front());
++          float max_offs_time_ms = (m.lio_time - frame_header_time) * 1000.0f;
++
++          for (int i = 0; i < pcl.size(); i++)
+           {
+-            pt.curvature += (frame_header_time - m.lio_time) * 1000.0f;
+-            meas.pcl_proc_next->points.push_back(pt);
++            auto pt = pcl[i];
++            if (pcl[i].curvature < max_offs_time_ms)
++            {
++              pt.curvature += (frame_header_time - meas.last_lio_update_time) * 1000.0f;
++              meas.pcl_proc_cur->points.push_back(pt);
++            }
++            else
++            {
++              pt.curvature += (frame_header_time - m.lio_time) * 1000.0f;
++              meas.pcl_proc_next->points.push_back(pt);
++            }
+           }
++          m6a10_terminal_support_context.observe_queue_pop(
++            M6A10TerminalSupportContext::Topic::Lidar, true);
++          lid_raw_data_buffer.pop_front();
++          lid_header_time_buffer.pop_front();
+         }
+-        lid_raw_data_buffer.pop_front();
+-        lid_header_time_buffer.pop_front();
+       }
+ 
+       meas.measures.push_back(m);
+@@ -1159,6 +1282,8 @@
+       //   printf("[ Data Cut ] imu time: %lf \n",
+       //   imu_buffer.front()->header.stamp.toSec());
+       // }
++      m6a10_terminal_support_context.observe_queue_pop(
++        M6A10TerminalSupportContext::Topic::Image, true);
+       img_buffer.pop_front();
+       img_time_buffer.pop_front();
+       mtx_buffer.unlock();
+@@ -1172,6 +1297,7 @@
+     default:
+     {
+       // printf("!! WRONG EKF STATE !!");
++      m6a10_terminal_support_context.abort_synchronization_unit();
+       return false;
+     }
+       // return false;
+@@ -1184,7 +1310,11 @@
+     if (!lidar_pushed) 
+     { 
+       // If not in lidar scan, need to generate new meas
+-      if (lid_raw_data_buffer.empty())  return false;
++      if (lid_raw_data_buffer.empty())
++      {
++        m6a10_terminal_support_context.abort_synchronization_unit();
++        return false;
++      }
+       meas.lidar = lid_raw_data_buffer.front(); // push the first lidar topic
+       meas.lidar_frame_beg_time = lid_header_time_buffer.front(); // generate lidar_beg_time
+       meas.lidar_frame_end_time  = meas.lidar_frame_beg_time + meas.lidar->points.back().curvature / double(1000); // calc lidar scan end time
+@@ -1193,6 +1323,8 @@
+     struct MeasureGroup m; // standard method to keep imu message.
+     m.lio_time = meas.lidar_frame_end_time;
+     mtx_buffer.lock();
++    m6a10_terminal_support_context.observe_queue_pop(
++      M6A10TerminalSupportContext::Topic::Lidar, true);
+     lid_raw_data_buffer.pop_front();
+     lid_header_time_buffer.pop_front();
+     mtx_buffer.unlock();
+@@ -1207,6 +1339,7 @@
+   default:
+   {
+     printf("!! WRONG SLAM TYPE !!");
++    m6a10_terminal_support_context.abort_synchronization_unit();
+     return false;
+   }
+   }
+@@ -1432,7 +1565,8 @@
+ {
+   odomAftMapped.header.frame_id = "camera_init";
+   odomAftMapped.child_frame_id = "aft_mapped";
+-  odomAftMapped.header.stamp = ros::Time::now(); //.ros::Time()fromSec(last_timestamp_lidar);
++  odomAftMapped.header.stamp =
++    m6a10_terminal_support_context.benchmark_sensor_stamp();
+   set_posestamp(odomAftMapped.pose.pose);
+ 
+   static tf::TransformBroadcaster br;
+@@ -1450,7 +1584,8 @@
+ 
+ void LIVMapper::publish_mavros(const ros::Publisher &mavros_pose_publisher)
+ {
+-  msg_body_pose.header.stamp = ros::Time::now();
++  msg_body_pose.header.stamp =
++    m6a10_terminal_support_context.benchmark_sensor_stamp();
+   msg_body_pose.header.frame_id = "camera_init";
+   set_posestamp(msg_body_pose.pose);
+   mavros_pose_publisher.publish(msg_body_pose);
+@@ -1459,7 +1594,8 @@
+ void LIVMapper::publish_path(const ros::Publisher pubPath)
+ {
+   set_posestamp(msg_body_pose.pose);
+-  msg_body_pose.header.stamp = ros::Time::now();
++  msg_body_pose.header.stamp =
++    m6a10_terminal_support_context.benchmark_sensor_stamp();
+   msg_body_pose.header.frame_id = "camera_init";
+   path.poses.push_back(msg_body_pose);
+   pubPath.publish(path);
+diff --git a/include/m6a10_consumer_evidence.h b/include/m6a10_consumer_evidence.h
+--- a/include/m6a10_consumer_evidence.h
++++ b/include/m6a10_consumer_evidence.h
+@@ -146,6 +146,8 @@
+   M6A10ConsumerEvidence()
+   {
+     const char *contract = std::getenv("M6A10_PHASE_CONTRACT_VERSION");
+-    enabled_ = contract != nullptr &&
+-               std::string(contract) == "m6a10-online-compute-v2";
++    const std::string contract_value = contract == nullptr ? std::string() :
++      std::string(contract);
++    enabled_ = contract_value == "m6a10-online-compute-v2" ||
++      contract_value == "m6a10-online-compute-v3-terminal-support-context";
+     if (!enabled_) return;

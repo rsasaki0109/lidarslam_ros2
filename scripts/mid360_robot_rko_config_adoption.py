@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
 
 
 RKO_CONFIG_ADOPTION_JSON = 'mid360_robot_rko_config_adoption.json'
@@ -298,3 +298,7 @@ def _case_summary(row: dict[str, Any]) -> dict[str, Any]:
         'parameters': row.get('parameters') or {},
         'output_dir': row.get('output_dir', ''),
     }
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_rko_config_adoption is a library module; import it instead of running it directly.")

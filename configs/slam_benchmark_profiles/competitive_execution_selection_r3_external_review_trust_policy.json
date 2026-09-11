@@ -1,0 +1,54 @@
+{
+  "schema": "competitive_execution_selection_r3_external_review_trust_policy_v1",
+  "schema_version": 1,
+  "status": "NOT_READY",
+  "benchmark_eligible": false,
+  "candidate_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
+    "file_sha256": "08548ed7f4afafc7575657477601bdc063415e248a3c345ca9e9576c522849c7",
+    "candidate_identity_sha256": "b79d6fb6b6eba73d0db1dbe094a283b33ec2fe78a5d0e27933e892401df1c584",
+    "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
+    "status": "NOT_READY"
+  },
+  "selection_binding": {
+    "profile_path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
+    "profile_file_sha256": "ba426b7b7fbe543c56fc813a144c0079633b447591ba8b565a910e1745d137bd",
+    "profile_canonical_sha256": "b9a454ae9fbb3ffc01348b76aa5086f6c3f8965c7d86721dd6cc3c9396431d31",
+    "r2_selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
+    "r2_selection_file_sha256": "941d7739aa1ed72bc10b0b7b81e8569f29364e6a8149fe776a72aa93dcfc8d6b",
+    "r2_selection_id": "competitive-execution-selection-2026-08-r2",
+    "r2_closure_id": "competitive-rival-source-closure-2026-08-r2",
+    "r2_closure_identity_sha256": "e876339f843b28c1be5d835e8f6a9a062c52715498c85d93afbdb83c6dbae4e8"
+  },
+  "capture_producer": {
+    "path": "scripts/capture_competitive_execution_selection_r3_external.py",
+    "file_sha256": "3509caeb2cef2fce7f395c6d154772d64569e09dbbf3f9c0bdf007214fa32b82",
+    "schema_path": "configs/slam_benchmark_profiles/competitive_execution_selection_r3_external_capture_v1.schema.json",
+    "schema_file_sha256": "d733d959e40e637be30b1fcf390d058631f7e70bd28c40204d48bc235bde26a3",
+    "schema": "competitive_execution_selection_r3_external_capture_manifest_v1"
+  },
+  "response_schema_binding": {
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_r3_external_review_response_v1.schema.json",
+    "file_sha256": "ea35c485aea44413cdbab098c368d9c25ab9ffca8eba6c3d145376946558f92c",
+    "schema": "competitive_execution_selection_r3_external_review_response_v1"
+  },
+  "verifier": {
+    "path": "scripts/validate_competitive_execution_selection_r3_external_review.py",
+    "file_sha256": "f5d107b4c9356bbb065365807998a157547e8aba2a192b37c6a94fbeadfaa366",
+    "implementation": "competitive_execution_selection_r3_external_review_v1",
+    "backend": {
+      "name": "python-cryptography",
+      "version": "46.0.5",
+      "implementation": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify",
+      "implementation_file": "scripts/validate_competitive_execution_selection_r3_external_review.py",
+      "implementation_sha256": "f5d107b4c9356bbb065365807998a157547e8aba2a192b37c6a94fbeadfaa366"
+    }
+  },
+  "authorized_keys": [],
+  "nonce_policy": {
+    "minimum_length": 32,
+    "maximum_length": 128,
+    "one_shot_ledger_required": true
+  },
+  "policy_identity_sha256": "915d22c16b2d36861a3ea399508d937a3dcf18d4f55ad3fded1946f208e763ac"
+}

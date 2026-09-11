@@ -34,8 +34,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Optional, Sequence
+
+# Sibling helpers stay importable regardless of which directory hosts the
+# caller (same pattern as build_lidar_init.py).
+_HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:
+    sys.path.append(str(_HERE))
 
 import build_lidar_init as builder
 import pointcloud_io as pcio

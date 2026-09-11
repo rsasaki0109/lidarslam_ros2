@@ -36,8 +36,8 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-from render_path import load_gaussian_ply, matrix_to_quat_xyzw, scale_intrinsics
-from train_gsplat import load_transforms
+from lidarslam_benchmark_tools.gaussian_splatting.render_path import load_gaussian_ply, matrix_to_quat_xyzw, scale_intrinsics
+from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import load_transforms
 
 
 # --------------------------------------------------------------------------- #
@@ -321,8 +321,8 @@ def rasterize_rgbda(gaussians: dict, viewmat: np.ndarray, K: np.ndarray,
     import torch.nn.functional as F
 
     from gsplat import rasterization
-    from render_path import infer_sh_degree
-    from train_gsplat import SH_C0
+    from lidarslam_benchmark_tools.gaussian_splatting.render_path import infer_sh_degree
+    from lidarslam_benchmark_tools.gaussian_splatting.train_gsplat import SH_C0
 
     dev = torch.device(device)
     means = torch.tensor(gaussians['means'], dtype=torch.float32, device=dev)
@@ -376,7 +376,7 @@ def run(ply: Path, transforms: Path, out_dir: Path, *, view: int, frames: int,
     """Render the actor crossing one scene view and write video + per-frame labels."""
     import imageio.v2 as imageio
 
-    from sim2real_gap import box_iou
+    from lidarslam_benchmark_tools.gaussian_splatting.sim2real_gap import box_iou
 
     dataset = load_transforms(transforms)
     scene = load_gaussian_ply(ply)
@@ -498,7 +498,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         raise SystemExit('--mode ply requires --actor-ply')
     detector = None
     if args.detector:
-        from sim2real_gap import Detector
+        from lidarslam_benchmark_tools.gaussian_splatting.sim2real_gap import Detector
 
         detector = Detector(args.detector, conf=args.det_conf)
     box_size = [float(v) for v in args.box_size.split(',')]

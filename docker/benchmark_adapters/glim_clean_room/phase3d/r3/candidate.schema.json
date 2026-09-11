@@ -1,0 +1,414 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "glim-clean-room-phase3d-r3-candidate-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "candidate_id", "candidate_revision", "status",
+    "benchmark_eligible", "base_image", "core_source_closure",
+    "offline_dependency_closure", "offline_build_contract",
+    "apt_closure_capture_contract",
+    "capture_contract", "campaign_aggregation",
+    "dependency_capture_campaign_aggregation",
+    "frozen_r2_binding", "input_contract", "container_contract",
+    "output_contract", "source_policy"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "candidate_id": {"const": "glim-clean-room-phase3d-r3-candidate-v1"},
+    "candidate_revision": {"const": 1},
+    "status": {"const": "OPT_IN_NOT_READY"},
+    "benchmark_eligible": {"const": false},
+    "purpose": {"type": "string", "minLength": 1},
+    "base_image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reference", "distribution", "architecture", "pull_policy", "network_during_run"],
+      "properties": {
+        "reference": {"pattern": "^ros@sha256:[0-9a-f]{64}$"},
+        "distribution": {"const": "jazzy"},
+        "architecture": {"const": "linux/amd64"},
+        "pull_policy": {"const": "never"},
+        "network_during_run": {"const": "none"}
+      }
+    },
+    "core_source_closure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_path", "manifest_sha256", "components"],
+      "properties": {
+        "manifest_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase1/source_closure.json"},
+        "manifest_sha256": {"pattern": "^[0-9a-f]{64}$"},
+        "components": {"type": "array", "minItems": 3, "maxItems": 3}
+      }
+    },
+    "offline_dependency_closure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_path", "manifest_sha256", "schema_path", "schema_sha256", "status", "build_policy"],
+      "properties": {
+        "manifest_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/offline_dependency_manifest.json"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/offline_dependency_manifest.schema.json"},
+        "schema_sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"const": "NOT_READY_APT_CLOSURE_UNSEALED"},
+        "build_policy": {"const": "host_prefetch_then_verify_then physical_disconnect; copy-only Docker build"}
+      }
+    },
+    "offline_build_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["recipe_path", "recipe_sha256", "prefetch_tool_path", "prefetch_tool_sha256", "planner_path", "planner_sha256", "build_network", "pull_policy", "jobs", "execution"],
+      "properties": {
+        "recipe_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/Dockerfile"},
+        "recipe_sha256": {"$ref": "#/$defs/sha256"},
+        "prefetch_tool_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/dependency_prefetch.py"},
+        "prefetch_tool_sha256": {"$ref": "#/$defs/sha256"},
+        "planner_path": {"const": "scripts/plan_glim_clean_room_r3_offline_build.py"},
+        "planner_sha256": {"$ref": "#/$defs/sha256"},
+        "build_network": {"const": "none"},
+        "pull_policy": {"const": "never"},
+        "jobs": {"const": 2},
+        "execution": {"const": "NOT_RUN"}
+      }
+    },
+    "apt_closure_capture_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "tool_path", "tool_sha256", "schema_path", "schema_sha256",
+        "proposal_schema_path", "proposal_schema_sha256", "outer_tool_path",
+        "outer_tool_sha256", "outer_schema_path", "outer_schema_sha256",
+        "planner_path", "planner_sha256", "status", "capture_mode", "network_used",
+        "production_manifest_status", "composition"
+      ],
+      "properties": {
+        "tool_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_closure_capture.py"},
+        "tool_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_closure_capture.schema.json"},
+        "schema_sha256": {"$ref": "#/$defs/sha256"},
+        "proposal_schema_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_closure_proposal.schema.json"},
+        "proposal_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "outer_tool_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_closure_outer.py"},
+        "outer_tool_sha256": {"$ref": "#/$defs/sha256"},
+        "outer_schema_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_closure_outer.schema.json"},
+        "outer_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "planner_path": {"const": "scripts/plan_glim_clean_room_r3_apt_capture.py"},
+        "planner_sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"const": "REVIEW_REQUIRED"},
+        "capture_mode": {"const": "CONTRACT_ONLY"},
+        "network_used": {"const": "provisioning_and_capture_only"},
+        "production_manifest_status": {"const": "NOT_READY_APT_CLOSURE_UNSEALED"},
+        "composition": {"const": "separate_unsigned_proposal_only"}
+      }
+    },
+    "capture_contract": {"$ref": "#/$defs/captureContract"},
+    "campaign_aggregation": {"$ref": "#/$defs/campaignAggregation"},
+    "dependency_capture_campaign_aggregation": {"$ref": "#/$defs/dependencyCaptureCampaignAggregation"},
+    "frozen_r2_binding": {"type": "object", "additionalProperties": true},
+    "input_contract": {"type": "object", "additionalProperties": true},
+    "container_contract": {"type": "object", "additionalProperties": true},
+    "output_contract": {"type": "object", "additionalProperties": true},
+    "source_policy": {"type": "object", "additionalProperties": true}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "campaignAggregation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "tool", "campaign_schema",
+        "partial_receipt_schema", "row_state_policy", "partial_rows_policy",
+        "normal_rows_exclude_partial", "status", "benchmark_eligible",
+        "promotion"],
+      "properties": {
+        "schema": {"const": "registration-plugin-release-campaign-aggregation-v1"},
+        "schema_version": {"const": 1},
+        "tool": {"$ref": "#/$defs/pathSha"},
+        "campaign_schema": {"$ref": "#/$defs/pathSha"},
+        "partial_receipt_schema": {"$ref": "#/$defs/pathSha"},
+        "row_state_policy": {"const": "fixed-four-state-vector"},
+        "partial_rows_policy": {"const": "sealed-started-child-only"},
+        "normal_rows_exclude_partial": {"const": true},
+        "status": {"const": "REVIEW_REQUIRED"},
+        "benchmark_eligible": {"const": false},
+        "promotion": {"const": "FORBIDDEN_UNTIL_SIGNED_RECEIPT"}
+      }
+    },
+    "dependencyCaptureCampaignAggregation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "tool", "campaign_schema",
+        "capture_executor_schema", "partial_receipt_schema", "prepare_mount_policy",
+        "row_state_policy", "rows_policy",
+        "partial_rows_policy", "normal_rows_exclude_partial",
+        "partial_row_identity", "status", "benchmark_eligible", "promotion"],
+      "properties": {
+        "schema": {"const": "registration-plugin-dependency-capture-campaign-aggregation-v1"},
+        "schema_version": {"const": 1},
+        "tool": {"$ref": "#/$defs/pathSha"},
+        "campaign_schema": {"$ref": "#/$defs/pathSha"},
+        "capture_executor_schema": {"$ref": "#/$defs/pathSha"},
+        "partial_receipt_schema": {"$ref": "#/$defs/pathSha"},
+        "prepare_mount_policy": {"$ref": "#/$defs/prepareMountPolicy"},
+        "row_state_policy": {"const": "fixed-four-state-vector"},
+        "rows_policy": {"const": "completed-pass-only"},
+        "partial_rows_policy": {"const": "sealed-started-child-only"},
+        "normal_rows_exclude_partial": {"const": true},
+        "partial_row_identity": {"const": "campaign-row-campaign-set-profile-child-receipt"},
+        "status": {"const": "REVIEW_REQUIRED"},
+        "benchmark_eligible": {"const": false},
+        "promotion": {"const": "FORBIDDEN_UNTIL_SIGNED_RECEIPT"}
+      }
+    },
+    "captureContract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "status", "benchmark_eligible",
+        "contract_bindings", "required_artifacts", "artifact_policy",
+        "directory_policy", "managed_directory_paths", "packages_format_policy", "release_declaration_policy",
+        "gpgv_status_policy", "gpg_inventory_policy", "source_snapshot", "promotion",
+        "reference_policy", "restore_owner_policy", "rosdep_prepare"],
+      "properties": {
+        "schema": {"const": "registration-plugin-dependency-capture-integration-v1"},
+        "schema_version": {"const": 1},
+        "status": {"const": "REVIEW_REQUIRED"},
+        "benchmark_eligible": {"const": false},
+        "contract_bindings": {"$ref": "#/$defs/captureContractBindings"},
+        "required_artifacts": {"const": ["capture_input", "base_status",
+          "apt_source_capture", "dependency_capture", "rosdep_prepare"]},
+        "artifact_policy": {"const": "exact_existing_sidecar_sealed_allowlist_v1"},
+        "directory_policy": {"const": "host_precreated_0700_owner_bound_nofollow_v1"},
+        "managed_directory_paths": {"const": ["logs", "gpg-inventory-work", "restore-owner-references", "restore-owner-references/build-partial", "restore-owner-references/runtime-partial", "apt-source", "apt-source/etc", "apt-source/etc/apt", "apt-source/etc/apt/sources.list.d", "apt-source/indices", "apt-keyrings", "apt-index", "raw-indexes", "signatures", "captured-debs", "captured-debs/build", "captured-debs/runtime", "rosdep", "rosdep/cache", "licenses", "licenses/build", "licenses/runtime", "debs-build", "debs-build/partial", "debs-runtime", "debs-runtime/partial", "rosdep-prepare", "rosdep-prepare/input", "rosdep-prepare/commands", "rosdep-prepare/artifacts", "rosdep-prepare/artifacts/rosdep", "rosdep-prepare/artifacts/rosdep/sources.list.d", "rosdep-prepare/artifacts/rosdep/cache", "rosdep-prepare/work", "rosdep-prepare/work/rosdistro", "rosdep-prepare/work/rosdistro/files", "rosdep-prepare/work/rosdistro/sources.list.d", "rosdep-prepare/work/rosdep-cache", "rosdep-prepare/work/ros-home","rosdep-prepare/work/ros-home/rosdep","rosdep-prepare/work/ros-home/rosdep/meta.cache","rosdep-prepare/work/ros-home/rosdep/sources.cache"]},
+        "packages_format_policy": {"$ref": "#/$defs/packagesFormatPolicy"},
+        "release_declaration_policy": {"$ref": "#/$defs/releaseDeclarationPolicy"},
+        "gpgv_status_policy": {"$ref": "#/$defs/gpgvStatusPolicy"},
+        "gpg_inventory_policy": {"$ref": "#/$defs/gpgInventoryPolicy"},
+        "reference_policy": {"$ref": "#/$defs/referencePolicy"},
+        "restore_owner_policy": {"$ref": "#/$defs/restoreOwnerPolicy"},
+        "rosdep_prepare": {"$ref": "#/$defs/rosdepPreparePolicy"},
+        "source_snapshot": {
+          "type": "object", "additionalProperties": false,
+          "required": ["schema", "schema_path", "schema_sha256",
+            "validator_path", "validator_sha256"],
+          "properties": {
+            "schema": {"const": "glim_clean_room_r3_apt_source_snapshot_v2"},
+            "schema_path": {"const": "configs/slam_benchmark_profiles/registration_plugin_apt_source_snapshot_v2.schema.json"},
+            "schema_sha256": {"$ref": "#/$defs/sha256"},
+            "validator_path": {"const": "docker/benchmark_adapters/glim_clean_room/phase3d/r3/apt_allowlist_composer.py"},
+            "validator_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "promotion": {"const": "FORBIDDEN_UNTIL_SIGNED_RECEIPT"}
+      }
+    },
+    "restoreOwnerPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "phase_order", "reference_mode",
+        "reference_mount", "mount_access", "command", "mode_policy",
+        "target_children", "identity", "cleanup", "before_policy", "transient_owner"],
+      "properties": {
+        "schema": {"const": "registration-plugin-apt-partial-owner-restore-v1"},
+        "schema_version": {"const": 1},
+        "phase_order": {"const": ["restore_build_partial_owner", "restore_runtime_partial_owner"]},
+        "reference_mode": {"const": 448},
+        "reference_mount": {"const": "ordered-host-source-container-target-bindings-v1"},
+        "mount_access": {"const": "read-only-bind"},
+        "command": {"const": "docker-exec-chown-reference"},
+        "mode_policy": {"const": "reference-mode-verified"},
+        "target_children": {"const": "empty-before-and-after"},
+        "identity": {"const": "host-dev-inode-owner-mode-nlink-pre-post"},
+        "cleanup": {"const": "no-post-hoc-chown-or-chmod"},
+        "before_policy": {"const": "presealed-lstat-only-on-exact-transient-owner"},
+        "transient_owner": {"$ref": "#/$defs/aptTransientOwnerPolicy"}
+      }
+    },
+    "aptTransientOwnerPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "identities", "identity_evidence", "binding"],
+      "properties": {
+        "schema": {"const": "registration-plugin-apt-transient-owner-policy-v2"},
+        "schema_version": {"const": 2},
+        "identities": {"const": [{"distro": "humble", "name": "_apt", "uid": 100, "gid": 0}, {"distro": "jazzy", "name": "_apt", "uid": 42, "gid": 0}]},
+        "identity_evidence": {"const": "profile-distro-image-digest-and-base-status/passwd"},
+        "binding": {"const": "distro-profile-image-digest"}
+      }
+    },
+    "prepareMountPolicy": {"type": "object", "additionalProperties": false, "required": ["schema", "schema_version", "identity", "entries"], "properties": {"schema": {"const": "registration-plugin-rosdep-prepare-mount-policy-v1"}, "schema_version": {"const": 1}, "identity": {"const": "ordered-host-source-container-target-bindings-v1"}, "entries": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"type": "object", "additionalProperties": false, "required": ["role", "source", "target", "read_only", "type", "noexec"], "properties": {"role": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}, "source": {"type": "string", "minLength": 1}, "target": {"type": "string", "minLength": 1}, "read_only": {"type": "boolean"}, "type": {"const": "bind"}, "noexec": {"const": false}}}}}},
+    "rosdepPreparePolicy": {"type": "object", "additionalProperties": false, "required": ["schema", "schema_version", "phase_order", "tool", "schema_binding", "input_bundle", "mount_policy", "discovery", "execution", "output", "promotion"], "properties": {"schema": {"const": "registration-plugin-rosdep-prepare-contract-v1"}, "schema_version": {"const": 1}, "phase_order": {"const": ["dependency_install", "network_disconnect", "rosdep_prepare", "rosdep_resolution"]}, "tool": {"$ref": "#/$defs/pathSha"}, "schema_binding": {"$ref": "#/$defs/pathSha"}, "input_bundle": {"type": "object", "additionalProperties": false, "required": ["schema", "schema_version", "source_relative_root", "container_root", "mount", "copy_policy", "identity_policy", "files"], "properties": {"schema": {"const": "registration-plugin-rosdep-prepare-input-v1"}, "schema_version": {"const": 1}, "source_relative_root": {"const": "rosdep-prepare/input"}, "container_root": {"const": "/opt/registration-plugin/prepare"}, "mount": {"type": "object", "additionalProperties": false, "required": ["source_relative", "target", "read_only", "noexec", "repository_bind"], "properties": {"source_relative": {"const": "rosdep-prepare/input"}, "target": {"const": "/opt/registration-plugin/prepare"}, "read_only": {"const": true}, "noexec": {"const": false}, "repository_bind": {"const": "forbidden"}}}, "copy_policy": {"const": "atomic-regular-0444-single-link-host-owned"}, "identity_policy": {"const": "source-and-pre-post-copy-descriptor-exact"}, "files": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "object", "additionalProperties": false, "required": ["role", "source_path", "container_path"], "properties": {"role": {"enum": ["tool", "schema", "discovery_validator", "consumer_profile"]}, "source_path": {"type": "string", "minLength": 1}, "container_path": {"type": "string", "pattern": "^/[^\\u0000\\r\\n]*$"}, "sha256": {"$ref": "#/$defs/sha256"}, "sha256_source": {"const": "plan_profile_sha256"}}}}}}, "mount_policy": {"$ref": "#/$defs/prepareMountPolicy"}, "discovery": {"type": "object", "additionalProperties": true}, "execution": {"type": "object", "additionalProperties": false, "required": ["image_digest", "platform", "pull", "build", "network", "network_disconnect_required", "fallback", "runner"], "properties": {"image_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}, "platform": {"const": "linux/amd64"}, "pull": {"const": false}, "build": {"const": false}, "network": {"const": "none"}, "network_disconnect_required": {"const": true}, "fallback": {"const": "forbidden"}, "runner": {"const": "existing_prepare_tool"}}}, "output": {"type": "object", "additionalProperties": false, "required": ["receipt_relative", "source_and_cache", "deb_inputs"], "properties": {"receipt_relative": {"const": "rosdep-prepare/registration_plugin_rosdep_prepare.receipt.json"}, "source_and_cache": {"const": "receipt-bound-sealed-descriptors"}, "deb_inputs": {"const": "discovery-11-exact-four"}}}, "promotion": {"type": "object", "additionalProperties": false, "required": ["status", "benchmark_eligible", "claim_eligible", "active_profile_switch", "promotion"], "properties": {"status": {"const": "REVIEW_REQUIRED"}, "benchmark_eligible": {"const": false}, "claim_eligible": {"const": false}, "active_profile_switch": {"const": false}, "promotion": {"const": "FORBIDDEN_UNTIL_SIGNED_REVIEW"}}}}},
+    "referencePolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "identity_domains",
+        "identity_token_hex_length", "artifact_naming", "prefix_collision",
+        "cache_semantics", "release_deduplication", "keyring_deduplication",
+        "signature_deduplication", "reference_projection", "partial_projection",
+        "promotion"],
+      "properties": {
+        "schema": {"const": "registration-plugin-capture-reference-policy-v1"},
+        "schema_version": {"const": 1},
+        "identity_domains": {"type": "object", "additionalProperties": false,
+          "required": ["release", "keyring", "signature", "package"],
+          "properties": {
+            "release": {"const": "registration-plugin-release-artifact-identity-v1"},
+            "keyring": {"const": "registration-plugin-gpg-keyring-identity-v1"},
+            "signature": {"const": "registration-plugin-release-signature-identity-v1"},
+            "package": {"const": "registration-plugin-packages-artifact-identity-v1"}}},
+        "identity_token_hex_length": {"const": 24},
+        "artifact_naming": {"const": "basename-plus-full-identity-sha256-prefix"},
+        "prefix_collision": {"const": "reject-before-write"},
+        "cache_semantics": {"const": "first-attempt-retained-deep-copy"},
+        "release_deduplication": {"const": "immutable-release-identity"},
+        "keyring_deduplication": {"const": "source-scoped-keyring-identity"},
+        "signature_deduplication": {"const": "release-keyring-signer-policy-identity"},
+        "reference_projection": {"const": "exact-map-and-counts"},
+        "partial_projection": {"const": "raw-release-before-later-validation"},
+        "promotion": {"const": "non-promoting-until-signed-receipt"}}
+    },
+    "captureContractBindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["capture_tool", "capture_schema", "closure_tool", "closure_schema",
+        "directory_tool", "directory_schema", "source_validator", "source_schema",
+        "rosdep_prepare_tool", "rosdep_prepare_schema"],
+      "properties": {
+        "capture_tool": {"$ref": "#/$defs/pathSha"},
+        "capture_schema": {"$ref": "#/$defs/pathSha"},
+        "closure_tool": {"$ref": "#/$defs/pathSha"},
+        "closure_schema": {"$ref": "#/$defs/pathSha"},
+        "directory_tool": {"$ref": "#/$defs/pathSha"},
+        "directory_schema": {"$ref": "#/$defs/pathSha"},
+        "source_validator": {"$ref": "#/$defs/pathSha"},
+        "source_schema": {"$ref": "#/$defs/pathSha"},
+        "rosdep_prepare_tool": {"$ref": "#/$defs/pathSha"},
+        "rosdep_prepare_schema": {"$ref": "#/$defs/pathSha"}
+      }
+    },
+    "releaseDeclarationPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "max_declared_bytes", "decimal_grammar", "zero_allowed"],
+      "properties": {
+        "schema": {"const": "registration-plugin-release-declaration-size-policy-v1"},
+        "schema_version": {"const": 1},
+        "max_declared_bytes": {"const": 17179869184},
+        "decimal_grammar": {"const": "0|[1-9][0-9]*"},
+        "zero_allowed": {"const": true}
+      }
+    },
+    "packagesFormatPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "selection_order", "allowed_formats",
+        "compressed_max_bytes", "decoded_max_bytes", "max_expansion_ratio",
+        "trailing_data", "concatenated_streams", "terminal_empty_stream_policy", "signed_empty_packages_policy"],
+      "properties": {
+        "schema": {"const": "registration-plugin-packages-format-policy-v1"},
+        "schema_version": {"const": 1},
+        "selection_order": {"const": ["xz", "gz", "plain"]},
+        "allowed_formats": {"const": ["xz", "gz", "plain"]},
+        "compressed_max_bytes": {"const": 67108864},
+        "decoded_max_bytes": {"const": 268435456},
+        "max_expansion_ratio": {"const": 256},
+        "trailing_data": {"const": "reject"},
+        "concatenated_streams": {"const": "reject"},
+        "terminal_empty_stream_policy": {"$ref": "#/$defs/terminalEmptyStreamPolicy"},
+        "signed_empty_packages_policy": {"$ref": "#/$defs/signedEmptyPackagesPolicy"}
+      }
+    },
+    "terminalEmptyStreamPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "enabled", "max_streams", "compressed_bytes", "decoded_bytes", "padding", "binding"],
+      "properties": {
+        "schema": {"const": "registration-plugin-xz-terminal-empty-stream-policy-v1"},
+        "schema_version": {"const": 1}, "enabled": {"const": true},
+        "max_streams": {"const": 2}, "compressed_bytes": {"const": 32},
+        "decoded_bytes": {"const": 0}, "padding": {"const": "forbidden"},
+        "binding": {"const": "index-offset-bytes-sha256-decoded-bytes"}
+      }
+    },
+    "signedEmptyPackagesPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "enabled", "signed_empty", "decoded_sha256", "decoded_bytes", "allowed_formats", "xz_stream_count", "xz_compressed_bytes", "padding", "trailing_data", "binding"],
+      "properties": {
+        "schema": {"const": "registration-plugin-signed-empty-packages-policy-v1"},
+        "schema_version": {"const": 1}, "enabled": {"const": true},
+        "signed_empty": {"const": true},
+        "decoded_sha256": {"const": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+        "decoded_bytes": {"const": 0}, "allowed_formats": {"const": ["xz"]},
+        "xz_stream_count": {"const": 1}, "xz_compressed_bytes": {"const": 32},
+        "padding": {"const": "forbidden"}, "trailing_data": {"const": "reject"},
+        "binding": {"const": "signed-release-pair-compressed-bytes-and-exact-empty-decode"}
+      }
+    },
+    "gpgvStatusPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "gnupg_version",
+        "required_proof_tags", "optional_informational_tags",
+        "informational_pair", "status_order", "key_considered_fields",
+        "key_considered_fingerprint", "key_considered_flags",
+        "verification_compliance_mode_fields", "verification_compliance_mode",
+        "informational_only", "proof", "keyring_input"],
+      "properties": {
+        "schema": {"const": "registration-plugin-gpgv-status-policy-v1"},
+        "schema_version": {"const": 1},
+        "gnupg_version": {"const": "2.2.27"},
+        "required_proof_tags": {"const": ["NEWSIG", "GOODSIG", "VALIDSIG"]},
+        "optional_informational_tags": {
+          "const": ["KEY_CONSIDERED", "VERIFICATION_COMPLIANCE_MODE"]},
+        "informational_pair": {"const": "independently-optional"},
+        "status_order": {"const": ["NEWSIG", "KEY_CONSIDERED", "SIG_ID",
+          "GOODSIG", "VALIDSIG", "VERIFICATION_COMPLIANCE_MODE"]},
+        "key_considered_fields": {"const": 4},
+        "key_considered_fingerprint": {"const": "validsig-primary-or-signer"},
+        "key_considered_flags": {
+          "const": "canonical-decimal-0..2147483647"},
+        "verification_compliance_mode_fields": {"const": 3},
+        "verification_compliance_mode": {
+          "const": "canonical-decimal-0..2147483647"},
+        "informational_only": {"const": true},
+        "proof": {"const": "GOODSIG_VALIDSIG_only"},
+        "keyring_input": {"const": "dearmored_path_only"}
+      }
+    },
+    "gpgInventoryPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "schema_version", "executable", "versions",
+        "version_argv", "argv_template", "homedir", "environment", "shell",
+        "network", "version_timeout_seconds", "inventory_timeout_seconds",
+        "failure_status", "metadata_residue_schema", "metadata_residue_policy",
+        "metadata_residue_names", "metadata_residue_mode",
+        "metadata_residue_max_bytes", "metadata_residue_retention"],
+      "properties": {
+        "schema": {"const": "registration-plugin-gpg-key-inventory-policy-v1"},
+        "schema_version": {"const": 1}, "executable": {"const": "/usr/bin/gpg"},
+        "versions": {"const": ["gpg (GnuPG) 2.2.27", "gpg (GnuPG) 2.4.4"]},
+        "version_argv": {"const": ["/usr/bin/gpg", "--version"]},
+        "argv_template": {"const": [
+          "/usr/bin/gpg", "--batch", "--no-options", "--no-default-keyring",
+          "--no-auto-key-retrieve", "--no-auto-key-import", "--no-auto-key-locate",
+          "--no-autostart", "--homedir", "<fresh-homedir>", "--with-colons",
+          "--with-fingerprint", "--with-subkey-fingerprint", "--import-options",
+          "show-only", "--import", "<dearmored-keyring>"
+        ]},
+        "homedir": {
+          "type": "object", "additionalProperties": false,
+          "required": ["parent", "parent_relative", "prefix", "token_hex_length", "mode",
+            "post_absent", "parent_empty_before_after", "cleanup"],
+          "properties": {
+            "parent": {"const": "/workspace/evidence-parent/gpg-inventory-work"},
+            "parent_relative": {"const": "gpg-inventory-work"},
+            "prefix": {"const": "glim-clean-room-r3-gpg-inventory-"},
+            "token_hex_length": {"const": 24}, "mode": {"const": 448},
+            "post_absent": {"const": true}, "parent_empty_before_after": {"const": true}, "cleanup": {
+              "const": "owned-tree-only-and-absence-required"}
+          }
+        },
+        "environment": {"const": "fixed-locale-no-home-or-agent"},
+        "shell": {"const": false}, "network": {"const": "none"},
+        "version_timeout_seconds": {"const": 30},
+        "inventory_timeout_seconds": {"const": 120},
+        "metadata_residue_schema": {"const": "registration-plugin-gpg-inventory-metadata-v1"},
+        "metadata_residue_policy": {"const": "exact-pubring.kbx-trustdb.gpg-supported-show-only"},
+        "metadata_residue_names": {"const": ["pubring.kbx", "trustdb.gpg"]},
+        "metadata_residue_mode": {"const": 384},
+        "metadata_residue_max_bytes": {"const": 16777216},
+        "metadata_residue_retention": {"const": "descriptor-only-cleaned"},
+        "failure_status": {"const": "REVIEW_REQUIRED"}
+      }
+    },
+    "pathSha": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}}
+    }
+  }
+}

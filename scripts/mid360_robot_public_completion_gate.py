@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_tools import payload_to_json
-from verify_autoware_map import MapVerifier
+from lidarslam_benchmark_tools.mid360_robot_tools import payload_to_json
+from lidarslam_benchmark_tools.verify_autoware_map import MapVerifier
 
 
 PUBLIC_COMPLETION_GATE_JSON = 'mid360_robot_public_completion_gate.json'
@@ -406,3 +406,7 @@ def _fmt_float(value: Any) -> str:
     if isinstance(value, (int, float)):
         return f'{float(value):.3f}'
     return 'n/a'
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_completion_gate is a library module; import it instead of running it directly.")

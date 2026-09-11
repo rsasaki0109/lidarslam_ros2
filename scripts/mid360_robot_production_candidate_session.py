@@ -10,20 +10,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from mid360_robot_dashboard import DASHBOARD_HTML, write_dashboard
-from mid360_robot_production_readiness import (
+from lidarslam_benchmark_tools import resolve_benchmark_resource
+from lidarslam_benchmark_tools.mid360_robot_dashboard import DASHBOARD_HTML, write_dashboard
+from lidarslam_benchmark_tools.mid360_robot_production_readiness import (
     PRODUCTION_READINESS_JSON,
     PRODUCTION_READINESS_MARKDOWN,
 )
-from mid360_robot_public_rko_adoption_gate import RKO_ADOPTION_GATE_JSON
-from mid360_robot_public_rko_sweep import RKO_SWEEP_JSON
-from mid360_robot_record_tools import (
+from lidarslam_benchmark_tools.mid360_robot_public_rko_adoption_gate import RKO_ADOPTION_GATE_JSON
+from lidarslam_benchmark_tools.mid360_robot_public_rko_sweep import RKO_SWEEP_JSON
+from lidarslam_benchmark_tools.mid360_robot_record_tools import (
     Mid360RecordManifestWriter,
     Mid360RobotRecordPlanner,
     RecordOptions,
     RecordPlan,
 )
-from mid360_robot_tools import RobotProfileLoader, payload_to_json
+from lidarslam_benchmark_tools.mid360_robot_tools import RobotProfileLoader, payload_to_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -443,7 +444,8 @@ class Mid360ProductionCandidateSessionRunner:
     ) -> list[str]:
         command = [
             'python3',
-            str(self._repo_root / 'scripts' / 'check_mid360_robot_production_readiness.py'),
+            str(resolve_benchmark_resource(
+                'scripts/check_mid360_robot_production_readiness.py')),
             '--artifact-dir',
             str(output_dir),
             '--host-readiness',
@@ -770,3 +772,7 @@ def _next_actions(
     if first.id == 'production_readiness':
         return ['Open mid360_robot_production_readiness.md and address each failing production gate check.']
     return ['Inspect the failed step output and rerun the production-candidate session.']
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_production_candidate_session is a library module; import it instead of running it directly.")

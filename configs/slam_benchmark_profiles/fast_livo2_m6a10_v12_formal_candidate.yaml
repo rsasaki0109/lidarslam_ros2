@@ -1,0 +1,184 @@
+# FAST-LIVO2 M6a10-v2c v12 additive formal candidate.
+#
+# This profile is deliberately unauthorized.  It records the immutable
+# implementation/no-input/host-gate lineage needed by a future authorization,
+# but it does not authorize opening the bag or starting a formal replay.
+name: fast_livo2_m6a10_v2c_v12_formal_candidate
+schema_version: 1
+preregistration:
+  status: FORMAL_CANDIDATE_UNAUTHORIZED
+  replay_count: 0
+  replay_authorized: false
+  formal_replay_forbidden: true
+  input_opened: false
+  ground_truth_content_opened: false
+  scorer_invoked: false
+  map_saved: false
+  predecessor_profile: configs/slam_benchmark_profiles/fast_livo2_m6a10_v12_formal_ready.yaml
+  predecessor_profile_sha256: 675996a7a5fd81d59d752de4bbea1d4373487a17d03ee085aa08ae9493a0b28d
+  predecessor_launcher: scripts/run_fast_livo2_m6a10_v11_formal.py
+  predecessor_launcher_sha256: efa51dee4d668b7c44305e0d43089ffebcd2a9eb817e0b863d50ee0703a5db66
+
+formal_candidate:
+  contract_version: m6a10-v12-formal-candidate-v1
+  status: UNAUTHORIZED_NOT_RUN
+  formal_replay_forbidden: true
+  authorization_required: true
+  phase:
+    contract_version: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+    mode: unpaced_ack
+    maximum_end_gap_seconds: 0.25
+    required_end_timestamp_seconds: 1623491515.148352
+    sensor_duration_seconds: 579.278127298
+    expected_messages: 236687
+    expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+  transport:
+    contract_version: m6a10-v12-callback-ack-transport-outstanding-v1
+    callback_schema_version: 3
+    outstanding_definition: received_total_minus_feeder_acknowledged
+    maximum_allowed_outstanding_messages: 1
+    mapper_internal_deque_is_diagnostic_only: true
+    terminal_support_tail_is_transport_backlog: false
+  image:
+    tag: m6a10-v2c-v12-nonlidar-boundary-transport-20260824-fast-livo2-benchmark:ros1-pinned
+    id: sha256:03dfa4c3e7c3f1ea9160ba2276ea23bfbdef43d441bc8afc628f907bd50743a7
+    base_tag: m6a10-v2c-v11-bounded-end-gap-20260823t121749z-fast-livo2-benchmark:ros1-pinned
+    base_id: sha256:729a7bba2127fc6517c106d59a12668294aeee1a0b31d04d31f9c25c762f6c3a
+  input:
+    path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+    bytes: 11290464091
+    sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+  receipts:
+    build:
+      path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v12_build_20260823T161850Z_agentv12/build_identity.receipt.json
+      sha256: e0e5c924025a24083661a6838bc5af28f07c34c419ce6e103c37890ed1382dda
+      sidecar_sha256: 5e79d3ba1145b58ca07e78256fd55593a77e1b7ebacb8e6d349d644ee578efb7
+      status: PASS
+    no_input_attempt6:
+      path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v12_dual_service_attempt6_20260823T175000Z_agentv12/no_input_dual_evidence.receipt.json
+      sha256: c5afa2452f96588bf46dc7f0d0b4504e816d0069bbd3a107009eb2c3beac0b45
+      sidecar_sha256: 076cd96e10c78d0bf73a6a7ed66d3549aaa2dd0f75c7503d5d88e19237d608e3
+      status: PASS
+      callback_sha256: 7b61b2299c3f9c79ddae33e9ae1bbf14855805b89e46a7e56d99ffba8cdfa84c
+      terminal_sha256: f843ce9bed5b16e4d44d6b7b7f9da945282ef0d3801ae94aa525717669b128b4
+      service_journal_sha256: f6608931454694d39cbf0fa5fc6f9af6db791d5ca2d8ffa9fed02608e026c26a
+      observed_runner_sha256: f3c41d6533475229a765fe92682d483758347053c6f146dd148fc85a6274648a
+    host_evidence_gate:
+      path: /media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/fast_livo2_v2c_v12_host_evidence_gate_20260823T180718Z_agentv12/host_evidence_gate.receipt.json
+      sha256: 3a603bc4ece0e9167b0b3943df6be569f2e64bce196beb18da29ff09ad69f643
+      sidecar_sha256: ff50620daf076ed357032111d33197da1903b840605fa34259f3880ae0e49f66
+      status: PASS
+      pytest_command_sha256: 8d305db19ba551f1a4f1ac884fe907bb651cb43e36e3152a3e31caa0828ba6f3
+  host_interference:
+    contract_version: m6a10-v12-host-interference-gate-v1
+    interval_seconds: 4.0
+    maximum_allowed_gap_seconds: 5.0
+    forbidden_classes: [compiler, linker, catkin, docker_build, external_gnss_build]
+    self_and_ancestors_excluded: true
+    owned_runner_pid_registered_after_start: true
+    detection_stops_process: false
+    detection_failure_kind: HOST_INTERFERENCE_CONTAMINATED
+    invalid_coverage_failure_kind: HOST_INTERFERENCE_COVERAGE_INVALID
+    performance_timing_admissible_on_detection: false
+  sources:
+    v12_ready_profile:
+      path: configs/slam_benchmark_profiles/fast_livo2_m6a10_v12_formal_ready.yaml
+      sha256: 675996a7a5fd81d59d752de4bbea1d4373487a17d03ee085aa08ae9493a0b28d
+    v12_delta_patch:
+      path: docker/patches/fast_livo2.m6a10-v2c-v12-nonlidar-boundary-transport.patch
+      sha256: 39c77535a7557365dac6b0f2c99849038b29670a57c3101be3a39138317c6333
+    v12_build_script:
+      path: scripts/build_fast_livo2_m6a10_v12_image.sh
+      sha256: 4a88bbfd68d5b021b5b3a194f42cfbae67816b31c92e1bb0036b10ed6b62e41b
+    v12_dockerfile:
+      path: docker/fast_livo2_m6a10_v12.Dockerfile
+      sha256: f579d6b09868a67fa33c626d23295de41c5517490f7849c2fafdb52203aaae26
+    v12_terminal_selftest:
+      path: tools/m6a10_terminal_support_context_v12_selftest.cpp
+      sha256: 1b42ed713dbb2a8614902ae6214d5790ab9c73ac59792f4d68753320cef47a91
+    v12_consumer_selftest:
+      path: tools/m6a10_consumer_evidence_v12_selftest.cpp
+      sha256: 02078640496daa28f0be471355c6e2ad2822a76199cda1b54e738eeff5fe48de
+    v12_validator:
+      path: scripts/benchmark_phase_contract.py
+      sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
+    v12_wrapper:
+      path: scripts/fast_livo2_m6a10_v12_formal_container_run.sh
+      sha256: af6fa54f834ae209758ee5a9903695674f4095c1063ac57b46c2774bfbc5c7a9
+    v12_no_input_payload:
+      path: scripts/fast_livo2_m6a10_v12_no_input_container_payload.sh
+      sha256: 2c1c9b86fadc0d1d83e7874542f92ff33b99b23421397374ecd9e880ad1b73aa
+    v12_feeder:
+      path: scripts/fast_livo2_m6a10_feeder.py
+      sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
+    binder:
+      path: scripts/bind_fast_livo2_v12_consumer_evidence.py
+      sha256: a958faded3122f1ea7d6bac948f62ff49462fdee6a831175176b21298fc97e43
+    compositor:
+      path: scripts/compose_fast_livo2_v12_terminal_evidence.py
+      sha256: 157bbdce2eca99584d5747df1b545fe2ef714e651e8f57173a467c658d14792e
+    monitor:
+      path: scripts/monitor_m6a10_host_interference.py
+      sha256: bfbc17ef80b49d64dd6965b0ce6956e64875cbcf29b0253c2631fb98cbac7c5a
+    host_evidence_gate_runner:
+      path: scripts/run_fast_livo2_m6a10_v12_host_evidence_gate.py
+      sha256: 9b542e1de68846b25d7307633fb38fa7f2e104a495da6e1ea23569a633fe6324
+    no_input_runner:
+      path: scripts/run_fast_livo2_m6a10_v12_no_input_gate.py
+      sha256: df5b2375ccc583e2a5e67f9d6e0646c4140e0f86f6ee8030dbc9cd34de03045e
+
+  execution:
+    formal_replay_authorized: false
+    formal_replay_started: false
+    replay_count: 0
+    watchdog_seconds: 1200
+    monitor_interval_seconds: 4.0
+    one_shell_free_popen: true
+    one_start: true
+    retry: false
+    manual_stop: false
+    network: none
+    rootfs: read_only
+    ground_truth_mount: false
+    scorer_mount: false
+    map_save: false
+    dry_run_only: true
+  conservation:
+    required_before_composition: true
+    topics: [lidar, imu, image]
+    completed_equals_backend_completed: true
+    completed_plus_buffer_equals_received: true
+    buffer_equals_record_count: true
+    support_equals_non_lidar_buffers_and_records: true
+    lidar_support_forbidden: true
+
+competitive_slam_profile:
+  m6a10_fast_livo2_v2c_v12_formal_candidate:
+    schema_version: 3
+    profile_key: m6a10_fast_livo2_v2c_v12_formal_candidate
+    system: fast_livo2
+    contract_id: m6a10-v2c-fast-livo2-terminal-support-context-v12-formal-candidate
+    status: unauthorized_candidate
+    result: null
+    input:
+      path: /media/sasaki/aiueo1/datasets/ntu_viral_release/tnp_01_m6a10_v2a_sync_materialization_v1_ros1.bag
+      bytes: 11290464091
+      sha256: 5bc7c6a0e5088aa3f733377a3e597705b075b1ec5ca5be272b75636a0b697310
+      expected_messages: 236687
+      expected_topic_counts: {lidar: 5793, imu: 225102, image: 5792}
+      opened: false
+      mount_performed: false
+    phase:
+      schema_version: 3
+      contract_version: m6a10-online-compute-v5-terminal-nonlidar-at-or-after-boundary
+      mode: unpaced_ack
+      maximum_end_gap_seconds: 0.25
+      required_evaluation_end_timestamp_seconds: 1623491515.148352
+    execution:
+      status: candidate_not_run
+      formal_replay_forbidden: true
+      formal_replay_started: false
+      input_opened: false
+      ground_truth_content_opened: false
+      scorer_invoked: false
+      map_saved: false

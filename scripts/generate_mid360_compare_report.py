@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+"""Render the GLIM-vs-lidarslam MID-360 comparison HTML report."""
 from __future__ import annotations
 
+import argparse
 import bisect
 import json
 import math
@@ -13,6 +15,17 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "output"
 REPORT = OUTPUT / "mid360_compare_report.html"
+
+
+def _parser():
+    parser = argparse.ArgumentParser(
+        description='Render mid360_compare_report.html from the latest '
+                    'GLIM and lidarslam MID-360 runs.')
+    parser.add_argument('--output-root', type=Path, default=OUTPUT,
+                        help=f'run directory root (default: {OUTPUT})')
+    parser.add_argument('--report', type=Path, default=REPORT,
+                        help=f'HTML output path (default: {REPORT})')
+    return parser
 
 
 def load_tum(path: Path):
@@ -173,10 +186,10 @@ def apply_alignment(rows, rot, trans):
     return aligned
 
 
-def find_latest_any(patterns):
+def find_latest_any(patterns, output_root=OUTPUT):
     candidates = []
     for pattern in patterns:
-        candidates.extend(OUTPUT.glob(pattern))
+        candidates.extend(output_root.glob(pattern))
     candidates = [path for path in candidates if path.exists()]
     if not candidates:
         return None
@@ -213,18 +226,21 @@ def make_xy_svg(ref_rows, est_rows, width=960, height=420, margin=24):
     )
 
 
-def main():
-    glim_dir = find_latest_any(["glim_mid360_sample_*"])
+def main(argv=None):
+    args = _parser().parse_args(argv)
+    glim_dir = find_latest_any(["glim_mid360_sample_*"], args.output_root)
     lid_dir = find_latest_any(
         [
             "lidarslam_mid360_auto_*",
             "lidarslam_mid360_noimu_nograph_fix_*",
             "lidarslam_mid360_noimu_*",
             "lidarslam_mid360_clean_*",
-        ]
+        ],
+        args.output_root,
     )
     if glim_dir is None or lid_dir is None:
-        raise SystemExit("required MID360 runs not found")
+        raise SystemExit(
+            f"required MID360 runs not found under {args.output_root}")
 
     glim_rows = load_tum(glim_dir / "dump" / "traj_lidar.txt")
     lid_rows = load_tum(lid_dir / "traj_lidarslam.tum")
@@ -433,8 +449,8 @@ lidarslam: {escape(summary['lidarslam_run'])}</div>
 </body>
 </html>
 """
-    REPORT.write_text(html, encoding="utf-8")
-    print(REPORT)
+    args.report.write_text(html, encoding="utf-8")
+    print(args.report)
 
 
 if __name__ == "__main__":

@@ -10,15 +10,8 @@ on:
       - scripts/check_installed_product_cli.py
       - docs/schemas/install-upgrade-v1.schema.json
       - .github/workflows/install-upgrade.yml
-  pull_request:
-    branches:
-      - develop
-    paths:
-      - lidarslam/**
-      - scripts/check_install_upgrade.py
-      - scripts/check_installed_product_cli.py
-      - docs/schemas/install-upgrade-v1.schema.json
-      - .github/workflows/install-upgrade.yml
+  # PRs skip this heavy 3-build validation; develop push and the weekly
+  # schedule still cover install/upgrade equivalence.
   schedule:
     - cron: '23 19 * * 3'
   workflow_dispatch:

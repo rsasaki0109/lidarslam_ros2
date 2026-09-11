@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "competitive-rival-source-closure-v1",
+  "title": "Competitive SLAM rival source closure v1",
+  "type": "object",
+  "additionalProperties": false,
+    "required": [
+    "schema_version", "required", "status", "status_reason",
+    "closure_id", "closure_revision", "closure_identity_hash_kind",
+    "active_selection", "legal_policy", "required_systems",
+    "archive_hash_kind", "source_tree_hash_kind", "revision_policy",
+    "official_source_policy", "rivals"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "required": {"const": true},
+    "status": {"enum": ["READY", "NOT_READY", "INVALID"]},
+    "status_reason": {
+      "type": "array", "items": {"type": "string", "minLength": 1}
+    },
+    "closure_id": {
+      "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"
+    },
+    "closure_revision": {"type": "integer", "minimum": 1},
+    "closure_identity_hash_kind": {
+      "const": "canonical_rival_source_closure_identity_sha256_v1"
+    },
+    "active_selection": {"$ref": "#/$defs/activeSelection"},
+    "legal_policy": {"$ref": "#/$defs/legalPolicy"},
+    "required_systems": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "archive_hash_kind": {"const": "downloaded_commit_archive_sha256_v1"},
+    "source_tree_hash_kind": {"const": "relative_path_content_sha256_v1"},
+    "revision_policy": {
+      "const": "exact_40_hex_commit_only_no_branch_latest_or_tag_only"
+    },
+    "official_source_policy": {
+      "const": "github_primary_upstream_commit_and_archive_only"
+    },
+    "rivals": {
+      "type": "object", "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/rival"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "relativePath": {
+      "type": "string", "minLength": 1,
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(?:/|$)).+$"
+    },
+    "licenseFile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "identity", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "identity": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "license": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "files", "components"],
+      "properties": {
+        "status": {"enum": ["READY", "NOT_READY", "NOT_READY_LEGAL_PROVENANCE"]},
+        "not_ready_reasons": {
+          "type": "array", "items": {"type": "string", "minLength": 1}
+        },
+        "files": {"type": "array", "items": {"$ref": "#/$defs/licenseFile"}},
+        "components": {
+          "type": "array", "minItems": 1,
+          "items": {"$ref": "#/$defs/licenseComponent"}
+        }
+      }
+    },
+    "licenseDeclaration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "identity", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "identity": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "licenseComponent": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "status", "files", "declarations"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "status": {"enum": ["READY", "NOT_READY_LEGAL_PROVENANCE"]},
+        "files": {
+          "type": "array", "items": {"$ref": "#/$defs/licenseFile"}
+        },
+        "declarations": {
+          "type": "array", "items": {"$ref": "#/$defs/licenseDeclaration"}
+        },
+        "not_ready_reasons": {
+          "type": "array", "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "archiveArtifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "path", "hash_kind", "sha256", "status"],
+      "properties": {
+        "role": {"type": "string", "minLength": 1},
+        "path": {"$ref": "#/$defs/relativePath"},
+        "hash_kind": {"const": "upstream_archive_file_sha256"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"enum": ["READY", "NOT_READY"]},
+        "not_ready_reasons": {
+          "type": "array", "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "activeSelection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["selection_id", "path", "sha256", "status", "supersedes"],
+      "properties": {
+        "selection_id": {
+          "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"
+        },
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"const": "CURRENT"},
+        "supersedes": {
+          "type": "array", "minItems": 1,
+          "items": {"$ref": "#/$defs/supersededReceipt"}
+        }
+      }
+    },
+    "supersededReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "status", "claim_eligible", "reason"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"const": "SUPERSEDED_RECIPE_REVISION"},
+        "claim_eligible": {"const": false},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "legalPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "source_fetch_mode", "redistribution_mode", "image_publication_status",
+        "claim_eligibility", "nonredistributable_sources", "warning"
+      ],
+      "properties": {
+        "source_fetch_mode": {
+          "const": "SOURCE_FETCH_ONLY_NO_REDISTRIBUTION"
+        },
+        "redistribution_mode": {
+          "const": "PROHIBITED_UNPROVEN_LICENSE"
+        },
+        "image_publication_status": {
+          "const": "BLOCKED_PENDING_LICENSE_PROVENANCE"
+        },
+        "claim_eligibility": {"const": "BLOCKED"},
+        "nonredistributable_sources": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "warning": {"type": "string", "minLength": 1}
+      }
+    },
+    "citation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["primary_upstream", "commit_url", "compatibility_status", "compatibility_note"],
+      "properties": {
+        "primary_upstream": {"const": true},
+        "commit_url": {"type": "string", "pattern": "^https://github\\.com/.+/commit/[0-9a-f]{40}$"},
+        "compatibility_status": {"enum": ["READY", "NOT_READY"]},
+        "compatibility_note": {"type": "string", "minLength": 1}
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "name", "status", "repository_url", "revision", "revision_kind",
+        "observed_ref", "archive_url", "archive_sha256", "source_tree_sha256",
+        "source_tree_hash_kind", "submodules", "license", "citation"
+      ],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "status": {"enum": ["READY", "NOT_READY"]},
+        "not_ready_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "repository_url": {"type": "string", "pattern": "^https://github\\.com/.+\\.git$"},
+        "revision": {"$ref": "#/$defs/revision"},
+        "revision_kind": {"const": "immutable_commit"},
+        "observed_ref": {"type": "string", "minLength": 1},
+        "archive_url": {"type": "string", "pattern": "^https://github\\.com/.+/archive/[0-9a-f]{40}\\.tar\\.gz$"},
+        "archive_sha256": {"$ref": "#/$defs/sha256"},
+        "source_tree_sha256": {"$ref": "#/$defs/sha256"},
+        "source_tree_hash_kind": {"const": "relative_path_content_sha256_v1"},
+        "submodules": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+        "archive_artifacts": {
+          "type": "array", "items": {"$ref": "#/$defs/archiveArtifact"}
+        },
+        "license": {"$ref": "#/$defs/license"},
+        "citation": {"$ref": "#/$defs/citation"}
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "hash_kind", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "hash_kind": {"enum": ["file_sha256", "canonical_tree_sha256"]},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "config": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "hash_kind", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "path_kind": {"type": "string"},
+        "hash_kind": {"enum": ["file_sha256", "canonical_tree_sha256", "external_container_file_sha256", "upstream_archive_file_sha256"]},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"enum": ["READY", "NOT_READY"]},
+        "source": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "not_ready_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "recipe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dockerfile", "build_script", "runner", "wrapper", "configs", "base_image", "build_options"],
+      "properties": {
+        "dockerfile": {"$ref": "#/$defs/artifact"},
+        "build_script": {"$ref": "#/$defs/artifact"},
+        "runner": {"$ref": "#/$defs/artifact"},
+        "wrapper": {"$ref": "#/$defs/artifact"},
+        "configs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/config"}},
+        "base_image": {
+          "type": "object", "additionalProperties": false,
+          "required": ["name", "digest"],
+          "properties": {
+            "name": {"type": "string", "minLength": 1},
+            "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+          }
+        },
+        "build_options": {"type": "object", "minProperties": 1}
+      }
+    },
+    "patch": {
+      "type": "object", "additionalProperties": false,
+      "required": ["order", "path", "sha256", "applies_to"],
+      "properties": {
+        "order": {"type": "integer", "minimum": 1},
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "applies_to": {"type": "string", "minLength": 1}
+      }
+    },
+    "rival": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "sources", "local_patches", "recipe"],
+      "properties": {
+        "status": {"enum": ["READY", "NOT_READY"]},
+        "not_ready_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source"}},
+        "local_patches": {"type": "array", "items": {"$ref": "#/$defs/patch"}},
+        "recipe": {"$ref": "#/$defs/recipe"}
+      }
+    }
+  }
+}
