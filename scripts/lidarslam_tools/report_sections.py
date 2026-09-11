@@ -201,7 +201,7 @@ def section(summary: dict[str, Any], output_root: Path) -> str:
     rows = "\n".join(run_row(rec, output_root) for rec in records)
     plots = "\n".join(plot_bundle(rec, output_root, open_default=(idx == 0)) for idx, rec in enumerate(records))
     return f"""
-    <section class="panel">
+    <section class="panel" id="group-{slugify(summary['group'])}">
       <div class="panel-head">
         <div>
           <p class="eyebrow">Experiment Group</p>
