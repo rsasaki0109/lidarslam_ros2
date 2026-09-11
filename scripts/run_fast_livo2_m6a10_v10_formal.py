@@ -52,7 +52,7 @@ WRAPPER_SHA256 = (
 FEEDER_PATH = Path('scripts/fast_livo2_m6a10_feeder.py')
 FEEDER_CONTAINER_PATH = '/runner/scripts/fast_livo2_m6a10_feeder.py'
 FEEDER_SHA256 = (
-    '1ea1c9bb9c625795c51c4b8c4b6aa81364370da17f8cac562f46d00af9691831')
+    '869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf')
 QUIESCENCE_SCRIPT = Path('scripts/check_m6a10_quiescence.py')
 QUIESCENCE_SCRIPT_SHA256 = (
     'acf8b2e65e7744dd9cfd4127ac5ec12fb381c5a7c1430910b3e769ea259fe85d')
@@ -148,7 +148,7 @@ BINDER_SHA256 = (
     'f8b81fdb17b7ee516cf1f7b0c24b79bfa6a0f2a3cf4f5dd199216534325f40e6')
 COMPOSITOR_PATH = Path('scripts/compose_fast_livo2_terminal_evidence.py')
 COMPOSITOR_SHA256 = (
-    'b706084392d858fb4c61f341e088c994996659a757a7ef209e9104851998fdfe')
+    '3ebda295d222693dae1880c2104cbdea16745bccc829b78f0eea5604f46f5792')
 
 
 class LaunchError(RuntimeError):

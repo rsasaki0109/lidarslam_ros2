@@ -41,7 +41,7 @@ INPUT_PATH = authorizer.INPUT_PATH
 V19_ADAPTER_PATH = ROOT / "scripts/fast_livo2_m6a10_v19_base_adapter.py"
 V19_ADAPTER_SHA256 = "61b3396aa54079773aa7066e5652527e27ddaa46121650b711f61807d0c82846"
 V19_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v19_formal.py"
-V19_LAUNCHER_SHA256 = "d2d2c7f2e2a9a3df3d7297a59546856e1fc84fac32e01cc63b77466cffcb5e9d"
+V19_LAUNCHER_SHA256 = "49cfb1cb323e06b17514987aa17dc14d52a509b700e625a6d65beddb839f5771"
 V21_LAUNCHER_PATH = Path(__file__).resolve()
 RECEIPT_NAME = "closure_receipt.json"
 

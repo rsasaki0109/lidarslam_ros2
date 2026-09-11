@@ -77,7 +77,7 @@ V19_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v19_formal.py"
 V19_LAUNCHER_SHA256 = "49cfb1cb323e06b17514987aa17dc14d52a509b700e625a6d65beddb839f5771"
 
 V22_AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v22_formal.py"
-V22_AUTHORIZER_SHA256 = "ee13d3e4e685cfab5ef3986d26d96692a96ff7c7f864d9f4e9d0fa6e217957c0"
+V22_AUTHORIZER_SHA256 = "22131463f3e8f9cb7ef630bab95bf2824f7b455e91b375fb95fbdd25b9dd4e66"
 V22_LAUNCHER_PATH = ROOT / "scripts/run_fast_livo2_m6a10_v22_formal.py"
 V22_LAUNCHER_SHA256 = "35e5ed40f312e017e45197061e8be604613804152675c179ed288b5f1a79578d"
 V22_PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v22_formal_candidate.yaml"
