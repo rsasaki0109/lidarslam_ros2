@@ -37,7 +37,7 @@ ORIGINAL_V12_PROFILE_SHA256 = mount_candidate.PARENT_PROFILE_SHA256
 PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v13_formal_candidate.yaml"
 PROFILE_SHA256 = "53d49adf595ae1783f741e264351dca45e2b17b6c91e9259f3e5fa5d036060ab"
 AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v13_formal.py"
-AUTHORIZER_SHA256 = "180a0b7e6d310560d02507ce46cf0d660254dd1e721cb8c3094a4e131864a033"
+AUTHORIZER_SHA256 = "723775f880686230b7aed2f04865a40d170a5b2f388630203918bd5e48636795"
 V13_CONTRACT_VERSION = "m6a10-v13-formal-candidate-closure-v1"
 V13_CANDIDATE_VERSION = "v13-mount-corrected-evidence-persistence"
 

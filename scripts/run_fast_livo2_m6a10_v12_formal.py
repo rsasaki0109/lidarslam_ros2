@@ -44,7 +44,7 @@ import lidarslam_benchmark_tools.check_m6a10_quiescence as _quiescence  # noqa: 
 
 
 PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v12_formal_candidate.yaml"
-PROFILE_SHA256 = "46e2f91d4cd1c2d84de499e0a45b7a1c88aa684ed8439923739946bb3b0ce207"
+PROFILE_SHA256 = "f7590430b103e275aa4f4e074afac1f279cfce1633b5ce8f27e63842ad5d053c"
 READY_PROFILE_PATH = ROOT / "configs/slam_benchmark_profiles/fast_livo2_m6a10_v12_formal_ready.yaml"
 READY_PROFILE_SHA256 = "675996a7a5fd81d59d752de4bbea1d4373487a17d03ee085aa08ae9493a0b28d"
 PROFILE_KEY = "m6a10_fast_livo2_v2c_v12_formal_candidate"
@@ -78,7 +78,7 @@ MONITOR_CONTRACT = "m6a10-v12-host-interference-gate-v1"
 AUTHORIZER_PATH = ROOT / "scripts/authorize_fast_livo2_m6a10_v12_formal.py"
 # This pin is intentionally one-way: the authorization receipt does not pin
 # this launcher, avoiding a self-referential receipt/source hash cycle.
-AUTHORIZER_SHA256 = "f56efb21c3f51bd219727c7dc8a193720b21a0e795ffbe82ac0dd12c46499cba"
+AUTHORIZER_SHA256 = "1d80197ac078b4f938231002b276706bdf2c45a1d7b6883f42e0eed992d360c5"
 
 BUILD_RECEIPT_PATH = Path(
     "/media/sasaki/aiueo1/benchmarks/m6a10_training_20260824/"
@@ -116,8 +116,8 @@ SOURCE_PINS = {
     "v12_wrapper": ("scripts/fast_livo2_m6a10_v12_formal_container_run.sh", "af6fa54f834ae209758ee5a9903695674f4095c1063ac57b46c2774bfbc5c7a9"),
     "v12_no_input_payload": ("scripts/fast_livo2_m6a10_v12_no_input_container_payload.sh", "2c1c9b86fadc0d1d83e7874542f92ff33b99b23421397374ecd9e880ad1b73aa"),
     "v12_feeder": ("scripts/fast_livo2_m6a10_feeder.py", "869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf"),
-    "binder": ("scripts/bind_fast_livo2_v12_consumer_evidence.py", "3a708c87137f81330b479579dbcb184ac25853596546263c406473dbef106aab"),
-    "compositor": ("scripts/compose_fast_livo2_v12_terminal_evidence.py", "e37c2f22ac6220f7cfc5739d27f7c24360c395bac7b2dd0f90ff80ca9e8db99f"),
+    "binder": ("scripts/bind_fast_livo2_v12_consumer_evidence.py", "a958faded3122f1ea7d6bac948f62ff49462fdee6a831175176b21298fc97e43"),
+    "compositor": ("scripts/compose_fast_livo2_v12_terminal_evidence.py", "157bbdce2eca99584d5747df1b545fe2ef714e651e8f57173a467c658d14792e"),
     "monitor": ("scripts/monitor_m6a10_host_interference.py", "d19cac9b7755b30e7cf45adcdb3fe7869855c4eb9814e337a50b102048dd5e7d"),
     "host_evidence_gate_runner": ("scripts/run_fast_livo2_m6a10_v12_host_evidence_gate.py", "9b542e1de68846b25d7307633fb38fa7f2e104a495da6e1ea23569a633fe6324"),
     "no_input_runner": ("scripts/run_fast_livo2_m6a10_v12_no_input_gate.py", "f3c41d6533475229a765fe92682d483758347053c6f146dd148fc85a6274648a"),
