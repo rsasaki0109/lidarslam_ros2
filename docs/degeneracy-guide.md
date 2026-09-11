@@ -12,6 +12,8 @@ numbers below come from
 (NTNU LiDAR Degeneracy Datasets fog/tunnel sequences, plus a HILTI 2022
 exp07 negative-result check). Read that page for the full methodology.
 
+![NTNU tunnel SLAM map: top view and gravity-alignment before/after side view](../lidarslam/images/tunnel_degeneracy_map.png)
+
 ## Is your odometry degenerating?
 
 | Symptom | Root cause | Preset | Sensors needed |

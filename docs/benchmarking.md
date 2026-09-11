@@ -2835,11 +2835,11 @@ Every release is blocked in CI by these per-dataset thresholds.
 | Dataset | Sensor | Reference | APE RMSE | Gate (pass) |
 | --- | --- | --- | --- | --- |
 | NTU VIRAL `tnp_01` (outdoor, ~580 s) | Ouster OS1-16 + VN-100 | Leica prism ground truth | **0.95 m** (best 0.87) | ≤ 1.00 m |
-| RTK-SLAM Construction Hall 2 (indoor, ~600 s) | Livox MID-360 | total-station checkpoints¹ | **0.154 m** (median 0.061) | ≤ 0.30 m |
-| RTK-SLAM Construction Hall 1 (indoor, ~741 s) | Livox MID-360 | total-station checkpoints¹ | **0.403 m** (median 0.263) | ≤ 0.55 m |
-| RTK-SLAM Stadtgarten 2 (outdoor park, ~876 s) | Livox MID-360 | total-station checkpoints¹ | **0.835 m** (median 0.327) | report-only² |
-| RTK-SLAM Stadtgarten 1 (outdoor park, ~1 km loop) | Livox MID-360 | total-station checkpoints¹ | **1.666 m** (median 1.511) | report-only² |
-| Newer College `math-hard` (~320 m loop) | Ouster OS0-128 | prism ground truth | reported separately | ≤ 0.10 m |
+| RTK-SLAM Construction Hall 2 (indoor, ~600 s) | Livox MID-360 | total-station checkpoints¹ | **0.086 m** (median 0.064, 16/16) | ≤ 0.30 m |
+| RTK-SLAM Construction Hall 1 (indoor, ~741 s) | Livox MID-360 | total-station checkpoints¹ | **0.321 m** (median 0.163, 16/16) | ≤ 0.55 m |
+| RTK-SLAM Stadtgarten 2 (outdoor park, ~876 s) | Livox MID-360 | total-station checkpoints¹ | **0.426 m** (median 0.264, 19/19) | report-only² |
+| RTK-SLAM Stadtgarten 1 (outdoor park, ~1 km loop) | Livox MID-360 | total-station checkpoints¹ | **0.838 m** (median 0.511, 36/36) | report-only² |
+| Newer College `Maths-Hard` (~320 m loop) | Ouster OS0-128 | ICP registration to survey-grade map | candidate evidence required locally | ≤ 0.10 m |
 
 ¹ Surveyed checkpoints from the public RTK-SLAM dataset (CC-BY 4.0), scored like
 its published baselines (dense odometry trajectory).
