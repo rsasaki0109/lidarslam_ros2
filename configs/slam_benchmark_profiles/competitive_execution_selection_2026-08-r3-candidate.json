@@ -13,7 +13,7 @@
   ],
   "candidate_hash_kind": "canonical_competitive_execution_selection_r3_candidate_sha256_v1",
   "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
-  "candidate_identity_sha256": "e75510154f9ae636e6cfb1187a7c611a3ae60d83deb9d75ef578a831cb372dae",
+  "candidate_identity_sha256": "69d55b69b7081381f58027008c18ec8048d4ecf001dcaa2934caca7a90d788c9",
   "candidate_kind": "competitive_execution_selection_r3_candidate_v1",
   "claim_eligible": false,
   "external_closures": {
@@ -63,7 +63,7 @@
         "selection_sha256": "1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed"
       },
       "legal_status": "BLOCKED",
-      "selection_file_sha256": "f730caf69b1ae46a49c9d27922782e5e9e042bc6588e5dbdda2d2564b20f97ce",
+      "selection_file_sha256": "1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed",
       "selection_path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml",
       "status": "NOT_READY"
     },
