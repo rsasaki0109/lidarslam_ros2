@@ -14,12 +14,12 @@ candidate:
   authorization_required: true
   authorization_status: UNAUTHORIZED_NOT_INSTALLED
   v22_authorizer_path: scripts/authorize_fast_livo2_m6a10_v22_formal.py
-  v22_authorizer_sha256: 3891f35ce2cefcabc003af4d4faa537493dd82e434f0660229345cf7d0fdc969
+  v22_authorizer_sha256: 22131463f3e8f9cb7ef630bab95bf2824f7b455e91b375fb95fbdd25b9dd4e66
   v22_launcher_path: scripts/run_fast_livo2_m6a10_v22_formal.py
   v22_wrapper_path: scripts/fast_livo2_m6a10_v22_formal_container_run.sh
   v22_wrapper_sha256: 6e74246d2b7ee60086f3b316b22c6ef69ca3f16307ffdecea3eae9ad2d794f67
   v22_gate_path: scripts/run_fast_livo2_m6a10_v22_synthetic_gate.py
-  v22_gate_sha256: 950d115937ced346116c116cdcf25b0f70d05c8dea3052efbae7394b9e74930a
+  v22_gate_sha256: c306e9f75011c036e53738d2ab705e1d342288925432dbcac20f05fa82fb87c6
   v22_gate_test_path: graph_based_slam/test/test_fast_livo2_m6a10_v22_synthetic_gate.py
   v22_gate_test_sha256: b6a34f8cb3a73fe95a93a1bba4927d7c29544ddc930151f79d0ce683eb2f27b7
   v22_formal_test_path: graph_based_slam/test/test_fast_livo2_m6a10_v22_formal.py

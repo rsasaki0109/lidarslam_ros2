@@ -26,7 +26,7 @@ import lidarslam_benchmark_tools.authorize_fast_livo2_m6a10_v22_formal as author
 CANDIDATE_VERSION = "v22-synthetic-evidence-persistence-candidate"
 CLOSURE_CONTRACT = "m6a10-v22-formal-closure-v1"
 PROFILE_PATH = authorizer.PROFILE_PATH
-PROFILE_SHA256 = "0fdadfefb7c30b9eb910e68529e47eaf1cacdee559d64ee0f262483452aeda6d"
+PROFILE_SHA256 = "3f77983f34bb2b585f0151c621bb4a697c2ab35b605dde53cdbce82f8d6555d3"
 V22_LAUNCHER_PATH = Path(__file__).resolve()
 V22_LAUNCHER_SHA256_OBSERVED = "__V22_LAUNCHER_SHA256_OBSERVED__"
 V22_AUTHORIZER_PATH = Path(authorizer.__file__).resolve()
