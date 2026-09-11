@@ -537,3 +537,7 @@ def _options_payload(options: LoopCloudAnalysisOptions) -> dict[str, Any]:
         'pass_median_nn_m': options.pass_median_nn_m,
         'pass_coverage_within_1m': options.pass_coverage_within_1m,
     }
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_loop_cloud_analyzer is a library module; import it instead of running it directly.")

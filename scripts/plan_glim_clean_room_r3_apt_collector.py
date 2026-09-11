@@ -235,3 +235,7 @@ def plan_collector(*, output_root: Path, allowlist: Mapping[str, Any],
     }
     plan["plan_identity_sha256"] = canonical_hash(plan)
     return plan
+
+
+if __name__ == "__main__":
+    raise SystemExit("plan_glim_clean_room_r3_apt_collector is a library module; import it instead of running it directly.")

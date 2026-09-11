@@ -335,3 +335,7 @@ def _load_json(path: Path) -> dict[str, Any]:
     except Exception:
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_production_candidate_bundle is a library module; import it instead of running it directly.")

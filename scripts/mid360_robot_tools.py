@@ -37,3 +37,7 @@ __all__ = [
     'RobotFrames', 'RobotProfile', 'RobotProfileLoader', 'TopicSelection',
     'payload_to_json', 'render_robot_profile_report', 'resolve_robot_frames',
 ]
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_tools is a library module; import it instead of running it directly.")

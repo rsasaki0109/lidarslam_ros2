@@ -1053,3 +1053,7 @@ def verify_fresh_holdout_authorization(
             if isinstance(auth.get('external_attestation'), Mapping) else None),
         'external_attestation_signature': attestation_result,
     }
+
+
+if __name__ == "__main__":
+    raise SystemExit("competitive_holdout_authorization is a library module; import it instead of running it directly.")

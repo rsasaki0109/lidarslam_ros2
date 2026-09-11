@@ -430,3 +430,7 @@ def validate_runtime_argv(argv: Sequence[str]) -> None:
         raise SharedAuthorizationError("ARGV_MOUNTS", "v23 mount destinations drift")
     if "--rm" in argv or any("/input" in mount for mount in mounts):
         raise SharedAuthorizationError("ARGV_FORBIDDEN", "v23 argv contains an unsafe surface")
+
+
+if __name__ == "__main__":
+    raise SystemExit("fast_livo2_m6a10_v23_shared_auth is a library module; import it instead of running it directly.")

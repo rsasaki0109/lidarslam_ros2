@@ -610,3 +610,7 @@ def acquire_candidate(selection_path: Path, profile_path: Path, evidence_root: P
               "receipt_sha256": receipt_sha, "candidate_root_relative": candidate_relative,
               "selection_id": context.selection_id, "failure": failure}
     return result
+
+
+if __name__ == "__main__":
+    raise SystemExit("ntu_viral_acquisition is a library module; import it instead of running it directly.")

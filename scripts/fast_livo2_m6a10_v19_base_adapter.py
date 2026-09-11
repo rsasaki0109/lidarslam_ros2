@@ -378,3 +378,7 @@ def verify_v18b_lineage(*, authorization_path: Path, authorization_sha256: str,
                      "status": closure.get("status"), "failure_kind": closure.get("failure_kind"),
                      "popen_count": execution.get("popen_count")},
     }
+
+
+if __name__ == "__main__":
+    raise SystemExit("fast_livo2_m6a10_v19_base_adapter is a library module; import it instead of running it directly.")

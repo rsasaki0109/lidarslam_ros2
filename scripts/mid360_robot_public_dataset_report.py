@@ -633,3 +633,7 @@ li { margin: 7px 0; }
   table { display: block; overflow-x: auto; }
 }
 """
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_dataset_report is a library module; import it instead of running it directly.")

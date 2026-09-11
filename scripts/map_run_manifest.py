@@ -218,3 +218,7 @@ def write_manifest(
     )
     os.replace(temporary, target)
     return target
+
+
+if __name__ == "__main__":
+    raise SystemExit("map_run_manifest is a library module; import it instead of running it directly.")

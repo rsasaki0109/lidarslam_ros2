@@ -277,3 +277,7 @@ def options_payload(options: PublicLoopBagOptions) -> dict[str, Any]:
     payload['input_bags'] = [str(bag) for bag in options.input_bags]
     payload['output_bag'] = str(options.output_bag)
     return payload
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_loop_bag is a library module; import it instead of running it directly.")

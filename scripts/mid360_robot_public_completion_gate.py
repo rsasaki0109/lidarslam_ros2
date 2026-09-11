@@ -406,3 +406,7 @@ def _fmt_float(value: Any) -> str:
     if isinstance(value, (int, float)):
         return f'{float(value):.3f}'
     return 'n/a'
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_completion_gate is a library module; import it instead of running it directly.")

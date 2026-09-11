@@ -605,3 +605,7 @@ def _estimated_runtime_sec(duration_sec: float | None, runtime_scale: float) -> 
     if duration_sec is None:
         return None
     return max(0.0, float(duration_sec)) * max(0.1, float(runtime_scale)) + 90.0
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_dataset_map_runner is a library module; import it instead of running it directly.")

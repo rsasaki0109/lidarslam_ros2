@@ -195,3 +195,7 @@ def matrix_options_to_dict(options: SampleSessionMatrixOptions) -> dict[str, Any
 
 def _safe_name(value: str) -> str:
     return ''.join(ch if ch.isalnum() else '_' for ch in value).strip('_') or 'scenario'
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_sample_session_matrix is a library module; import it instead of running it directly.")

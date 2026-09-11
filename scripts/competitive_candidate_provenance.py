@@ -78,3 +78,7 @@ def verify_candidate_manifest(root: Path, manifest_path: Path) -> dict[str, Any]
         'source_tree_sha256': current['sha256'],
         'source_file_count': current['file_count'],
     }
+
+
+if __name__ == "__main__":
+    raise SystemExit("competitive_candidate_provenance is a library module; import it instead of running it directly.")

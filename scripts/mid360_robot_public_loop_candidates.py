@@ -330,3 +330,7 @@ def _fmt(value: Any) -> str:
         return f'{float(value):.3f}'
     except Exception:
         return ''
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_loop_candidates is a library module; import it instead of running it directly.")

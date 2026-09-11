@@ -197,3 +197,7 @@ def verify_authorization(path: Optional[Path] = None, *, expected_sha256: Option
     del path, expected_sha256, attempt_root
     raise AuthorizationError("AUTHORIZATION_NOT_INSTALLED",
                              "v22 formal authorization is intentionally not installed")
+
+
+if __name__ == "__main__":
+    raise SystemExit("authorize_fast_livo2_m6a10_v22_formal is a library module; import it instead of running it directly.")

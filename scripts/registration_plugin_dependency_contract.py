@@ -26,3 +26,7 @@ DEPENDENCY_INSTALL_COMMAND = (
 def dependency_install_command_sha256():
     """Return the hash of the exact command sent to the container shell."""
     return hashlib.sha256(DEPENDENCY_INSTALL_COMMAND.encode("utf-8")).hexdigest()
+
+
+if __name__ == "__main__":
+    raise SystemExit("registration_plugin_dependency_contract is a library module; import it instead of running it directly.")

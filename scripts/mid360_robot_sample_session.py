@@ -455,3 +455,7 @@ def _mismatched_frame(expected_frame: str, fallback: str) -> str:
     if expected_frame != fallback:
         return fallback
     return f'{fallback}_alt'
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_sample_session is a library module; import it instead of running it directly.")

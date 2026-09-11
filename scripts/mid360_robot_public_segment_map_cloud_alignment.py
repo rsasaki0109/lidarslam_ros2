@@ -693,3 +693,7 @@ def _render_alignment_ply(aligned_start: np.ndarray, end_points: np.ndarray) -> 
             f'{red} {green} {blue}'
         )
     return '\n'.join(lines) + '\n'
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_segment_map_cloud_alignment is a library module; import it instead of running it directly.")

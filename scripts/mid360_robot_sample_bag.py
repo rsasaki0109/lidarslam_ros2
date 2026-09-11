@@ -334,3 +334,7 @@ def render_summary(summary: SampleBagSummary) -> str:
         f'lidar_frame: {summary.frames["lidar_frame"]}',
         f'imu_frame: {summary.frames["imu_frame"]}',
     ])
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_sample_bag is a library module; import it instead of running it directly.")

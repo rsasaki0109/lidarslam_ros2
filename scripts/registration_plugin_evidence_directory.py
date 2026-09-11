@@ -398,3 +398,7 @@ def launcher_paths(child_relative, dependency_names=(), include_prefetch=False):
     for relative in release_runner_paths(dependency_names, include_prefetch):
         paths.add(child_relative + "/" + relative)
     return tuple(sorted(paths, key=lambda value: (value.count("/"), value)))
+
+
+if __name__ == "__main__":
+    raise SystemExit("registration_plugin_evidence_directory is a library module; import it instead of running it directly.")

@@ -611,3 +611,7 @@ def evaluate_memory_gate(
         'aggregate_peak_rss_bytes': aggregate,
         'resource_receipts_reopened': len(seen_receipts),
     }
+
+
+if __name__ == "__main__":
+    raise SystemExit("competitive_memory_gate is a library module; import it instead of running it directly.")

@@ -490,3 +490,7 @@ __all__ = [
     'SCHEMA_VERSION',
     'allowed_pids',
 ]
+
+
+if __name__ == "__main__":
+    raise SystemExit("monitor_m6a10_host_interference is a library module; import it instead of running it directly.")

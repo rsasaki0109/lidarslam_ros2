@@ -420,3 +420,7 @@ def _next_actions(
     if not loop_candidates:
         actions.append('Run loop-alignment analysis first if loop candidate markers are needed.')
     return actions
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_3d_map_preview is a library module; import it instead of running it directly.")

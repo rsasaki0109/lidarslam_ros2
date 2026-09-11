@@ -551,3 +551,7 @@ def _as_float(value: Any, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_continuous_relocalization_gate is a library module; import it instead of running it directly.")

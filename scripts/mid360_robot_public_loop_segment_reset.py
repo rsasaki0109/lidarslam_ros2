@@ -436,3 +436,7 @@ def _select_candidate(sequence: dict[str, Any], candidate_index: int) -> dict[st
 
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.expanduser().resolve().read_text(encoding='utf-8'))
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_loop_segment_reset is a library module; import it instead of running it directly.")

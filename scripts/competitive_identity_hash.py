@@ -54,3 +54,7 @@ def canonical_profile_payload(profile: Any) -> dict[str, Any]:
 def canonical_profile_sha256(profile: Any) -> str:
     """Return the non-cyclic canonical profile SHA-256."""
     return canonical_json_sha256(canonical_profile_payload(profile))
+
+
+if __name__ == "__main__":
+    raise SystemExit("competitive_identity_hash is a library module; import it instead of running it directly.")

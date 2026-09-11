@@ -266,3 +266,7 @@ def _suggested_next_steps(
 
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding='utf-8'))
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_bag_clip is a library module; import it instead of running it directly.")

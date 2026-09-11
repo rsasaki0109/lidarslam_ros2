@@ -772,3 +772,7 @@ def _next_actions(
     if first.id == 'production_readiness':
         return ['Open mid360_robot_production_readiness.md and address each failing production gate check.']
     return ['Inspect the failed step output and rerun the production-candidate session.']
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_production_candidate_session is a library module; import it instead of running it directly.")

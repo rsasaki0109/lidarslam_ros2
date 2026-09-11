@@ -1172,3 +1172,7 @@ pre {
   h1 { font-size: 26px; }
 }
 """
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_dashboard is a library module; import it instead of running it directly.")

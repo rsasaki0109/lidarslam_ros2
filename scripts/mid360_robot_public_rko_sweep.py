@@ -966,3 +966,7 @@ def _fmt_value(value: Any) -> str:
     if value is None:
         return ''
     return str(value)
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_rko_sweep is a library module; import it instead of running it directly.")

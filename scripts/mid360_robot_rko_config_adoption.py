@@ -298,3 +298,7 @@ def _case_summary(row: dict[str, Any]) -> dict[str, Any]:
         'parameters': row.get('parameters') or {},
         'output_dir': row.get('output_dir', ''),
     }
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_rko_config_adoption is a library module; import it instead of running it directly.")

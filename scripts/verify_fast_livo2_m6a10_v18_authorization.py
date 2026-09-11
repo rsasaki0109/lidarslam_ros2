@@ -589,3 +589,7 @@ def verify_authorization(path: Path, attempt_root: Path, expected_sha256: str, *
             require_fresh_root=True,
         )
     raise AuthorizationError("AUTHORIZATION_PATH", "authorization receipt path is not an approved v18 root")
+
+
+if __name__ == "__main__":
+    raise SystemExit("verify_fast_livo2_m6a10_v18_authorization is a library module; import it instead of running it directly.")

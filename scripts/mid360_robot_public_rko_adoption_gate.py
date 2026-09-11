@@ -307,3 +307,7 @@ def _sweep_markdown_path(sweep_path: Path) -> str:
         return str(markdown_path)
     candidate = sweep_path.parent / RKO_SWEEP_JSON.replace('.json', '.md')
     return str(candidate) if candidate.is_file() else ''
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_rko_adoption_gate is a library module; import it instead of running it directly.")

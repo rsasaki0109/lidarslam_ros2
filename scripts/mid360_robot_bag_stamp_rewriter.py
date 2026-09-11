@@ -234,3 +234,7 @@ def options_payload(options: BagStampRewriterOptions) -> dict[str, Any]:
     payload['input_bag'] = str(options.input_bag)
     payload['output_bag'] = str(options.output_bag)
     return payload
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_bag_stamp_rewriter is a library module; import it instead of running it directly.")

@@ -187,3 +187,7 @@ def seal_receipt(value: Mapping[str, Any]) -> dict[str, Any]:
     sealed['execution_receipt_sha256'] = receipt_sha256(sealed)
     validate_receipt(sealed)
     return sealed
+
+
+if __name__ == "__main__":
+    raise SystemExit("competitive_execution_attempt_receipt is a library module; import it instead of running it directly.")

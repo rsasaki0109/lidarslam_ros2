@@ -576,3 +576,7 @@ def public_dataset_payload() -> dict[str, Any]:
     return {
         'datasets': [dataset.to_dict() for dataset in public_dataset_registry()],
     }
+
+
+if __name__ == "__main__":
+    raise SystemExit("mid360_robot_public_datasets is a library module; import it instead of running it directly.")
