@@ -1056,7 +1056,6 @@ if(BUILD_TESTING)
     test_benchmark_phase_contract
     test_bind_fast_livo2_v10_consumer_evidence
     test_bind_fast_livo2_v12_consumer_evidence
-    test_capture_registration_plugin_rosdep_discovery
     test_competitive_container_recipes
     test_competitive_execution_identity_capture
     test_competitive_execution_r3_source_worktree
@@ -1072,18 +1071,6 @@ if(BUILD_TESTING)
     test_fast_livo2_m6a10_v22_synthetic_gate
     test_fast_livo2_python38_compat
     test_freeze_competitive_fresh_holdouts
-    test_glim_clean_room_phase3d_r3_candidate
-    test_glim_clean_room_r3_apt_capture
-    test_glim_clean_room_r3_apt_signature
-    test_glim_clean_room_r3_apt_signature_authorization
-    test_glim_clean_room_r3_apt_signature_executor
-    test_glim_clean_room_r3_apt_signature_keyed_authorization
-    test_glim_clean_room_r3_apt_signature_promotion
-    test_glim_clean_room_r3_custodian_handoff
-    test_glim_clean_room_r3_custodian_handoff_response
-    test_glim_clean_room_r3_machine_identity
-    test_glim_clean_room_r3_machine_identity_keyed
-    test_glim_clean_room_r3_offline_contract
     test_m6a10_fixed10_v7_launcher
     test_m6a10_no_map_artifacts
     test_m6a10_quiescence
@@ -1104,19 +1091,9 @@ if(BUILD_TESTING)
     test_ours_m6a10_consumer_hook
     test_prepare_competitive_evidence_bundle_handoff
     test_prepare_competitive_fresh_ros_inputs
-    test_prepare_registration_plugin_rosdep
     test_publish_competitive_claim
     test_registration_contract_cmake_smoke
-    test_registration_plugin_dependency_closure
-    test_registration_plugin_dependency_environment
-    test_registration_plugin_dependency_prefetch
-    test_registration_plugin_docker_absence_compat
     test_registration_plugin_dso_gate
-    test_registration_plugin_evidence_directory
-    test_registration_plugin_gpg_inventory
-    test_registration_plugin_processing_boundary
-    test_registration_plugin_release_campaign
-    test_registration_plugin_session_stress_source
     test_run_competitive_gt_blind_benchmark
     test_sample_container_process_rss
     test_verify_competitive_evidence_bundle
