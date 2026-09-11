@@ -6,7 +6,7 @@
   "benchmark_eligible": false,
   "claim_eligible": false,
   "candidate_hash_kind": "canonical_competitive_execution_selection_r3_candidate_sha256_v1",
-  "candidate_identity_sha256": "80cd78a0d63a314f79fa1eeea001d0119938d4ff314a37c47860d57a826b2bba",
+  "candidate_identity_sha256": "075bdbc2f6211c46beecca6b4f8eaf24fd390eda9095c7362efd0ddc2e2610c9",
   "profile_binding": {
     "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
     "file_sha256": "e75fd774a78aafec9738584811e017cd6a2f725dfe2ecddaaa68a61b744057a1",
@@ -72,7 +72,7 @@
     "memory": {
       "sampler": {"path": "scripts/sample_container_process_rss.py", "sha256": "0b45345942b188d4c97e55e4ff849dae020a90ce3c76f683b027bddff32eb547"},
       "helper": {"path": "scripts/container_memory_evidence.py", "sha256": "f526cd3e526d870982ccf12657e09397f6b048c0b446c5b57b9e5c63433ef9cf"},
-      "gate": {"path": "scripts/competitive_memory_gate.py", "sha256": "ec4e316f33acd253565fef7ccbbaa04401be87b9d21c575018871b0ea0f2ac04"}
+      "gate": {"path": "scripts/competitive_memory_gate.py", "sha256": "04763ec404d9517ff39e48451dcd611434b58b42cc1e5f4c74705d0640af77ad"}
     }
   },
   "system_bindings": {
