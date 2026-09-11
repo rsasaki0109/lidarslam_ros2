@@ -3,6 +3,23 @@
 This page describes the recommended benchmark path and the release/readiness
 gate used for the default permissive workflow.
 
+> **Reading guide (2447 lines).** Start here, then jump to what you need:
+>
+> - New to benchmarking? Read [Recommended Benchmark](#recommended-benchmark)
+>   and [FAST-LIVO2 head-to-head](#fast-livo2-head-to-head) only.
+> - Making a competitive claim? Read [Claim-eligible evidence
+>   bundles](#claim-eligible-evidence-bundles) and [Competitive victory
+>   evidence (schema v2)](#competitive-victory-evidence-schema-v2).
+> - Running M6a10 runtime gates? See [Runtime phase contract
+>   (M6a10-v1 compatibility)](#runtime-phase-contract-m6a10-v1-compatibility)
+>   and the M6a10 subsections below it.
+> - Fresh-holdout / GT-blind procedure? See [Fresh-holdout authorization and
+>   GT-blind claim gate](#fresh-holdout-authorization-and-gt-blind-claim-gate).
+>
+> Section map: Claim-eligible evidence bundles → Recommended Benchmark →
+> FAST-LIVO2 head-to-head → Runtime phase contract (M6a10-v1…) → Competitive
+> victory evidence (schema v2) → Fresh-holdout authorization…
+
 ## Claim-eligible evidence bundles
 
 The final competitive suite gate accepts a claim only when the evidence
