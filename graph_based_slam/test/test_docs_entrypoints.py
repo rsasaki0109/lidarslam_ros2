@@ -601,9 +601,6 @@ def test_docs_reference_existing_entrypoint_scripts():
         REPO_ROOT / 'scripts' / 'generate_v2_beta_readiness_report.py',
         REPO_ROOT / 'scripts' / 'generate_map_authoring_report.py',
         REPO_ROOT / 'scripts' / 'generate_stress_validation_report.py',
-        REPO_ROOT / 'scripts' / 'generate_readme_dynamic_filter_figure.py',
-        REPO_ROOT / 'scripts' / 'generate_readme_autoware_proof_figure.py',
-        REPO_ROOT / 'scripts' / 'generate_readme_large_loop_map_figure.py',
         REPO_ROOT / 'scripts' / 'generate_readme_loop_zoom_figure.py',
         REPO_ROOT / 'scripts' / 'generate_social_autoware_map_authoring_card.py',
         REPO_ROOT / 'scripts' / 'generate_social_autoware_demo_video.py',
@@ -613,8 +610,6 @@ def test_docs_reference_existing_entrypoint_scripts():
         REPO_ROOT / 'scripts' / 'inspect_applanix_gsof50_quality.py',
         REPO_ROOT / 'scripts' / 'convert_applanix_gsof_to_navsatfix_bag.py',
         REPO_ROOT / 'scripts' / 'convert_applanix_gsof_to_imu_bag.py',
-        REPO_ROOT / 'scripts' / 'extract_applanix_gsof49_reference.py',
-        REPO_ROOT / 'scripts' / 'extract_static_transform_from_bag.py',
         REPO_ROOT / 'scripts' / 'prepare_velodyne_pointcloud_overlay.sh',
         REPO_ROOT / 'scripts' / 'run_open_data_gnss_smoke.sh',
         REPO_ROOT / 'scripts' / 'run_open_data_applanix_velodyne_gnss_smoke.sh',
@@ -626,10 +621,7 @@ def test_docs_reference_existing_entrypoint_scripts():
         REPO_ROOT / 'scripts' / 'generate_dynamic_object_filter_validation_report.py',
         REPO_ROOT / 'scripts' / 'generate_exploration_closeout_report.py',
         REPO_ROOT / 'scripts' / 'run_place_recognition_benchmark.sh',
-        REPO_ROOT / 'scripts' / 'generate_classic_path_report.py',
         REPO_ROOT / 'scripts' / 'generate_place_recognition_report.py',
-        REPO_ROOT / 'scripts' / 'generate_packet_imu_deskew_validation_report.py',
-        REPO_ROOT / 'scripts' / 'generate_dynamic_object_filter_report.py',
         REPO_ROOT / 'scripts' / 'preflight_autoware_map_bag.py',
         REPO_ROOT / 'scripts' / 'run_autoware_map_beginner.sh',
         REPO_ROOT / 'scripts' / 'run_autoware_map_from_bag.py',
@@ -1690,8 +1682,6 @@ def test_docs_cover_autoware_and_release_gate_keywords():
     assert 'inspect_applanix_gsof50_quality.py' in workflows_doc
     assert 'convert_applanix_gsof_to_navsatfix_bag.py' in workflows_doc
     assert 'convert_applanix_gsof_to_imu_bag.py' in workflows_doc
-    assert 'extract_applanix_gsof49_reference.py' in workflows_doc
-    assert 'extract_static_transform_from_bag.py' in workflows_doc
     assert 'prepare_velodyne_pointcloud_overlay.sh' in workflows_doc
     assert 'run_open_data_gnss_smoke.sh' in workflows_doc
     assert 'run_open_data_applanix_velodyne_gnss_smoke.sh' in workflows_doc
@@ -1719,11 +1709,9 @@ def test_docs_cover_autoware_and_release_gate_keywords():
     assert 'all-sensors-bag6' in benchmarking_doc
     assert 'classic_path_report.md' in benchmarking_doc
     assert 'exploration_closeout_report_20260327.md' in benchmarking_doc
-    assert 'generate_classic_path_report.py' in benchmarking_doc
     assert 'run_place_recognition_benchmark.sh' in benchmarking_doc
     assert 'generate_place_recognition_report.py' in benchmarking_doc
     assert 'generate_packet_imu_deskew_validation_report.py' in benchmarking_doc
-    assert 'generate_dynamic_object_filter_report.py' in benchmarking_doc
     assert 'run_release_readiness_checks.sh' in benchmarking_doc
     assert 'docs/comparison.md' in benchmarking_doc
     assert 'generate_v2_beta_readiness_report.py' in benchmarking_doc

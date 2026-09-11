@@ -444,7 +444,7 @@ That wrapper will:
   topics when they exist
 - otherwise generate a `NavSatFix` sidecar bag from `GSOF49/50`
 - optionally generate an `Imu` sidecar bag from `GSOF49/50`
-- extract a local `TUM` reference from `GSOF49` with `extract_applanix_gsof49_reference.py`
+- extract a local `TUM` reference from `GSOF49`
 - build a minimal `velodyne_pointcloud` overlay on demand with
   `bash scripts/prepare_velodyne_pointcloud_overlay.sh`
 - convert `VelodyneScan` packets into `sensor_msgs/msg/PointCloud2`
@@ -542,7 +542,6 @@ bash scripts/run_open_data_applanix_velodyne_gnss_benchmark.sh \
 That path uses:
 
 - `convert_applanix_gsof_to_imu_bag.py`
-- `extract_static_transform_from_bag.py`
 - `PointCloud2.time`-based deskew in `scanmatcher`
 - `--imu-rotation-use-orientation false` for the gyro-only rotation variant
 
