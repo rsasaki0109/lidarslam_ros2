@@ -9,7 +9,7 @@
   "candidate_binding": {
     "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
     "file_sha256": "1a775ed80198b14f48a9f65be51a558ac160e49399538dd8233a19db4b182e08",
-    "candidate_identity_sha256": "80cd78a0d63a1ba9f565f45080ddb6c80aedb15b51ac1684b31394c4383de836",
+    "candidate_identity_sha256": "80cd78a0d63a314f79fa1eeea001d0119938d4ff314a37c47860d57a826b2bba",
     "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
     "status": "NOT_READY"
   },
@@ -33,5 +33,5 @@
     "image_toolchain_review": {"status": "PENDING", "path": null, "sha256": null},
     "source_worktree_review": {"status": "PENDING", "path": null, "sha256": null}
   },
-  "manifest_identity_sha256": "1f423d02d735d1ccd81f227bab7c6bdad031057f045bb57a733dcbce54adde72"
+  "manifest_identity_sha256": "8c910886734fa9efd1bffa444f9a1aefc58067c52bb92ff506e48d5565a1e9e5"
 }
