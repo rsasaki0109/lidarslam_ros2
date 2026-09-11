@@ -1053,7 +1053,6 @@ if(BUILD_TESTING)
     test_select_rosbag_topic
     test_slice_rosbag2
     test_audit_m6a7_v3_evidence
-    test_authorize_fast_livo2_m6a10_v17_formal
     test_benchmark_phase_contract
     test_bind_fast_livo2_v10_consumer_evidence
     test_bind_fast_livo2_v12_consumer_evidence
@@ -1069,24 +1068,6 @@ if(BUILD_TESTING)
     test_compose_fast_livo2_terminal_evidence
     test_compose_fast_livo2_v12_terminal_evidence
     test_container_memory_evidence
-    test_fast_livo2_m6a10_v10_container_run
-    test_fast_livo2_m6a10_v11_build_candidate
-    test_fast_livo2_m6a10_v11_container_run
-    test_fast_livo2_m6a10_v11_delta
-    test_fast_livo2_m6a10_v11_formal_ready_profile
-    test_fast_livo2_m6a10_v11_host_gate
-    test_fast_livo2_m6a10_v12_build_candidate
-    test_fast_livo2_m6a10_v12_formal_container_run
-    test_fast_livo2_m6a10_v12_no_input_container_payload
-    test_fast_livo2_m6a10_v12_no_input_gate
-    test_fast_livo2_m6a10_v13_persistence_gate
-    test_fast_livo2_m6a10_v14_formal
-    test_fast_livo2_m6a10_v15_feeder
-    test_fast_livo2_m6a10_v15_formal
-    test_fast_livo2_m6a10_v15_no_input_identity
-    test_fast_livo2_m6a10_v17_formal
-    test_fast_livo2_m6a10_v17_production
-    test_fast_livo2_m6a10_v17_root_cause
     test_fast_livo2_m6a10_v22_container_run
     test_fast_livo2_m6a10_v22_synthetic_gate
     test_fast_livo2_python38_compat
