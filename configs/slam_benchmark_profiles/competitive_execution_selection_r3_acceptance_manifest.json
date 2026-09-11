@@ -4,8 +4,8 @@
   "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
   "candidate_binding": {
     "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
-    "candidate_identity_sha256": "350fd03e725f81c00b98790987e051a0587af80f2d1ae22018d7cce536c27dee",
-    "file_sha256": "c5195e0c1664a2f1f0cb0938c3dd8b3115c6253bfb188a92d8583e4f90392f38",
+    "candidate_identity_sha256": "e75510154f9ae636e6cfb1187a7c611a3ae60d83deb9d75ef578a831cb372dae",
+    "file_sha256": "08b43bd1868f8cafdef86d2e88005ca886f2c587974734c079562c671d0a37b2",
     "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
     "status": "NOT_READY"
   },
@@ -47,7 +47,7 @@
       "status": "PENDING"
     }
   },
-  "manifest_identity_sha256": "0623433a3373df7ade513cbad79bb76c4a2c64fe27c5fd1c76025bec3fe1e62b",
+  "manifest_identity_sha256": "b117caed6c71017104035325ea7308f8feceb06279ff5ef574229e296df70e2f",
   "profile_binding": {
     "canonical_hash_kind": "canonical_profile_sha256_v1",
     "canonical_sha256": "c6374aabfb218f14810b1544e3b8c9ebbee9992184ac1e9f344245f0e526ca05",
