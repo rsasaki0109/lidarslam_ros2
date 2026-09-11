@@ -5,7 +5,7 @@ status: ready
 common_identity:
   # This fixture is consumed by the schema-v2 synthetic contract, whose
   # canonical profile includes the v2 phase policy and frozen test slots.
-  profile_sha256: 0b666bd2a6f58c55ebf0c56ce3e1594af48f30b0f395f17ea5c54a7fe9961140
+  profile_sha256: 3d377e8d9343316b98473015f6ef3a1759ef5a6a0095c2b8df76d1167bcd992c
   profile_sha256_kind: canonical_profile_sha256_v1
   rival_source_closure:
     closure_id: competitive-rival-source-closure-2026-08-r2
@@ -14,4 +14,4 @@ common_identity:
     closure_identity_sha256: abe385d54f435431aff8ba48975ee69a1a1fac31f548ae3a9733684316f2a5c2
     selection_id: competitive-execution-selection-2026-08-r2
     selection_path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml
-    selection_sha256: e4059775b68ffe4be2c5904582a623e65e803ba71102a5832ae066d7d732660b
+    selection_sha256: 1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed

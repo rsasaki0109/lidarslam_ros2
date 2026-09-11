@@ -13,7 +13,7 @@ profile_revision_id: competitive-slam-v1-2026-08-r2
 current_recipe_bindings:
   glim:
     dockerfile: {path: docker/glim_cpu_benchmark.Dockerfile, hash_kind: file_sha256, sha256: dcd01d013eeb5cb50e2582646548c06f2c3b1a93820412b110b7fb25b769d70d}
-    build_script: {path: scripts/build_competitive_benchmark_images.sh, hash_kind: file_sha256, sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1}
+    build_script: {path: scripts/build_competitive_benchmark_images.sh, hash_kind: file_sha256, sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde}
     runner: {path: scripts/run_glim_benchmark.py, hash_kind: file_sha256, sha256: fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5}
     wrapper: {path: scripts/glim_container_run.sh, hash_kind: file_sha256, sha256: 6b9948a1319ba5eaeba1bd53fca9d35ae6b3f93cda41ebea3e8d79a2b467b19e}
     configs:
@@ -25,7 +25,7 @@ current_recipe_bindings:
       - {order: 2, path: docker/patches/glim_ros2.m6a10-v2b.patch, sha256: ede64c7a00f409a19138f41c19685f08d58b5c8c8d9d9ffa47b6c7dcb774c0f2}
   fast_livo2:
     dockerfile: {path: docker/fast_livo2_benchmark.Dockerfile, hash_kind: file_sha256, sha256: 1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5}
-    build_script: {path: scripts/build_competitive_benchmark_images.sh, hash_kind: file_sha256, sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1}
+    build_script: {path: scripts/build_competitive_benchmark_images.sh, hash_kind: file_sha256, sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde}
     runner: {path: scripts/run_fast_livo2_benchmark.py, hash_kind: file_sha256, sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f}
     wrapper: {path: scripts/fast_livo2_container_run.sh, hash_kind: file_sha256, sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20}
     configs:
