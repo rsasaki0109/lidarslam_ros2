@@ -27,7 +27,7 @@ from lidarslam_benchmark_tools import module_path, package_root
 ROOT = package_root()
 V9_PATH = module_path('run_m6a10_fixed10_v9')
 V9_SHA256 = (
-    '8157d1b8c7013a82ed2f76bfdba02356e4c73743d70563484fea1868feb870b7')
+    '45704d041e260942136bcaffa31f9d385ad3ebb3bbfd21c0482d7715ea86a10b')
 CONTRACT_ID = 'm6a10-v2a-ours-rko-unpaced-ack-fixed10-v10'
 LAUNCHER_CONTRACT_ID = 'm6a10-v2a-fixed10-v10-single-process-launcher-v1'
 TREE_HASH_KIND = 'relative_path_size_content_sha256_v1'

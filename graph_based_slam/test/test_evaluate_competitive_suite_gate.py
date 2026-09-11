@@ -31,7 +31,9 @@
 """Tests for the three-holdout, two-track suite gate."""
 
 import copy
+import hashlib
 import importlib.util
+import json
 from pathlib import Path
 
 import yaml
