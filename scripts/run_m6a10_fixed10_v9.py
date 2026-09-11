@@ -33,7 +33,7 @@ TREE_HASH_KIND = 'relative_path_size_content_sha256_v1'
 MATERIALIZER_HELPER_PATH = (
     module_path('materialize_m6a10_synchronized_tail'))
 MATERIALIZER_HELPER_SHA256 = (
-    'caddcf0ae85d74444ae65ea85ed33d5e561a2569dc8ef180b2496a9d87c132c9')
+    '2a2ff6476c6996a20b3e27d375ef33528ad08f20ea8b9bb539c8359075a5ee2b')
 EXPECTED_INPUT_TREE_SHA256 = (
     '0a45497ab4ed94bf8e9757bab3f37e5786fee4991beea16c1efdc49e38cb9263')
 IMAGE_TAG = 'm6a10-v2a-fixed10-v2-lidarslam-ours:jazzy'
