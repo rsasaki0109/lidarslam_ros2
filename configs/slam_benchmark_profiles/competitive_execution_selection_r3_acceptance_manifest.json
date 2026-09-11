@@ -1,37 +1,69 @@
 {
-  "schema": "competitive_execution_selection_r3_acceptance_manifest_v1",
-  "schema_version": 1,
-  "status": "NOT_READY",
-  "benchmark_eligible": false,
-  "claim_eligible": false,
   "active_profile_switch": false,
+  "benchmark_eligible": false,
   "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
   "candidate_binding": {
-    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
-    "file_sha256": "36e3feb4b470453e6427192fb8bf2b01f306df54a9cbe103b26612ab86f81fe0",
-    "candidate_identity_sha256": "0145855f1cb05ef4fbca64595b6931eedb37f076526a79eca0e80c38a4fe1065",
     "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
+    "candidate_identity_sha256": "350fd03e725f81c00b98790987e051a0587af80f2d1ae22018d7cce536c27dee",
+    "file_sha256": "c5195e0c1664a2f1f0cb0938c3dd8b3115c6253bfb188a92d8583e4f90392f38",
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
     "status": "NOT_READY"
   },
+  "claim_eligible": false,
+  "closures": {
+    "dataset_source_closure": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "fresh_holdout_authorization": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "image_toolchain_review": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "machine_identity": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "rival_source_closure": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "selection_handoff": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    },
+    "source_worktree_review": {
+      "path": null,
+      "sha256": null,
+      "status": "PENDING"
+    }
+  },
+  "manifest_identity_sha256": "0623433a3373df7ade513cbad79bb76c4a2c64fe27c5fd1c76025bec3fe1e62b",
   "profile_binding": {
-    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
-    "file_sha256": "b2c0c0ea48d120c2f5b5322987205f80da362050428f9322fc49944145c62573",
+    "canonical_hash_kind": "canonical_profile_sha256_v1",
     "canonical_sha256": "c6374aabfb218f14810b1544e3b8c9ebbee9992184ac1e9f344245f0e526ca05",
-    "canonical_hash_kind": "canonical_profile_sha256_v1"
+    "file_sha256": "b2c0c0ea48d120c2f5b5322987205f80da362050428f9322fc49944145c62573",
+    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"
   },
   "required_closures": [
-    "selection_handoff", "rival_source_closure", "dataset_source_closure",
-    "fresh_holdout_authorization", "machine_identity",
-    "image_toolchain_review", "source_worktree_review"
+    "selection_handoff",
+    "rival_source_closure",
+    "dataset_source_closure",
+    "fresh_holdout_authorization",
+    "machine_identity",
+    "image_toolchain_review",
+    "source_worktree_review"
   ],
-  "closures": {
-    "selection_handoff": {"status": "PENDING", "path": null, "sha256": null},
-    "rival_source_closure": {"status": "PENDING", "path": null, "sha256": null},
-    "dataset_source_closure": {"status": "PENDING", "path": null, "sha256": null},
-    "fresh_holdout_authorization": {"status": "PENDING", "path": null, "sha256": null},
-    "machine_identity": {"status": "PENDING", "path": null, "sha256": null},
-    "image_toolchain_review": {"status": "PENDING", "path": null, "sha256": null},
-    "source_worktree_review": {"status": "PENDING", "path": null, "sha256": null}
-  },
-  "manifest_identity_sha256": "dc80be2e242eb2a9c913766345adb3462493b97c099431b3182b9c1b8160032a"
+  "schema": "competitive_execution_selection_r3_acceptance_manifest_v1",
+  "schema_version": 1,
+  "status": "NOT_READY"
 }

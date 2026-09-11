@@ -1,41 +1,45 @@
 {
+  "authorized_keys": [],
+  "benchmark_eligible": false,
+  "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
+  "candidate_binding": {
+    "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
+    "candidate_identity_sha256": "350fd03e725f81c00b98790987e051a0587af80f2d1ae22018d7cce536c27dee",
+    "file_sha256": "c5195e0c1664a2f1f0cb0938c3dd8b3115c6253bfb188a92d8583e4f90392f38",
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
+    "status": "NOT_READY"
+  },
+  "execution_authorized": false,
+  "nonce_policy": {
+    "maximum_length": 128,
+    "minimum_length": 32,
+    "one_shot_ledger_required": true
+  },
+  "policy_identity_sha256": "a6e411942dd3c76ac8123ec8c82fb4d47c7ff7c0ebb53649d4eadfc583ce2d9f",
+  "profile_binding": {
+    "canonical_hash_kind": "canonical_profile_sha256_v1",
+    "canonical_sha256": "c6374aabfb218f14810b1544e3b8c9ebbee9992184ac1e9f344245f0e526ca05",
+    "file_sha256": "b2c0c0ea48d120c2f5b5322987205f80da362050428f9322fc49944145c62573",
+    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml"
+  },
+  "response_schema_binding": {
+    "file_sha256": "4f96890414a89933e0853a79d0e7bbc331c53c530e58b3661d0ce098a6752f94",
+    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_r3_acceptance_response_v1.schema.json",
+    "schema": "competitive_execution_selection_r3_acceptance_response_v1"
+  },
   "schema": "competitive_execution_selection_r3_acceptance_trust_policy_v1",
   "schema_version": 1,
   "status": "NOT_READY",
-  "benchmark_eligible": false,
-  "execution_authorized": false,
-  "campaign_id": "competitive-execution-selection-2026-08-r3-candidate",
-  "candidate_binding": {
-    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r3-candidate.json",
-    "file_sha256": "36e3feb4b470453e6427192fb8bf2b01f306df54a9cbe103b26612ab86f81fe0",
-    "candidate_identity_sha256": "0145855f1cb05ef4fbca64595b6931eedb37f076526a79eca0e80c38a4fe1065",
-    "candidate_id": "competitive-execution-selection-2026-08-r3-candidate",
-    "status": "NOT_READY"
-  },
-  "profile_binding": {
-    "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
-    "file_sha256": "b2c0c0ea48d120c2f5b5322987205f80da362050428f9322fc49944145c62573",
-    "canonical_sha256": "c6374aabfb218f14810b1544e3b8c9ebbee9992184ac1e9f344245f0e526ca05",
-    "canonical_hash_kind": "canonical_profile_sha256_v1"
-  },
-  "response_schema_binding": {
-    "path": "configs/slam_benchmark_profiles/competitive_execution_selection_r3_acceptance_response_v1.schema.json",
-    "file_sha256": "4f96890414a89933e0853a79d0e7bbc331c53c530e58b3661d0ce098a6752f94",
-    "schema": "competitive_execution_selection_r3_acceptance_response_v1"
-  },
   "verifier": {
-    "path": "scripts/validate_competitive_execution_r3_acceptance.py",
-    "file_sha256": "ed39c7d9e5ff6a1d8b93a477353cf0ad9eb59d7bb4ef5999cd36487174dc1628",
-    "implementation": "competitive_execution_selection_r3_acceptance_v1",
     "backend": {
-      "name": "python-cryptography",
-      "version": "46.0.5",
       "implementation": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.verify",
       "implementation_file": "scripts/validate_competitive_execution_r3_acceptance.py",
-      "implementation_sha256": "ed39c7d9e5ff6a1d8b93a477353cf0ad9eb59d7bb4ef5999cd36487174dc1628"
-    }
-  },
-  "authorized_keys": [],
-  "nonce_policy": {"minimum_length": 32, "maximum_length": 128, "one_shot_ledger_required": true},
-  "policy_identity_sha256": "53ae2bd3b13850e5a872ba58b77da6b8da81f4296db01364663f4b22f4658836"
+      "implementation_sha256": "ed39c7d9e5ff6a1d8b93a477353cf0ad9eb59d7bb4ef5999cd36487174dc1628",
+      "name": "python-cryptography",
+      "version": "46.0.5"
+    },
+    "file_sha256": "ed39c7d9e5ff6a1d8b93a477353cf0ad9eb59d7bb4ef5999cd36487174dc1628",
+    "implementation": "competitive_execution_selection_r3_acceptance_v1",
+    "path": "scripts/validate_competitive_execution_r3_acceptance.py"
+  }
 }
