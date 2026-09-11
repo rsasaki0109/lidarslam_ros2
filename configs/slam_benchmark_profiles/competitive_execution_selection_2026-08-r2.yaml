@@ -7,7 +7,7 @@ status: CURRENT
 closure_id: competitive-rival-source-closure-2026-08-r2
 closure_revision: 2
 closure_identity_hash_kind: canonical_rival_source_closure_identity_sha256_v1
-closure_identity_sha256: abe385d54f435431aff8ba48975ee69a1a1fac31f548ae3a9733684316f2a5c2
+closure_identity_sha256: 93ee1877c4c134130fc18f2e77805618b71114ecabc0a0a185ee518db30eeece
 profile_path: configs/slam_benchmark_profiles/competitive_slam_v1.yaml
 profile_revision_id: competitive-slam-v1-2026-08-r2
 current_recipe_bindings:

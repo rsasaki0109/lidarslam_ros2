@@ -15,8 +15,8 @@
   },
   "profile_binding": {
     "path": "configs/slam_benchmark_profiles/competitive_slam_v1.yaml",
-    "file_sha256": "e75fd774a78aafec9738584811e017cd6a2f725dfe2ecddaaa68a61b744057a1",
-    "canonical_sha256": "b70a074a8948b9c0a6e9a604235237c6147ddb68dfb9710902e935ee355068d4",
+    "file_sha256": "febb00c02be59610361508b9930c96a79ddb88272bf58c8b9bef4be88c02c7cd",
+    "canonical_sha256": "922dd8340f0b5551bb040ef28700c322811ba6556f4e0e47ee207c8bf3d9ac31",
     "canonical_hash_kind": "canonical_profile_sha256_v1"
   },
   "required_closures": [
@@ -33,5 +33,5 @@
     "image_toolchain_review": {"status": "PENDING", "path": null, "sha256": null},
     "source_worktree_review": {"status": "PENDING", "path": null, "sha256": null}
   },
-  "manifest_identity_sha256": "02b396b2144d821262afd1496b78587b7df0db5ae72bd41f0ec574a96f334573"
+  "manifest_identity_sha256": "1c056553b5b78cbcb2b17a58bf01c082a1c2037f916c26c85d0e912d41ddd7ec"
 }

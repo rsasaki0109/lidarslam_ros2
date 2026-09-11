@@ -74,10 +74,10 @@ competitive_slam_profile:
         sha256: d601a89d1cdc6b6d90483005a65c71e6f9b0a6171bccab2085dcec83eac2dfe7
       shell_bridge:
         path: scripts/container_phase_evidence.sh
-        sha256: 70f6643af29faa3bd8c0456722e477b4fdb42ff622e87ae164895f4302c8014d
+        sha256: 4def58dd17b3ec1f8e9803f418267cb97dd3189063b5dd4fb6d74f748e14d107
       completion_barrier:
         path: scripts/run_rko_lio_graph_benchmark.sh
-        sha256: d82df94521189d97fabd0b8f672b2b61a239a417f7e3220ddb4ab12a65ef450f
+        sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
         state_exit_codes:
           pass: 0
           invalid_or_malformed: 125
@@ -198,7 +198,7 @@ competitive_slam_profile:
             status: PASS
           wrapper:
             path: scripts/materialize_m6a10_ros1_equivalent.py
-            sha256: c018c4d9a80dcb66e62431ea815365ee6812ab69359f845ab321d5dbcf685233
+            sha256: 23170ffb0fe1d0b3fc8c05b7ef592e30ddc387825d6b5f09a6b5339b97687142
             test_path: graph_based_slam/test/test_materialize_m6a10_ros1_equivalent.py
             test_sha256: f3572921c330fd0a9b8f504caac6d775938495f244b918f15c8e109dddc720ea
             contract_id: m6a10-v2a-ros1-equivalence-v1
@@ -347,7 +347,7 @@ competitive_slam_profile:
             sha256: 806857afec65c16105446e75fb32450e2b0efe1116268ce4412ffb44559db8a6
           runner:
             path: scripts/run_rko_lio_graph_benchmark.sh
-            sha256: d82df94521189d97fabd0b8f672b2b61a239a417f7e3220ddb4ab12a65ef450f
+            sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
           completion_contract:
             path: scripts/m6a10_completion_contract.sh
             sha256: 9e770dbd0f5c755a2271ec431e6018cf4614e58c3836812292f9977e31b9d3e1
@@ -510,7 +510,7 @@ competitive_slam_profile:
             sha256: 806857afec65c16105446e75fb32450e2b0efe1116268ce4412ffb44559db8a6
           runner:
             path: scripts/run_rko_lio_graph_benchmark.sh
-            sha256: d82df94521189d97fabd0b8f672b2b61a239a417f7e3220ddb4ab12a65ef450f
+            sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
           launch:
             path: lidarslam/launch/rko_lio_slam.launch.py
             sha256: d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c
@@ -659,7 +659,7 @@ competitive_slam_profile:
             sha256: 806857afec65c16105446e75fb32450e2b0efe1116268ce4412ffb44559db8a6
           runner:
             path: scripts/run_rko_lio_graph_benchmark.sh
-            sha256: d82df94521189d97fabd0b8f672b2b61a239a417f7e3220ddb4ab12a65ef450f
+            sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
           launch:
             path: lidarslam/launch/rko_lio_slam.launch.py
             sha256: d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c
@@ -822,7 +822,7 @@ competitive_slam_profile:
             sha256: 806857afec65c16105446e75fb32450e2b0efe1116268ce4412ffb44559db8a6
           runner:
             path: scripts/run_rko_lio_graph_benchmark.sh
-            sha256: d82df94521189d97fabd0b8f672b2b61a239a417f7e3220ddb4ab12a65ef450f
+            sha256: bfa6822f288c8a4c2d6f0edb83f316f0d96711fa78a9a27faddbca6d6af02aed
           launch:
             path: lidarslam/launch/rko_lio_slam.launch.py
             sha256: d45545717f90f6877b5f281fc5623df04b824f7a236d2fe73b91c2dd3714371c
@@ -1161,7 +1161,7 @@ competitive_slam_profile:
           <<: *m6a10_fixed10_v4_consumer
         launcher:
           path: scripts/run_m6a10_fixed10_v8.py
-          sha256: 8a75783da2d35416856417259e6a5c9a36d7bfc04c7a2645fc6e4b2ad896bccc
+          sha256: 90c1210fefb2983ed80cab2f655b814d7dde1a6c851a309dc384ecd850041c96
           contract_id: m6a10-v2a-fixed10-v8-single-process-launcher-v1
           test_path: graph_based_slam/test/test_m6a10_fixed10_v8_launcher.py
           test_sha256: 7c5ad992060027642d38468f4b138dfa37bac8ab010536a4b93f85f9d2fd430d
@@ -1260,7 +1260,7 @@ competitive_slam_profile:
           <<: *m6a10_fixed10_v4_consumer
         launcher:
           path: scripts/run_m6a10_fixed10_v9.py
-          sha256: 879fa1c44aa093b158e405806276935bc41bf3bf4d9134a4534cd4922312254f
+          sha256: 45704d041e260942136bcaffa31f9d385ad3ebb3bbfd21c0482d7715ea86a10b
           contract_id: m6a10-v2a-fixed10-v9-single-process-launcher-v1
           test_path: graph_based_slam/test/test_m6a10_fixed10_v9_launcher.py
           test_sha256: b26a0580db1eac88e6be4ba9620731533cd98b25ddeea7033bedf5bd1a0ea1b8
@@ -1394,14 +1394,14 @@ competitive_slam_profile:
           <<: *m6a10_fixed10_v4_consumer
         launcher:
           path: scripts/run_m6a10_fixed10_v10.py
-          sha256: f1d7844eaf8f2d5c22431fed5abcc84ae07f9f34cbd92de3b515c61d20ce78ed
+          sha256: a892430b003f6c5d9c5beca7ccabb78c9a1a85517ab3f45ef5cd84c8f2b9bdb2
           contract_id: m6a10-v2a-fixed10-v10-single-process-launcher-v1
           test_path: graph_based_slam/test/test_m6a10_fixed10_v10_launcher.py
           test_sha256: b89afc720fec4cc0af2d0736367407cbb6dc4b8789a26e3a0a3adf56530b2283
           tree_hash_kind: relative_path_size_content_sha256_v1
           tree_hash_helper_path: scripts/materialize_m6a10_synchronized_tail.py
           tree_hash_helper_sha256: 2a2ff6476c6996a20b3e27d375ef33528ad08f20ea8b9bb539c8359075a5ee2b
-          pinned_v9_launcher_sha256: 879fa1c44aa093b158e405806276935bc41bf3bf4d9134a4534cd4922312254f
+          pinned_v9_launcher_sha256: 45704d041e260942136bcaffa31f9d385ad3ebb3bbfd21c0482d7715ea86a10b
           image_tag: m6a10-v2a-fixed10-v2-lidarslam-ours:jazzy
           image_digest: sha256:385b6eeedae3014bcd893849f2ec3a49f5176f0ef3cdd7e96559690e8dc25a69
           quiescence_invocations: 1
@@ -1492,7 +1492,7 @@ competitive_slam_profile:
       dockerfile_path: docker/glim_cpu_benchmark.Dockerfile
       dockerfile_sha256: dcd01d013eeb5cb50e2582646548c06f2c3b1a93820412b110b7fb25b769d70d
       build_script_path: scripts/build_competitive_benchmark_images.sh
-      build_script_sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
+      build_script_sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
       build_with_cv_bridge: 'ON'
       image_tag: m6a10-v2b-20260823-glim-cpu-benchmark:competitive-v1
       image_id: sha256:010c0019a077116edf4d1e7462dfa28561c4fb17db3b5db52e3652c8a875eb41
@@ -1543,7 +1543,7 @@ competitive_slam_profile:
       log_text_is_not_evidence: true
     runner:
       path: scripts/run_glim_benchmark.py
-      sha256: 1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1
+      sha256: fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5
       phase_cli: '--phase-contract v2 --phase-mode {paced_1x,unpaced_ack}'
     tests:
       path: graph_based_slam/test/test_glim_m6a10_consumer_hook.py
@@ -1751,10 +1751,10 @@ competitive_slam_profile:
         supervision_is_non_destructive: true
       feeder:
         path: scripts/fast_livo2_m6a10_feeder.py
-        sha256: bde0631d29dbb18575fe0fd2ce4bc339e738d14e1b47a1ccc8a77aa348f5622d
+        sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
       runner:
         path: scripts/run_fast_livo2_benchmark.py
-        sha256: b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30
+        sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f
       container_entrypoint:
         path: scripts/fast_livo2_container_run.sh
         sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
@@ -1771,7 +1771,7 @@ competitive_slam_profile:
         labels_hash_kind: json_file_bytes_sha256
         labels_canonical_sha256: efb4220c520259c9e7546c9441133c02eae33597cd9ee3bb1f15ea501ba8a04e
         installed_probe_sha256: 11b0aca6ab1fadccc6399677dc311b505ba7af483f39526fcabb89f49f3e917e
-        feeder_label_sha256: bde0631d29dbb18575fe0fd2ce4bc339e738d14e1b47a1ccc8a77aa348f5622d
+        feeder_label_sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
         cpu_flags_policy: portable_x86_64_v1
         active_forbidden_compile_flags: false
       source:
@@ -1782,10 +1782,10 @@ competitive_slam_profile:
       build:
         recipe:
           path: docker/fast_livo2_benchmark.Dockerfile
-          sha256: d4d32627cf447ece1dbcaf636b962a0a173c023eae9dff52d319ccb4167a5e56
+          sha256: 1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5
         entrypoint:
           path: scripts/build_competitive_benchmark_images.sh
-          sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
+          sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
         receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v5portable-20260823/build_receipt.json
         receipt_sha256: ed212dd6b1560068bddc48140c313c24c635d8397160ad1b38d354ebf3ac2f76
         log_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v5portable-20260823/build.log
@@ -1827,8 +1827,8 @@ competitive_slam_profile:
       instrumentation_version: m6a10-fast-livo2-observable-supervision-v1
       requires_new_image_label: true
       source_identity:
-        feeder_sha256: bde0631d29dbb18575fe0fd2ce4bc339e738d14e1b47a1ccc8a77aa348f5622d
-        runner_sha256: b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30
+        feeder_sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
+        runner_sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f
         wrapper_sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
       no_authoritative_v5_run: true
     quiescence_attempt:
@@ -1903,7 +1903,7 @@ competitive_slam_profile:
       build_required: true
     image_labels:
       patch_sha256: 33f30a40ad54db5eea331a87b8b86f32410aac2980e37e4cb6d5027100095297
-      feeder_sha256: bde0631d29dbb18575fe0fd2ce4bc339e738d14e1b47a1ccc8a77aa348f5622d
+      feeder_sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
       consumer_contract: m6a10-v2c-fast-livo2-single-inflight-v1
       queue_overflow_capability: single_inflight_exact_count_observed
       callback_capability: callback_acceptance_status_ack_eof_v2c
@@ -1915,10 +1915,10 @@ competitive_slam_profile:
       image_status: build_passed_not_executed
       recipe:
         path: docker/fast_livo2_benchmark.Dockerfile
-        sha256: d4d32627cf447ece1dbcaf636b962a0a173c023eae9dff52d319ccb4167a5e56
+        sha256: 1b916086ce40f386ea1a4bb2dc591f784c249c81723f6d7e486bca217a9b3da5
       build_entrypoint:
         path: scripts/build_competitive_benchmark_images.sh
-        sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
+        sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
       build_receipt_path: /media/sasaki/aiueo1/benchmarks/competitive_build_evidence/m6a10-v2c-fast-livo2-v5portable-20260823/build_receipt.json
       build_receipt_sha256: ed212dd6b1560068bddc48140c313c24c635d8397160ad1b38d354ebf3ac2f76
       image_inspect_sha256: 868df4814aa42687f86a98a799caec78953f9809247ca02964943027e98054f2
@@ -1939,7 +1939,7 @@ competitive_slam_profile:
       thread_environment: {OMP_NUM_THREADS: 8, OPENBLAS_NUM_THREADS: 8, MKL_NUM_THREADS: 8, TBB_NUM_THREADS: 8}
     feeder:
       path: scripts/fast_livo2_m6a10_feeder.py
-      sha256: bde0631d29dbb18575fe0fd2ce4bc339e738d14e1b47a1ccc8a77aa348f5622d
+      sha256: 869ca54921c86310af5cefc4ef0c4f8626b5fdcc125dcd60e865fdf1e677ddbf
       contract_id: m6a10-v2c-fast-livo2-single-inflight-feeder-v1
       one_message_inflight: true
       publisher_queue_size: 1
@@ -1949,7 +1949,7 @@ competitive_slam_profile:
       ack_backpressure_verified: true
     runner:
       path: scripts/run_fast_livo2_benchmark.py
-      sha256: b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30
+      sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f
       phase_entrypoint_path: scripts/fast_livo2_container_run.sh
       phase_entrypoint_sha256: f4236ec79659becacb12dc5f76c2d7ef41bc83be7616df88c1ee6ebc60e65d20
       phase_input_only_command_required: true
@@ -2092,11 +2092,11 @@ competitive_slam_profile:
       active_selection:
         selection_id: competitive-execution-selection-2026-08-r2
         path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08-r2.yaml
-        sha256: 1234790b96571e59c987f4046ec362e901f1d5bf5fbc5d842152012e51e404ed
+        sha256: f730caf69b1ae46a49c9d27922782e5e9e042bc6588e5dbdda2d2564b20f97ce
         status: CURRENT
         supersedes:
           - path: configs/slam_benchmark_profiles/competitive_execution_selection_2026-08.yaml
-            sha256: dd0ed7c5d80f22a279d18126c5df64dc0685c007e8343a89983c1a01df0089e5
+            sha256: f2f9aefc368a1ce627574b514f65f9cbadd17042716ba7915aee908c199d6b0e
             status: SUPERSEDED_RECIPE_REVISION
             claim_eligible: false
             reason: historical receipt binds the pre-r2 Dockerfile/build-script recipe revision
@@ -2133,14 +2133,14 @@ competitive_slam_profile:
                 files:
                   - path: LICENSE
                     identity: MIT
-                    sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
+                    sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
                 components:
                   - name: glim
                     status: READY
                     files:
                       - path: LICENSE
                         identity: MIT
-                        sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
+                        sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
                     declarations: []
               citation:
                 primary_upstream: true
@@ -2193,7 +2193,7 @@ competitive_slam_profile:
                 files:
                   - path: LICENSE
                     identity: BSD-3-Clause
-                    sha256: 38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775
+                    sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
                   - path: LICENSE.BSD
                     identity: BSD-3-Clause
                     sha256: ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0
@@ -2203,7 +2203,7 @@ competitive_slam_profile:
                     files:
                       - path: LICENSE
                         identity: BSD-3-Clause
-                        sha256: 38af8103282a75115a94ab29bea125d1c36fe0af04b9ac5f664144d0b399b775
+                        sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
                       - path: LICENSE.BSD
                         identity: BSD-3-Clause
                         sha256: ec9746ecc24d4b36c4c8412ced73a9c7351238396d1fd17b70b3ba1e6a2e5bd0
@@ -2267,14 +2267,14 @@ competitive_slam_profile:
                 files:
                   - path: LICENSE
                     identity: MIT
-                    sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
+                    sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
                 components:
                   - name: gtsam_points
                     status: READY
                     files:
                       - path: LICENSE
                         identity: MIT
-                        sha256: e491c5c12eef41e3a5f673fa0b1942d575fbd1bbd8c4dfa73e4c9d464c4a9ba4
+                        sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
                     declarations: []
               citation:
                 primary_upstream: true
@@ -2298,11 +2298,11 @@ competitive_slam_profile:
             build_script:
               path: scripts/build_competitive_benchmark_images.sh
               hash_kind: file_sha256
-              sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
+              sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
             runner:
               path: scripts/run_glim_benchmark.py
               hash_kind: file_sha256
-              sha256: 1cb5a1e7354c168ae2317ff96e9450fb9e7e93b1314db8690bc63177e04913a1
+              sha256: fc7b2109e4dfe8b93500473279020420777c2450e1900cada0ce2fdef320d0f5
             wrapper:
               path: scripts/glim_container_run.sh
               hash_kind: file_sha256
@@ -2360,14 +2360,14 @@ competitive_slam_profile:
                 files:
                   - path: LICENSE
                     identity: GPL-2.0-only
-                    sha256: 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643
+                    sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
                 components:
                   - name: fast_livo2
                     status: NOT_READY_LEGAL_PROVENANCE
                     files:
                       - path: LICENSE
                         identity: GPL-2.0-only
-                        sha256: 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643
+                        sha256: bd843428df8e1b195678c777f0cd8c1b990e00973cedbdf4b14610dff211523a
                     declarations:
                       - path: package.xml
                         identity: BSD
@@ -2464,11 +2464,11 @@ competitive_slam_profile:
             build_script:
               path: scripts/build_competitive_benchmark_images.sh
               hash_kind: file_sha256
-              sha256: 136f52c41da1b090f47c310bb3ce85fd8c317e4824410cecba960815c7ad42d1
+              sha256: 3ddda9f610f1f4a157b38bbf6cf87cdfa403ade4977e093565eac9d08c8fcdde
             runner:
               path: scripts/run_fast_livo2_benchmark.py
               hash_kind: file_sha256
-              sha256: b8a57115aba296e31ee53e380052d5a35eb8df4fbb72e8797ae65bab694dbd30
+              sha256: 77c65229da460839a73775740c03ee3972450289b8a14c542a45e8bf3ec9bf6f
             wrapper:
               path: scripts/fast_livo2_container_run.sh
               hash_kind: file_sha256

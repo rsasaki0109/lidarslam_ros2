@@ -10,8 +10,8 @@
   "benchmark_eligible": false,
   "candidate_binding": {
     "candidate_id": "competitive-rival-source-closure-2026-08-r3-candidate",
-    "canonical_sha256": "2abadbc9ae006ff6685492c0e218dfa3c925762f17c4efcf8ad34c134566a713",
-    "file_sha256": "743b66c554903c1ed7a1f3faeb347b9ffcde34f91c6e552ad0852f88dab68e77",
+    "canonical_sha256": "a3c9805ac7f5aaa25b39979f2931a707c2412467acc9b99aa8110dc1eeb3ffba",
+    "file_sha256": "0d7fbb94ccf9fada4b7815641e7e5ba279d5c0875eedfe770760a2aabd668882",
     "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-candidate.json"
   },
   "nonce_policy": {
@@ -19,7 +19,7 @@
     "minimum_length": 32,
     "one_shot_ledger_required": true
   },
-  "policy_identity_sha256": "747126efb7fb317fac276ebf72842fcc369dfb7ebe486e79a88019892f7565e3",
+  "policy_identity_sha256": "3afb33a4bb0ba2a2d66375098aeccf12850869834eed1dabec012eb2b41d5d96",
   "response_schema_binding": {
     "file_sha256": "8d88ae0c96b757fc38dbd44488055c5a0b9d42dc47ad125c61892a8ed52c76d4",
     "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_r3_custodian_response_v1.schema.json",
@@ -28,8 +28,8 @@
   "schema": "competitive_rival_source_closure_r3_custodian_trust_policy_v1",
   "schema_version": 1,
   "selection_binding": {
-    "canonical_sha256": "d42ee73733ff2e68a96455c0ef554afc779e9d55d2279c7fdb0d5d1ec9dd19b7",
-    "file_sha256": "53886f335db8801f0aaa978d9e575952eb9d2287fbd346c2214c658dd91b6e8a",
+    "canonical_sha256": "21fdd8cc992342beb358d9c49fc2427577836a62c3f983e8adf244c75704db7b",
+    "file_sha256": "9c621d3eecc442b95925ecc6c415b4be7ceaebc0ae37858b8096c0fc0a417f64",
     "path": "configs/slam_benchmark_profiles/competitive_rival_source_closure_2026-08-r3-selection-candidate.json",
     "selection_id": "competitive-rival-source-closure-selection-2026-08-r3-candidate"
   },
